@@ -47,6 +47,10 @@
 # LDFLAGS = -bsd
 
 # Sun:
+# CFLAGS = -g -Wall
+# LDFLAGS = -static
+
+# Linux:
 CFLAGS = -g -Wall
 LDFLAGS = -static
 
