@@ -607,14 +607,13 @@ String &String::vsprintf(const char *format, va_list ap)
             // String (%s) escape.  (Uses precision to limit string length.)
             s = va_arg(ap, char *);
             n = strlen(s);
-            if (precision_specified && prec < int(strlen(s))) n = prec;
-            tmp = String(s, n);
-            if (left_justify) append(tmp);
-            if (width_specified && width > tmp.length()) {
-               width -= tmp.length();
+            if (precision_specified && prec < n) n = prec;
+            if (left_justify) append(s, n);
+            if (width_specified && width > n) {
+               width -= n;
                while (width-- > 0) append(' ');
             }
-            if (!left_justify) append(tmp);
+            if (!left_justify) append(s, n);
             break;
          default:
             // Unknown %escape.  Format as error message.
