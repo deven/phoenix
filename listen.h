@@ -25,9 +25,7 @@ public:
    static void Open(int port);	// Open a listening port.
    Listen(int port);		// constructor
    ~Listen();			// destructor
-   void InputReady(int fd);
-   void OutputReady(int fd) {
-      error("Listen::OutputReady(fd = %d): invalid operation!",fd);
-   }
+   void InputReady();
+   void OutputReady() { abort(); }
    void Closed();
 };
