@@ -38,7 +38,7 @@ MOST = discussion.cc fdtable.cc listen.cc output.cc outstr.cc event.cc \
 SRCS = hash.cc string.cc most.cc $(MOST)
 OBJS = hash.o string.o most.o
 
-all: $(EXEC) restart
+all: $(EXEC)
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
@@ -51,11 +51,6 @@ string.o: boolean.h object.h string.h string.cc
 
 .cc.o:
 	$(CC) $(CFLAGS) -c $<
-
-restart.o: conf.h
-
-restart: restart.o
-	$(CC) $(CFLAGS) -o restart restart.o
 
 clean:
 	rm -f restart restart.o $(EXEC) $(OBJS) core *~
