@@ -98,6 +98,7 @@ public:
    String &prepend(const char *s, size_t n);
    String &prepend(char *s, size_t n) { return prepend((const char *) s, n); }
    String &prepend(char c);
+   void trim();
    String &vsprintf(const char *format, va_list ap);
    String &sprintf(const char *format, ...);
    int operator ==(const String &s) {
