@@ -116,8 +116,6 @@ void log(char *format,...);
 void warn(char *format,...);
 void error(char *format,...);
 void crash(char *format,...);
-char *message_start(char *line,char *sendlist,int len,boolean &explicit);
-int match_name(char *name,char *sendlist);
 void quit(int);
 void alrm(int);
 void RestartServer();
