@@ -94,6 +94,38 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    return idle;
 }
 
+void Session::DoDown(char *args) // Do !down command.
+{
+   if (!strcmp(args,"!")) {
+      log("Immediate shutdown requested by %s (%s).",name_only,user->user);
+      log("Final shutdown warning.");
+      Telnet::announce("*** %s has shut down conf! ***\n",name);
+      Telnet::announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
+      alarm(5);
+      Shutdown = 2;
+   } else if (!strcasecmp(args,"cancel")) {
+      if (Shutdown) {
+	 Shutdown = 0;
+	 alarm(0);
+	 log("Shutdown cancelled by %s (%s).",name_only,user->user);
+	 Telnet::announce("*** %s has cancelled the server shutdown. ***\n",
+			  name);
+      } else {
+	 telnet->output("The server was not about to shut down.\n");
+      }
+   } else {
+      int seconds;
+      if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
+      log("Shutdown requested by %s (%s) in %d seconds.",name_only,user->user,
+	  seconds);
+      Telnet::announce("*** %s has shut down conf! ***\n",name);
+      Telnet::announce("\a\a>>> This server will shutdown in %d seconds... "
+		       "<<<\n\a\a",seconds);
+      alarm(seconds);
+      Shutdown = 1;
+   }
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];

@@ -447,40 +447,9 @@ void process_input(Telnet *telnet,char *line)
          return;
       }
       if (!strncasecmp(line,"!down",5)) {
-	 if (!strcasecmp(line,"!down !")) {
-	    log("Immediate shutdown requested by %s (%s).",
-		telnet->session->name_only,telnet->session->user->user);
-	    log("Final shutdown warning.");
-	    Telnet::announce("*** %s has shut down conf! ***\n",
-			     telnet->session->name);
-	    Telnet::announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
-			     "\n%c%c",Bell,Bell,Bell,Bell);
-	    alarm(5);
-	    Shutdown = 2;
-	 } else if (!strcasecmp(line,"!down cancel")) {
-	    if (Shutdown) {
-	       Shutdown = 0;
-	       alarm(0);
-	       log("Shutdown cancelled by %s (%s).",telnet->session->name_only,
-		   telnet->session->user->user);
-	       Telnet::announce("*** %s has cancelled the server shutdown. ***"
-				"\n",telnet->session->name);
-	    } else {
-	       telnet->output("The server was not about to shut down.\n");
-	    }
-	 } else {
-	    int i;
-
-	    if (sscanf(line+5,"%d",&i) != 1) i = 30;
-	    log("Shutdown requested by %s (%s) in %d seconds.",
-		telnet->session->name_only,telnet->session->user->user,i);
-	    Telnet::announce("*** %s has shut down conf! ***\n",
-			     telnet->session->name);
-	    Telnet::announce("%c%c>>> This server will shutdown in %d seconds"
-			     "... <<<\n%c%c",Bell,Bell,i,Bell,Bell);
-	    alarm(i);
-	    Shutdown = 1;
-	 }
+	 while (*line && !isspace(*line)) line++;
+	 while (*line && isspace(*line)) line++;
+	 telnet->session->DoDown(line);
       } else if (!strncasecmp(line,"!nuke ",6)) {
 	 int i;
 
