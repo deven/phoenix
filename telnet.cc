@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: telnet.cc,v 1.2 1993/12/11 08:02:32 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.2  1993/12/11 08:02:32  deven
+// Removed global buffers, added local buffers to functions.  Fixed Telnet
+// destructor to call NoReadSelect() and NoWriteSelect() only if fd != -1,
+// added call to fdtable.Closed(fd).  Changed redraw slightly.  Added some
+// extra error handling on write() for lost connections. (drop silently)
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
