@@ -10,6 +10,8 @@
 
 #include "conf.h"
 
+int Telnet::count = 0;
+
 void Telnet::LogCaller() {	// Log calling host and port.
    struct sockaddr_in saddr;
    int saddrlen = sizeof(saddr);
@@ -308,6 +310,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    fd = accept(lfd,NULL,NULL);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
 
+   count++;			// Increment connection count.
+
    if (fcntl(fd,F_SETFD,0) == -1) error("Telnet::Telnet(): fcntl()");
 
    LogCaller();			// Log calling host and port.
@@ -378,6 +382,7 @@ void Telnet::Closed()		// Connection is closed.
    NoWriteSelect();
    Command.~OutputBuffer();	// Destroy command output buffer.
    Output.~OutputBuffer();	// Destroy data output buffer.
+   count--;			// Decrement connection count.
    fd = -1;			// Connection is closed.
 }
 
