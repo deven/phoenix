@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.3 1993/12/21 15:14:28 deven Exp $
+// $Id: telnet.h,v 1.4 1993/12/31 08:13:31 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.4  1993/12/31 08:13:31  deven
+// Added support for telnet TIMING-MARK option.
+//
 // Revision 1.3  1993/12/21 15:14:28  deven
 // Did major restructuring to route most I/O through Session class.  All
 // Session-level output is now stored in a symbolic queue, as a block of
