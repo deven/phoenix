@@ -1580,28 +1580,26 @@ void Session::DoBlurb(char *start,boolean entry = false)
    while (*start && isspace(*start)) start++;
    if (*start) {
       for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
-      if (strncasecmp(start,"off",end - start + 1)) {
-	 if (*start == '\"' && *end == '\"' && start < end ||
-	     *start == '[' && *end == ']') start++; else end++;
-	 start[end - start] = 0;
-	 SetBlurb(start);
-	 if (!entry) print("Your blurb has been set to%s.\n",-blurb);
-      } else {
+      if (end == start + 2 && !strncasecmp(start,"off",3)) {
 	 if (entry || blurb) {
 	    SetBlurb(NULL);
 	    if (!entry) output("Your blurb has been turned off.\n");
 	 } else {
 	    if (!entry) output("Your blurb was already turned off.\n");
 	 }
+      } else {
+	 if (*start == '\"' && *end == '\"' && start < end ||
+	     *start == '[' && *end == ']') start++; else end++;
+	 start[end - start] = 0;
+	 SetBlurb(start);
+	 if (!entry) print("Your blurb has been set to%s.\n",-blurb);
       }
    } else if (entry) {
       SetBlurb(NULL);
+   } else if (blurb) {
+      print("Your blurb is currently set to%s.\n",-blurb);
    } else {
-      if (blurb) {
-	 print("Your blurb is currently set to%s.\n",-blurb);
-      } else {
-	 output("You do not currently have a blurb set.\n");
-      }
+      output("You do not currently have a blurb set.\n");
    }
 }
 
