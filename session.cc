@@ -511,9 +511,9 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
    // Nuke target session.  // Should require confirmation! ***
    if (drain) {
-      print("%s has been nuked.\n",target->name_only);
+      print("\"%s\" has been nuked.\n",target->name_only);
    } else {
-      print("%s has been nuked without delay.\n",target->name_only);
+      print("\"%s\" has been nuked without delay.\n",target->name_only);
    }
 
    if (target->telnet.Null()) {
