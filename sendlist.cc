@@ -166,7 +166,16 @@ int Sendlist::Expand(Set<Session> &who, Session *sender)
    who.Reset();
 
    SetIter<Session> session(sessions);
-   while (session++) who.Add((Session *) session);
+   while (session++) {
+      if (session->SignedOn) {
+	 who.Add((Session *) session);
+      } else {
+	 // *** Should search for the same name in a new session!
+// *** "errors" needs to be reset!
+	 errors.append(session->name);
+	 errors.append(" has signed off.\n");
+      }
+   }
 
    SetIter<Discussion> discussion(discussions);
    while (discussion++) {
