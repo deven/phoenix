@@ -322,10 +322,12 @@ Telnet::~Telnet()
    delete session;		// Free session structure.
    delete data;			// Free input line buffer.
 
-   if (fd != -1) close(fd);	// Close connection.
-
-   NoReadSelect();		// Don't select closed connection at all!
-   NoWriteSelect();
+   if (fd != -1) {		// Skip all this if there's no connection.
+      fdtable.Closed(fd);	// Remove from FDTable.
+      close(fd);		// Close connection.
+      NoReadSelect();		// Don't select closed connection at all!
+      NoWriteSelect();
+   }
 }
 
 void Telnet::Close()		// Close telnet connection.
