@@ -68,3 +68,23 @@ void DetachNotify::output(Pointer<Telnet> &telnet)
 		    name->name,date(time,11,5));
    }
 }
+
+void HereNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s is now here. [%s] ***\n",name->name,date(time,11,5));
+}
+
+void AwayNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s is now away. [%s] ***\n",name->name,date(time,11,5));
+}
+
+void BusyNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s is now busy. [%s] ***\n",name->name,date(time,11,5));
+}
+
+void GoneNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s is now gone. [%s] ***\n",name->name,date(time,11,5));
+}

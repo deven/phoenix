@@ -25,7 +25,8 @@
 // Types of Output subclasses.
 enum OutputType {
    UnknownOutput,TextOutput,PublicMessage,PrivateMessage,EntryOutput,
-   ExitOutput,TransferOutput,AttachOutput,DetachOutput
+   ExitOutput,TransferOutput,AttachOutput,DetachOutput,HereOutput,
+   AwayOutput,BusyOutput,GoneOutput
 };
 
 // Classifications of Output subclasses.
@@ -117,5 +118,41 @@ private:
 public:
    DetachNotify(Pointer<Name> &who,boolean i,time_t when = 0):
    Output(DetachOutput,NotificationClass,when),name(who),intentional(i) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class HereNotify: public Output {
+private:
+   Pointer<Name> name;
+public:
+   HereNotify(Pointer<Name> &who,time_t when = 0):
+   Output(HereOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class AwayNotify: public Output {
+private:
+   Pointer<Name> name;
+public:
+   AwayNotify(Pointer<Name> &who,time_t when = 0):
+   Output(AwayOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class BusyNotify: public Output {
+private:
+   Pointer<Name> name;
+public:
+   BusyNotify(Pointer<Name> &who,time_t when = 0):
+   Output(BusyOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class GoneNotify: public Output {
+private:
+   Pointer<Name> name;
+public:
+   GoneNotify(Pointer<Name> &who,time_t when = 0):
+   Output(GoneOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
 };

@@ -75,6 +75,7 @@ Session::Session(Pointer<Telnet> &t)
    name_only[0] = 0;		// No name.
    name[0] = 0;			// No name/blurb.
    blurb[0] = 0;		// No blurb.
+   away = Here;			// Default to "here".
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
@@ -480,6 +481,18 @@ void Session::ProcessInput(char *line)
       } else if (!strncasecmp(line,"/blurb",3)) { // /blurb command.
 	 while (*line && !isspace(*line)) line++;
 	 DoBlurb(line);
+      } else if (!strncasecmp(line,"/here",5)) {
+	 while (*line && !isspace(*line)) line++;
+	 DoHere(line);
+      } else if (!strncasecmp(line,"/away",5)) {
+	 while (*line && !isspace(*line)) line++;
+	 DoAway(line);
+      } else if (!strncasecmp(line,"/busy",5)) {
+	 while (*line && !isspace(*line)) line++;
+	 DoBusy(line);
+      } else if (!strncasecmp(line,"/gone",5)) {
+	 while (*line && !isspace(*line)) line++;
+	 DoGone(line);
       } else if (!strncasecmp(line,"/help",5)) { // /help command.
 	 DoHelp();
       } else {			// Unknown /command.
@@ -909,6 +922,42 @@ int Session::DoBlurb(char *start,boolean entry = false)
    return 0;
 }
 
+void Session::DoHere(char *args) // Do /here command.
+{
+   while (*args == Space) args++;
+   if (*args) DoBlurb(args);
+   output("You are now \"here\".\n");
+   away = Here;
+   EnqueueOthers(new HereNotify(name_obj));
+}
+
+void Session::DoAway(char *args) // Do /away command.
+{
+   while (*args == Space) args++;
+   if (*args) DoBlurb(args);
+   output("You are now \"away\".\n");
+   away = Away;
+   EnqueueOthers(new AwayNotify(name_obj));
+}
+
+void Session::DoBusy(char *args) // Do /busy command.
+{
+   while (*args == Space) args++;
+   if (*args) DoBlurb(args);
+   output("You are now \"busy\".\n");
+   away = Busy;
+   EnqueueOthers(new BusyNotify(name_obj));
+}
+
+void Session::DoGone(char *args) // Do /gone command.
+{
+   while (*args == Space) args++;
+   if (*args) DoBlurb(args);
+   output("You are now \"gone\".\n");
+   away = Gone;
+   EnqueueOthers(new GoneNotify(name_obj));
+}
+
 void Session::DoHelp()		// Do /help command.
 {
    output("Known commands: /blurb (set a descriptive blurb), /bye (leave conf)"
@@ -995,10 +1044,12 @@ void Session::SendEveryone(char *msg)
       print("\a\aThere is no one else here! (message not sent)\n");
       break;
    case 1:
+      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
       ResetIdle(10);
       print("(message sent to everyone.) [1 person]\n");
       break;
    default:
+      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
       ResetIdle(10);
       print("(message sent to everyone.) [%d people]\n",sent);
       break;
@@ -1012,8 +1063,26 @@ void Session::SendPrivate(char *sendlist,char *msg)
    Set<Session> matches;
 
    if (session = FindSession(sendlist,matches)) {
+      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
       ResetIdle(10);
-      print("(message sent to %s.)\n",session->name);
+      output("(message sent to ");
+      output(session->name);
+      if (!session->telnet) output(", detached");
+      switch (session->away) {
+      case Here:
+	 break;
+      case Away:
+	 output(", \"away\"");
+	 break;
+      case Busy:
+	 output(", \"busy\"");
+	 break;
+      case Gone:
+	 output(", \"gone\"");
+	 break;
+      }
+      // print idle time ***
+      output(".)\n");
       last_message = new Message(PrivateMessage,name_obj,session,msg);
       session->Enqueue((Message *) last_message);
    } else {
