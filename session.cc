@@ -172,6 +172,12 @@ void Session::Close(boolean drain = true) // Close session.
    if (SignedOn) NotifyExit();	// Notify and log exit if signed on.
    SignedOn = false;
 
+   // Quit all discussions. (silently)
+   ListIter<Discussion> d(discussions);
+   while (d++) {
+      if (d->members.In(this)) d->Quit(this);
+   }
+
    if (telnet) {		// Close connection if attached.
       Pointer<Telnet> t(telnet);
       telnet = NULL;

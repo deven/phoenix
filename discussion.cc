@@ -92,8 +92,11 @@ void Discussion::Join(Session *session) {
 void Discussion::Quit(Session *session) {
    if (members.In(session)) {
       members.Remove(session);
-      EnqueueOthers(new QuitNotify(this,session),session);
-      session->print("You are no longer a member of discussion %s.\n",~name);
+      if (session->SignedOn) {
+	 EnqueueOthers(new QuitNotify(this,session),session);
+	 session->print("You are no longer a member of discussion %s.\n",
+			~name);
+      }
    } else {
       session->print("You are not a member of discussion %s.\n",~name);
    }
