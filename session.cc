@@ -1057,7 +1057,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 	 attached = true;
       }
       count = here + away + busy + gone + attached + detached + active +
-	 inactive + doidle + unidle + privileged + everyone;
+	 inactive + doidle + unidle + privileged + guests + everyone;
       if (count == lastcount) {
 	 if (send) send.append(Separator);
 	 send.append(args);
