@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: assoc.h,v 1.5 2000/03/22 04:04:43 deven Exp $
+// $Id: assoc.h,v 1.6 2000/03/22 07:13:20 deven Exp $
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.h,v $
+// Revision 1.6  2000/03/22 07:13:20  deven
+// Marked constant Size as static.
+//
 // Revision 1.5  2000/03/22 04:04:43  deven
 // Updated copyright dates and whitespace conventions.
 //
