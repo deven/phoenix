@@ -27,7 +27,7 @@
 const int BlockSize = 1024;	// data size for block
 const int BufSize = 32768;	// general temporary buffer size
 const int InputSize = 256;	// default size of input line buffer
-const int DefaultPort = 9999;	// TCP port to run on
+const int DefaultPort = PORT;	// TCP port to run on
 
 // Internal character constants.
 const unsigned char UnquotedUnderscore = 128, Separator = 129;
