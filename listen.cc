@@ -185,7 +185,7 @@ void Listen::RequestShutdown(int port) // Request server shutdown.
    return;
 }
 
-void Listen::InputReady(int fd)
+void Listen::InputReady()
 {
-   fdtable.OpenTelnet(fd);	// Accept pending telnet connection.
+   if (fd != -1) fdtable.OpenTelnet(fd); // Accept pending telnet connection.
 }

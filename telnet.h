@@ -152,6 +152,6 @@ public:
    void erase_char();		// Erase input character before point.
    void delete_char();		// Delete character at point.
    void transpose_chars();	// Transpose characters at point.
-   void InputReady(int fd);
-   void OutputReady(int fd);
+   void InputReady();
+   void OutputReady();
 };
