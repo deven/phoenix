@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: outstr.cc,v 1.1 1993/12/21 15:36:30 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: outstr.cc,v $
+// Revision 1.1  1993/12/21 15:36:30  deven
+// Initial revision
+//
 
 #include "conf.h"
 

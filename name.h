@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: name.h,v 1.1 1993/12/21 15:28:36 deven Exp $
 //
 // Name class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: name.h,v $
+// Revision 1.1  1993/12/21 15:28:36  deven
+// Initial revision
+//
 
 class Name {
 public:

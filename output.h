@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: output.h,v 1.1 1993/12/21 15:33:22 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: output.h,v $
+// Revision 1.1  1993/12/21 15:33:22  deven
+// Initial revision
+//
 
 // Types of Output subclasses.
 enum OutputType {

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.h,v 1.2 1993/12/11 07:31:47 deven Exp $
+// $Id: conf.h,v 1.3 1993/12/21 15:19:25 deven Exp $
 //
 // Conferencing system server -- Primary header file.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.h,v $
+// Revision 1.3  1993/12/21 15:19:25  deven
+// Modified to include name.h, output.h and outstr.h.
+//
 // Revision 1.2  1993/12/11 07:31:47  deven
 // Modified to define class FDTable before class FD, because class FD now
 // includes a static member of type FDTable.
