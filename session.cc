@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.40 1996/02/19 23:40:50 deven Exp $
+// $Id: session.cc,v 1.41 1996/02/20 00:48:55 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.41  1996/02/20 00:48:55  deven
+// Fixed /rename command to create new name_obj directly instead of using the
+// SetBlurb() function incorrectly.
+//
 // Revision 1.40  1996/02/19 23:40:50  deven
 // Changed Name() to EnteredName() to avoid conflict with class Name.
 //
