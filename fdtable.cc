@@ -85,7 +85,7 @@ Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
 }
 
 void FDTable::Close(int fd) {	// Close fd, deleting FD object.
-   Closed(fd);
+   Closed(fd)->Closed();
 }
 
 void FDTable::Select()		// Select across all ready connections.

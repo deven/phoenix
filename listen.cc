@@ -75,6 +75,21 @@ Listen::Listen(int port)	// Listen on a port.
    if (listen(fd,Backlog)) error("Listen::Listen(): listen()");
 }
 
+Listen::~Listen()		// Listen destructor.
+{
+   Closed();
+}
+
+void Listen::Closed()		// Connection is closed.
+{
+   if (fd == -1) return;	// Skip the rest if already closed.
+   fdtable.Closed(fd);		// Remove from FDTable.
+   close(fd);			// Close connection.
+   NoReadSelect();		// Don't select closed connection at all!
+   NoWriteSelect();
+   fd = -1;			// Connection is closed.
+}
+
 void Listen::RequestShutdown(int port) // Request server shutdown.
 {
    struct sockaddr_in saddr;	// socket address
