@@ -1,0 +1,182 @@
+/*
+ * $Id: conf.h,v 1.1 1993/03/05 18:03:14 deven Exp $
+ *
+ * Conferencing system server.
+ *
+ * conf.h -- constants, structures, variable declarations and prototypes.
+ *
+ * Copyright 1993 by Deven T. Corzine.
+ *
+ * Development began on November 30, 1992.
+ *
+ * $Log: conf.h,v $
+ * Revision 1.1  1993/03/05 18:03:14  deven
+ * Initial revision
+ *
+ */
+
+/* General parameters. */
+#define BUFSIZE 32768
+#define BLOCKSIZE 1024
+#define INPUTSIZE 256
+#define NAMELEN 33
+#define PORT 6789
+#define BACKLOG 8
+
+/* For compatibility. */
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK EAGAIN
+#endif
+
+/* Telnet commands. */
+#define COMMAND_SHUTDOWN 24	/* Not a real telnet command! */
+#define TELNET_SUBNEGIOTIATION_END 240
+#define TELNET_NOP 241
+#define TELNET_DATA_MARK 242
+#define TELNET_BREAK 243
+#define TELNET_INTERRUPT_PROCESS 244
+#define TELNET_ABORT_OUTPUT 245
+#define TELNET_ARE_YOU_THERE 246
+#define TELNET_ERASE_CHARACTER 247
+#define TELNET_ERASE_LINE 248
+#define TELNET_GO_AHEAD 249
+#define TELNET_SUBNEGIOTIATION_BEGIN 250
+#define TELNET_WILL 251
+#define TELNET_WONT 252
+#define TELNET_DO 253
+#define TELNET_DONT 254
+#define TELNET_IAC 255
+
+/* Telnet options. */
+#define TELNET_ECHO 1
+#define TELNET_SUPPRESS_GO_AHEAD 3
+
+/* Telnet option bits. */
+#define TELNET_WILL_WONT 1
+#define TELNET_DO_DONT 2
+#define TELNET_ENABLED (TELNET_DO_DONT|TELNET_WILL_WONT)
+
+/* Option states. */
+#define ON 1
+#define OFF 0
+
+typedef void (*func_ptr)();	/* function pointer type */
+
+/* Input buffer consisting of a single buffer, resized as needed. */
+
+struct InputBuffer {
+   char *data;			/* start of input data */
+   char *free;			/* start of free area of allocated block */
+   char *end;			/* end of allocated block (+1) */
+};
+
+/* Single input lines waiting to be processed. */
+struct Line {
+   char *line;			/* input line */
+   struct Line *next;		/* next input line */
+};
+
+/* Output buffer consisting of linked list of output blocks. */
+
+struct OutputBuffer {
+   struct block *head;		/* first data block */
+   struct block *tail;		/* last data block */
+};
+
+/* Block in a data buffer, allocated with data immediately following. */
+
+struct block {
+   char *data;			/* start of data (not of allocated block) */
+   char *free;			/* start of free area */
+   char *end;			/* end of allocated block (+1) */
+   struct block *next;		/* next block in data buffer */
+   /* data follows contiguously */
+};
+
+/* Telnet options are stored in a single byte each, with bit 0 representing
+   WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
+   is only enabled when both bits are set. */
+
+/* Data about a particular telnet connection. */
+struct telnet {
+   int fd;			/* file descriptor for TCP connection */
+   struct user *user;		/* back-pointer to user structure */
+   struct InputBuffer input;	/* pending input */
+   struct Line *lines;		/* unprocessed input lines */
+   struct OutputBuffer output;	/* pending data output */
+   struct OutputBuffer command;	/* pending command output */
+   unsigned char state;		/* input state (0/\r/IAC/WILL/WONT/DO/DONT) */
+   char undrawn;		/* input line undrawn for output? */
+   char blocked;		/* output blocked? (boolean) */
+   char closing;		/* connection closing? (boolean) */
+   char do_echo;		/* should server be echoing? (boolean) */
+   char echo;			/* telnet ECHO option (local) */
+   char LSGA;			/* telnet SUPPRESS-GO-AHEAD option (local) */
+   char RSGA;			/* telnet SUPPRESS-GO-AHEAD option (remote) */
+   func_ptr echo_callback;	/* ECHO callback (local) */
+   func_ptr LSGA_callback;	/* SUPPRESS-GO-AHEAD callback (local) */
+   func_ptr RSGA_callback;	/* SUPPRESS-GO-AHEAD callback (remote) */
+   struct telnet *next;		/* next telnet connection */
+};
+
+/* /// need session structure? */
+/* Data about a particular user. */
+struct user {
+   struct telnet *telnet;	/* telnet connection for this user */
+   func_ptr input;		/* function pointer for input processor */
+   /* /// change! vvv  */
+   char user[32];		/* account name */
+   char passwd[32];		/* password for this account (during login) */
+   /* /// change! ^^^ */
+   char name[NAMELEN];		/* user name */
+   char last_sendlist[32];	/* last explicit sendlist */
+   time_t login_time;		/* time logged in */
+   time_t message_time;		/* time signed on */
+};
+
+void warn();
+void error();
+void *alloc(int len);
+struct block *alloc_block(void);
+void free_block(struct block *block);
+void free_user(struct user *user);
+void save_input_line(struct telnet *telnet,char *line);
+void set_input_function(struct telnet *telnet,func_ptr input);
+void output(struct telnet *telnet,char *buf);
+void print();
+void announce();
+void put_command(struct telnet *telnet, int cmd);
+char *message_start(char *line,char *sendlist,int len);
+int match_name(char *name,char *sendlist);
+void echo(struct telnet *telnet, func_ptr callback, int state);
+void LSGA(struct telnet *telnet, func_ptr callback, int state);
+void RSGA(struct telnet *telnet, func_ptr callback, int state);
+void request_shutdown(int port);
+int listen_on(int port, int backlog);
+void welcome(struct telnet *telnet);
+void login(struct telnet *telnet,char *line);
+void password(struct telnet *telnet,char *line);
+void name(struct telnet *telnet,char *line);
+void process_input(struct telnet *telnet,char *line);
+void who_cmd(struct telnet *telnet);
+void new_connection(int lfd);
+void close_connection(struct telnet *telnet);
+void undraw_line(struct telnet *telnet);
+void redraw_line(struct telnet *telnet);
+void erase_character(struct telnet *telnet);
+void erase_line(struct telnet *telnet);
+void input_ready(struct telnet *telnet);
+void output_ready(struct telnet *telnet);
+void quit(int);
+void alrm(int);
+void main(int argc,char **argv);
+
+extern int errno;		/* error number */
+
+extern struct telnet *connections; /* telnet connections */
+
+extern int shutdown;		/* shutdown flag */
+
+extern int nfds;		/* number of file descriptors available */
+extern fd_set readfds;		/* read fdset for select() */
+extern fd_set writefds;		/* write fdset for select() */
