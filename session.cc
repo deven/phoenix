@@ -101,6 +101,47 @@ void Session::notify(char *format,...) // formatted write to all sessions
    }
 }
 
+void Session::who_cmd(Telnet *telnet)
+{
+   Session *s;
+   Telnet *t;
+   int idle,days,hours,minutes;
+
+   // Output /who header.
+   telnet->output("\n"
+        " Name                              On Since   Idle   User      fd\n"
+        " ----                              --------   ----   ----      --\n");
+
+   // Output data about each user.
+   for (s = sessions; s; s = s->next) {
+      t = s->telnet;
+      idle = (time(NULL) - t->session->message_time) / 60;
+      if (idle) {
+	 hours = idle / 60;
+	 minutes = idle - hours * 60;
+	 days = hours / 24;
+	 hours -= days * 24;
+	 if (days) {
+	    telnet->print(" %-32s  %8s %2dd%2d:%02d %-8s  %2d\n",
+			  t->session->name,date(t->session->login_time,11,8),
+			  days,hours,minutes,t->session->user->user,t->fd);
+	 } else if (hours) {
+	    telnet->print(" %-32s  %8s  %2d:%02d   %-8s  %2d\n",
+			  t->session->name,date(t->session->login_time,11,8),
+			  hours,minutes,t->session->user->user,t->fd);
+	 } else {
+	    telnet->print(" %-32s  %8s   %4d   %-8s  %2d\n",t->session->name,
+			  date(t->session->login_time,11,8),minutes,
+			  t->session->user->user,t->fd);
+	 }
+      } else {
+	 telnet->print(" %-32s  %8s          %-8s  %2d\n",t->session->name,
+		       date(t->session->login_time,11,8),
+		       t->session->user->user,t->fd);
+      }
+   }
+}
+
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
    if (Shutdown && !sessions) {
