@@ -13,6 +13,7 @@
 #include "object.h"
 #include "general.h"
 #include "constants.h"
+#include "functions.h"
 #include "string.h"
 #include "list.h"
 #include "set.h"
