@@ -122,34 +122,34 @@ String::String(char *s, int n)
 
 String::String(int n)
 {
-   str = new char[32];
+   str = new char[NumberLength];
    sprintf(str, "%d", n);
    len = strlen(str);
-   extra = 32 - len - 1;
+   extra = NumberLength - len - 1;
 }
 
 String::String(unsigned int n)
 {
-   str = new char[32];
+   str = new char[NumberLength];
    sprintf(str, "%ud", n);
    len = strlen(str);
-   extra = 32 - len - 1;
+   extra = NumberLength - len - 1;
 }
 
 String::String(long n)
 {
-   str = new char[32];
+   str = new char[NumberLength];
    sprintf(str, "%ld", n);
    len = strlen(str);
-   extra = 32 - len - 1;
+   extra = NumberLength - len - 1;
 }
 
 String::String(unsigned long n)
 {
-   str = new char[32];
+   str = new char[NumberLength];
    sprintf(str, "%lud", n);
    len = strlen(str);
-   extra = 32 - len - 1;
+   extra = NumberLength - len - 1;
 }
 
 String &String::operator =(const String &s)
@@ -196,6 +196,46 @@ String &String::operator =(const char *s)
    len = n;
    strncpy(str, s, len);
    str[len] = 0;
+   return *this;
+}
+
+String &String::operator =(int n)
+{
+   delete [] str;
+   str = new char[NumberLength];
+   sprintf(str, "%d", n);
+   len = strlen(str);
+   extra = NumberLength - len - 1;
+   return *this;
+}
+
+String &String::operator =(unsigned int n)
+{
+   delete [] str;
+   str = new char[NumberLength];
+   sprintf(str, "%ud", n);
+   len = strlen(str);
+   extra = NumberLength - len - 1;
+   return *this;
+}
+
+String &String::operator =(long n)
+{
+   delete [] str;
+   str = new char[NumberLength];
+   sprintf(str, "%ld", n);
+   len = strlen(str);
+   extra = NumberLength - len - 1;
+   return *this;
+}
+
+String &String::operator =(unsigned long n)
+{
+   delete [] str;
+   str = new char[NumberLength];
+   sprintf(str, "%lud", n);
+   len = strlen(str);
+   extra = NumberLength - len - 1;
    return *this;
 }
 
