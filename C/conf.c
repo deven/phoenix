@@ -54,7 +54,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <errno.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #include "conf.h"
 
@@ -106,42 +106,33 @@ void open_log()
    fprintf(stderr,"Logging on \"%s\".\n",buf);
 }
 
-/* VARARGS1 */
-void Log(format,va_alist)	/* log message */
-char *format;
-va_dcl
+void Log(char *format,...)	/* log message */
 {
    va_list ap;
 
    if (!logfile) return;
-   va_start(ap);
+   va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    (void) fprintf(logfile,"[%s] %s\n",date(0,4,15),buf);
 }
 
-/* VARARGS1 */
-void warn(format,va_alist)	/* print error message */
-char *format;
-va_dcl
+void warn(char *format,...)	/* print error message */
 {
    va_list ap;
 
-   va_start(ap);
+   va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    (void) fprintf(stderr,"\n%s: %s\n",buf,strerror(errno));
    (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,strerror(errno));
 }
 
-/* VARARGS1 */
-void error(format,va_alist)	/* print error message and exit */
-char *format;
-va_dcl
+void error(char *format,...)	/* print error message and exit */
 {
    va_list ap;
 
-   va_start(ap);
+   va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    (void) fprintf(stderr,"\n%s: %s\n",buf,strerror(errno));
@@ -295,29 +286,22 @@ void output(struct telnet *telnet,char *buf) /* queue output data */
    }
 }
 
-/* VARARGS1 */
-void print(telnet,format,va_alist) /* formatted write */
-struct telnet *telnet;
-char *format;
-va_dcl
+void print(struct telnet *telnet,char *format,...) /* formatted write */
 {
    va_list ap;
 
-   va_start(ap);
+   va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    output(telnet,buf);
 }
 
-/* VARARGS1 */
-void announce(format,va_alist)	/* formatted write to all connections */
-char *format;
-va_dcl
+void announce(char *format,...) /* formatted write to all connections */
 {
-   struct telnet *telnet;
    va_list ap;
+   struct telnet *telnet;
 
-   va_start(ap);
+   va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    for (telnet = connections; telnet; telnet = telnet->next) {
@@ -327,13 +311,10 @@ va_dcl
    }
 }
 
-/* VARARGS1 */
-void notify(format,va_alist)	/* formatted write to all sessions */
-char *format;
-va_dcl
+void notify(char *format,...)	/* formatted write to all sessions */
 {
-   struct session *session;
    va_list ap;
+   struct session *session;
 
    va_start(ap);
    (void) vsprintf(buf,format,ap);

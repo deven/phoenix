@@ -152,12 +152,11 @@ struct user {
    char passwd[32];		/* password for this account (during login) */
    /* /// change! ^^^ */
    char reserved_name[NAMELEN];	/* reserved user name (pseudo) */
-   /* /// default blurb? */
 };
 
-void Log();
-void warn();
-void error();
+void Log(char *format,...);
+void warn(char *format,...);
+void error(char *format,...);
 void *alloc(int len);
 struct block *alloc_block(void);
 void free_block(struct block *block);
@@ -165,8 +164,9 @@ void free_user(struct user *user);
 void save_input_line(struct telnet *telnet,char *line);
 void set_input_function(struct telnet *telnet,func_ptr input);
 void output(struct telnet *telnet,char *buf);
-void print();
-void announce();
+void print(struct telnet *telnet,char *format,...);
+void announce(char *format,...);
+void notify(char *format,...);
 void put_command(struct telnet *telnet, int cmd);
 char *message_start(char *line,char *sendlist,int len,int *explicit);
 int match_name(char *name,char *sendlist);
