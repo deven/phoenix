@@ -19,6 +19,17 @@
 
 #include "conf.h"
 
+void Telnet::announce(char *format,...) // formatted write to all connections
+{
+   char buf[BufSize];
+   va_list ap;
+
+   va_start(ap,format);
+   (void) vsprintf(buf,format,ap);
+   va_end(ap);
+   fdtable.announce(buf);
+}
+
 void Telnet::Drain() {		// Drain connection, then close.
    blocked = 0;
    closing = 1;

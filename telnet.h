@@ -78,6 +78,8 @@ public:
    CallbackFuncPtr echo_callback; // ECHO callback (local)
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
+
+   static void announce(char *format,...);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Prompt(char *p);
