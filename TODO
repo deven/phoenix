@@ -1,8 +1,21 @@
-*** Fix this fucking thing to build cleanly again!
+*** When a session terminates, make sure to disconnect it from /send targets!
 
-*** Allow /set date to adjust server time relative to system time...
+*** Modify input history to somehow include current input line so it's not
+*** lost when scrolling through history lines!
 
-Implement /oops and /also (have /also extend last sendlist)
+Add Hebrew support?
+
+Allow /set date to adjust server time relative to system time...
+
+Implement /group.
+
+Add some sort of lily bridge.  Possibly add /lily command to connect to lily
+server as user, use special character (such as ">" or pseudo-user "lily" for
+input and output prefixing, configurable)
+
+/at, /every, /signal at, /signal every
+
+implement !force. (output as text to forced session, don't dequeue output.)
 
 add /last command to show last message sent to someone.  (if multiple, replay
 the set of last messages sent to those people) [dunno about discussions]
@@ -14,6 +27,26 @@ finger-type info -- real name, web page, email, etc.
 /notify, /info, /group, /finger, server banner w/admin address, crash recovery
 
 guest questionnaire
+
+Add /help language (aliases /help spanish, /help french, etc.) to document
+Latin-1 compose sequences.
+
+Add /ayuda to give help text in Spanish?
+
+Cleanup response messages from SendMessage() for /oops and /also.  Fix /also
+(and /oops?) to resend messages with bogus sendlists.
+
+*** Integrate Berkeley DB library for external data storage at least, if not
+*** actual persistent objects. (multiple access issues?)
+
+Add DB support, have an Associative class for it, allowing both internal hash
+tables and external (DB) hash tables a la perl, use String type for key/data!
+Maybe even overload [] to act like {} perl associative array reference...
+Have [] dereference to Element object which knows the reference internally,
+then have conversions Element <-> String cause actual hash table lookup/store
+and (possibly) DB read/write.  Make sure Element <-> Element copies, using
+operator=, so foo["bar"]=foo["baz"] will work.  Also have numeric->String so
+foo[1] will be the same as foo["1"].  Have Element.operator=(String) maybe too.
 
 Fix the input editing for up & down arrows.  Add i-search?
 
@@ -97,19 +130,7 @@ fix hang after /det (use final option negotiation different from TIMING-MARK?)
 
 Allow system variables (e.g. uptime) to be abbreviated?
 
-*** Integrate Berkeley DB library for external data storage at least, if not
-*** actual persistent objects. (multiple access issues?)
-
 *** PROBLEM:  anonymous signons with duplicate and reserved names!!!
-
-Add DB support, have an Associative class for it, allowing both internal hash
-tables and external (DB) hash tables a la perl, use String type for key/data!
-Maybe even overload [] to act like {} perl associative array reference...
-Have [] dereference to Element object which knows the reference internally,
-then have conversions Element <-> String cause actual hash table lookup/store
-and (possibly) DB read/write.  Make sure Element <-> Element copies, using
-operator=, so foo["bar"]=foo["baz"] will work.  Also have numeric->String so
-foo[1] will be the same as foo["1"].  Have Element.operator=(String) maybe too.
 
 If a sendlist match fails, attempt match against non-joined discussions for a
 better error message.  Fix sendlist matching in /who (et al) to be consistent.
@@ -366,10 +387,6 @@ Use unsigned for idle?  check for overflow on /set idle.
 
 *** Update client editing to match server!
 
-Add some sort of lily bridge.  Possibly add /lily command to connect to lily
-server as user, use special character (such as ">" or pseudo-user "lily" for
-input and output prefixing, configurable)
-
 Add a "/sync" command to see if messages were actually *received* or not.
 Allow a username argument(s), and if not sent, pause if recipient attached,
 unless "sync" user decides to abort.  (this probably can't work for public's)
@@ -619,8 +636,6 @@ Have trailing spaces trimmed from output.
 
 Add String class.
 
-Make height & width variable terminal characteristics.
-
 /away when idle 15
 
 Move static Telnet::announce() to non-static Session::announce().
@@ -629,10 +644,6 @@ add array class for fdtable to use?
 
 maybe have some sort of InitSession object?  A different Session object for
 Session protocol?  Make announcements Session-based?
-
-/at, /every, /signal at, /signal every
-
-implement !force. (output as text to forced session)
 
 fd_set scanning optimization (portable & non-portable) [32/8/1 bit]
 
