@@ -108,13 +108,14 @@ void FDTable::CloseAll() {	// Close all fds.
    used = 0;
 }
 
-void FDTable::Select()		// Select across all ready connections.
+// Select across all ready connections, with specified timeout.
+void FDTable::Select(struct timeval *timeout)
 {
    fd_set rfds = readfds;
    fd_set wfds = writefds;
-   int found = select(size,&rfds,&wfds,0,0);
+   int found = select(size,&rfds,&wfds,0,timeout);
 
-   if (found == -1) {
+   if (found < 0) {
       if (errno == EINTR) return;
       error("FDTable::Select(): select()");
    }
