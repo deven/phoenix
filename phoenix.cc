@@ -299,7 +299,7 @@ int main(int argc,char **argv)	// main program
    ServerStartUptime = SystemUptime();
 
    Shutdown = 0;
-   if (pw = getpwuid(geteuid())) {
+   if ((pw = getpwuid(geteuid()))) {
       home = pw->pw_dir;
       home.append("/lib");	// Make sure ~/lib exists.
       if (chdir(~home) && errno == ENOENT && mkdir(~home,0755)) {
