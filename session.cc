@@ -209,7 +209,7 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 
 void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
 {
-   if (SignedOn && telnet) {
+   if (SignedOn && priv > 0) {
       if (telnet == t) {
 	 if (intentional) {
 	    log("Detach: %s (%s) on fd %d. (intentional)",~name,~user->user,
@@ -999,10 +999,15 @@ void Session::DoClear(char *args) // Do /clear command.
 
 void Session::DoDetach(char *args) // Do /detach command.
 {
-   ResetIdle(10);
-   output("You have been detached.\n");
-   EnqueueOutput();
-   if (telnet) telnet->Close(); // Drain connection, then close.
+   if (priv > 0) {
+      ResetIdle(10);
+      output("You have been detached.\n");
+      EnqueueOutput();
+      if (telnet) telnet->Close(); // Drain connection, then close.
+   } else {
+      output("Guest users are not allowed to detach from the system.  Use "
+	     "/bye to sign off.\n");
+   }
 }
 
 void Session::ListItem(boolean &flag,String &last,char *str)
