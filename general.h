@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.7 1994/01/03 10:10:10 deven Exp $
+// $Id: general.h,v 1.8 1994/01/09 05:09:03 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.8  1994/01/09 05:09:03  deven
+// Added declarations for sys_errlist and sys_nerr.
+//
 // Revision 1.7  1994/01/03 10:10:10  deven
 // Removed system function declarations.
 //
