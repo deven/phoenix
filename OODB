@@ -1,0 +1,133 @@
+Maybe have 64-bit unique permanent identifiers and 32-bit temporary identifier
+handles?  never recycle 64-bit id's, may recycle 32-bit id's, assign dynamic,
+negotiate over network with other parts of db...
+-------------------------------------------------------------------------------
+Individual Object:
+
+[all ints are big-endian]
+
+ulong? -- length of this object. (could use registry, but more robust this way)
+ulong -- local registry ID for object class. (0 = null object)
+ulong? -- sequence number for this object. (increment when modified)
+-------------------------------------------------------------------------------
+Should sequence number be local to the object class or global to the DB?
+
+Don't require all objects to be distributed, leave optional.
+
+Have an IPC connection (TCP, UDP, Unix socket, etc) to another database
+be a special object type of its own?  Have to coordinate differing
+object class registry ID's.
+
+Allow some objects to be variable length and have others be fixed length?
+Maybe just have specific basic types supported be variable length, e.g.
+strings.  strings would include length in the object.  Keep total object
+size stored for ease of manipulation.
+
+Need magic numbers.  What different top-level files might there be?  Should
+the object registry be in a separate file, maybe directory?  Should it be
+built from normal objects, or a separate dedicated format?  What about
+index files?  B-trees, hashes?
+
+Include a pointer (reference) basic object type for storage.  Use internal
+32-bit object ID as the "pointer".  Direct use of this value will not be
+allowed -- the database system will have the right to renumber objects at
+will, however it must maintain referential integrity of the pointers.  It
+must either renumber objects only when the database is offline, or have a
+way of tracking whether in-memory references to the object ID exist.  Have
+a garbage-collector for the database -- can mark & scan to cache references,
+destroy unreferenced objects and renumber remaining objects.  This should
+probably only happen when the database is offline unless there's a way to
+track in-memory references.  It could be done through the Pointer class,
+probably -- e.g. maintain a single-linked list from the Object class head
+pointer through each Pointer object referencing the object, or something.
+If a Pointer object still stores an object ID when the object is not in
+memory, it would be necessary to deal with those too.  Ugh, keep it offline!
+
+Make sure EVERYTHING is network-byte-order.
+
+Need to consider object access permissions somehow.  Possibly have object
+methods and have a send() method to forward a request to another object?
+That's hard to do in C++.  Maybe maintain an authentication list of object
+"keys" that could unlock other objects?  Also troublesome.  Realistically,
+there's no true protection against direct C++ code, would need a different
+language for real inter-object protection.  Ignore the issue for now?
+
+-------------------------------------------------------------------------------
+Database internal structure -- variable-length records, which may be data
+or indexing information, each record having a length count (longword) and a
+forward chaining pointer (longword offset) and reverse referencing pointers
+to any records referencing the record.  Allocation granularity, 8 bytes.
+For free segments, forward chaining pointer and length, then garbage.  To
+access records and/or free segments, use B-tree indices on offsets and/or
+size.  Data B-tree indices would have pointers to records, and maybe a
+portion of the major key value.  (Such as the first 4 bytes of a string.)
+Records would also probably need a record type identifier.  For database
+backup/transfer, use IFF?  Database application -- possibly support
+completion on fields indexed with a B-tree?
+-------------------------------------------------------------------------------
+Add persistent objects.  Have Object contain a database file & logical
+address.  Use blocks for data storage, addressing to multiples of 16 bytes,
+first word of block & 0xfffffff0 == address of next block (link) in entry,
+first word & 0x0f == encoded block size -- 0=16, 1=32, 2=64, 3=128, 4=256,
+5=512, 6=1024, 7=2048, 8=4096, 9=8192, 10=16384, 11=32768, 12=65536,
+13=131072, 14=262144, 15=524288.  [maybe use 8 instead of 16?]  [maybe use
+mixed scheme, some scaling, some multiplying?]
+
+Have root object for each database file, returned when opened.  Overload <<
+operator for outputting parts of objects to database entry, including for
+Pointer class, saving logical database address.  When object is to be
+written to database, call << on object, which may recurse for subobjects.
+
+When Object is swapped to disk, replace Object with StubObject?  Or, maybe
+objects can be swapped to disk, decrementing refcounts, letting Objects
+expire?  Or, have Pointer class hold logical address?  Need some way to
+release memory by swapping old objects to disk...
+
+Possibly implement Btrees in objects saved?  [inefficient, but integrated.]
+-------------------------------------------------------------------------------
+Registry Information: class ID, description, version (major/minor), class name,
+   code version, $Id$, compatibility version (major/minor or major only?).
+
+Have a Token class.
+
+Session(Token &key) calls OpenStream(ID,key)
+
+class Storable: public Object
+-------------------------------------------------------------------------------
+class Database: public Object {
+public:
+   Pointer<String> name;
+   int fd;
+   DBEntry header;
+
+   Database(char *db): name(db) {
+      fd = open(db,O_RDWR);
+      header = Open(0);
+   }
+   ~Database() {
+      // Do what?
+   }
+   DBEntry Open(long addr) {
+      return DBEntry(*this,addr);
+   }
+};
+
+class DBEntry: public Object {
+private:
+   long addr;
+public:
+   // ...
+};
+-------------------------------------------------------------------------------
+Add Handle class?
+-------------------------------------------------------------------------------
+block - 1st word - & ~0x0f = logical address (link)
+                   &  0x0f = size/16
+                             0x01 = 16
+                             0x02 = 32,etc.
+                             0x00 = extended size
+                                    => next word (2 bytes)
+                                       = size/16 - 16
+                                         0x0000 = 256
+                                         0x0001 = 282
+                                         0xfff0 = 1048576
