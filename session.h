@@ -127,11 +127,11 @@ public:
    String reply_sendlist;	// last explicit sendlist typed
 
    void init_defaults();
-   Session(Pointer<Telnet> &t);
+   Session(Telnet *t);
    ~Session();
    void Close(boolean drain = true);
-   void Transfer(Pointer<Telnet> &t);
-   void Attach(Pointer<Telnet> &t);
+   void Transfer(Telnet *t);
+   void Attach(Telnet *t);
    void Detach(Telnet *t,boolean intentional);
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
@@ -155,30 +155,29 @@ public:
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet,new Text(buf));
    }
-   void Enqueue(Pointer<OutputObj> &out) { // Enqueue output buffer and object.
+   void Enqueue(OutputObj *out) { // Enqueue output buffer and object.
       EnqueueOutput();
       Pending.Enqueue(telnet,out);
    }
-   void EnqueueOthers(Pointer<OutputObj> &out) { // Enqueue output to others.
+   void EnqueueOthers(OutputObj *out) { // Enqueue output to others.
       ListIter<Session> session(sessions);
       while (session++) if (session != this) session->Enqueue(out);
    }
    void AcknowledgeOutput(void) { // Output acknowledgement.
       Pending.Acknowledge();
    }
-   boolean OutputNext(Pointer<Telnet> &telnet) { // Output next output block.
+   boolean OutputNext(Telnet *telnet) { // Output next output block.
       return Pending.SendNext(telnet);
    }
 
-   boolean FindSendable(char *sendlist,Pointer<Session> &session,
-			Set<Session> &sessionmatches,
-			Pointer<Discussion> &discussion,
+   boolean FindSendable(char *sendlist,Session *&session,
+			Set<Session> &sessionmatches, Discussion *&discussion,
 			Set<Discussion> &discussionmatches,
 			boolean member = false,boolean exact = false,
 			boolean do_sessions = true,
 			boolean do_discussions = true);
-   Pointer<Session> FindSession(char *sendlist,Set<Session> &matches);
-   Pointer<Discussion> FindDiscussion(char *sendlist,Set<Discussion> &matches,
+   Session *FindSession(char *sendlist,Set<Session> &matches);
+   Discussion *FindDiscussion(char *sendlist,Set<Discussion> &matches,
 				      boolean member = false);
    void PrintSessions(Set<Session> &sessions);
    void PrintDiscussions(Set<Discussion> &discussions);
@@ -232,6 +231,6 @@ public:
    void DoRename(char *args);	 // Do /rename command.
    void DoReset();		 // Do <space><return> idle time reset.
    void DoMessage(char *line);	 // Do message send.
-   void SendMessage(Pointer<Sendlist> &sendlist,char *msg);
+   void SendMessage(Sendlist *sendlist,char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

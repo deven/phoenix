@@ -34,7 +34,7 @@ private:
    Pointer<ListNode> next;	// Next node.
    Pointer<ListNode> prev;	// Previous node.
    Pointer<Type> obj;		// Object this node refers to.
-   ListNode(Pointer<Type> &ptr): obj(ptr) { }
+   ListNode(Type *ptr): obj(ptr) { }
 };
 
 template <class Type>
@@ -50,31 +50,31 @@ public:
    ~List() { while (Dequeue()) ; }
    int Count() { return count; }
    void Reset() { while (Dequeue()) ; }
-   int In(Pointer<Type> &ptr);
-   int AddHead(Pointer<Type> &ptr);
-   int AddTail(Pointer<Type> &ptr);
+   boolean In(Type *ptr);
+   int AddHead(Type *ptr);
+   int AddTail(Type *ptr);
    Pointer<Type> RemHead();
    Pointer<Type> RemTail();
-   int Enqueue(Pointer<Type> &ptr) { return AddTail(ptr); }
+   int Enqueue(Type *ptr) { return AddTail(ptr); }
    Pointer<Type> Dequeue() { return RemHead(); }
-   int Push(Pointer<Type> &ptr) { return AddTail(ptr); }
+   int Push(Type *ptr) { return AddTail(ptr); }
    Pointer<Type> Pop() { return RemTail(); }
-   int Shift(Pointer<Type> &ptr) { return AddHead(ptr); }
-   Pointer<Type> Unshift() { return RemHead(); }
+   int Shift(Type *ptr) { return AddHead(ptr); }
+   Type *Unshift() { return RemHead(); }
    Pointer<Type> First();
-   void Remove(Pointer<Type> &obj);
+   void Remove(Type *obj);
 };
 
 template <class Type>
-int List<Type>::In(Pointer<Type> &ptr) {
+int List<Type>::In(Type *ptr) {
    ListIter<Type> i(this);
-   while (i++) if (ptr == i) return true;
+   while (i++) if (i == ptr) return true;
    return false;
 }
 
 template <class Type>
-int List<Type>::AddHead(Pointer<Type> &ptr) {
-   Pointer<NodeType> node(new NodeType(ptr));
+int List<Type>::AddHead(Type *ptr) {
+   NodeType *node = new NodeType(ptr);
    node->next = head;
    if (head) {
       head->prev = node;
@@ -86,8 +86,8 @@ int List<Type>::AddHead(Pointer<Type> &ptr) {
 }
 
 template <class Type>
-int List<Type>::AddTail(Pointer<Type> &ptr) {
-   Pointer<NodeType> node(new NodeType(ptr));
+int List<Type>::AddTail(Type *ptr) {
+   NodeType *node = new NodeType(ptr);
    node->prev = tail;
    if (tail) {
       tail->next = node;
@@ -135,7 +135,7 @@ Pointer<Type> List<Type>::First() {
 }
 
 template <class Type>
-void List<Type>::Remove(Pointer<Type> &obj) {
+void List<Type>::Remove(Type *obj) {
    Pointer<NodeType> node(head);
 
    while (node) {
@@ -187,9 +187,9 @@ public:
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    Type *operator --();
    Type *operator ++();
-   Pointer<Type> Remove();
-   int InsertBefore(Pointer<Type> &obj);
-   int InsertAfter(Pointer<Type> &obj);
+   Type *Remove();
+   int InsertBefore(Type *obj);
+   int InsertAfter(Type *obj);
 };
 
 template <class Type>
@@ -207,7 +207,7 @@ Type *ListIter<Type>::operator ++() {
 }
 
 template <class Type>
-Pointer<Type> ListIter<Type>::Remove() {
+Type *ListIter<Type>::Remove() {
    if (!ptr) return Pointer<Type>();
    if (!ptr->prev) return list->RemHead();
    if (!ptr->next) return list->RemTail();
@@ -228,9 +228,9 @@ Pointer<Type> ListIter<Type>::Remove() {
 }
 
 template <class Type>
-int ListIter<Type>::InsertBefore(Pointer<Type> &obj) {
+int ListIter<Type>::InsertBefore(Type *obj) {
    if (!ptr || !ptr->prev) return list->AddHead(obj);
-   Pointer<NodeType> node(new NodeType(obj));
+   NodeType *node = new NodeType(obj);
    last = ptr;
    node->next = ptr;
    node->prev = ptr->prev;
@@ -241,9 +241,9 @@ int ListIter<Type>::InsertBefore(Pointer<Type> &obj) {
 }
 
 template <class Type>
-int ListIter<Type>::InsertAfter(Pointer<Type> &obj) {
+int ListIter<Type>::InsertAfter(Type *obj) {
    if (!ptr || !ptr->next) return list->AddTail(obj);
-   Pointer<NodeType> node(new NodeType(obj));
+   NodeType *node = new NodeType(obj);
    last = ptr;
    node->prev = ptr;
    node->next = ptr->next;

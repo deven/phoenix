@@ -31,31 +31,31 @@ private:
 public:
    int Count() { return l.Count(); }
    void Reset() { l.Reset(); }
-   int In(Pointer<Type> &ptr);
-   void Add(Pointer<Type> &ptr);
-   void Remove(Pointer<Type> &ptr);
-   Pointer<Type> First();
+   int In(Type *ptr);
+   void Add(Type *ptr);
+   void Remove(Type *ptr);
+   Type *First();
 };
 
 template <class Type>
-int Set<Type>::In(Pointer<Type> &ptr) {
+int Set<Type>::In(Type *ptr) {
    ListIter<Type> i(l);
-   while (i++) if (ptr == i) return true;
+   while (i++) if (i == ptr) return true;
    return false;
 }
 
 template <class Type>
-void Set<Type>::Add(Pointer<Type> &ptr) {
+void Set<Type>::Add(Type *ptr) {
    if (!In(ptr)) l.AddTail(ptr);
 }
 
 template <class Type>
-void Set<Type>::Remove(Pointer<Type> &ptr) {
+void Set<Type>::Remove(Type *ptr) {
    l.Remove(ptr);
 }
 
 template <class Type>
-Pointer<Type> Set<Type>::First() {
+Type *Set<Type>::First() {
    return l.First();
 }
 

@@ -37,14 +37,14 @@
 
 #include "phoenix.h"
 
-void OutputStream::OutputObject::output(Pointer<Telnet> &telnet)
+void OutputStream::OutputObject::output(Telnet *telnet)
 {				// Output object.
    if (!Output) return;
    Output->output(telnet);
    telnet->TimingMark();
 }
 
-void OutputStream::Attach(Pointer<Telnet> &telnet) // Review detached output.
+void OutputStream::Attach(Telnet *telnet) // Review detached output.
 {
    sent = NULL;
    Acknowledged = Sent = 0;
@@ -52,7 +52,7 @@ void OutputStream::Attach(Pointer<Telnet> &telnet) // Review detached output.
 }
 
 // Enqueue output.
-void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<OutputObj> &out)
+void OutputStream::Enqueue(Telnet *telnet,OutputObj *out)
 {
    if (!out) return;
    if (tail) {
@@ -89,13 +89,13 @@ void OutputStream::Dequeue()	// Dequeue all acknowledged output.
 	 delete out;
       }
       if (!head) {
-	 sent = tail = NULL;
+	 sent = tail = 0;
 	 Acknowledged = Sent = 0;
       }
    }
 }
 
-boolean OutputStream::SendNext(Pointer<Telnet> &telnet) // Send next output.
+boolean OutputStream::SendNext(Telnet *telnet) // Send next output.
 {
    if (!telnet || !sent && !head) return false;
    if (sent && !sent->next) {

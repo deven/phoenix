@@ -21,11 +21,11 @@
 #include "assoc.h"
 #include "pointer.h"
 
-int Assoc::Hash(String &key)
+int Assoc::Hash(char *key)
 {
    unsigned long hash = 0;
-   unsigned char *ptr = key;
-   int len = key;
+   unsigned char *ptr = (unsigned char *) key;
+   int len = strlen(key);
 
    while (len--) {
       hash <<= 4;
@@ -36,15 +36,15 @@ int Assoc::Hash(String &key)
    return hash % Size;
 }
 
-void Assoc::Store(String &key,String &value)
+void Assoc::Store(char *key,char *value)
 {
-   Pointer<AssocEntry> entry(new AssocEntry(key,value));
+   AssocEntry *entry = new AssocEntry(key,value);
    int hash = Hash(key);
    entry->next = bucket[hash];
    bucket[hash] = entry;
    count++;
    while (entry->next) {
-      if (key == entry->key) {
+      if (entry->key == key) {
 	 entry->next = entry->next->next;
 	 count--;
 	 return;
@@ -53,16 +53,16 @@ void Assoc::Store(String &key,String &value)
    }
 }
 
-void Assoc::Delete(String &key)
+void Assoc::Delete(char *key)
 {
    int hash = Hash(key);
    Pointer<AssocEntry> entry(bucket[hash]);
-   if (key == entry->key) {
+   if (entry->key == key) {
       bucket[hash] = entry->next;
       count--;
    } else {
       while (entry->next) {
-	 if (key == entry->key) {
+	 if (entry->key == key) {
 	    entry->next = entry->next->next;
 	    count--;
 	    return;
@@ -72,47 +72,47 @@ void Assoc::Delete(String &key)
    }
 }
 
-boolean Assoc::Known(String &key)
+boolean Assoc::Known(char *key)
 {
    int hash = Hash(key);
-   Pointer<AssocEntry> entry(bucket[hash]);
+   AssocEntry *entry = bucket[hash];
 
    while (entry) {
-      if (key == entry->key) return true;
+      if (entry->key == key) return true;
       entry = entry->next;
    }
    return false;
 }
 
-String &Assoc::Fetch(String &key)
+String Assoc::Fetch(char *key)
 {
    int hash = Hash(key);
-   Pointer<AssocEntry> entry(bucket[hash]);
+   AssocEntry *entry = bucket[hash];
 
    while (entry) {
-      if (key == entry->key) return entry->value;
+      if (entry->key == key) return entry->value;
       entry = entry->next;
    }
-   return "";
+   return String();
 }
 
-AssocEntry &Assoc::operator [](String &key)
+AssocEntry &Assoc::operator [](char *key)
 {
    int hash = Hash(key);
-   Pointer<AssocEntry> entry(bucket[hash]);
+   AssocEntry *entry = bucket[hash];
 
    while (entry) {
-      if (key == entry->key) return *((AssocEntry *) entry);
+      if (entry->key == key) return *entry;
       entry = entry->next;
    }
    entry = new AssocEntry(key,"");
    entry->next = bucket[hash];
    bucket[hash] = entry;
    count++;
-   return *((AssocEntry *) entry);
+   return *entry;
 }
 
-Pointer<AssocEntry> AssocIter::operator ++() {
+AssocEntry *AssocIter::operator ++() {
    if (entry) {
       if (entry = entry->next) return entry;
       while (++bucket < Assoc::Size) {
