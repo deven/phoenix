@@ -97,6 +97,31 @@ void Session::CheckShutdown()   // Exit if shutting down and no users are left.
    }
 }
 
+// Send a message to everyone else signed on.
+void Session::SendEveryone(char *msg)
+{
+   int sent = 0;
+   for (Session *session = sessions; session; session = session->next) {
+      if (session == this) continue;
+      session->telnet->PrintMessage(Public,name,name_only,0,msg);
+      sent++;
+   }
+
+   switch (sent) {
+   case 0:
+      telnet->print("\a\aThere is no one else here! (message not sent)\n");
+      break;
+   case 1:
+      ResetIdle(10);
+      telnet->print("(message sent to everyone.) [1 person]\n");
+      break;
+   default:
+      ResetIdle(10);
+      telnet->print("(message sent to everyone.) [%d people]\n",sent);
+      break;
+   }
+}
+
 // Send private message by fd #.
 void Session::SendByFD(int fd,char *sendlist,int explicit,char *msg)
 {
