@@ -1252,6 +1252,9 @@ void Telnet::InputReady()	// telnet stream can input data
 	       case ControlT:
 		  transpose_chars();
 		  break;
+	       case ControlU:
+		  erase_line();
+		  break;
 	       case ControlY:
 		  yank();
 		  break;
