@@ -38,13 +38,15 @@ public:
    Pointer(Type &p): ptr(&p) { if (ptr) ptr->NewReference(); }
    ~Pointer() { if (ptr) ptr->DeleteReference(); }
    Pointer &operator =(Pointer &p) {
+      if (p.ptr) p.ptr->NewReference();
       if (ptr) ptr->DeleteReference();
-      if (ptr = p.ptr) ptr->NewReference();
+      ptr = p.ptr;
       return *this;
    }
    Pointer &operator =(Type *p) {
+      if (p) p->NewReference();
       if (ptr) ptr->DeleteReference();
-      if (ptr = p) ptr->NewReference();
+      ptr = p;
       return *this;
    }
    Pointer &operator =(int n) {
