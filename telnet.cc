@@ -358,7 +358,7 @@ void Telnet::Prompt(char *p) {	// Print and set new prompt.
    if (prompt) delete prompt;
    prompt = new char[prompt_len + 1];
    strcpy(prompt,p);
-   output(prompt);
+   if (!undrawn) output(prompt);
 }
 
 Telnet::~Telnet()
@@ -402,15 +402,20 @@ void Telnet::UndrawInput()	// Erase input line from screen.
 {
    int lines;
 
-   if (!undrawn && End()) {
-      undrawn = true;
+   if (undrawn) return;
+   undrawn = true;
+   if (Echo == TelnetEnabled && DoEcho) {
+      if (!Start() && !End()) return;
       lines = PointLine();
-      // ANSI! ***
-      if (lines) {
-	 echo_print("\r\033[%dA\033[J",lines); // Move cursor up and erase.
-      } else {
-	 echo("\r\033[J"); // Erase line.
-      }
+   } else {
+      if (!Start()) return;
+      lines = StartLine();
+   }
+   // ANSI! ***
+   if (lines) {
+      print("\r\033[%dA\033[J",lines); // Move cursor up and erase.
+   } else {
+      output("\r\033[J"); // Erase line.
    }
 }
 
@@ -418,9 +423,10 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 {
    int lines,columns;
 
-   if (undrawn && End()) {
-      undrawn = false;
-      if (prompt) output(prompt);
+   if (!undrawn) return;
+   undrawn = false;
+   if (prompt) output(prompt);
+   if (End()) {
       echo(data,End());
       if (!AtEnd()) {		// Move cursor back to point.
 	 lines = EndLine() - PointLine();
