@@ -49,7 +49,7 @@ char *inet_ntoa(struct in_addr in);
 int strcasecmp(const char *s1,const char *s2);
 int strncasecmp(const char *s1,const char *s2,size_t len);
 int setlinebuf(FILE *stream);
-int setpgrp(int pid,int pgrp);
+pid_t setsid();
 char *crypt(char *key,char *salt);
 int socket(int domain,int type,int protocol);
 int setsockopt(int s,int level,int optname,char *optval,int optlen);
