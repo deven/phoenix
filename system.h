@@ -100,6 +100,13 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#else
+#define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
+#define WIFEXITED(status)     (((status) & 0x7f) == 0)
+#endif
+
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
