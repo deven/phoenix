@@ -64,21 +64,18 @@ public:
    char *mark;			// current mark location
    char *prompt;		// current prompt
    int prompt_len;		// length of current prompt
-   Line *lines;			// unprocessed input lines
+   Name *reply_to;		// send of last private message
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
-   InputFuncPtr InputFunc;	// function pointer for input processor
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
-   char SignalPublic;		// Signal for public messages? (boolean)
-   char SignalPrivate;		// Signal for private messages? (boolean)
    char undrawn;		// input line undrawn for output? (boolean)
    char blocked;		// output blocked? (boolean)
    char closing;		// connection closing? (boolean)
-   char do_echo;		// should server be echoing? (boolean)
-   char echo;			// telnet ECHO option (local)
+   char DoEcho;			// should server be echoing? (boolean)
+   char Echo;			// telnet ECHO option (local)
    char LSGA;			// telnet SUPPRESS-GO-AHEAD option (local)
    char RSGA;			// telnet SUPPRESS-GO-AHEAD option (remote)
-   CallbackFuncPtr echo_callback; // ECHO callback (local)
+   CallbackFuncPtr Echo_callback; // ECHO callback (local)
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
@@ -100,27 +97,26 @@ public:
    int End() { return free - data; }
    int EndLine() { return (Start() + End()) / width; }
    int EndColumn() { return (Start() + End()) % width; }
-   void Close();		// Close telnet connection.
+   void Close(boolean drain = true); // Close telnet connection.
    void nuke(Telnet *telnet,boolean drain);
-   void Drain();
-   void SaveInputLine(char *line);
-   void SetInputFunction(InputFuncPtr input);
    void output(int byte);
    void output(char *buf);
    void output(char *buf,int len);
    void print(char *format,...);
+   void echo(int byte);
+   void echo(char *buf);
+   void echo(char *buf,int len);
+   void echo_print(char *format,...);
    void command(char *buf);	// queue command data
    void command(char *buf,int len); // queue command data (with length)
    void command(int byte);	    // Queue command byte.
    void command(int byte1,int byte2); // Queue 2 command bytes.
    void command(int byte1,int byte2,int byte3); // Queue 3 command bytes.
+   void PrintMessage(OutputType type,time_t time,Name *from,char *start);
+   void Welcome();
    void UndrawInput();		// Erase input line from screen.
    void RedrawInput();		// Redraw input line on screen.
-   void OutputWithRedraw(char *buf);
-   void PrintWithRedraw(char *format,...);
-   void PrintMessage(MessageType type,char *from,char *reply_to,char *to,
-		     char *msg);
-   void set_echo(CallbackFuncPtr callback,int state);
+   void set_Echo(CallbackFuncPtr callback,int state);
    void set_LSGA(CallbackFuncPtr callback,int state);
    void set_RSGA(CallbackFuncPtr callback,int state);
    void beginning_of_line();	// Jump to beginning of line.
