@@ -21,7 +21,7 @@
 # $Log$
 
 # Linux:
-CFLAGS = -Wall
+CFLAGS = -g -Wall
 LDFLAGS = -static
 LIBS = -lcrypt
 
