@@ -25,8 +25,8 @@ private:
       OutputObject *next;
       Pointer<Output> Output;
 
-      OutputObject(Pointer<Output> out): Output(out) { next = NULL; }
-      void output(Pointer<Telnet> telnet);
+      OutputObject(Pointer<Output> &out): Output(out) { next = NULL; }
+      void output(Pointer<Telnet> &telnet);
    };
 public:
    OutputObject *head;		// first output object
@@ -50,8 +50,8 @@ public:
    void Acknowledge() {		// Acknowledge a block of output.
       if (Acknowledged < Sent) Acknowledged++;
    }
-   void Attach(Pointer<Telnet> telnet);
-   void Enqueue(Pointer<Telnet> telnet,Pointer<Output> out);
+   void Attach(Pointer<Telnet> &telnet);
+   void Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out);
    void Dequeue();
-   boolean SendNext(Pointer<Telnet> telnet);
+   boolean SendNext(Pointer<Telnet> &telnet);
 };
