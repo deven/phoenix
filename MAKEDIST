@@ -1,22 +1,26 @@
+* CHECK TIMESTAMPS!
+
+* Check copyright dates, update if necessary.
+
 * Update NEWS and RELEASES files.
 
-* Make sure all files are checked into RCS.
+* Change version in configure.ac, run "./bootstrap".
 
 * Build and test the programs!
 
-* Run "make clean".
+* Make sure all files are checked into RCS/CVS.
 
-* Copy entire directory to new release directory.
+* Run "rcs2log -h ties.org -i 1" and edit the ChangeLog.
 
-* In the copy, change permissions to make files writeable!
+* Check the new ChangeLog into RCS/CVS.
 
-* Remove RCS directory and this file from the copy.
-
-* Create tarball of new release.
+* Run "./configure; make distcheck".
 
 * Create patch from previous release with "diff -urN".
 
-* Sign tarball and patch.
+* Build new RPMs.  (Maybe sign here instead of below?)
+
+* Sign tarball, patch and RPM packages.
 
 * Place online on FTP server.
 
