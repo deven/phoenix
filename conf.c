@@ -314,7 +314,9 @@ va_dcl
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    for (telnet = connections; telnet; telnet = telnet->next) {
+      undraw_line(telnet);	/* undraw input line */
       output(telnet,buf);
+      redraw_line(telnet);	/* redraw input line */
    }
 }
 
