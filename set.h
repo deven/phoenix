@@ -58,5 +58,5 @@ public:
    operator Type *() { return iter; }
    Type *operator --() { return iter--; }
    Type *operator ++() { return iter++; }
-   Pointer<Type> Remove() { return iter.Remove(); }
+   void Remove() { iter.Remove(); }
 };
