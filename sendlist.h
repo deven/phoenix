@@ -20,5 +20,5 @@ public:
 
    Sendlist(Session &sender,String &sendlist);
    Sendlist &set(Session &sender,String &sendlist);
-   int Enqueue(Pointer<Output> &out,Pointer<Session> &sender,boolean &self);
+   int Expand(Set<Session> &who);
 };

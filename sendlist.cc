@@ -139,40 +139,18 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist)
 }
 
 // Enqueues message to sendlist, returns count of recipients.
-int Sendlist::Enqueue(Pointer<Output> &out,Pointer<Session> &sender,
-		      boolean &self)
+int Sendlist::Expand(Set<Session> &who)
 {
-   Set<Session> sent;
-
-   self = false;
+   who.Reset();
 
    SetIter<Session> session(sessions);
-   while (session++) {
-      if (!sent.In((Session *) session)) {
-	 if (session == sender) {
-	    self = true;
-	 } else {
-	    session->Enqueue(out);
-	 }
-	 sent.Add((Session *) session);
-      }
-   }
+   while (session++) who.Add((Session *) session);
 
    SetIter<Discussion> discussion(discussions);
    while (discussion++) {
-      discussion->Output.Enqueue((Telnet *) NULL,out);
       session = discussion->members;
-      while (session++) {
-	 if (!sent.In((Session *) session)) {
-	    if (session == sender) {
-	       self = true;
-	    } else {
-	       session->Enqueue(out);
-	    }
-	    sent.Add((Session *) session);
-	 }
-      }
+      while (session++) who.Add((Session *) session);
    }
 
-   return sent.Count();
+   return who.Count();
 }
