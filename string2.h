@@ -41,7 +41,7 @@
 
 class String {
 private:
-   static const size_t Extra = 16;
+   static const size_t Extra = 128;
    static const size_t NumberLength = 32;
    char *str;
    size_t len;
