@@ -97,7 +97,7 @@ void Discussion::Permit(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args,Comma)) {
+      while ((user = getword(args,Comma))) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
 	       session->print("Discussion %s is already public.\n",~name);
@@ -107,9 +107,9 @@ void Discussion::Permit(Session *session,char *args) {
 	       session->print("You have made discussion %s public.\n",~name);
 	    }
 	 } else {
-	    if (s = session->FindSession(user,matches)) {
+	    if ((s = session->FindSession(user,matches))) {
 	       if (Public) {
-		  if (n = Denied(s)) {
+		  if ((n = Denied(s))) {
 		     denied.Remove(n);
 		     s->Enqueue(new PermitNotify(this,session,true));
 		     session->print("You have repermitted %s to discussion "
@@ -124,7 +124,7 @@ void Discussion::Permit(Session *session,char *args) {
 				    "public discussion %s.\n",~s->name,~name);
 		  }
 	       } else {
-		  if (n = Denied(s)) {
+		  if ((n = Denied(s))) {
 		     denied.Remove(n);
 		     allowed.Add(s->name_obj);
 		     s->Enqueue(new PermitNotify(this,session,true));
@@ -157,7 +157,7 @@ void Discussion::Depermit(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args,Comma)) {
+      while ((user = getword(args,Comma))) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
 	       Public = false;
@@ -169,9 +169,9 @@ void Discussion::Depermit(Session *session,char *args) {
 	       session->print("Discussion %s is already private.\n",~name);
 	    }
 	 } else {
-	    if (s = session->FindSession(user,matches)) {
+	    if ((s = session->FindSession(user,matches))) {
 	       if (Public) {
-		  if (n = Allowed(s)) allowed.Remove(n);
+		  if ((n = Allowed(s))) allowed.Remove(n);
 		  if (Denied(s)) {
 		     session->print("%s is already depermitted from "
 				    "discussion %s.\n",~s->name,~name);
@@ -191,7 +191,7 @@ void Discussion::Depermit(Session *session,char *args) {
 		     }
 		  }
 	       } else {
-		  if (n = Allowed(s)) {
+		  if ((n = Allowed(s))) {
 		     allowed.Remove(n);
 		     if (members.In(s)) {
 			members.Remove(s);
@@ -233,8 +233,8 @@ void Discussion::Appoint(Session *session,char *args) {
    char *user;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args,Comma)) {
-	 if (s = session->FindSession(user,matches)) {
+      while ((user = getword(args,Comma))) {
+	 if ((s = session->FindSession(user,matches))) {
 	    if (IsModerator(s)) {
 	       session->print("%s is already a moderator of discussion %s.\n",
 			      ~s->name,~name);
@@ -260,9 +260,9 @@ void Discussion::Unappoint(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args,Comma)) {
-	 if (s = session->FindSession(user,matches)) {
-	    if (n = IsModerator(s)) {
+      while ((user = getword(args,Comma))) {
+	 if ((s = session->FindSession(user,matches))) {
+	    if ((n = IsModerator(s))) {
 	       moderators.Remove(n);
 	       EnqueueOthers(new UnappointNotify(this,session,s),session);
 	       session->print("You have unappointed %s as a moderator of "
