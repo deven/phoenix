@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.15 1994/02/07 21:50:46 deven Exp $
+// $Id: session.cc,v 1.16 1994/02/17 05:15:56 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.16  1994/02/17 05:15:56  deven
+// Added PrintTimeLong() function, cleaned up SetIdle() a bit.
+//
 // Revision 1.15  1994/02/07 21:50:46  deven
 // Added SetIdle(), SetBlurb() and Unidle(), modified DoIdle() for setting idle
 // time (/idle=<time>), took "User" column out of /who, added privileged /why,
