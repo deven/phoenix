@@ -10,6 +10,7 @@ Gangplank has been known to build and run on the following platforms:
  * SunOS 4.1.4
  * IRIX 6.5.6
  * AIX 4.3.2
+ * Cygwin (under Windows)
 
 Gangplank is known to compile with GCC versions from 2.95 through 3.1, using
 the "gcc" driver.  (Although Gangplank is written in C++, it does not use the
