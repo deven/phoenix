@@ -61,10 +61,10 @@ public:
    char last_sendlist[SendlistLen];    // last explicit sendlist
    char reply_sendlist[SendlistLen];   // reply sendlist for last sender
 
-   Session(Pointer<Telnet> t);	// constructor
+   Session(Pointer<Telnet> &t);	// constructor
    ~Session();			// destructor
    void Close(boolean drain = true); // Close session.
-   void Attach(Pointer<Telnet> t);
+   void Attach(Pointer<Telnet> &t);
    void Detach(boolean intentional);
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
@@ -85,11 +85,11 @@ public:
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet,new Text(buf));
    }
-   void Enqueue(Pointer<Output> out) { // Enqueue output buffer and object.
+   void Enqueue(Pointer<Output> &out) { // Enqueue output buffer and object.
       EnqueueOutput();
       Pending.Enqueue(telnet,out);
    }
-   void EnqueueOthers(Pointer<Output> out) { // Enqueue output to others.
+   void EnqueueOthers(Pointer<Output> &out) { // Enqueue output to others.
       Pointer<Session> session;
       for (session = sessions; session; session = session->next) {
 	 if (session == this) continue;
@@ -99,7 +99,7 @@ public:
    void AcknowledgeOutput(void) { // Output acknowledgement.
       Pending.Acknowledge();
    }
-   boolean OutputNext(Pointer<Telnet> telnet) { // Output next output block to Telnet.
+   boolean OutputNext(Pointer<Telnet> &telnet) { // Output next output block to Telnet.
       return Pending.SendNext(telnet);
    }
 

@@ -50,7 +50,7 @@
 
 Pointer<Session> Session::sessions = NULL;
 
-Session::Session(Pointer<Telnet> t)
+Session::Session(Pointer<Telnet> &t)
 {
    telnet = t;			// Save Telnet pointer.
    next = NULL;			// No next session.
@@ -106,7 +106,7 @@ void Session::Close(boolean drain = true) // Close session.
    user = NULL;
 }
 
-void Session::Attach(Pointer<Telnet> t) // Attach session to telnet connection.
+void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
    if (t) {
       telnet = t;

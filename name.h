@@ -24,7 +24,7 @@ public:
    Pointer<Session> session;	// Session this name refers to.
    char name[NameLen];		// Name string.
 
-   Name(Pointer<Session> s,Pointer<Name> &prev,char *str): session(s) {
+   Name(Pointer<Session> &s,Pointer<Name> &prev,char *str): session(s) {
       // Delete leading unused names. (may not work)
       while (prev && prev->References() == 1) prev = prev->next;
       strncpy(name,str,NameLen); // Save name string.

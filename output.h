@@ -39,7 +39,7 @@ public:
       }
    }
    virtual ~Output() {}		// destructor
-   virtual void output(Pointer<Telnet> telnet) = 0;
+   virtual void output(Pointer<Telnet> &telnet) = 0;
 };
 
 class Text: public Output {
@@ -48,7 +48,7 @@ private:
 public:
    Text(char *buf): Output(TextOutput,TextClass),text(buf) { }
    ~Text() { delete text; }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };
 
 class Message: public Output {
@@ -57,40 +57,40 @@ private:
    // Pointer<Sendlist> to;
    char *text;
 public:
-   Message(OutputType type,Pointer<Name> sender,char *msg):
+   Message(OutputType type,Pointer<Name> &sender,char *msg):
    Output(type,MessageClass),from(sender) {
       text = new char[strlen(msg) + 1];
       strcpy(text,msg);
    }
    ~Message() { delete text; }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };
 
 class EntryNotify: public Output {
 private:
    Pointer<Name> name;
 public:
-   EntryNotify(Pointer<Name> who,time_t when = 0):
+   EntryNotify(Pointer<Name> &who,time_t when = 0):
    Output(EntryOutput,NotificationClass,when),name(who) { }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };
 
 class ExitNotify: public Output {
 private:
    Pointer<Name> name;
 public:
-   ExitNotify(Pointer<Name> who,time_t when = 0):
+   ExitNotify(Pointer<Name> &who,time_t when = 0):
    Output(ExitOutput,NotificationClass,when),name(who) { }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };
 
 class AttachNotify: public Output {
 private:
    Pointer<Name> name;
 public:
-   AttachNotify(Pointer<Name> who,time_t when = 0):
+   AttachNotify(Pointer<Name> &who,time_t when = 0):
    Output(AttachOutput,NotificationClass,when),name(who) { }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };
 
 class DetachNotify: public Output {
@@ -98,7 +98,7 @@ private:
    Pointer<Name> name;
    boolean intentional;
 public:
-   DetachNotify(Pointer<Name> who,boolean i,time_t when = 0):
+   DetachNotify(Pointer<Name> &who,boolean i,time_t when = 0):
    Output(DetachOutput,NotificationClass,when),name(who),intentional(i) { }
-   void output(Pointer<Telnet> telnet);
+   void output(Pointer<Telnet> &telnet);
 };

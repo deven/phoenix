@@ -16,7 +16,7 @@
 
 #include "conf.h"
 
-User::User(Pointer<Session> s): session(s) {
+User::User(Pointer<Session> &s): session(s) {
    priv = 10;			// default user privilege level
    strcpy(user,"[nobody]");	// Who is this?
    password[0] = 0;		// No password.

@@ -214,7 +214,7 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
    }
 }
 
-void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> from,
+void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 			  char *start)
 {
    char *wrap,*p;

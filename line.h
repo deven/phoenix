@@ -30,7 +30,7 @@ public:
    ~Line() {			// destructor
       delete line;
    }
-   void Append(Pointer<Line> p) { // Add new line at end of list.
+   void Append(Pointer<Line> &p) { // Add new line at end of list.
       if (next) {
 	 next->Append(p);
       } else {

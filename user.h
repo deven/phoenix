@@ -25,5 +25,5 @@ public:
    // change! ***
    char reserved_name[NameLen];	// reserved user name (pseudo)
    char default_blurb[NameLen];	// default blurb
-   User(Pointer<Session> s);
+   User(Pointer<Session> &s);
 };
