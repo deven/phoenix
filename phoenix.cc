@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.22 2000/03/22 04:09:27 deven Exp $
+// $Id: phoenix.cc,v 1.23 2000/03/22 18:41:06 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.23  2000/03/22 18:41:06  deven
+// Changed logfile name to use a 4-digit year.
+//
 // Revision 1.22  2000/03/22 04:09:27  deven
 // Updated copyright dates and whitespace conventions.
 //
