@@ -12,6 +12,13 @@ Stable Releases
 Development/Test Releases
 -------------------------
 
+ * Version 1.0.0.beta.6 (November 20, 2002)
+
+   This release integrates autoconf/automake so "./configure; make" can be
+   used to build Gangplank.  Configure options exist to disable guest access
+   and/or change the default TCP port used by the server.  This release also
+   fixes the ANSI terminal-handling bugs related to line wrapping.
+
  * Version 1.0.0.beta.5 (September 10, 2002)
 
    Special thanks are due to Ron Frederick <frederick@timeheart.net> for this
