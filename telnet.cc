@@ -235,10 +235,11 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
 }
 
 void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
-			  char *start)
+			  Pointer<Sendlist> &to,char *start)
 {
    char *wrap,*p;
    int col;
+   boolean flag;
 
    switch (type) {
    case PublicMessage:
@@ -251,10 +252,61 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
       // Save name to reply to.
       reply_to = from;
 
+      // Decide if "private".
+      flag = false;
+      if (to->sessions.In(session)) {
+	 flag = true;
+      } else {
+	 SetIter<Discussion> discussion(to->discussions);
+	 while (discussion++) {
+	    if (discussion->members.In(session) && !discussion->Public) {
+	       flag = true;
+	       break;
+	    }
+	 }
+      }
+
       // Print message header.
-      if (session->SignalPrivate) output(Bell);
-      print("\n >> Private message from %s%s:",(char *) from->name,(char *) from->blurb);
-      break;
+      if (flag) {
+	 if (session->SignalPrivate) output(Bell);
+	 if (to->sessions.In(session)) {
+	    output("\n >> Private message from ");
+	 } else {
+	    if (!session->SignalPrivate && session->SignalPublic) output(Bell);
+	    output("\n >> From ");
+	 }
+      } else {
+	 if (session->SignalPublic) output(Bell);
+	 output("\n -> From ");
+      }
+      output((char *) from->name);
+      output((char *) from->blurb);
+      if (to->sessions.Count() > 1 || to->discussions.Count() > 0) {
+	 output(" to ");
+	 boolean first = true;
+
+	 SetIter<Session> s(to->sessions);
+	 while (s++) {
+	    if (first) {
+	       first = false;
+	    } else {
+	       output(", ");
+	    }
+	    output((char *) s->name);
+	 }
+
+	 SetIter<Discussion> discussion(to->discussions);
+	 while (discussion++) {
+	    if (first) {
+	       first = false;
+	    } else {
+	       output(", ");
+	    }
+	    output((char *) discussion->name);
+	    print(" [%d members]",discussion->members.Count());
+	 }
+      }
+      output(Colon);
    }
 
    // Print timestamp. (make optional? ***)
