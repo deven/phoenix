@@ -110,23 +110,36 @@ class ListIter {
 private:
    typedef ListNode<Type> NodeType;
    typedef List<Type> ListType;
-   Pointer<NodeType> ptr;
+   Pointer<NodeType> ptr,last;
    Pointer<ListType> list;
 public:
    ListIter() { }
    ListIter(ListType &l): list(&l) { }
    ListIter(Pointer<ListType> &l): list(l) { }
-   ListIter &operator =(ListType &l) { list = &l; ptr = 0; }
-   ListIter &operator =(Pointer<ListType> &l) { list = l; ptr = 0; }
+   ListIter &operator =(ListType &l) { list = &l; ptr = last = 0; }
+   ListIter &operator =(Pointer<ListType> &l) { list = l; ptr = last = 0; }
    Type *operator ->() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
-   operator int() { return ptr != 0; }
-   Type *operator --() { ptr = ptr ? ptr->prev : list->tail; return *this; }
-   Type *operator ++() { ptr = ptr ? ptr->next : list->head; return *this; }
+   Type *operator --();
+   Type *operator ++();
    Pointer<Type> Remove();
    int InsertBefore(Pointer<Type> &obj);
    int InsertAfter(Pointer<Type> &obj);
 };
+
+template <class Type>
+Type *ListIter<Type>::operator --() {
+   last = ptr;
+   ptr = ptr ? ptr->prev : list->tail;
+   return *this;
+}
+
+template <class Type>
+Type *ListIter<Type>::operator ++() {
+   last = ptr;
+   ptr = ptr ? ptr->next : list->head;
+   return *this;
+}
 
 template <class Type>
 Pointer<Type> ListIter<Type>::Remove() {
@@ -134,7 +147,14 @@ Pointer<Type> ListIter<Type>::Remove() {
    if (!ptr->prev) return list->RemHead();
    if (!ptr->next) return list->RemTail();
    Pointer<NodeType> node(ptr);
-   ptr = ptr->next;
+   ptr = last;
+   if (ptr == node->prev) {
+      last = node->prev;
+   } else if (ptr == node->next) {
+      last = node->next;
+   } else {
+      last = 0;
+   }
    list->count--;
    node->prev->next = node->next;
    node->next->prev = node->prev;
@@ -146,6 +166,7 @@ template <class Type>
 int ListIter<Type>::InsertBefore(Pointer<Type> &obj) {
    if (!ptr || !ptr->prev) return list->AddHead(obj);
    Pointer<NodeType> node(new NodeType(obj));
+   last = ptr;
    node->next = ptr;
    node->prev = ptr->prev;
    ptr->prev->next = node;
@@ -158,6 +179,7 @@ template <class Type>
 int ListIter<Type>::InsertAfter(Pointer<Type> &obj) {
    if (!ptr || !ptr->next) return list->AddTail(obj);
    Pointer<NodeType> node(new NodeType(obj));
+   last = ptr;
    node->prev = ptr;
    node->next = ptr->next;
    ptr->next->prev = node;
