@@ -1,4 +1,5 @@
-/*
+/* -*- C -*-
+ *
  * $Id$
  *
  * Utility program to restart Gangplank conferencing server from cron.
