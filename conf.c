@@ -1166,13 +1166,16 @@ void new_connection(int lfd)	/* accept a new connection */
 
    /* Initialize session structure. */
 
+   session->next = NULL;
    session->user_next = NULL;
    user = telnet->session->user = alloc(sizeof(struct user));
    session->telnet = telnet;
 
    /* No name yet. */
-   strcpy(session->name,"[logging in]");
+   session->name_only[0] = 0;
+   session->name[0] = 0;
 
+   strcpy(session->default_sendlist,"everyone");
    session->last_sendlist[0] = 0;
    session->login_time = session->message_time = time(NULL);
 
@@ -1784,6 +1787,7 @@ void main(int argc,char **argv) /* main program */
    errors = 0;
    shutdown = 0;
    connections = NULL;
+   sessions = NULL;
    free_blocks = NULL;
    if (chdir("/home/deven/src/conf")) error("chdir");
    open_log();
