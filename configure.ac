@@ -18,7 +18,7 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 
-AC_INIT([gangplank], [1.0.0.beta.10], [bugs@gangplank.org])
+AC_INIT([gangplank], [1.0.0.beta.11], [bugs@gangplank.org])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gangplank.cc])
 AM_CONFIG_HEADER([config.h])
