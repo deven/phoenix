@@ -286,7 +286,7 @@ int main(int argc, char **argv)	// main program
       default:
 	 fprintf(stderr, "Started Gangplank server, version %s.\n", VERSION);
 	 fprintf(stderr, "Listening for connections on TCP port %d. (pid %d)\n",
-		 port, getpid());
+		 port, pid);
 	 exit(0);
 	 break;
       }
