@@ -116,7 +116,7 @@ void quit(int sig)		// received SIGQUIT or SIGTERM
       char buf[16];
 
       sprintf(buf, "signal %d", sig);
-      events.Enqueue(Shutdown = new ShutdownEvent(buf, 30));
+      events.Enqueue(Shutdown = new ShutdownEvent(buf, 5));
    }
 }
 
