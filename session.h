@@ -198,7 +198,7 @@ public:
    void NotifyEntry();		// Notify other users of entry and log.
    void NotifyExit();		// Notify other users of exit and log.
    void PrintTimeLong(int minutes); // Print time value, long format.
-   int ResetIdle(int min);	// Reset and return idle time, maybe report.
+   int ResetIdle(int min = 10);	// Reset and return idle time, maybe report.
    void SetIdle(char *args);	// Set idle time.
    void SetBlurb(char *newblurb); // Set a new blurb.
    void DoRestart(char *args);	// Do !restart command.
