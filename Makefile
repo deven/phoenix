@@ -47,7 +47,7 @@
 # LDFLAGS = -bsd
 
 # Sun:
-CFLAGS = -g
+CFLAGS = -g -Wall
 LDFLAGS =
 
 # Mach:
