@@ -1,5 +1,25 @@
 $Id: ChangeLog,v 1.2 2002/11/21 06:18:39 deven Exp $
 
+2002-11-22  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.7 released.
+
+ * ChangeLog, NEWS, RELEASES: Updated release information.
+
+ * acinclude.m4: Added AC_CXX_EXCEPTIONS and AC_CXX_RTTI macros.
+ * configure.ac: Changed version number, added checks for Cygwin environment,
+   exceptions and RTTI.  For GCC only, use "gcc" driver instead of "g++"
+   (since libstdc++ is not used), added "-Wall" option and (if supported)
+   disabled exceptions with "-fno-exceptions" and RTTI with "-fno-rtti".  For
+   Cygwin environments, added "-DFD_SETSIZE=256" option to increase the
+   maximum number of connections.
+ * Makefile.am: Removed compiler flags (moved to configure.ac).
+
+ * Makefile.am: Added "bootstrap" script to distribution archives.
+
+ * gangplank.cc (main): Modified startup messages in logfile to include server
+   version number.
+
 2002-11-21  Deven T. Corzine  <deven@ties.org>
 
  * Version 1.0.0.beta.6 released.
