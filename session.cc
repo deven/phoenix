@@ -502,7 +502,8 @@ void Session::Password(char *line)
    SetInputFunction(&Session::EnteredName); // Set name input routine.
 }
 
-void Session::EnteredName(char *line)
+boolean Session::CheckNameAvailability(char *name, boolean double_check,
+				       boolean transferring)
 {
    Session *session;
    Discussion *discussion;
@@ -510,6 +511,60 @@ void Session::EnteredName(char *line)
    Set<Session> sessionmatches;
    Set<Discussion> discussionmatches;
 
+   if (!strcasecmp(name, "me")) {
+      output("The keyword \"me\" is reserved.  Choose another name.\n");
+      telnet->Prompt("Enter name: ");
+      SetInputFunction(&Session::EnteredName);
+      return false;
+   }
+   if (user->FindReserved(name, u) && user != u) {
+      telnet->print("\"%s\" is%s a reserved name.  Choose another.\n",
+         ~u->reserved, double_check ? " now" : "");
+      telnet->Prompt("Enter name: ");
+      SetInputFunction(&Session::EnteredName);
+      return false;
+   }
+   if (FindSendable(name, session, sessionmatches, discussion,
+		    discussionmatches, false, true)) {
+      if (session) {
+	 if (session->user == user && user->priv > 0) {
+	    if (session->telnet) {
+	       if (transferring) {
+		  telnet->output("Transferring active session...\n");
+		  session->Transfer(telnet);
+	       } else {
+		  telnet->print("You are%s attached elsewhere under that name."
+				"\n", double_check ? " now" : "");
+		  telnet->Prompt("Transfer active session? [no] ");
+		  SetInputFunction(&Session::TransferSession);
+	       }
+	       return false;
+	    } else {
+	       telnet->output("Re-attaching to detached session...\n");
+	       session->Attach(telnet);
+	       telnet = 0;
+	       Close();
+	       return false;
+	    }
+	 } else {
+	    telnet->print("The name \"%s\" is %s in use.  Choose another.\n",
+			   ~session->name, double_check ? "now" : "already");
+	    telnet->Prompt("Enter name: ");
+	    SetInputFunction(&Session::EnteredName);
+	    return false;
+	 }
+      } else {
+	 print("There is %s a discussion named \"%s\".  Choose another "
+	       "name.\n", double_check ? "now" : "already", ~discussion->name);
+	 telnet->Prompt("Enter name: ");
+	 return false;
+      }
+   }
+   return true;
+}
+
+void Session::EnteredName(char *line)
+{
    if (!*line) {		// blank line
       if (user->reserved) {
 	 name = user->reserved;
@@ -520,105 +575,30 @@ void Session::EnteredName(char *line)
    } else {
       name = line;		// Save user's name.
    }
-   if (!strcasecmp(~name, "me")) {
-      output("The keyword \"me\" is reserved.  Choose another name.\n");
-      telnet->Prompt("Enter name: ");
-      return;
+   if (CheckNameAvailability(~name, false, false)) {
+      telnet->Prompt("Enter blurb: "); // Prompt for blurb.
+      SetInputFunction(&Session::EnteredBlurb); // Set blurb input routine.
    }
-   if (user->FindReserved(~name, u)) {
-      telnet->print("\"%s\" is a reserved name.  Choose another.\n",
-         ~u->reserved);
-      telnet->Prompt("Enter name: ");
-      return;
-   }
-   if (FindSendable(~name, session, sessionmatches, discussion,
-		    discussionmatches, false, true)) {
-      if (session) {
-	 if (session->user == user) {
-	    if (session->telnet) {
-	       telnet->output("You are attached elsewhere under that name.\n");
-	       telnet->Prompt("Transfer active session? [no] ");
-	       SetInputFunction(&Session::TransferSession);
-	       return;
-	    } else {
-	       telnet->output("Re-attaching to detached session...\n");
-	       telnet->CloseOnEOF = false; // Don't close connection on EOF now.
-	       session->Attach(telnet);
-	       telnet = 0;
-	       Close();
-	       return;
-	    }
-	 } else {
-	    telnet->output("That name is already in use.  Choose another.\n");
-	    telnet->Prompt("Enter name: ");
-	    return;
-	 }
-      } else {
-	 print("There is already a discussion named \"%s\".  Choose another "
-	       "name.\n", ~discussion->name);
-	 telnet->Prompt("Enter name: ");
-	 return;
-      }
-   }
-   telnet->Prompt("Enter blurb: "); // Prompt for blurb.
-   SetInputFunction(&Session::Blurb); // Set blurb input routine.
 }
 
 void Session::TransferSession(char *line)
 {
-   Session *session;
-   Discussion *discussion;
-   User *u;
-   Set<Session> sessionmatches;
-   Set<Discussion> discussionmatches;
-
    if (!match(line, "yes", 1)) {
       telnet->output("Session not transferred.\n");
       telnet->Prompt("Enter name: ");
       SetInputFunction(&Session::EnteredName);
       return;
    }
-   if (user->FindReserved(name, u)) {
-      telnet->print("\"%s\" is now a reserved name.  Choose another.\n",
-         ~u->reserved);
-      telnet->Prompt("Enter name: ");
-      return;
+   if (CheckNameAvailability(~name, true, true)) {
+      telnet->output("(That session is now gone.)\n");
+      telnet->Prompt("Enter blurb: "); // Prompt for blurb.
+      SetInputFunction(&Session::EnteredBlurb); // Set blurb input routine.
    }
-   if (FindSendable(name, session, sessionmatches, discussion,
-       discussionmatches, false, true)) {
-      if (session) {
-	 if (session->user == user) {
-	    telnet->CloseOnEOF = false; // Don't close connection on EOF now.
-	    if (session->telnet) {
-	       telnet->output("Transferring active session...\n");
-	       session->Transfer(telnet);
-	    } else {
-	       telnet->output("Re-attaching to detached session...\n");
-	       session->Attach(telnet);
-	    }
-	    telnet = 0;
-	    Close();
-	    return;
-	 } else {
-	    telnet->output("That name is now taken.  Choose another.\n");
-	    telnet->Prompt("Enter name: ");
-	    SetInputFunction(&Session::EnteredName);
-	    return;
-	 }
-      } else {
-	 print("There is now a discussion named \"%s\".  Choose another "
-	       "name.\n", ~discussion->name);
-	 telnet->Prompt("Enter name: ");
-	 SetInputFunction(&Session::EnteredName);
-	 return;
-      }
-   }
-   telnet->Prompt("Enter blurb: "); // Prompt for blurb.
-   SetInputFunction(&Session::Blurb); // Set blurb input routine.
 }
 
 void Session::EnteredBlurb(char *line)
 {
+   if (!CheckNameAvailability(~name, true, false)) return;
    if (!line || !*line) line = user->blurb;
    if (!line) line = "";
    DoBlurb(line, true);
@@ -657,7 +637,6 @@ void Session::EnteredBlurb(char *line)
    DoHowMany("");
 
    telnet->History.Reset();	// Reset input history.
-   telnet->CloseOnEOF = false;	// Don't close connection on EOF now.
 
    SetInputFunction(&Session::ProcessInput); // Set normal input routine.
 }
