@@ -1222,7 +1222,7 @@ void close_connection(struct telnet *telnet)
    /* Unlink session from list, remember if found. */
    found = 0;
    session = telnet->session;
-   if (sessions = session) {
+   if (sessions == session) {
       sessions = session->next;
       found++;
    } else {
