@@ -1,0 +1,87 @@
+From coderpunks-errors@toad.com  Thu Apr 18 20:54:48 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id UAA06092 for <deven@escher.ties.org>; Thu, 18 Apr 1996 20:54:44 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id UAA23133 for <deven@asylum.sf.ca.us>; Thu, 18 Apr 1996 20:54:42 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id UAA29283; Thu, 18 Apr 1996 20:54:39 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id RAA07212 for coderpunks-outgoing; Thu, 18 Apr 1996 17:43:08 -0700 (PDT)
+Received: from infinity.c2.org (infinity.c2.org [140.174.185.11]) by toad.com (8.7.5/8.7.3) with ESMTP id RAA07204 for <coderpunks@toad.com>; Thu, 18 Apr 1996 17:42:34 -0700 (PDT)
+Received: (from raph@localhost) by infinity.c2.org (8.7.4/8.6.9)
+	id RAA22540; Thu, 18 Apr 1996 17:36:13 -0700 (PDT)
+	Community ConneXion: Privacy & Community: <URL:http://www.c2.net>
+Date: Thu, 18 Apr 1996 17:36:07 -0700 (PDT)
+From: Raph Levien <raph@c2.org>
+To: Hal <hfinney@shell.portal.com>
+cc: coderpunks@toad.com
+Subject: Re: Stream transformation
+In-Reply-To: <199604182333.QAA16185@jobe.shell.portal.com>
+Message-ID: <Pine.SUN.3.91.960418172720.21184A@infinity.c2.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+
+
+On Thu, 18 Apr 1996, Hal wrote:
+
+[...code...]
+>
+> This looks very nice.  Does it work for multiple threads?  Could I do:
+>
+> 	fifo1 = AST_file_read(fdsock1a);
+> 	AST_file_write (fifo1, fdsock1b);
+> 	fifo2 = AST_file_read(fdsock2a);
+> 	AST_file_write (fifo2, fdsock2b);
+>
+> with the intention that this would copy data from fdsock1a to fdsock1b,
+> while simultaneously copying from fdsock2a to fdsock2b?
+
+That's the idea. Sorry if this wasn't clear from the beginning.
+
+> Being able to do this nicely (with filters etc.) was what stalled me on
+> my efforts to make an SSL encrypting web proxy program which would run on
+> the same PC as your browser and transparently do encryption for you.
+> Because browsers use multiple simultaneous connections it is necessary to
+> have multiple transformations going on at once, in an environment of
+> asynchronous, non-blocking I/O (winsock).
+
+See attached code. The resulting server is capable of dealing with an
+arbitrary number of concurrent connections.
+
+Raph
+
+AST_fifo *the_server (AST_socket_server *ss, AST_fifo *in) {
+  AST_fifo *mid1, *out;
+
+  mid1 = AST_lowercase (in);
+  out = AST_b64e (mid1);
+
+  return out;
+}
+
+int main (int argc, char **argv) {
+  int status;
+  struct timeval tv;
+  AST_socket_server *ss;
+
+  AST_init ();
+
+  ss = NEW (AST_socket_server);
+  ss->server = the_server;
+  ss->private = NULL;
+  AST_socket_server_install (ss, 4000);
+
+  do {
+    status = AST_progress ();
+    if (AST_select_pending ()) {
+      tv.tv_sec = 5;
+      tv.tv_usec = 0;
+      AST_select_do (&tv);
+      status = AST_AGAIN;
+    }
+  } while (status == AST_AGAIN);
+
+  AST_done ();
+
+  return 0;
+}
