@@ -41,10 +41,8 @@
 //
 
 class Session: public Object {
-   static Pointer<Session> sessions; // List of all sessions. (global)
+   static List<Session> sessions; // List of all sessions. (global)
 public:
-   Pointer<Session> next;	// next session (global)
-   Pointer<Session> user_next;	// next session (user)
    Pointer<User> user;		// user this session belongs to
    Pointer<Telnet> telnet;	// telnet connection for this session
    InputFuncPtr InputFunc;	// function pointer for input processor
@@ -95,16 +93,13 @@ public:
       Pending.Enqueue(telnet,out);
    }
    void EnqueueOthers(Pointer<Output> &out) { // Enqueue output to others.
-      Pointer<Session> session;
-      for (session = sessions; session; session = session->next) {
-	 if (session == this) continue;
-	 session->Enqueue(out);
-      }
+      ListIter<Session> iter(sessions);
+      while (iter++) if (iter != this) iter->Enqueue(out);
    }
    void AcknowledgeOutput(void) { // Output acknowledgement.
       Pending.Acknowledge();
    }
-   boolean OutputNext(Pointer<Telnet> &telnet) { // Output next output block to Telnet.
+   boolean OutputNext(Pointer<Telnet> &telnet) { // Output next output block.
       return Pending.SendNext(telnet);
    }
 
