@@ -161,20 +161,22 @@ void Session::SaveInputLine(char *line)
 {
    Pointer<Line> p(new Line(line));
    if (lines) {
-      lines = p;
-   } else {
       lines->Append(p);
+   } else {
+      lines = p;
    }
 }
 
 void Session::SetInputFunction(InputFuncPtr input)
 {
+   Pointer<Line> l;
    InputFunc = input;
 
    // Process lines as long as we still have a defined input function.
    while (InputFunc != NULL && lines) {
-      (this->*InputFunc)(lines->line);
-      lines = lines->next;
+      l = lines;
+      lines = l->next;
+      (this->*InputFunc)(l->line);
       EnqueueOutput();		// Enqueue output buffer (if any).
    }
 }
