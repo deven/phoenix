@@ -642,11 +642,12 @@ void Session::SetIdle(char *args) // Set idle time.
       return;
    }
 
-   if (num < login_time) {
+   if (num < login_time && user->priv < 50) {
       output("Sorry, you can't be idle longer than you've been signed on.\n");
       return;
    } else {
       message_time = num;
+      if (message_time < login_time) login_time = message_time;
    }
 
    if (idle && idle != (now - message_time) / 60) {
