@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.6 1994/01/02 11:38:41 deven Exp $
+// $Id: general.h,v 1.7 1994/01/03 10:10:10 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.7  1994/01/03 10:10:10  deven
+// Removed system function declarations.
+//
 // Revision 1.6  1994/01/02 11:38:41  deven
 // Updated copyright notice, added crash() function, removed others.
 //

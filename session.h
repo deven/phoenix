@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.5 1994/01/02 12:06:43 deven Exp $
+// $Id: session.h,v 1.6 1994/01/03 09:31:54 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.6  1994/01/03 09:31:54  deven
+// Added DoClear(), removed SendByFD().
+//
 // Revision 1.5  1994/01/02 12:06:43  deven
 // Updated copyright notice, made class Session derived from Object, modified
 // to use smart pointers, added Close(), Attach() and Detach() functions, made
