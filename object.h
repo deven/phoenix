@@ -39,8 +39,8 @@ public:
    Object(): RefCnt(0) { }
    virtual ~Object() { if (RefCnt > 0) abort(); }
    int References() { return RefCnt; }
-   void NewReference() { RefCnt++; }
-   void DeleteReference() { if (--RefCnt == 0) { RefCnt = -1000; delete this; } }
+   void NewReference() { if (RefCnt++ <= 0) RefCnt = -1; }
+   void DeleteReference() { if (--RefCnt == 0) delete this; }
 };
 
 template <class Type>
