@@ -11,9 +11,10 @@
 // Initial revision
 //
 
-#include <string.h>
+#include "other.h"
 #include "object.h"
 #include "string.h"
+#include "general.h"
 #include "assoc.h"
 
 int Assoc::Hash(String &key)
@@ -65,6 +66,18 @@ void Assoc::Delete(String &key)
 	 entry = entry->next;
       }
    }
+}
+
+boolean Assoc::Known(String &key)
+{
+   int hash = Hash(key);
+   Pointer<AssocEntry> entry(bucket[hash]);
+
+   while (entry) {
+      if (key == entry->key) return true;
+      entry = entry->next;
+   }
+   return false;
 }
 
 String &Assoc::Fetch(String &key)
