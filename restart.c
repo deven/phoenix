@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: restart.c,v 1.3 2002/09/18 02:16:22 deven Exp $
+ * $Id: restart.c,v 1.4 2002/11/26 04:27:51 deven Exp $
  *
  * Utility program to restart Gangplank conferencing server from cron.
  *
@@ -19,6 +19,9 @@
  * for more information or if any conditions of this licensing are unclear.
  *
  * $Log: restart.c,v $
+ * Revision 1.4  2002/11/26 04:27:51  deven
+ * Modified to include both <string.h> and <strings.h> if both are available.
+ *
  * Revision 1.3  2002/09/18 02:16:22  deven
  * Added include file config.h, modified to use paramters from configure's
  * tests to determine which include files to use.  Generate a compile-time

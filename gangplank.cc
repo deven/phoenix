@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.7 2002/11/22 05:06:47 deven Exp $
+// $Id: gangplank.cc,v 1.8 2002/11/26 06:43:22 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,11 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.8  2002/11/26 06:43:22  deven
+// If configure did not find strerror(), define an implementation.  (For very
+// old BSD systems.)  Fixed getpid() back to pid, from last update to startup
+// messages.  (Parent process was reporting the wrong pid for child process.)
+//
 // Revision 1.7  2002/11/22 05:06:47  deven
 // Modified startup messages in logfile to include server version number.
 //

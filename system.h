@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.4 2002/09/17 04:12:52 deven Exp $
+// $Id: system.h,v 1.5 2002/11/26 04:27:51 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.5  2002/11/26 04:27:51  deven
+// Modified to include both <string.h> and <strings.h> if both are available.
+//
 // Revision 1.4  2002/09/17 04:12:52  deven
 // Removed BSD checks, added conditional checks for various includes, based on
 // configure's tests.

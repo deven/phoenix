@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.4 2002/11/21 06:07:48 deven Exp $
+// $Id: string.cc,v 1.5 2002/11/26 04:27:51 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.5  2002/11/26 04:27:51  deven
+// Modified to include both <string.h> and <strings.h> if both are available.
+//
 // Revision 1.4  2002/11/21 06:07:48  deven
 // Changed "string.h" to "string2.h" to avoid conflict with <string.h> file.
 //

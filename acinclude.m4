@@ -1,4 +1,4 @@
-# $Id: acinclude.m4,v 1.2 2002/11/22 05:57:23 deven Exp $
+# $Id: acinclude.m4,v 1.3 2002/11/26 06:36:10 deven Exp $
 
 # If the C++ compiler recognizes bool as a separate built-in type, define
 # HAVE_BOOL.  (Note that a typedef is not a separate type since you cannot
