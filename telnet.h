@@ -77,6 +77,7 @@ private:
    static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
 public:
+   static const int BufSize = 32768;	// size of input buffer
    static const int default_width = 80; // Hardcoded default screen width ***
    static const int minimum_width = 10; // Hardcoded minimum screen width ***
    static const int default_height = 24; // Hardcoded default screen height ***
