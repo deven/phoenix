@@ -103,9 +103,95 @@ Session::Session(Pointer<Telnet> &t)
    inits.AddTail(this);		// Add session to initializing list.
 }
 
+Session::Session(char *User,int Login,int Message,int Away,int SigPub,
+		 int SigPri,char *Name,char *Blurb,char *Sendlist)
+{
+   user = User::GetUser(User);	// User this session belongs to.
+   InputFunc = ProcessInput;	// Normal input function.
+   login_time = (time_t) Login;	// Restore login time.
+   message_time = (time_t) Message; // Restore message time.
+   away = (AwayState) Away;	    // Restore away state.
+   SignalPublic = (char) SigPub;    // Restore public signal flag.
+   SignalPrivate = (char) SigPri;   // Restore private signal flag.
+   SignedOn = true;		    // Signed on.
+   closing = false;		    // Not closing.
+   strncpy(name_only,Name,NameLen); // Restore user name (pseudo).
+   name_only[NameLen] = 0;
+   SetBlurb(Blurb);		// Restore blurb.
+   strncpy(default_sendlist,Sendlist,SendlistLen); // Restore default sendlist.
+   default_sendlist[SendlistLen] = 0;
+   last_sendlist[0] = 0;	// No last sendlist.
+   reply_sendlist[0] = 0;	// No reply sendlist.
+   sessions.AddTail(this);	// Add session to active list.
+}
+
 Session::~Session()
 {
    Close();
+}
+
+void Session::Dump(FILE *state) // Dump a single session.
+{
+   char buf[256];
+   FILE *out;
+
+   if (!SignedOn || closing) return;
+   fprintf(state,"Begin Session.\n");
+   fprintf(state,"%s %d %d %d %d %d\n%s\n%s\n%s\n",(char *) user->user,
+	   login_time,message_time,(int) away,SignalPublic,SignalPrivate,
+	   name_only,blurb,default_sendlist);
+   Pending.Dump(state);
+   fprintf(state,"*** End of output from old server. ***\n");
+   fprintf(state,"End Session. [$(*)#@!]\n");
+}
+
+void Session::DumpState()	// Dump server state for restart.
+{
+   FILE *state;
+
+   log("Saving system state for restart.");
+   unlink("ServerState");
+   if (state = fopen("ServerState","w")) {
+      fprintf(state,"Begin State.\n");
+      ListIter<Session> session(sessions);
+      while (session++) session->Dump(state);
+      fprintf(state,"End State.\n");
+      fclose(state);
+   }
+}
+
+void Session::RestoreState()	// Restore server state after restart.
+{
+   FILE *state;
+   char user[NameLen],name[NameLen],blurb[NameLen],sendlist[SendlistLen];
+   int login,message,away,Public,Private;
+   Pointer<Session> session;
+   char buf[BufSize],*p;
+
+   User::UpdateAll();		// Update user accounts.
+   if (state = fopen("ServerState","r")) {
+      if (fgets(buf,BufSize,state) && !strcmp(buf,"Begin State.\n")) {
+	 while (fgets(buf,BufSize,state) && !strcmp(buf,"Begin Session.\n")) {
+	    if (!fgets(buf,BufSize,state)) break;
+	    sscanf(buf,"%s %d %d %d %d %d\n",user,&login,&message,&away,
+		   &Public,&Private);
+	    if (!fgets(name,NameLen,state)) break;
+	    for (p = name; *p; p++) if (*p == Newline) *p = 0;
+	    if (!fgets(blurb,NameLen,state)) break;
+	    for (p = blurb; *p; p++) if (*p == Newline) *p = 0;
+	    if (!fgets(sendlist,SendlistLen,state)) break;
+	    for (p = sendlist; *p; p++) if (*p == Newline) *p = 0;
+	    session = new Session(user,login,message,away,Public,Private,name,
+				  blurb[0] ? blurb : NULL,sendlist);
+	    while (fgets(buf,BufSize,state) &&
+		   strcmp(buf,"End Session. [$(*)#@!]\n")) {
+	       session->output(buf);
+	    }
+	    session->EnqueueOutput();
+	 }
+      }
+      fclose(state);
+   }
 }
 
 void Session::Close(boolean drain = true) // Close session.
@@ -530,6 +616,7 @@ void Session::ProcessInput(char *line)
       DoReset();
    } else if (*line) {
       DoMessage(line);
+      DumpState();
    }
 }
 
@@ -580,6 +667,7 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
       output(".]\n");
    }
    message_time = now;
+   DumpState();
    return idle;
 }
 
@@ -1360,7 +1448,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
-   if (Telnet::Count() || inits.Count() || sessions.Count()) return;
+   if (Telnet::Count()) return;
    if (Shutdown > 2) {
       log("All connections closed, restarting.");
       RestartServer();

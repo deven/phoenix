@@ -285,6 +285,7 @@ void alrm(int sig)		// received SIGALRM
 
 void RestartServer()		// Restart server.
 {
+   Session::DumpState();
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
@@ -294,6 +295,7 @@ void RestartServer()		// Restart server.
 
 void ShutdownServer()		// Shutdown server.
 {
+   Session::DumpState();
    log("Server down.");
    if (logfile) fclose(logfile);
    exit(0);
@@ -344,6 +346,7 @@ int main(int argc,char **argv)	// main program
    signal(SIGTERM,quit);
    signal(SIGALRM,alrm);
 
+   Session::RestoreState();
    while(1) {
       Session::CheckShutdown();
       FD::Select();

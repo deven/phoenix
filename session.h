@@ -87,7 +87,12 @@ public:
    Pointer<Message> last_message;      // last message sent
 
    Session(Pointer<Telnet> &t);
+   Session(char *User,int Login,int Message,int Away,int SigPub,int SigPri,
+	   char *Name,char *Blurb,char *Sendlist);
    ~Session();
+   void Dump(FILE *state);
+   static void DumpState();
+   static void RestoreState();
    void Close(boolean drain = true);
    void Transfer(Pointer<Telnet> &t);
    void Attach(Pointer<Telnet> &t);

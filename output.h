@@ -50,6 +50,7 @@ public:
    }
    virtual ~Output() {}		// destructor
    virtual void output(Pointer<Telnet> &telnet) = 0;
+   virtual void Dump(FILE *out) = 0;
 };
 
 class Text: public Output {
@@ -59,6 +60,7 @@ public:
    Text(char *buf): Output(TextOutput,TextClass),text(buf) { }
    ~Text() { delete [] text; }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class Message: public Output {
@@ -76,6 +78,7 @@ public:
    }
    ~Message() { delete [] text; }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class EntryNotify: public Output {
@@ -85,6 +88,7 @@ public:
    EntryNotify(Pointer<Name> &who,time_t when = 0):
    Output(EntryOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class ExitNotify: public Output {
@@ -94,6 +98,7 @@ public:
    ExitNotify(Pointer<Name> &who,time_t when = 0):
    Output(ExitOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class TransferNotify: public Output {
@@ -103,6 +108,7 @@ public:
    TransferNotify(Pointer<Name> &who,time_t when = 0):
    Output(TransferOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class AttachNotify: public Output {
@@ -112,6 +118,7 @@ public:
    AttachNotify(Pointer<Name> &who,time_t when = 0):
    Output(AttachOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class DetachNotify: public Output {
@@ -122,6 +129,7 @@ public:
    DetachNotify(Pointer<Name> &who,boolean i,time_t when = 0):
    Output(DetachOutput,NotificationClass,when),name(who),intentional(i) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class HereNotify: public Output {
@@ -131,6 +139,7 @@ public:
    HereNotify(Pointer<Name> &who,time_t when = 0):
    Output(HereOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class AwayNotify: public Output {
@@ -140,6 +149,7 @@ public:
    AwayNotify(Pointer<Name> &who,time_t when = 0):
    Output(AwayOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class BusyNotify: public Output {
@@ -149,6 +159,7 @@ public:
    BusyNotify(Pointer<Name> &who,time_t when = 0):
    Output(BusyOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };
 
 class GoneNotify: public Output {
@@ -158,4 +169,5 @@ public:
    GoneNotify(Pointer<Name> &who,time_t when = 0):
    Output(GoneOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> &telnet);
+   void Dump(FILE *out);
 };

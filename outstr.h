@@ -57,4 +57,9 @@ public:
    void Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out);
    void Dequeue();
    boolean SendNext(Pointer<Telnet> &telnet);
+   void Dump(FILE *out) // Dump output stream.
+   {
+      OutputObject *obj;
+      for (obj = head; obj; obj = obj->next) obj->Output->Dump(out);
+   }
 };
