@@ -60,6 +60,7 @@ public:
    char default_sendlist[SendlistLen]; // current default sendlist
    char last_sendlist[SendlistLen];    // last explicit sendlist
    char reply_sendlist[SendlistLen];   // reply sendlist for last sender
+   Pointer<Message> last_message;      // last message sent
 
    Session(Pointer<Telnet> &t);	// constructor
    ~Session();			// destructor
@@ -103,6 +104,7 @@ public:
       return Pending.SendNext(telnet);
    }
 
+   Pointer<Session> FindSession(char *sendlist,Set<Session> &matches);
    void Login(char *line);
    void Password(char *line);
    void Name(char *line);
