@@ -452,7 +452,7 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
 
 void Telnet::Welcome()
 {
-   // Make sure we're done with initial option negotiations.
+   // Make sure we're done with required initial option negotiations.
    // Intentionally use == with bitfield mask to test both bits at once.
    if (LBin == TelnetWillWont) return;
    if (RBin == TelnetDoDont) return;
@@ -559,10 +559,25 @@ void Telnet::set_RBin(CallbackFuncPtr callback, int state)
    RBin_callback = callback;	// save callback function
 }
 
+// Set telnet NAWS option. (remote)
+void Telnet::set_NAWS(CallbackFuncPtr callback, int state)
+{
+   if (state) {
+      command(TelnetIAC, TelnetDo, TelnetNAWS);
+      NAWS |= TelnetDoDont;	// mark DO sent
+   } else {
+      command(TelnetIAC, TelnetDont, TelnetNAWS);
+      NAWS &= ~TelnetDoDont;	// mark DON'T sent
+   }
+   NAWS_callback = callback;	// save callback function
+}
+
 Telnet::Telnet(int lfd)		// Telnet constructor.
 {
    SetWidth(0);			// Set default terminal width.
    SetHeight(0);		// Set default terminal height.
+   NAWS_width = 0;		// No NAWS subnegotiation yet.
+   NAWS_height = 0;		// No NAWS subnegotiation yet.
    type = TelnetFD;		// Identify as a Telnet FD.
    data = new char[InputSize];	// Allocate input line buffer.
    end = data + InputSize;	// Save end of allocated block.
@@ -581,11 +596,14 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    RSGA = 0;			// SUPPRESS-GO-AHEAD option off (remote)
    LBin = 0;			// TRANSMIT-BINARY option off (local)
    RBin = 0;			// TRANSMIT-BINARY option off (remote)
+   NAWS = 0;			// NAWS option off (remote)
    Echo_callback = 0;		// no ECHO callback (local)
    LSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (local)
    RSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (remote)
    LBin_callback = 0;		// no TRANSMIT-BINARY callback (local)
    RBin_callback = 0;		// no TRANSMIT-BINARY callback (remote)
+   NAWS_callback = 0;		// no NAWS callback (remote)
+   sb_state = TelnetSB_Idle;	// telnet subnegotiation state = idle
 
    fd = accept(lfd, 0, 0);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
@@ -612,6 +630,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    set_LBin(&Telnet::Welcome, true);
    set_RBin(&Telnet::Welcome, true);
    set_Echo(&Telnet::Welcome, true);
+   set_NAWS(0, true);
 
    // Send welcome banner.
    output("\nWelcome to Phoenix!\n\n");
@@ -939,9 +958,9 @@ void Telnet::accept_input()	// Accept input line.
       RBin_callback == &Telnet::Welcome) {
       // Assume this is a raw TCP connection.
       LSGA = RSGA = LBin = RBin = TelnetEnabled;
-      Echo = 0;
+      Echo = NAWS = 0;
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
-         RBin_callback = 0;
+         RBin_callback = NAWS_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
 	     "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
 	     "if you need it.)\n\n");
@@ -1247,7 +1266,8 @@ void Telnet::InputReady()	// telnet stream can input data
 	    case TelnetWont:
 	    case TelnetDo:
 	    case TelnetDont:
-	       // Options negotiation.  Remember which type.
+	    case TelnetSubnegotiationBegin:
+	       // Option negotiation/subnegotiation.  Remember which type.
 	       state = n;
 	       break;
 	    case TelnetIAC:
@@ -1311,6 +1331,27 @@ void Telnet::InputReady()	// telnet stream can input data
 	       if (RSGA_callback) {
 		  (this->*RSGA_callback)();
 		  RSGA_callback = 0;
+	       }
+	       break;
+	    case TelnetNAWS:
+	       if (state == TelnetWill) {
+		  NAWS |= TelnetWillWont;
+		  if (!(NAWS & TelnetDoDont)) {
+		     // Turn on NAWS option.
+		     NAWS |= TelnetDoDont;
+		     command(TelnetIAC, TelnetDo, TelnetNAWS);
+		  }
+	       } else {
+		  NAWS &= ~TelnetWillWont;
+		  if (NAWS & TelnetDoDont) {
+		     // Turn off NAWS option.
+		     NAWS &= ~TelnetDoDont;
+		     command(TelnetIAC, TelnetDont, TelnetNAWS);
+		  }
+	       }
+	       if (NAWS_callback) {
+		  (this->*NAWS_callback)();
+		  NAWS_callback = 0;
 	       }
 	       break;
 	    case TelnetTimingMark:
@@ -1404,6 +1445,79 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    }
 	    state = 0;
+	    break;
+	 case TelnetSubnegotiationBegin:
+	 case TelnetSubnegotiationEnd:
+	    // Process option subnegotiation sequence.
+	    if (state == TelnetSubnegotiationBegin && n == TelnetIAC) {
+	       // Watch for IAC in subnegotiation sequence.
+	       state = TelnetSubnegotiationEnd;
+	       break;
+	    } else if (state == TelnetSubnegotiationEnd) {
+	       // Received IAC during subnegotiation sequence, check for SE.
+	       if (n == TelnetSubnegotiationEnd) {
+		  // Subnegotiation sequence is complete.
+		  switch (sb_state) {
+		  case TelnetSB_NAWS_Done:
+		     // NAWS subnegotiation was successful; set the new size.
+		     SetWidth(NAWS_width);
+		     SetHeight(NAWS_height);
+		     break;
+		  default:
+		     // Subnegotiation was unsuccessful; do nothing.
+		     break;
+		  }
+		  state = 0;
+		  sb_state = TelnetSB_Idle;
+		  break;
+	       } else {
+		  // Return to subnegotiation sequence processing.
+		  state = TelnetSubnegotiationBegin;
+	       }
+
+	       // Allow doubled IAC to fall through as data, ignore others.
+	       if (n != TelnetIAC) break;
+	    }
+
+	    // Process subnegotiation data.
+	    switch (sb_state) {
+	    case TelnetSB_Idle:
+	       // Get subnegotiation option.
+	       switch (n) {
+	       case TelnetNAWS:
+		  // NAWS subnegotiation started.
+		  sb_state = TelnetSB_NAWS_WidthHigh;
+		  break;
+	       default:
+		  // Unknown option subnegotiation started; ignore it.
+		  sb_state = TelnetSB_Unknown;
+		  break;
+	       }
+	       break;
+	    case TelnetSB_NAWS_WidthHigh:
+	       // Get high byte of terminal width.
+	       NAWS_width = n * 256;
+	       sb_state = TelnetSB_NAWS_WidthLow;
+	       break;
+	    case TelnetSB_NAWS_WidthLow:
+	       // Get low byte of terminal width.
+	       NAWS_width += n;
+	       sb_state = TelnetSB_NAWS_HeightHigh;
+	       break;
+	    case TelnetSB_NAWS_HeightHigh:
+	       // Get high byte of terminal height.
+	       NAWS_height = n * 256;
+	       sb_state = TelnetSB_NAWS_HeightLow;
+	       break;
+	    case TelnetSB_NAWS_HeightLow:
+	       // Get low byte of terminal height.
+	       NAWS_height += n;
+	       sb_state = TelnetSB_NAWS_Done;
+	       break;
+	    default:
+	       // Ignore subnegotiation data in other states.
+	       break;
+	    }
 	    break;
 	 case Return:
 	    // Throw away next character.
