@@ -81,6 +81,8 @@ enum Char {			// Character codes.
 // Declarations for system functions.
 extern "C" char *strerror(int err);
 extern "C" char *inet_ntoa(struct in_addr in);
+extern "C" int strcasecmp(const char *s1,const char *s2);
+extern "C" int strncasecmp(const char *s1,const char *s2,size_t len);
 
 // Input function pointer type. ***
 typedef void (*InputFuncPtr)(Telnet *telnet,char *line);
