@@ -115,6 +115,7 @@ public:
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
    boolean undrawn;		// input line undrawn for output?
    boolean closing;		// connection closing?
+   boolean CloseOnEOF;		// close connection on EOF?
    boolean acknowledge;		// use telnet TIMING-MARK option?
    boolean DoEcho;		// should server be echoing?
    char Echo;			// telnet ECHO option (local)

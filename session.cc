@@ -533,6 +533,7 @@ void Session::EnteredName(char *line)
 	       return;
 	    } else {
 	       telnet->output("Re-attaching to detached session...\n");
+	       telnet->CloseOnEOF = false; // Don't close connection on EOF now.
 	       session->Attach(telnet);
 	       telnet = 0;
 	       Close();
@@ -578,6 +579,7 @@ void Session::TransferSession(char *line)
        discussionmatches, false, true)) {
       if (session) {
 	 if (session->user == user) {
+	    telnet->CloseOnEOF = false; // Don't close connection on EOF now.
 	    if (session->telnet) {
 	       telnet->output("Transferring active session...\n");
 	       session->Transfer(telnet);
@@ -644,6 +646,7 @@ void Session::Blurb(char *line)
    DoHowMany("");
 
    telnet->History.Reset();	// Reset input history.
+   telnet->CloseOnEOF = false;	// Don't close connection on EOF now.
 
    SetInputFunction(&Session::ProcessInput); // Set normal input routine.
 }

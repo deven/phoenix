@@ -477,6 +477,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
    closing = false;		// conection not closing
+   CloseOnEOF = true;		// close on EOF
    acknowledge = false;		// Assume no TIMING-MARK option until tested.
    DoEcho = true;		// Do echoing, if ECHO option enabled.
    Echo = 0;			// ECHO option off (local)
@@ -1979,7 +1980,11 @@ void Telnet::InputReady()	// telnet stream can input data
 		  state = ControlC;
 		  break;
 	       case ControlD:
-		  delete_char();
+		  if (CloseOnEOF && point == free && free == data) {
+		     Close();
+		  } else {
+		     delete_char();
+		  }
 		  break;
 	       case ControlE:
 		  end_of_line();
