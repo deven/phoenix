@@ -82,7 +82,7 @@
 # LDFLAGS = -static
 
 # Linux:
-CFLAGS = -g -Wall
+CFLAGS = -Wall
 LDFLAGS = -static
 LIBS = -lcrypt
 
@@ -108,6 +108,7 @@ all: $(EXEC) restart
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
 	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
+	strip $(EXEC)
 
 most.o: $(HDRS) $(MOST)
 assoc.o: other.h boolean.h object.h string.h general.h assoc.h pointer.h \
