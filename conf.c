@@ -176,7 +176,7 @@ void set_input_function(struct telnet *telnet,func_ptr input)
    while (telnet->user->input && telnet->lines) {
       p = telnet->lines;
       telnet->lines = p->next;
-      input(telnet,p->line);
+      telnet->user->input(telnet,p->line);
       free(p->line);
       free(p);
    }
