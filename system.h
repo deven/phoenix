@@ -52,10 +52,10 @@
 
 #ifdef HAVE_STRING_H
 #include <string.h>
-#else
+#endif
+
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
-#endif
 #endif
 
 #ifdef HAVE_MEMORY_H
