@@ -26,6 +26,7 @@
 
 #include "other.h"
 #include "object.h"
+#include "string.h"
 #include "list.h"
 #include "set.h"
 #include "general.h"
