@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.3 2003/02/18 05:08:57 deven Exp $
+// $Id: user.h,v 1.4 2003/09/18 01:44:49 deven Exp $
 //
 // User class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: user.h,v $
+// Revision 1.4  2003/09/18 01:44:49  deven
+// Added support for multiple reserved names.
+//
 // Revision 1.3  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //

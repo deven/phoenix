@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.12 2003/02/24 06:29:36 deven Exp $
+// $Id: gangplank.cc,v 1.13 2003/09/18 01:24:55 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.13  2003/09/18 01:24:55  deven
+// Modified warn(), error() and crash() to check if logfile is open.  Modified
+// to double-fork and close I/O during server startup.
+//
 // Revision 1.12  2003/02/24 06:29:36  deven
 // Removed mkdir() check.  Modified to use LIBDIR instead of "~/lib/gangplank"
 // directory.  Added options processing, required -port to specify port number.

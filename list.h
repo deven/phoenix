@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.2 2003/02/18 05:08:56 deven Exp $
+// $Id: list.h,v 1.3 2003/09/18 01:25:33 deven Exp $
 //
 // List class interface and implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: list.h,v $
+// Revision 1.3  2003/09/18 01:25:33  deven
+// Added Last().
+//
 // Revision 1.2  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //

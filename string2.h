@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string2.h,v 1.8 2003/02/18 05:08:57 deven Exp $
+// $Id: string2.h,v 1.9 2003/09/18 01:38:29 deven Exp $
 //
 // String class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string2.h,v $
+// Revision 1.9  2003/09/18 01:38:29  deven
+// Added trim().
+//
 // Revision 1.8  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //

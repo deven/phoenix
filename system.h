@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.6 2003/02/18 05:08:57 deven Exp $
+// $Id: system.h,v 1.7 2003/09/18 01:41:37 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.7  2003/09/18 01:41:37  deven
+// Include <sys/wait.h> or define macros instead.
+//
 // Revision 1.6  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //
