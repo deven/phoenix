@@ -1,45 +1,147 @@
-add "account" layer also, for account (person) versus "user" (alias)?
+*** Use Telnet TIMING-MARK option as ACK for /detach.  Send once with initial
+*** options (first) to verify response.
 
-perhaps support highlighting somehow?
+*** announce(), link session immediately, make sessions have state different
+*** before signon or have "inactive" and "active" sessions, drop connections
+*** with sessions during login, make sure telnet pointer is valid when input
+*** processing routines are called.  make nuke() session-level as well as
+*** announce().
 
-filter out control characters from messages
+*** fix name_obj whenever name or blurb changes, wipe session pointers in
+*** name objects when session is destroyed.
 
-message length limits?
+*** handle accept() errors (fd==-1) more cleanly than a "range error".
 
-word wrapping
+*** for all reference-counted objects, make sure to decrement & delete when
+*** replacing a pointer with another.  (use operator = and stuff to handle
+*** reference-counted objects safely?)
 
-real accounts
+Have trailing spaces trimmed from output.
 
-server echoing
+Make height & width variable terminal characteristics.
 
-telnet linemode option
+Have Sendlist class have list of sessions and list of discussions.
 
-line editing and redraw
+Possible to check if kernel buffers have drained?  a la TCSA_DRAIN in fcntl()?
 
-session layer (multi-session<->multi-user?)
+Move static Telnet::announce() to non-static Session::announce().
 
-users all in memory
+Fix idle time formatting (spacing), make On Since show date (means multiday
+idle can take advantage of smaller On Since, also.)
 
-output to files merged?
+maybe have some sort of InitSession object?  A different Session object for
+Session protocol?  Make announcements Session-based?
+
+/alias
+
+fd_set scanning optimization (portable & non-portable) [32/8/1 bit]
+
+definitely make terminal-handling class, maybe use termcap
+
+any operators worth using in general?  <<?
+
+maybe save some sort of "persona" structure or something so multiple string
+copies of a name don't have to be saved, but the session doesn't either, or
+the session can change the current name.
+
+Do reference counting in objects and share as many objects as possible.  For
+example, share notification event objects until they have been delivered to
+all parties.  (all have reattached)
+
+put in hash functions, symbol tables/variables for each user/ session, etc?
+
+create "sendlist" class.  for things like "all" or "away" or /who, keywords
+or class extensions?  "group" class?  privilege required for general group
+sending like "all" or "everyone"?
+
+improve editing support (kill-ring)
+
+here/away support, have /reply command to set automatic reply while away.
+(also "reply" keyword on /away but still take blurb, prompt for reply.)
+
+abstract terminal handling
+
+event queue
+
+implement notifications and messages as events, include event queue in session
+for past events while detached, have global or per-session future events in
+another event queue to allow for future message sending...  No bell for any
+messages played back from being detached.
+
+add general code to interpret time values, as relative offsets or absolute.
+
+timed messages -- delayed send, timeouts
+
+add /leave command.  Force disconnect unless /leave cancel is done.
+
+have shutdown/cancel use event queue instead of alarm().
+
+allow for minimum-privilege level required for entry.
+
+allow changed privileges with a !command
+
+expand ; and : immediately
+
+Allow multiline message sends, info file entry, etc. using "." to terminate
+input?  Postpone notifications/messages in event queue a la detach for the
+duration, but still ring bell.  Maybe allow emacs-style editing between lines
+or such?  possibly create a second screen window?
+
+log !commands?
 
 support tcp w/o telnet by not blocking on options and assuming no telnet unless/until reply received.
-
-session -> add redraw -> telnet
 
 no go aheads unless sga *refused*  no block at least
 
 check options against 0 or 3,could be 1 or 2!!
 
-make user accounts
+session -> add redraw -> telnet
 
-privilege levels
+real command parser
 
-allow changed privileges with a !command
+Where does "(-: message" go?  should mirrored smileys not be special-cased?
 
-log !commands?
+improve account handling
 
-when echoing straight text, try to block it up
+users all in memory
 
-previous idle time when reset
+add /notify
 
-timed messages -- delayed send, timeouts
+allow sending to users not signed on (send email notifications?)
+
+add /invite command (email/talk/?)
+
+save session information so state can be reset on restart?
+
+output to files merged with Telnet I/O?
+
+session layer (multi-session<->multi-user?)
+
+telnet linemode option?
+
+add "account" layer also, for account (person) versus "user" (alias)?
+
+perhaps support highlighting somehow?
+
+message length limits?  (recipient confirmation?)
+
+anti-spamming?
+
+incorporate any sort of data compression/encryption/database code?
+
+allow file transfers between users? (storage?)
+
+Have new-handler to toss less important structures, like notifications?
+
+Have operator new and operator delete for Block, etc. save "free" blocks?
+
+maybe handle Listen::RequestShutdown() differently?  Can waiting for a
+response be entwined with attempting to bind on the port?  Can binding to
+the port be integrated into the main loop?
+
+User message logging?  deliver with email/ftp?  conversation/thread logging?
+
+Public vs. private multiple reserved names?
+
+user/pseudo-oriented permissions/notifications, permanent & temporary interest
+levels, etc. (i.e. mark friends, etc.)
