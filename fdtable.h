@@ -23,7 +23,8 @@ public:
    ~FDTable();			// destructor
    void OpenListen(int port);	// Open a listening port.
    void OpenTelnet(int lfd);	// Open a telnet connection.
-   void Close(int fd);		// Close fd.
+   FD *Closed(int fd);		// Close fd, return pointer to FD object.
+   void Close(int fd);		// Close fd, deleting FD object.
    void Select();		// Select across all ready connections.
    void InputReady(int fd);	// Input is ready on file descriptor fd.
    void OutputReady(int fd);	// Output is ready on file descriptor fd.
