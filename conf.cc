@@ -568,8 +568,8 @@ void process_input(Telnet *telnet,char *line)
 	 if (*start) {
 	    for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
 	    if (strncmp(start,"off",end - start + 1)) {
-	       if (*start == '[' && *end == ']' ||
-		   *start == '\"' && *end == '\"') start++; else end++;
+	       if (*start == '\"' && *end == '\"' && start < end ||
+		   *start == '[' && *end == ']') start++; else end++;
 	       if (end - start < len) len = end - start;
 	       strncpy(telnet->session->blurb,start,len);
 	       telnet->session->blurb[len] = 0;
