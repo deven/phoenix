@@ -45,10 +45,6 @@
 #include <crypt.h>
 #endif
 
-#ifndef HAVE_CRYPT
-#error crypt() required!
-#endif
-
 #ifndef HAVE_GETPASS
 #error getpass() required!
 #endif

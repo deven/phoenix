@@ -22,10 +22,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_INET_NTOA
-#error inet_ntoa() required!
-#endif
-
 int Telnet::count = 0;
 
 void Telnet::LogCaller() {	// Log calling host and port.
