@@ -460,21 +460,7 @@ void process_input(Telnet *telnet,char *line)
       }
    } else if (*line == '/') {
       if (!strncasecmp(line,"/bye",4)) {
-	 // Exit conf.
-	 if (telnet->Output.head) {
-	    // Queued output, try to send it first.
-	    telnet->blocked = 0;
-	    telnet->closing = 1;
-
-	    // Don't read any more from connection.
-	    telnet->NoReadSelect();
-
-	    // Do write to connection.
-	    telnet->WriteSelect();
-	 } else {
-	    // No queued output, close immediately.
-	    telnet->Close();
-	 }
+	 telnet->session->DoBye();
       } else if (!strncasecmp(line,"/who",4)) {
 	 // /who list.
 	 Session::who_cmd(telnet);
