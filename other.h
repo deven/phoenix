@@ -53,14 +53,14 @@ extern "C" {
 char *inet_ntoa(struct in_addr in);
 int strcasecmp(const char *s1,const char *s2);
 int strncasecmp(const char *s1,const char *s2,size_t len);
-int setlinebuf(FILE *stream);
+void setlinebuf(FILE *stream);
 pid_t setsid();
-char *crypt(char *key,char *salt);
+char *crypt(const char *key,const char *salt);
 int socket(int domain,int type,int protocol);
-int setsockopt(int s,int level,int optname,char *optval,int optlen);
+int setsockopt(int s,int level,int optname,const void *optval,int optlen);
 int bind(int s,struct sockaddr *name,int namelen);
 int listen(int s,int backlog);
-void bzero(char *b,int length);
+void bzero(void *b,int length);
 int getpeername(int s,struct sockaddr *name,int *namelen);
 int accept(int s,struct sockaddr *addr,int *addrlen);
 int getdtablesize();
