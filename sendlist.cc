@@ -43,8 +43,7 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
    Discussion *discussion = 0;
    Set<Session> sessionmatches;
    Set<Discussion> discussionmatches;
-   String nomatch;
-   String lastnomatch;
+   List<StringObj> nonmatches;
    char *start;
    char *separator;
    char buf[64];
@@ -123,16 +122,11 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 	    }
 	 }
 	 if (!sessionmatches.Count() && !discussionmatches.Count()) {
-	    if (nomatch) {
-	       if (lastnomatch) {
-		  nomatch.append("\", \"");
-		  nomatch.append(lastnomatch);
-	       }
-	       lastnomatch = tmp;
-	    } else {
-	       nomatch = "No names matched \"";
-	       nomatch.append(tmp);
-	    }
+	    ListIter<StringObj> nonmatch(nonmatches);
+	    while (nonmatch++) {
+	       if (tmp == *nonmatch) break;
+            }
+	    if (!nonmatch) nonmatches.AddTail(new StringObj(tmp));
 	 }
       }
       if (separator) {
@@ -141,11 +135,19 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
       }
    } while (separator);
 
-   if (nomatch) {
-      errors.append(nomatch);
-      if (lastnomatch) {
+   if (nonmatches.Count()) {
+      ListIter<StringObj> nonmatch(nonmatches);
+      int left = nonmatches.Count();
+
+      errors.append("No names matched \"");
+      errors.append(*++nonmatch);
+      while (--left > 1 && nonmatch++) {
+	 errors.append("\", \"");
+	 errors.append(*nonmatch);
+      }
+      if (left) {
 	 errors.append("\" or \"");
-	 errors.append(lastnomatch);
+	 errors.append(*++nonmatch);
       }
       errors.append("\".\n");
    }
