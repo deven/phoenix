@@ -1,5 +1,5 @@
 #
-# $Id: configure.ac,v 1.7 2003/02/24 06:25:40 deven Exp $
+# $Id: configure.ac,v 1.8 2003/09/18 03:53:24 deven Exp $
 #
 # Master autoconf configuration file.
 #

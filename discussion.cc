@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.5 2003/02/24 06:26:04 deven Exp $
+// $Id: discussion.cc,v 1.6 2003/09/18 01:19:44 deven Exp $
 //
 // Discussion class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: discussion.cc,v $
+// Revision 1.6  2003/09/18 01:19:44  deven
+// Fixed Join() to check if the user is already a member, added privileged
+// session check to Appoint().
+//
 // Revision 1.5  2003/02/24 06:26:04  deven
 // Removed check for strcasecmp().
 //

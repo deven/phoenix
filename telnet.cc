@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.12 2003/02/24 06:35:42 deven Exp $
+// $Id: telnet.cc,v 1.13 2003/09/18 02:01:29 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.13  2003/09/18 02:01:29  deven
+// Added session checks, fixed timeout, avoided saving empty input lines in
+// history and added application cursor support.
+//
 // Revision 1.12  2003/02/24 06:35:42  deven
 // Removed inet_ntoa() check.
 //
