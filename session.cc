@@ -180,7 +180,7 @@ void Session::Login(char *line)
       }
       fclose(pw);
       if (!found) {
-	 telnet->output("Login incorrect.\n");
+	 if (*line) telnet->output("Login incorrect.\n");
 	 telnet->Prompt("login: ");
 	 return;
       }
