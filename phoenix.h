@@ -2,7 +2,7 @@
 //
 // $Id: conf.h,v 1.7 1994/04/16 05:45:12 deven Exp $
 //
-// Conferencing system server -- Primary header file.
+// Phoenix conferencing system server -- Primary header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //

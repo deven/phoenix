@@ -1,7 +1,7 @@
 /*
  * $Id: restart.c,v 1.1 1993/12/08 02:36:57 deven Exp $
  *
- * Utility program to restart conferencing server from cron.
+ * Utility program to restart Phoenix conferencing server from cron.
  *
  * Copyright 1994 by Deven T. Corzine.  All rights reserved.
  *
@@ -53,5 +53,5 @@ int check_for_server(int port)	/* check for running server */
 void main(int argc,char **argv) /* main program */
 {
    if (check_for_server(PORT)) exit(0);
-   execl("/home/deven/src/conf/conf","conf",0);
+   execl("/home/deven/bin/phoenixd","phoenixd",0);
 }

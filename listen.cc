@@ -24,7 +24,7 @@
 // Initial revision
 //
 
-#include "conf.h"
+#include "phoenix.h"
 
 void Listen::Open(int port)
 {

@@ -20,7 +20,7 @@
 // Initial revision
 //
 
-#include "conf.h"
+#include "phoenix.h"
 
 List<User> User::users;
 
