@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: other.h,v 1.9 1994/04/21 05:54:06 deven Exp $
+// $Id: other.h,v 1.10 1994/05/13 06:01:23 deven Exp $
 //
 // Phoenix conferencing system server -- Other (system) include files.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
+// Revision 1.10  1994/05/13 06:01:23  deven
+// Added #include <sys/stat.h>.
+//
 // Revision 1.9  1994/04/21 05:54:06  deven
 // Renamed "conf" to "Phoenix".
 //

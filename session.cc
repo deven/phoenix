@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.23 1994/05/13 03:48:09 deven Exp $
+// $Id: session.cc,v 1.24 1994/05/13 04:29:59 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.24  1994/05/13 04:29:59  deven
+// Changed (char *) casts to unary operator -() instead.
+//
 // Revision 1.23  1994/05/13 03:48:09  deven
 // Various minor bugfixes and enhancements; major rewrite of /help.
 //

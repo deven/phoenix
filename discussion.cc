@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.1 1994/04/21 06:07:38 deven Exp $
+// $Id: discussion.cc,v 1.2 1994/05/13 04:27:33 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.2  1994/05/13 04:27:33  deven
+// Changed (char *) casts to unary operator -() instead.
+//
 // Revision 1.1  1994/04/21 06:07:38  deven
 // Initial revision
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.18 1994/05/10 06:39:07 deven Exp $
+// $Id: telnet.cc,v 1.19 1994/05/13 04:30:37 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.19  1994/05/13 04:30:37  deven
+// Changed (char *) casts to unary operator -() instead.
+//
 // Revision 1.18  1994/05/10 06:39:07  deven
 // Fixed to not send Go-Aheads endlessly.
 //

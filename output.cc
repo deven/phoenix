@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.7 1994/04/21 06:09:51 deven Exp $
+// $Id: output.cc,v 1.8 1994/05/13 04:28:29 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.8  1994/05/13 04:28:29  deven
+// Changed (char *) casts to unary operator -() instead.
+//
 // Revision 1.7  1994/04/21 06:09:51  deven
 // Renamed "conf" to "Phoenix", added discussion-related notifications and
 // /rename notification.

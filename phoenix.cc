@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.13 1994/04/21 06:11:00 deven Exp $
+// $Id: phoenix.cc,v 1.14 1994/05/13 04:28:54 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.14  1994/05/13 04:28:54  deven
+// Modified to lookup home directory and use ~/lib/phoenix to run in.
+//
 // Revision 1.13  1994/04/21 06:11:00  deven
 // Renamed "conf" to "Phoenix", added trim(), getword() and match() functions.
 //
