@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.9 1994/06/27 05:28:24 deven Exp $
+// $Id: output.cc,v 1.10 1994/07/21 05:56:47 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.10  1994/07/21 05:56:47  deven
+// Fixed /appoint and /unappoint notification messages.
+//
 // Revision 1.9  1994/06/27 05:28:24  deven
 // Changed unary minus to unary tilde on strings.
 //

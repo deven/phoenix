@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.3 1994/06/27 05:27:40 deven Exp $
+// $Id: discussion.cc,v 1.4 1994/07/21 05:56:18 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.4  1994/07/21 05:56:18  deven
+// Fixed /appoint and /unappoint notification messages.
+//
 // Revision 1.3  1994/06/27 05:27:40  deven
 // Changed unary minus to unary tilde on strings.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.28 1994/07/21 02:54:56 deven Exp $
+// $Id: session.cc,v 1.29 1994/07/21 05:57:02 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.29  1994/07/21 05:57:02  deven
+// Added basic colon and semicolon processing, removed idle reset on attach.
+//
 // Revision 1.28  1994/07/21 02:54:56  deven
 // Fixed /send for multiple sendlists.
 //

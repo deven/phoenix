@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.11 1994/04/21 08:53:26 deven Exp $
+// $Id: telnet.h,v 1.12 1994/07/21 06:06:45 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.12  1994/07/21 06:06:45  deven
+// Added basic colon and semicolon processing.
+//
 // Revision 1.11  1994/04/21 08:53:26  deven
 // Added upcase_word(), downcase_word(), capitalize_word() functions.
 //

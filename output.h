@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.7 1994/04/21 05:57:34 deven Exp $
+// $Id: output.h,v 1.8 1994/07/21 05:55:16 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.8  1994/07/21 05:55:16  deven
+// Fixed /appoint and /unappoint notification messages.
+//
 // Revision 1.7  1994/04/21 05:57:34  deven
 // Added discussion-related notifications and /rename notification.
 //
