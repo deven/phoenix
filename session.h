@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.9 1994/01/20 00:22:29 deven Exp $
+// $Id: session.h,v 1.10 1994/01/20 02:19:05 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.10  1994/01/20 02:19:05  deven
+// Added Session::inits as List<Session> for initializing sessions.
+//
 // Revision 1.9  1994/01/20 00:22:29  deven
 // Changed Session::sessions into a List<Session>, removed next, user_next.
 //
