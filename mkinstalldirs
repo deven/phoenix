@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id$
+# $Id: mkinstalldirs,v 1.1 2002/07/05 21:36:57 deven Exp $
 
 errstatus=0
 dirmode=""
