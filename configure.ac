@@ -1,7 +1,7 @@
 # $Id: configure.ac,v 1.1 2002/11/20 03:59:42 deven Exp $
 #
 # Process this file with autoconf to produce a configure script.
-AC_INIT([gangplank], [1.0.0.beta.6], [bugs@gangplank.org])
+AC_INIT([gangplank], [1.0.0.beta.7], [bugs@gangplank.org])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gangplank.cc])
 AM_CONFIG_HEADER([config.h])
