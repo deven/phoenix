@@ -149,11 +149,11 @@ public:
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet,new Text(buf));
    }
-   void Enqueue(Pointer<Output> &out) { // Enqueue output buffer and object.
+   void Enqueue(Pointer<OutputObj> &out) { // Enqueue output buffer and object.
       EnqueueOutput();
       Pending.Enqueue(telnet,out);
    }
-   void EnqueueOthers(Pointer<Output> &out) { // Enqueue output to others.
+   void EnqueueOthers(Pointer<OutputObj> &out) { // Enqueue output to others.
       ListIter<Session> session(sessions);
       while (session++) if (session != this) session->Enqueue(out);
    }
@@ -180,7 +180,7 @@ public:
    void DiscussionMatches(char *name,Set<Discussion> &matches);
    void Login(char *line);
    void Password(char *line);
-   void Name(char *line);
+   void EnteredName(char *line);
    void TransferSession(char *line);
    void Blurb(char *line);
    void ProcessInput(char *line);
