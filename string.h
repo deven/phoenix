@@ -55,8 +55,8 @@ public:
       return len != s.len || strncmp(str,s.str,len) != 0;
    }
    int operator !=(const char *s) { return strcmp(str,s ? s : "") != 0; }
-   const char *operator -() const { return str; }
-   char *operator -() { return str; }
+   const char *operator ~() const { return str; }
+   char *operator ~() { return str; }
    operator const char *() const { return str; }
    operator char *() { return str; }
    operator int() { return len; }
