@@ -39,15 +39,15 @@ the server, etc.
 
 If the password file is not found, only accounts hardcoded in "user.cc" will
 work until a password file is put in place.  By default, this is the "guest"
-account only, but administrative and/or accounts can easily be added also.
+account only, but administrative and/or accounts could easily be added also.
 
-The "restart" program was designed to run every minute from cron, to ensure
-that the server remains running.  It attempts to bind to the server's port,
-and assumes the server is running okay if it CANNOT bind to the port.  If it
-successfully binds to the port, it assumes the server is not running, and
-launches it.  To use this program, add an appropriate "* * * * *" entry to
-the crontab of the user which will run the server.  It is critical that the
-server pathname and port number hardcoded in "restart.c" be correct.
+The server accepts a "-cron" option, which was was designed to run once per
+minute from cron, to ensure that the server remains running.  With the -cron
+option, the server will silently exit if it CANNOT bind to its port, on the
+assumption that another server is already running.  If the server can bind
+to the port, it will startup normally.  To use this option, add cron job such
+as "* * * * * /usr/local/sbin/gangplank -cron" to the crontab of the user to
+run the server under.
 
 The "makepw" program is a simple utility to encrypt Unix-style passwords,
 either by prompting for input or taking a cleartext password as an argument.
