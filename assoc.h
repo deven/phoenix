@@ -43,6 +43,7 @@ public:
    Assoc(): count(0) { }
    int Count() { return count; }
    void Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
+   boolean Known(String &key);
    void Store(String &key,String &value);
    void Delete(String &key);
    String &Fetch(String &key);
