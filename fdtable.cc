@@ -90,6 +90,11 @@ void FDTable::Close(int fd) {	// Close fd, deleting FD object.
    if (FD) FD->Closed();
 }
 
+void FDTable::CloseAll() {	// Close all fds.
+   for (int i = 0; i < used; i++) Close(i);
+   used = 0;
+}
+
 void FDTable::Select()		// Select across all ready connections.
 {
    fd_set rfds = readfds;

@@ -41,6 +41,7 @@ public:
    void OpenTelnet(int lfd);	// Open a telnet connection.
    Pointer<FD> Closed(int fd);	// Close fd, return pointer to FD object.
    void Close(int fd);		// Close fd, deleting FD object.
+   void CloseAll();		// Close all fds.
    void Select();		// Select across all ready connections.
    void InputReady(int fd);	// Input is ready on file descriptor fd.
    void OutputReady(int fd);	// Output is ready on file descriptor fd.

@@ -345,7 +345,11 @@ void Session::ProcessInput(char *line)
          output("Sorry, all !commands are privileged.\n");
          return;
       }
-      if (!strncasecmp(line,"!down",5)) {
+      if (!strncasecmp(line,"!restart",8)) {
+	 while (*line && !isspace(*line)) line++;
+	 while (*line && isspace(*line)) line++;
+	 DoRestart(line);
+      } else if (!strncasecmp(line,"!down",5)) {
 	 while (*line && !isspace(*line)) line++;
 	 while (*line && isspace(*line)) line++;
 	 DoDown(line);
@@ -393,7 +397,8 @@ void Session::ProcessInput(char *line)
    }
 }
 
-void Session::NotifyEntry() {	// Notify other users of entry and log.
+void Session::NotifyEntry()	// Notify other users of entry and log.
+{
    log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
    next = sessions;		// Link session into global list.
@@ -401,7 +406,8 @@ void Session::NotifyEntry() {	// Notify other users of entry and log.
    // Link new session into user list. ***
 }
 
-void Session::NotifyExit() {	// Notify other users of exit and log.
+void Session::NotifyExit()	// Notify other users of exit and log.
+{
    if (telnet) {
       log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    } else {
@@ -435,6 +441,42 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    return idle;
 }
 
+void Session::DoRestart(char *args) // Do !restart command.
+{
+   if (!strcmp(args,"!")) {
+      log("Immediate restart requested by %s (%s).",name_only,user->user);
+      log("Final shutdown warning.");
+      announce("*** %s has restarted conf! ***\n",name);
+      announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
+      alarm(5);
+      Shutdown = 4;
+   } else if (!strcasecmp(args,"cancel")) {
+      if (Shutdown > 2) {
+	 Shutdown = 0;
+	 alarm(0);
+	 log("Restart cancelled by %s (%s).",name_only,user->user);
+	 announce("*** %s has cancelled the server restart. ***\n",name);
+      } else if (Shutdown) {
+	 Shutdown = 0;
+	 alarm(0);
+	 log("Shutdown cancelled by %s (%s).",name_only,user->user);
+	 announce("*** %s has cancelled the server shutdown. ***\n",name);
+      } else {
+	 output("The server was not about to restart.\n");
+      }
+   } else {
+      int seconds;
+      if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
+      log("Restart requested by %s (%s) in %d seconds.",name_only,user->user,
+	  seconds);
+      announce("*** %s has restarted conf! ***\n",name);
+      announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
+	       seconds);
+      alarm(seconds);
+      Shutdown = 3;
+   }
+}
+
 void Session::DoDown(char *args) // Do !down command.
 {
    if (!strcmp(args,"!")) {
@@ -445,7 +487,12 @@ void Session::DoDown(char *args) // Do !down command.
       alarm(5);
       Shutdown = 2;
    } else if (!strcasecmp(args,"cancel")) {
-      if (Shutdown) {
+      if (Shutdown > 2) {
+	 Shutdown = 0;
+	 alarm(0);
+	 log("Restart cancelled by %s (%s).",name_only,user->user);
+	 announce("*** %s has cancelled the server restart. ***\n",name);
+      } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
 	 log("Shutdown cancelled by %s (%s).",name_only,user->user);
@@ -931,10 +978,12 @@ void Session::SendPrivate(char *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
-   if (Shutdown && !sessions) {
+   if (!Shutdown || sessions) return;
+   if (Shutdown > 2) {
+      log("All connections closed, restarting.");
+      RestartServer();
+   } else {
       log("All connections closed, shutting down.");
-      log("Server down.");
-      if (logfile) fclose(logfile);
-      exit(0);
+      ShutdownServer();
    }
 }
