@@ -9,6 +9,7 @@
 // $Log$
 
 #include "other.h"
+#include "boolean.h"
 #include "object.h"
 #include "string.h"
 #include "general.h"
