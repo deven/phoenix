@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Object class interface.
+// Object class interface and implementation, Pointer class interface.
 //
 // Copyright 1992-2001 by Deven T. Corzine.  All rights reserved.
 //

@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Assoc (associative array) class implementation.
+// Hash class implementation.
 //
 // Copyright 1992-2001 by Deven T. Corzine.  All rights reserved.
 //

@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// List class interface.
+// List class interface and implementation.
 //
 // Copyright 1992-2001 by Deven T. Corzine.  All rights reserved.
 //
