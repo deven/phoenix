@@ -39,55 +39,59 @@ void Message::output(Pointer<Telnet> &telnet)
 
 void EntryNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s has entered conf! [%s] ***\n",name->name,
-		 date(time,11,5));
+   telnet->print("*** %s%s has entered conf! [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void ExitNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s has left conf! [%s] ***\n",name->name,
-		 date(time,11,5));
+   telnet->print("*** %s%s has left conf! [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void TransferNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s has transferred to new connection. [%s] ***\n",
-		 name->name,date(time,11,5));
+   telnet->print("*** %s%s has transferred to new connection. [%s] ***\n",
+		 (char *) name->name,(char *) name->blurb,date(time,11,5));
 }
 
 void AttachNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s is now attached. [%s] ***\n",name->name,
-		 date(time,11,5));
+   telnet->print("*** %s%s is now attached. [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void DetachNotify::output(Pointer<Telnet> &telnet)
 {
    if (intentional) {
-      telnet->print("*** %s has intentionally detached. [%s] ***\n",
-		    name->name,date(time,11,5));
+      telnet->print("*** %s%s has intentionally detached. [%s] ***\n",
+		    (char *) name->name,(char *) name->blurb,date(time,11,5));
    } else {
-      telnet->print("*** %s has accidentally detached. [%s] ***\n",
-		    name->name,date(time,11,5));
+      telnet->print("*** %s%s has accidentally detached. [%s] ***\n",
+		    (char *) name->name,(char *) name->blurb,date(time,11,5));
    }
 }
 
 void HereNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s is now here. [%s] ***\n",name->name,date(time,11,5));
+   telnet->print("*** %s%s is now here. [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void AwayNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s is now away. [%s] ***\n",name->name,date(time,11,5));
+   telnet->print("*** %s%s is now away. [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void BusyNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s is now busy. [%s] ***\n",name->name,date(time,11,5));
+   telnet->print("*** %s%s is now busy. [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }
 
 void GoneNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s is now gone. [%s] ***\n",name->name,date(time,11,5));
+   telnet->print("*** %s%s is now gone. [%s] ***\n",(char *) name->name,
+		 (char *) name->blurb,date(time,11,5));
 }

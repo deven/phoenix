@@ -77,7 +77,6 @@ public:
    char SignalPrivate;		// Signal for private messages? (boolean)
    char SignedOn;		// Session signed on? (boolean)
    char closing;		// Session closing? (boolean)
-   String name_only;		// current user name (pseudo) alone
    String name;			// current user name (pseudo)
    String blurb;		// current user blurb
    Pointer<Name> name_obj;	// current name object.

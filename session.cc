@@ -131,7 +131,7 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet = t;
    telnet->session = this;
-   log("Transfer: %s (%s) from fd %d to fd %d.",(char *) name_only,
+   log("Transfer: %s (%s) from fd %d to fd %d.",(char *) name,
        (char *) user->user,old->fd,t->fd);
    old->output("*** This session has been transferred to a new connection. ***"
 	       "\n");
@@ -147,7 +147,7 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
    telnet = t;
    telnet->session = this;
-   log("Attach: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+   log("Attach: %s (%s) on fd %d.",(char *) name,(char *) user->user,
        telnet->fd);
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
@@ -161,10 +161,10 @@ void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
    if (SignedOn && telnet) {
       if (telnet == t) {
 	 if (intentional) {
-	    log("Detach: %s (%s) on fd %d. (intentional)",(char *) name_only,
+	    log("Detach: %s (%s) on fd %d. (intentional)",(char *) name,
 		(char *) user->user,t->fd);
 	 } else {
-	    log("Detach: %s (%s) on fd %d. (accidental)",(char *) name_only,
+	    log("Detach: %s (%s) on fd %d. (accidental)",(char *) name,
 		(char *) user->user,t->fd);
 	 }
 	 EnqueueOthers(new DetachNotify(name_obj,intentional));
@@ -274,8 +274,8 @@ Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
    Pointer<Session> lead,match;
    ListIter<Session> session(sessions);
    while (session++) {
-      if (!strcasecmp(session->name_only,sendlist)) return session;
-      if (pos = match_name(session->name_only,sendlist)) {
+      if (!strcasecmp(session->name,sendlist)) return session;
+      if (pos = match_name(session->name,sendlist)) {
 	 if (pos == 1) {
 	    count++;
 	    lead = session;
@@ -364,23 +364,23 @@ void Session::Name(char *line)
 {
    if (!*line) {		// blank line
       if (user->reserved) {
-	 name_only = user->reserved;
+	 name = user->reserved;
       } else {
 	 telnet->Prompt("Enter name: ");
 	 return;
       }
    } else {
-      name_only = line;		// Save user's name.
+      name = line;		// Save user's name.
    }
    User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(name_only)) {
+   if (user->CheckReserved(name)) {
       telnet->output("That name is reserved.  Choose another.\n");
       telnet->Prompt("Enter name: ");
       return;
    }
    ListIter<Session> session(sessions);
    while (session++) {
-      if (!strcasecmp(session->name_only,name_only)) {
+      if (!strcasecmp(session->name,name)) {
 	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("You are attached elsewhere under that name.\n");
@@ -414,14 +414,14 @@ void Session::TransferSession(char *line)
       return;
    }
    User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(name_only)) {
+   if (user->CheckReserved(name)) {
       telnet->output("That name is now reserved.  Choose another.\n");
       telnet->Prompt("Enter name: ");
       return;
    }
    ListIter<Session> session(sessions);
    while (session++) {
-      if (!strcasecmp(session->name_only,name_only)) {
+      if (!strcasecmp(session->name,name)) {
 	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("Transferring active session...\n");
@@ -545,10 +545,10 @@ void Session::ProcessInput(char *line)
 void Session::NotifyEntry()	// Notify other users of entry and log.
 {
    if (telnet) {
-      log("Enter: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+      log("Enter: %s (%s) on fd %d.",(char *) name,(char *) user->user,
 	  telnet->fd);
    } else {
-      log("Enter: %s (%s), detached.",(char *) name_only,(char *) user->user);
+      log("Enter: %s (%s), detached.",(char *) name,(char *) user->user);
    }
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
 }
@@ -556,10 +556,10 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
 void Session::NotifyExit()	// Notify other users of exit and log.
 {
    if (telnet) {
-      log("Exit: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+      log("Exit: %s (%s) on fd %d.",(char *) name,(char *) user->user,
 	  telnet->fd);
    } else {
-      log("Exit: %s (%s), detached.",(char *) name_only,(char *) user->user);
+      log("Exit: %s (%s), detached.",(char *) name,(char *) user->user);
    }
    EnqueueOthers(new ExitNotify(name_obj));
 }
@@ -669,24 +669,22 @@ void Session::SetBlurb(char *newblurb) // Set a new blurb.
    ResetIdle(10);
    if (newblurb) {
       blurb = newblurb;
-      name = name_only;
-      name.append(" [");
-      name.append(blurb);
-      name.append(']');
+      blurb.prepend(" [");
+      blurb.append(']');
    } else {
       blurb = "";
-      name = name_only;
    }
-   name_obj = new Name(this,name_obj,name);
+   name_obj = new Name(this,name,blurb);
 }
 
 void Session::DoRestart(char *args) // Do !restart command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate restart requested by %s (%s).",(char *) name_only,
+      log("Immediate restart requested by %s (%s).",(char *) name,
 	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s has restarted conf! ***\n",(char *) name);
+      announce("*** %s%s has restarted conf! ***\n",(char *) name,
+	       (char *) blurb);
       announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 4;
@@ -694,26 +692,27 @@ void Session::DoRestart(char *args) // Do !restart command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",(char *) name_only,
+	 log("Restart cancelled by %s (%s).",(char *) name,
 	     (char *) user->user);
-	 announce("*** %s has cancelled the server restart. ***\n",
-		  (char *) name);
+	 announce("*** %s%s has cancelled the server restart. ***\n",
+		  (char *) name,(char *) blurb);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",(char *) name_only,
+	 log("Shutdown cancelled by %s (%s).",(char *) name,
 	     (char *) user->user);
-	 announce("*** %s has cancelled the server shutdown. ***\n",
-		  (char *) name);
+	 announce("*** %s%s has cancelled the server shutdown. ***\n",
+		  (char *) name,(char *) blurb);
       } else {
 	 output("The server was not about to restart.\n");
       }
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Restart requested by %s (%s) in %d seconds.",(char *) name_only,
+      log("Restart requested by %s (%s) in %d seconds.",(char *) name,
 	  (char *) user->user,seconds);
-      announce("*** %s has restarted conf! ***\n",(char *) name);
+      announce("*** %s%s has restarted conf! ***\n",(char *) name,
+	       (char *) blurb);
       announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
 	       seconds);
       alarm(seconds);
@@ -724,10 +723,11 @@ void Session::DoRestart(char *args) // Do !restart command.
 void Session::DoDown(char *args) // Do !down command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate shutdown requested by %s (%s).",(char *) name_only,
+      log("Immediate shutdown requested by %s (%s).",(char *) name,
 	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s has shut down conf! ***\n",(char *) name);
+      announce("*** %s%s has shut down conf! ***\n",(char *) name,
+	       (char *) blurb);
       announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 2;
@@ -735,26 +735,27 @@ void Session::DoDown(char *args) // Do !down command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",(char *) name_only,
+	 log("Restart cancelled by %s (%s).",(char *) name,
 	     (char *) user->user);
-	 announce("*** %s has cancelled the server restart. ***\n",
-		  (char *) name);
+	 announce("*** %s%s has cancelled the server restart. ***\n",
+		  (char *) name,(char *) blurb);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",(char *) name_only,
+	 log("Shutdown cancelled by %s (%s).",(char *) name,
 	     (char *) user->user);
-	 announce("*** %s has cancelled the server shutdown. ***\n",
-		  (char *) name);
+	 announce("*** %s%s has cancelled the server shutdown. ***\n",
+		  (char *) name,(char *) blurb);
       } else {
 	 output("The server was not about to shut down.\n");
       }
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Shutdown requested by %s (%s) in %d seconds.",(char *) name_only,
+      log("Shutdown requested by %s (%s) in %d seconds.",(char *) name,
 	  (char *) user->user,seconds);
-      announce("*** %s has shut down conf! ***\n",(char *) name);
+      announce("*** %s%s has shut down conf! ***\n",(char *) name,
+	       (char *) blurb);
       announce("\a\a>>> This server will shutdown in %d seconds... <<<\n\a\a",
 	       seconds);
       alarm(seconds);
@@ -773,25 +774,25 @@ void Session::DoNuke(char *args) // Do !nuke command.
    if (session = FindSession(args,matches)) {
       // Nuke target session.  // Should require confirmation! ***
       if (drain) {
-	 print("\"%s\" has been nuked.\n",(char *) session->name_only);
+	 print("\"%s\" has been nuked.\n",(char *) session->name);
       } else {
-	 print("\"%s\" has been nuked immediately.\n",(char *) session->name_only);
+	 print("\"%s\" has been nuked immediately.\n",(char *) session->name);
       }
 
       if (session->telnet) {
 	 Pointer<Telnet> telnet(session->telnet);
 	 session->telnet = NULL;
 	 log("%s (%s) on fd %d has been nuked by %s (%s).",
-	     (char *) session->name_only,(char *) session->user->user,telnet->fd,
-	     (char *) name_only,(char *) user->user);
+	     (char *) session->name,(char *) session->user->user,telnet->fd,
+	     (char *) name,(char *) user->user);
 	 telnet->UndrawInput();
-	 telnet->print("\a\a\a*** You have been nuked by %s. ***\n",
-		       (char *) name);
+	 telnet->print("\a\a\a*** You have been nuked by %s%s. ***\n",
+		       (char *) name,(char *) blurb);
 	 telnet->RedrawInput();
 	 telnet->Close(drain);
       } else {
 	 log("%s (%s), detached, has been nuked by %s (%s).",
-	     (char *) session->name_only,(char *) session->user->user,(char *) name_only,
+	     (char *) session->name,(char *) session->user->user,(char *) name,
 	     (char *) user->user);
 	 session->Close();
       }
@@ -807,10 +808,10 @@ void Session::DoNuke(char *args) // Do !nuke command.
 	 SetIter<Session> session(matches);
 
 	 print("\a\a\"%s\" matches %d names: ",(char *) tmp,matches.Count());
-	 output((char *) session++->name_only);
+	 output((char *) session++->name);
 	 while (session++) {
 	    output(", ");
-	    output((char *) session->name_only);
+	    output((char *) session->name);
 	 }
 	 output(". (nobody nuked)\n");
       } else {
@@ -839,6 +840,7 @@ void Session::DoDetach()	// Do /detach command.
 
 void Session::DoWho()		// Do /who command.
 {
+   String tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
    char buf[32];
@@ -874,7 +876,9 @@ void Session::DoWho()		// Do /who command.
       } else {
 	 output(Tilde);
       }
-      print("%-32.32s%c ",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
+      tmp = session->name;
+      tmp.append(session->blurb);
+      print("%-32.32s%c ",(char *) tmp,tmp.length() > 32 ? '+' : ' ');
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
@@ -925,6 +929,7 @@ void Session::DoWho()		// Do /who command.
 
 void Session::DoWhy()		// Do /why command.
 {
+   String tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
    char buf[32];
@@ -966,7 +971,9 @@ void Session::DoWhy()		// Do /why command.
       } else {
 	 output(Tilde);
       }
-      print("%-32.32s%c ",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
+      tmp = session->name;
+      tmp.append(session->blurb);
+      print("%-32.32s%c ",(char *) tmp,tmp.length() > 32 ? '+' : ' ');
       if ((now - session->login_time) < 86400) {
 	 output(date(session->login_time,11,8));
       } else {
@@ -1019,6 +1026,7 @@ void Session::DoWhy()		// Do /why command.
 
 void Session::DoIdle(char *args) // Do /idle command.
 {
+   String tmp;
    int idle,days,hours,minutes;
    int now = time(NULL);
    int col = 0;
@@ -1055,7 +1063,9 @@ void Session::DoIdle(char *args) // Do /idle command.
       } else {
 	 output(Tilde);
       }
-      print("%-32.32s%c",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
+      tmp = session->name;
+      tmp.append(session->blurb);
+      print("%-32.32s%c",(char *) tmp,tmp.length() > 32 ? '+' : ' ');
       idle = (now - session->message_time) / 60;
       if (idle) {
 	 hours = idle / 60;
@@ -1160,7 +1170,7 @@ void Session::DoBlurb(char *start,boolean entry = false)
 	     *start == '[' && *end == ']') start++; else end++;
 	 start[end - start] = 0;
 	 SetBlurb(start);
-	 if (!entry) print("Your blurb has been set to [%s].\n",(char *) blurb);
+	 if (!entry) print("Your blurb has been set to%s.\n",(char *) blurb);
       } else {
 	 if (entry || blurb) {
 	    SetBlurb(NULL);
@@ -1173,7 +1183,7 @@ void Session::DoBlurb(char *start,boolean entry = false)
       SetBlurb(NULL);
    } else {
       if (blurb) {
-	 print("Your blurb is currently set to [%s].\n",(char *) blurb);
+	 print("Your blurb is currently set to%s.\n",(char *) blurb);
       } else {
 	 output("You do not currently have a blurb set.\n");
       }
@@ -1400,6 +1410,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
       ResetIdle(10);
       output("(message sent to ");
       output((char *) session->name);
+      output((char *) session->blurb);
       if (!session->telnet) output(", detached");
       switch (session->away) {
       case Here:
@@ -1430,10 +1441,10 @@ void Session::SendPrivate(char *sendlist,char *msg)
 	 SetIter<Session> session(matches);
 
 	 print("\a\a\"%s\" matches %d names: ",sendlist,matches.Count());
-	 output((char *) session++->name_only);
+	 output((char *) session++->name);
 	 while (session++) {
 	    output(", ");
-	    output((char *) session->name_only);
+	    output((char *) session->name);
 	 }
 	 output(". (message not sent)\n");
       } else {
