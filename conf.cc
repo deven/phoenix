@@ -393,27 +393,13 @@ void name(Telnet *telnet,char *line)
 
 void blurb(Telnet *telnet,char *line)
 {
-   int over;
-
-   if (!*line) line = telnet->session->user->default_blurb;
-   if (*line) {
-      over = strlen(telnet->session->name_only) + strlen(line) + 4 - NameLen;
-      if (over > 0) {
-	 telnet->print("The combination of your name and blurb is %d character"
-		       "%s too long.\n",over,over == 1 ? "" : "s");
-	 // Prompt for blurb.
-	 telnet->Prompt("Enter blurb: ");
-	 return;
-      } else {
-	 // Save user's name, with blurb.
-	 strcpy(telnet->session->blurb,line);
-	 sprintf(telnet->session->name,"%s [%s]",telnet->session->name_only,
-		 telnet->session->blurb);
-      }
-   } else {
-      // Save user's name, no blurb.
-      telnet->session->blurb[0] = 0;
-      strcpy(telnet->session->name,telnet->session->name_only);
+   if (!line || !*line) line = telnet->session->user->default_blurb;
+   int over = telnet->session->DoBlurb(line,true);
+   if (over) {
+      telnet->print("The combination of your name and blurb is %d "
+		    "character%s too long.\n",over,over == 1 ? "" : "s");
+      telnet->Prompt("Enter blurb: ");
+      return;
    }
 
    // Announce entry.
@@ -472,41 +458,8 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strncasecmp(line,"/why",4)) {
 	 telnet->session->DoWhy();
       } else if (!strncasecmp(line,"/blurb",3)) {
-	 char *start = line,*end;
-	 int len = NameLen - strlen(telnet->session->name_only) - 4;
-
-	 while (*start && !isspace(*start)) start++;
-	 while (*start && isspace(*start)) start++;
-	 if (*start) {
-	    for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
-	    if (strncasecmp(start,"off",end - start + 1)) {
-	       if (*start == '\"' && *end == '\"' && start < end ||
-		   *start == '[' && *end == ']') start++; else end++;
-	       if (end - start < len) len = end - start;
-	       strncpy(telnet->session->blurb,start,len);
-	       telnet->session->blurb[len] = 0;
-	       sprintf(telnet->session->name,"%s [%s]",
-		       telnet->session->name_only,telnet->session->blurb);
-	       telnet->print("Your blurb has been %s to [%s].\n",
-			     end - start > len ? "truncated" : "set",
-			     telnet->session->blurb);
-	    } else {
-	       if (telnet->session->blurb[0]) {
-		  telnet->session->blurb[0] = 0;
-		  strcpy(telnet->session->name,telnet->session->name_only);
-		  telnet->output("Your blurb has been turned off.\n");
-	       } else {
-		  telnet->output("Your blurb was already turned off.\n");
-	       }
-	    }
-	 } else {
-	    if (telnet->session->blurb[0]) {
-	       telnet->print("Your blurb is currently set to [%s].\n",
-			      telnet->session->blurb);
-	    } else {
-	       telnet->output("You do not currently have a blurb set.\n");
-	    }
-	 }
+	 while (*line && !isspace(*line)) line++;
+	 telnet->session->DoBlurb(line);
       } else if (!strncasecmp(line,"/help",5)) {
 	 telnet->output("Currently known commands:\n\n"
 			"/blurb -- set a descriptive blurb\n"

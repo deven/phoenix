@@ -262,6 +262,49 @@ void Session::DoWhy()		// Do /why command.
    telnet->output("Why not?\n");
 }
 
+// Do /blurb command (or blurb set on entry), return number of bytes truncated.
+int Session::DoBlurb(char *start,boolean entry = false)
+{
+   char *end;
+   while (*start && isspace(*start)) start++;
+   if (*start) {
+      for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
+      if (strncasecmp(start,"off",end - start + 1)) {
+	 if (*start == '\"' && *end == '\"' && start < end ||
+	     *start == '[' && *end == ']') start++; else end++;
+	 int len = end - start;
+	 int over = len - (NameLen - strlen(name_only) - 4);
+	 if (over < 0) over = 0;
+	 len -= over;
+	 strncpy(blurb,start,len);
+	 blurb[len] = 0;
+	 sprintf(name,"%s [%s]",name_only,blurb);
+	 if (!entry) telnet->print("Your blurb has been %s to [%s].\n",over ?
+	       "truncated" : "set",blurb);
+	 return over;
+      } else {
+	 if (entry || blurb[0]) {
+	    blurb[0] = 0;
+	    strcpy(name,name_only);
+	    if (!entry) telnet->output("Your blurb has been turned off.\n");
+	 } else {
+	    if (!entry) telnet->output("Your blurb was already turned off.\n");
+	 }
+      }
+   } else if (entry) {
+      blurb[0] = 0;
+      strcpy(name,name_only);
+   } else {
+      if (blurb[0]) {
+	 if (!entry) telnet->print("Your blurb is currently set to [%s].\n",
+	       blurb);
+      } else {
+	 if (!entry) telnet->output("You do not currently have a blurb set.\n");
+      }
+   }
+   return 0;
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
