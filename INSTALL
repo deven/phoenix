@@ -1,18 +1,19 @@
-$Id: INSTALL,v 1.1 2001/12/12 05:44:00 deven Exp $
+$Id: INSTALL,v 1.2 2002/09/17 06:24:10 deven Exp $
 
 This document describes how to build and install the Gangplank CMC server.
 
-Before compiling, check the Makefile for platform-specific changes which
-may need to be made by hand.  (For example, Solaris requires "-lsocket -lnsl"
-and BSD does not use "-lcrypt".)  Building static executables is optional.
+Use "./configure --help" to see the configuration options available.  Use
+"./configure" alone to configure with the defaults.  After configuring,
+build the server with "make" and install it with "make install".
 
-The default TCP port number is 9999.  To use a different port number, change
-the definitions of "DefaultPort" in "constants.h" and "PORT" in "restart.c".
-To use the standard telnet port (port 23), it would be necessary to run the
-server as root.  There is currently no code to give up root privileges, so
-use caution.  If a port number over 1024 is used, any user can run the server.
+The default TCP port number is 9999.  Use the "--enable-port" configure
+option to change this.  For example, "--enable-port=23" will use the
+standard port for the TELNET protocol.  This would require running the
+server as root to bind to the privileged port.  There is currently no code
+to give up root privileges, so use caution.  If a port number over 1024 is
+used, any user can run the server.
 
-If a "guest" login is not desired, comment out the relevant line in "user.cc".
+If a "guest" login is not desired, use the "--disable-guest" option.
 
 The default server executable pathname is "/usr/local/bin/gangplank"; change
 this in "restart.c" and "event.cc" if the server is to be installed elsewhere.
