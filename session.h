@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.22 1995/10/27 03:55:22 deven Exp $
+// $Id: session.h,v 1.24 1996/02/19 23:50:58 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.24  1996/02/19 23:50:58  deven
+// Changed "Output" class to "OutputObj" to avoid conflicts.
+//
+// Revision 1.23  1996/02/19 23:40:08  deven
+// Changed Name() to EnteredName() to avoid conflict with class Name.
+//
 // Revision 1.22  1995/10/27 03:55:22  deven
 // Added user_vars and sys_vars Assoc arrays per session and static defaults
 // Assoc array for all sessions.  Added init_defaults() and DoDisplay().

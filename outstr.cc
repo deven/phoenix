@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.7 1994/04/21 06:10:20 deven Exp $
+// $Id: outstr.cc,v 1.8 1996/02/19 23:51:51 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.8  1996/02/19 23:51:51  deven
+// Changed "Output" class to "OutputObj" to avoid conflicts.
+//
 // Revision 1.7  1994/04/21 06:10:20  deven
 // Renamed "conf" to "Phoenix", added Unenqueue() function.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.11 1996/02/19 23:25:47 deven Exp $
+// $Id: output.cc,v 1.12 1996/02/19 23:51:32 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.12  1996/02/19 23:51:32  deven
+// Changed "Output" class to "OutputObj" to avoid conflicts.
+//
 // Revision 1.11  1996/02/19 23:25:47  deven
 // Changed "explicit" to "is_explicit" to make GCC 2.7.2 happy.
 //
