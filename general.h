@@ -83,8 +83,8 @@ enum Char {			// Character codes.
    ControlV, ControlW, ControlX, ControlY, ControlZ, Escape,
    Bell = '\007', Backspace = '\010', Tab = '\t', Linefeed = '\n',
    Newline = '\n', Return = '\r', Space = ' ', Quote = '\"', Colon = ':',
-   Semicolon = ';', Backslash = '\\', Underscore = '_', Delete = 127,
-   CSI = 155, UnquotedUnderscore = 128
+   Semicolon = ';', Backslash = '\\', Underscore = '_', Tilde = '~',
+   Delete = 127, CSI = 155, UnquotedUnderscore = 128
 };
 
 // Declarations for system functions.

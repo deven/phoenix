@@ -417,7 +417,12 @@ void Session::DoWho()		// Do /who command.
 
    // Output data about each user.
    for (Session *session = sessions; session; session = session->next) {
-      print(" %-32s  ",session->name);
+      if (session->telnet) {
+	 output(Space);
+      } else {
+	 output(Tilde);
+      }
+      print("%-32s  ",session->name);
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
@@ -480,7 +485,12 @@ void Session::DoIdle()		// Do /idle command.
 
    // Output data about each user.
    for (Session *session = sessions; session; session = session->next) {
-      print(" %-32s ",session->name);
+      if (session->telnet) {
+	 output(Space);
+      } else {
+	 output(Tilde);
+      }
+      print("%-32s ",session->name);
       idle = (now - session->message_time) / 60;
       if (idle) {
 	 hours = idle / 60;
