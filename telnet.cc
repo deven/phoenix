@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.15 1994/04/21 06:17:17 deven Exp $
+// $Id: telnet.cc,v 1.16 1994/04/21 08:54:00 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.16  1994/04/21 08:54:00  deven
+// Added upcase_word(), downcase_word(), capitalize_word() functions.
+//
 // Revision 1.15  1994/04/21 06:17:17  deven
 // Renamed "conf" to "Phoenix", changed message format, added input history,
 // simple kill ring, added word editing commands.
