@@ -536,6 +536,7 @@ void Session::Name(char *line)
    Set<Session> sessionmatches;
    Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
+   Pointer<User> u;
 
    if (!*line) {		// blank line
       if (user->reserved) {
@@ -552,9 +553,9 @@ void Session::Name(char *line)
       telnet->Prompt("Enter name: ");
       return;
    }
-   User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(name)) {
-      telnet->output("That name is reserved.  Choose another.\n");
+   if (user->FindReserved(name,u)) {
+      telnet->print("\"%s\" is a reserved name.  Choose another.\n",
+         ~u->reserved);
       telnet->Prompt("Enter name: ");
       return;
    }
@@ -596,6 +597,7 @@ void Session::TransferSession(char *line)
    Set<Session> sessionmatches;
    Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
+   Pointer<User> u;
 
    if (!match(line,"yes",1)) {
       telnet->output("Session not transferred.\n");
@@ -603,9 +605,9 @@ void Session::TransferSession(char *line)
       SetInputFunction(Name);
       return;
    }
-   User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(name)) {
-      telnet->output("That name is now reserved.  Choose another.\n");
+   if (user->FindReserved(name,u)) {
+      telnet->print("\"%s\" is now a reserved name.  Choose another.\n",
+         ~u->reserved);
       telnet->Prompt("Enter name: ");
       return;
    }
@@ -1660,6 +1662,7 @@ void Session::DoCreate(char *args) // Do /create command.
    Set<Session> sessionmatches;
    Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
+   Pointer<User> u;
    char *name;
    boolean Public = true;
 
@@ -1681,10 +1684,11 @@ void Session::DoCreate(char *args) // Do /create command.
       output("The keyword \"me\" is reserved.  (not created)\n");
       return;
    }
-   User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(name)) {
-      print("There is a reserved name conflicting with \"%s\". "
-	     "(not created)\n",name);
+   if (user->FindReserved(name,u)) {
+      print("\"%s\" is a reserved name. (not created)\n",~u->reserved);
+      return;
+   } else if (u == user) {
+      print("\"%s\" is your reserved name. (not created)\n",~u->reserved);
       return;
    }
    if (FindSendable(name,session,sessionmatches,discussion,discussionmatches,
@@ -1855,6 +1859,7 @@ void Session::DoRename(char *args) // Do /rename command.
    Set<Session> sessionmatches;
    Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
+   Pointer<User> u;
 
    if (!*args) {
       output("Usage: /rename <name>\n");
@@ -1864,9 +1869,8 @@ void Session::DoRename(char *args) // Do /rename command.
       output("The keyword \"me\" is reserved.  (name unchanged)\n");
       return;
    }
-   User::UpdateAll();		// Update user accounts.
-   if (user->CheckReserved(args)) {
-      output("That name is reserved.  (name unchanged)\n");
+   if (user->FindReserved(args,u)) {
+      print("\"%s\" is a reserved name.  (name unchanged)\n",~u->reserved);
       return;
    }
    if (FindSendable(args,session,sessionmatches,discussion,discussionmatches,

@@ -70,13 +70,17 @@ void User::UpdateAll()		// Update all user entries from password file.
    Update("guest",NULL,NULL,NULL,0);
 }
 
-boolean User::CheckReserved(char *name)
+boolean User::FindReserved(char *name,Pointer<User> &user)
 {
+   UpdateAll();			// Update user accounts.
+
    ListIter<User> u(users);
    while (u++) {
-      if (u != this && u->reserved && !strcasecmp(u->reserved,name)) {
-	 return true;
+      if (u->reserved && !strcasecmp(u->reserved,name)) {
+         user = u;
+	 return boolean(u != this);
       }
    }
+   user = 0;
    return false;
 }
