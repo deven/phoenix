@@ -108,8 +108,8 @@ enum Char {			// Character codes.
    Bell = '\007', Backspace = '\010', Tab = '\t', Linefeed = '\n',
    Newline = '\n', Return = '\r', Space = ' ', Quote = '\"', Colon = ':',
    Semicolon = ';', Backslash = '\\', Underscore = '_', Tilde = '~',
-   Comma = ',', Delete = 127, CSI = 155, UnquotedUnderscore = 128,
-   Separator = 129
+   Equals = '=', Comma = ',', DollarSign = '$', Delete = 127, CSI = 155,
+   UnquotedUnderscore = 128, Separator = 129
 };
 
 // Input function pointer type.

@@ -743,7 +743,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/why",4)) DoWhy(line);
       else if (match(line,"/date",3)) DoDate(line);
       else if (match(line,"/signal",3)) DoSignal(line);
-      else if (match(line,"/setidle",8)) SetIdle(line);
+      else if (match(line,"/set",4)) DoSet(line);
       else output("Unknown /command.  Type /help for help.\n");
    } else if (!strcmp(line," ")) {
       DoReset();
@@ -1007,6 +1007,28 @@ void Session::DoNuke(char *args) // Do !nuke command.
 void Session::DoBye(char *args)	// Do /bye command.
 {
    Close();			// Close session.
+}
+
+void Session::DoSet(char *args) // Do /set command.
+{
+   char *var;
+
+   var = getword(args,Equals);
+   if (!var || !*args) {
+      output("Usage: /set <variable>=<value>\n");
+      return;
+   }
+   if (*var == DollarSign) {
+      output("User variables are not yet implemented.\n");
+      return;
+   }
+   if (match(var,"idle")) {
+      SetIdle(args);
+      return;
+   } else {
+      print("Unknown system variable: \"%s\"\n",var);
+      return;
+   }
 }
 
 void Session::DoClear(char *args) // Do /clear command.
@@ -2208,7 +2230,7 @@ and \"gone\", how many users are attached and detached, total number of\n\
 users signed on, and how many discussions are active.\n");
    } else if (match(args,"/why",4) || match(args,"why",3)) {
       output("\
-The /why command is pretty self-explanatory.\n");
+The /why command is pretty self-explanatory. (try it!)\n");
    } else if (match(args,"/date",3) || match(args,"date",4)) {
       output("\
 The /date command prints the current date and time like the date(1) command.\n\
@@ -2219,17 +2241,6 @@ The /signal command is used to control whether or not to ring the terminal\n\
 bell when incoming messages arrive.  There are separate controls for public\n\
 and private messages.  The default is on for both.\n\n\
 Syntax: /signal [public|private] [on|off]\n");
-   } else if (match(args,"/setidle",8) || match(args,"setidle",7)) {
-      output("\
-The /setidle command is used to set an arbitrary idle time.  It will later\n\
-become \"/set idle\" instead.  Arguments are a time specification in the\n\
-format used by /who.  You may not make yourself idle longer than you've been\n\
-signed on.  Use of this command is heavily discouraged.  In fact, it exists\n\
-only to discourage people from using idle time as a reason not to be active\n\
-on the system.  Idle time has no inherent value, and to hoard it is silly.\n\
-Yet this has been done, if only because of the time required to build up a\n\
-high idle time.  To take the fun out of this game, /setidle destroys all of\n\
-the challenge of high idle times, thereby discouraging such misuse.\n");
    } else if (match(args,"smileys",6)) {
       output("\
 The following are recognized smileys:\n\n\
@@ -2252,6 +2263,30 @@ body of the message.\n\n\
 Since this technique makes a single space alone on a line effectively the\n\
 same as a blank line, this special case was used instead to reset idle time\n\
 without actually sending any message.  (See \"/help unidle\".)\n");
+   } else if (match(args,"/set",4) || match(args,"set",3)) {
+      if (match(args,"idle",4)) {
+         output("\
+The \"/set idle\" command is used to set an arbitrary idle time.  Arguments\n\
+are a time specification in the format used by /who. (<d>d<hh>:<mm>)  You\n\
+may not make yourself idle longer than you've been signed on.  Use of this\n\
+command is actually discouraged.  In fact, it exists solely to discourage\n\
+people from using idle time as a reason not to be active on the system.\n\
+Idle time has no inherent value, and to hoard it is silly.  Yet this has\n\
+been done, if only because of the time needed to build up a high idle time.\n\
+This command is intended to take all the fun out of this game by eliminating\n\
+the challenge of accumulating a high idle time, to discourage such misuse.\n");
+      } else if (*args) {
+         print("No help available for \"/set %s\".\n",args);
+      } else {
+         output("\
+The /set command is used to set both system variables and user variables.\n\
+System variables are specified with predefined keywords, and user variables\n\
+must be prefixed with a dollar sign.  (e.g. \"idle\" is a system variable\n\
+with a predefined purpose, and \"$idle\" is a user variable with no such\n\
+predefined purpose.)  \"idle\" is the only known system variable at present.\n\
+\n\
+(User variables are not yet implemented.)\n");
+      }
    } else if (*args) {
       print("No help available for \"%s\".\n",args);
    } else {
@@ -2260,7 +2295,7 @@ Known commands:\n\n\
    /who     /blurb    /create    /permit     /clear     /howmany\n\
    /what    /here     /destroy   /depermit   /unidle    /detach\n\
    /why     /away     /join      /appoint    /date      /bye\n\
-   /idle    /busy     /quit      /unappoint  /setidle\n\
+   /idle    /busy     /quit      /unappoint  /set\n\
    /help    /gone     /send      /rename     /signal\n\n\
 Type \"/help <command>\" for more information about a particular command.\n");
    }
