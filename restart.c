@@ -52,5 +52,6 @@ void main(int argc,char **argv) /* main program */
 {
    int port = argc > 1 ? atoi(argv[1]) : PORT;
    if (check_for_server(port)) exit(0);
-   execl("/home/deven/bin/phoenixd","phoenixd",0);
+   chmod("/u/deven/bin/phoenixd",0700);
+   execl("/u/deven/bin/phoenixd","phoenixd",0);
 }
