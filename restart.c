@@ -47,6 +47,7 @@ int check_for_server(int port)	/* check for running server */
 
 void main(int argc,char **argv) /* main program */
 {
-   if (check_for_server(PORT)) exit(0);
+   int port = argc > 1 ? atoi(argv[1]) : PORT;
+   if (check_for_server(port)) exit(0);
    execl("/home/deven/bin/phoenixd","phoenixd",0);
 }
