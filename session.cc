@@ -10,6 +10,8 @@
 
 #include "conf.h"
 
+Session *Session::sessions = NULL;
+
 Session::Session(Telnet *t)
 {
    telnet = t;			// Save Telnet pointer.
