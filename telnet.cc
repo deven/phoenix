@@ -527,9 +527,13 @@ inline void Telnet::accept_input() // Accept input line.
       while (session->OutputNext(this)) session->AcknowledgeOutput();
    }
 
-   // Jump to end of line and echo newline if necessary.
-   if (!AtEnd()) end_of_line();
-   echo("\n");
+   if (undrawn) {		// Line undrawn, queue as text output.
+      session->output(data);
+      session->output(Newline);
+   } else {			// Jump to end of line and echo newline.
+      if (!AtEnd()) end_of_line();
+      echo("\n");
+   }
 
    point = free = data;		// Wipe input line. (data intact)
    mark = NULL;			// Wipe mark.
