@@ -4,7 +4,7 @@
 //
 // Sendlist class interface.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.h,v $
 // Revision 1.3  1994/04/21 06:02:53  deven

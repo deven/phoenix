@@ -4,7 +4,7 @@
 //
 // Assoc (associative array) class interface.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.h,v $
 // Revision 1.3  1996/02/19 22:21:43  deven

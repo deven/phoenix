@@ -4,7 +4,7 @@
 //
 // Output and derived classes, implementations.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
 // Revision 1.12  1996/02/19 23:51:32  deven

@@ -4,7 +4,7 @@
 //
 // Phoenix conferencing system server -- Main program.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
 // Revision 1.18  1995/12/05 20:14:42  deven

@@ -4,7 +4,7 @@
 //
 // OutputBuffer class interface.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outbuf.h,v $
 // Revision 1.5  1996/02/19 22:24:52  deven

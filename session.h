@@ -4,7 +4,7 @@
 //
 // Session class interface.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
 // Revision 1.24  1996/02/19 23:50:58  deven

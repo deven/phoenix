@@ -4,7 +4,7 @@
 //
 // User class implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.cc,v $
 // Revision 1.6  1994/06/27 13:29:20  deven

@@ -4,7 +4,7 @@
 //
 // Phoenix conferencing system server -- Primary header file.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.h,v $
 // Revision 1.9  1995/10/27 03:06:45  deven
