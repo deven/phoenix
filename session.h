@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.13 1994/02/07 21:49:40 deven Exp $
+// $Id: session.h,v 1.14 1994/02/17 05:24:37 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.14  1994/02/17 05:24:37  deven
+// Added PrintTimeLong() function.
+//
 // Revision 1.13  1994/02/07 21:49:40  deven
 // Added SetIdle(), SetBlurb() and Unidle(), modified DoIdle().
 //
