@@ -40,7 +40,7 @@ public:
       time = now + when;
    }
    virtual ~Event() { }		// destructor
-   virtual boolean Execute() = 0; // Execute event, return true to reschedule.
+   virtual boolean Execute() { abort(); } // Execute event, return true to reschedule.
    EventType Type() { return type; }
    time_t Time() { return time; }
    void SetAbsTime(time_t when) {
