@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: event.cc,v 1.1 1996/05/13 18:48:34 deven Exp $
 //
 // Event and derived classes, implementations.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: event.cc,v $
+// Revision 1.1  1996/05/13 18:48:34  deven
+// Initial revision
+//
 
 #include "phoenix.h"
 

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: eventqueue.cc,v 1.1 1996/05/13 18:48:48 deven Exp $
 //
 // EventQueue class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: eventqueue.cc,v $
+// Revision 1.1  1996/05/13 18:48:48  deven
+// Initial revision
+//
 
 #include "phoenix.h"
 

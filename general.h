@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.19 1996/05/12 07:22:57 deven Exp $
+// $Id: general.h,v 1.20 1996/05/13 18:24:49 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.20  1996/05/13 18:24:49  deven
+// Added Event and EventQueue forward class declarations.  Moved all constants
+// to new constants.h file.  Moved all function prototypes to new functions.h
+// file.  Moved all global variables to new globals.h file.
+//
 // Revision 1.19  1996/05/12 07:22:57  deven
 // Added Timestamp class, changed ServerStartTime to Timestamp, moved date()
 // to Timestamp::date().
