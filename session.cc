@@ -685,7 +685,8 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
    if (format == 1) output(")");
 }
 
-int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
+// Reset and return idle time, maybe report.
+int Session::ResetIdle(int min = 10)
 {
    Timestamp now;
    int idle = (now - message_time) / 60;
@@ -771,7 +772,7 @@ void Session::SetIdle(char *args) // Set idle time.
 
 void Session::SetBlurb(char *newblurb) // Set a new blurb.
 {
-   ResetIdle(10);
+   ResetIdle();
    if (newblurb) {
       blurb = newblurb;
       blurb.prepend(" [");
@@ -1006,7 +1007,7 @@ void Session::DoClear(char *)	// Do /clear command.
 void Session::DoDetach(char *)	// Do /detach command.
 {
    if (priv > 0) {
-      ResetIdle(10);
+      ResetIdle();
       output("You have been detached.\n");
       EnqueueOutput();
       if (telnet) telnet->Close(); // Drain connection, then close.
@@ -1714,7 +1715,7 @@ void Session::DoBlurb(char *start,boolean entry = false)
 
 void Session::DoHere(char *args) // Do /here command.
 {
-   ResetIdle(10);
+   ResetIdle();
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"here\".\n");
@@ -1724,7 +1725,7 @@ void Session::DoHere(char *args) // Do /here command.
 
 void Session::DoAway(char *args) // Do /away command.
 {
-   ResetIdle(10);
+   ResetIdle();
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"away\".\n");
@@ -1734,7 +1735,7 @@ void Session::DoAway(char *args) // Do /away command.
 
 void Session::DoBusy(char *args) // Do /busy command.
 {
-   ResetIdle(10);
+   ResetIdle();
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"busy\".\n");
@@ -1744,7 +1745,7 @@ void Session::DoBusy(char *args) // Do /busy command.
 
 void Session::DoGone(char *args) // Do /gone command.
 {
-   ResetIdle(10);
+   ResetIdle();
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"gone\".\n");
@@ -2443,7 +2444,7 @@ void Session::SendMessage(Sendlist *sendlist,char *msg)
       output("[Warning: you are still listed as \"busy\".]\n");
    }
 
-   ResetIdle(10);
+   ResetIdle();
 
    output("(message sent to ");
    SetIter<Session> session(sendlist->sessions);
