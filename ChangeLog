@@ -2,6 +2,10 @@ $Id: ChangeLog,v 1.5 2003/02/21 04:43:16 deven Exp $
 
 2003-02-21  Deven T. Corzine  <deven@ties.org>
 
+ * Version 1.0.0.beta.9 released.
+
+ * ChangeLog, NEWS, RELEASES: Updated release information.
+
  * session.cc (Session::CheckNameAvailability): Added new function to check for
    availability and later double-check after other prompts to avoid creating
    duplicate sessions with the same name, or infringing newly-reserved names
