@@ -81,6 +81,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
 
 EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
@@ -98,8 +100,6 @@ am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
 
-AM_CFLAGS = -Wall -fno-rtti -fno-exceptions
-AM_CXXFLAGS = -Wall -fno-rtti -fno-exceptions
 bin_PROGRAMS = makepw restart gangplank
 makepw_SOURCES = makepw.c
 restart_SOURCES = restart.c
@@ -112,7 +112,7 @@ gangplank_SOURCES = hash.cc string.cc most.cc gangplank.h system.h boolean.h \
 EXTRA_DIST = discussion.cc event.cc eventqueue.cc fdtable.cc gangplank.cc \
 	listen.cc most.cc output.cc outstr.cc sendlist.cc session.cc \
 	telnet.cc timestamp.cc user.cc CREDITS HISTORY KLUDGES LICENSE.QPL \
-	OVERVIEW PORTING RELEASES TOUR passwd
+	OVERVIEW PORTING RELEASES TOUR bootstrap passwd
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -161,8 +161,9 @@ CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 CXXFLAGS = @CXXFLAGS@
 DIST_SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES) $(restart_SOURCES)
 DIST_COMMON = README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
-	Makefile.in NEWS TODO acinclude.m4 aclocal.m4 config.h.in \
-	configure configure.ac depcomp install-sh missing mkinstalldirs
+	Makefile.in NEWS TODO acinclude.m4 aclocal.m4 config.guess \
+	config.h.in config.sub configure configure.ac depcomp \
+	install-sh missing mkinstalldirs
 SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES) $(restart_SOURCES)
 
 all: config.h
