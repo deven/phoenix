@@ -28,5 +28,6 @@ public:
 
    Session(Telnet *t);		// constructor
    ~Session();			// destructor
+   void Link();			// Link session into global list.
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
 };

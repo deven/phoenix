@@ -408,9 +408,7 @@ void blurb(Telnet *telnet,char *line)
    log("Enter: %s (%s) on fd %d.",telnet->session->name_only,
        telnet->session->user->user,telnet->fd);
 
-   // Link new session into list.
-   telnet->session->next = sessions;
-   sessions = telnet->session;
+   telnet->session->Link();	// Link new session into list.
 
    // Link new session into user list. ***
 
