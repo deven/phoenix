@@ -32,7 +32,9 @@
 enum OutputType {
    UnknownOutput,TextOutput,PublicMessage,PrivateMessage,EntryOutput,
    ExitOutput,TransferOutput,AttachOutput,DetachOutput,HereOutput,
-   AwayOutput,BusyOutput,GoneOutput
+   AwayOutput,BusyOutput,GoneOutput,CreateOutput,DestroyOutput,JoinOutput,
+   QuitOutput,PublicOutput,PrivateOutput,PermitOutput,DepermitOutput,
+   AppointOutput,UnappointOutput
 };
 
 // Classifications of Output subclasses.
@@ -155,5 +157,100 @@ private:
 public:
    GoneNotify(Pointer<Name> &who,time_t when = 0):
    Output(GoneOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class CreateNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+public:
+   CreateNotify(Pointer<Discussion> &d,time_t when = 0):
+   Output(CreateOutput,NotificationClass,when),discussion(d) { }
+   void output(Pointer<Telnet> &telnet);
+};
+
+class DestroyNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   DestroyNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class JoinNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   JoinNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class QuitNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   QuitNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class PublicNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   PublicNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class PrivateNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   PrivateNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class PermitNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+   boolean explicit;
+public:
+   PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,boolean flag,
+		time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class DepermitNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+   boolean explicit;
+   Pointer<Name> removed;
+public:
+   DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,boolean flag,
+		  Pointer<Session> &who,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class AppointNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class UnappointNotify: public Output {
+private:
+   Pointer<Discussion> discussion;
+   Pointer<Name> name;
+public:
+   UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
    void output(Pointer<Telnet> &telnet);
 };
