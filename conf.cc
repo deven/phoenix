@@ -10,10 +10,6 @@
 
 #include "conf.h"
 
-static char buf[BufSize];	// temporary buffer ***
-
-static char inbuf[BufSize];	// input buffer ***
-
 Session *sessions;		// active sessions ***
 
 int Shutdown;			// shutdown flag ***
@@ -55,6 +51,7 @@ char *date(time_t clock,int start,int len) // get part of date string ***
 
 void OpenLog()			// class Log? ***
 {
+   char buf[32];
    time_t t;
    struct tm *tm;
 
@@ -72,6 +69,7 @@ void OpenLog()			// class Log? ***
 // Use << operator instead of printf() formats? ***
 void log(char *format,...)	// log message ***
 {
+   char buf[BufSize];
    va_list ap;
 
    if (!logfile) return;
@@ -83,6 +81,7 @@ void log(char *format,...)	// log message ***
 
 void warn(char *format,...)	// print error message ***
 {
+   char buf[BufSize];
    va_list ap;
 
    va_start(ap,format);
@@ -94,6 +93,7 @@ void warn(char *format,...)	// print error message ***
 
 void error(char *format,...)	// print error message and exit ***
 {
+   char buf[BufSize];
    va_list ap;
 
    va_start(ap,format);
@@ -107,6 +107,7 @@ void error(char *format,...)	// print error message and exit ***
 
 void notify(char *format,...)	// formatted write to all sessions
 {
+   char buf[BufSize];
    Session *session;
    va_list ap;
 
