@@ -216,6 +216,26 @@ void ShutdownServer()		// Shutdown server.
    exit(0);
 }
 
+void trim(char *&input) {
+   while (*input && isspace(*input)) input++;
+   char *p = input;
+   while (*p) p++;
+   while (p > input && isspace(p[-1])) p--;
+   *p = 0;
+}
+
+char *getword(char *&input) {
+   while (*input && isspace(*input)) input++;
+   char *p = input;
+   while (*input && !isspace(*input) && *input != Comma) input++;
+   if (*input) {
+      while (*input && isspace(*input)) *input++ = 0;
+      if (*input == Comma) *input++ = 0;
+      while (*input && isspace(*input)) *input++ = 0;
+   }
+   return *p ? p : 0;
+}
+
 char *match(char *&input,char *keyword,int min = 0) {
    char *p = input,*q = keyword;
    if (!min) min = strlen(keyword);

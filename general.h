@@ -126,5 +126,7 @@ void quit(int);
 void alrm(int);
 void RestartServer();
 void ShutdownServer();
+void trim(char *&input);
+char *getword(char *&input);
 char *match(char *&input,char *keyword,int min = 0);
 int main(int argc,char **argv);
