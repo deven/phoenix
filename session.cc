@@ -189,8 +189,8 @@ Session::Session(Telnet *t)
 {
    if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
    telnet = t;			// Save Telnet pointer.
-   InputFunc = NULL;		// No input function.
-   lines = NULL;		// No pending input lines.
+   InputFunc = 0;		// No input function.
+   lines = 0;			// No pending input lines.
    away = Here;			// Default to "here".
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
@@ -221,12 +221,12 @@ void Session::Close(boolean drain = true) // Close session.
 
    if (telnet) {		// Close connection if attached.
       Pointer<Telnet> t(telnet);
-      telnet = NULL;
+      telnet = 0;
       t->Close(drain);
    }
 
    if (user) user->sessions.Remove(this); // Disassociate from user.
-   user = NULL;
+   user = 0;
 }
 
 void Session::Transfer(Telnet *t) // Transfer session to connection.
@@ -269,7 +269,7 @@ void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
 		t->fd);
 	 }
 	 EnqueueOthers(new DetachNotify(name_obj,intentional));
-	 telnet = NULL;
+	 telnet = 0;
       }
    } else {
       Close();
@@ -292,7 +292,7 @@ void Session::SetInputFunction(InputFuncPtr input)
    InputFunc = input;
 
    // Process lines as long as we still have a defined input function.
-   while (InputFunc != NULL && lines) {
+   while (InputFunc != 0 && lines) {
       l = lines;
       lines = l->next;
       (this->*InputFunc)(l->line);
@@ -376,13 +376,13 @@ boolean Session::FindSendable(char *sendlist,Session *&session,
 			      boolean do_discussions = true)
 {
    int pos,count = 0;
-   Session *sessionlead = NULL;
-   Discussion *discussionlead = NULL;
+   Session *sessionlead = 0;
+   Discussion *discussionlead = 0;
    ListIter<Session> s(sessions);
    ListIter<Discussion> d(discussions);
 
-   session = NULL;
-   discussion = NULL;
+   session = 0;
+   discussion = 0;
 
    if (do_sessions) {
       if (!strcasecmp(sendlist,"me")) {
@@ -444,7 +444,7 @@ Session *Session::FindSession(char *sendlist,Set<Session> &matches)
 		    false,false,true,false)) {
       return session;
    }
-   return NULL;
+   return 0;
 }
 
 Discussion *Session::FindDiscussion(char *sendlist,Set<Discussion> &matches,
@@ -458,7 +458,7 @@ Discussion *Session::FindDiscussion(char *sendlist,Set<Discussion> &matches,
 		    member,false,false,true)) {
       return discussion;
    }
-   return NULL;
+   return 0;
 }
 
 void Session::PrintSessions(Set<Session> &sessions)
@@ -582,7 +582,7 @@ void Session::Password(char *line)
       telnet->output("Login incorrect.\n");
       telnet->Prompt("login: "); // Prompt for login.
       SetInputFunction(Login);	 // Set login input routine.
-      user = NULL;
+      user = 0;
       return;
    }
 
@@ -637,7 +637,7 @@ void Session::EnteredName(char *line)
 	    } else {
 	       telnet->output("Re-attaching to detached session...\n");
 	       session->Attach(telnet);
-	       telnet = NULL;
+	       telnet = 0;
 	       Close();
 	       return;
 	    }
@@ -688,7 +688,7 @@ void Session::TransferSession(char *line)
 	       telnet->output("Re-attaching to detached session...\n");
 	       session->Attach(telnet);
 	    }
-	    telnet = NULL;
+	    telnet = 0;
 	    Close();
 	    return;
 	 } else {
@@ -854,7 +854,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
 
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 {
-   int now = time(NULL);
+   int now = time(0);
    int idle = (now - message_time) / 60;
 
    if (min && idle >= min) {
@@ -872,7 +872,7 @@ void Session::SetIdle(char *args) // Set idle time.
    boolean flag;
 
    days = hours = minutes = 0;
-   now = time(NULL);
+   now = time(0);
    idle = (now - message_time) / 60;
 
    while (*args && isspace(*args)) args++;
@@ -1044,7 +1044,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
       if (session->telnet) {
 	 Pointer<Telnet> telnet(session->telnet);
-	 session->telnet = NULL;
+	 session->telnet = 0;
 	 log("%s (%s) on fd %d has been nuked by %s (%s).",~session->name,
 	     ~session->user->user,telnet->fd,~name,~user->user);
 	 telnet->UndrawInput();
@@ -1117,7 +1117,7 @@ void Session::DoDisplay(char *args) // Do /display command.
          }
       } else if (match(var,"idle")) {
          output("Your idle time is");
-         PrintTimeLong((time(NULL) - message_time) / 60);
+         PrintTimeLong((time(0) - message_time) / 60);
          output(".\n");
       } else if (match(var,"time_format")) {
          String time_format;
@@ -1143,7 +1143,7 @@ void Session::DoDisplay(char *args) // Do /display command.
          if (system && ServerStartUptime) {
             uptime = (system - ServerStartUptime) / 60;
          } else {
-            uptime = (time(NULL) - ServerStartTime) / 60;
+            uptime = (time(0) - ServerStartTime) / 60;
          }
 
          output("This server has been running for");
@@ -1237,7 +1237,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 {
    String send;
    char *mark;
-   int idle,now = time(NULL);
+   int idle,now = time(0);
    int count,lastcount = 0;
    boolean here,away,busy,gone,attached,detached,active,inactive,doidle,
       unidle,privileged,guests,everyone;
@@ -1286,7 +1286,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
    }
 
    Pointer<Sendlist> sendlist = new Sendlist(*this,send,true);
-   sendlist->Expand(who,NULL);
+   sendlist->Expand(who,0);
 
    ListIter<Session> s(sessions);
    while (s++) {
@@ -1356,7 +1356,7 @@ void Session::DoWho(char *args)	// Do /who command.
 {
    Set<Session> who;
    String errors,msg,tmp;
-   int idle,days,hours,minutes,now = time(NULL);
+   int idle,days,hours,minutes,now = time(0);
    int i,extend = 0;
    char buf[32];
 
@@ -1467,7 +1467,7 @@ void Session::DoWhy(char *args)	// Do /why command.
 {
    Set<Session> who;
    String errors,msg,tmp;
-   int idle,days,hours,minutes,now = time(NULL);
+   int idle,days,hours,minutes,now = time(0);
    int i,extend = 0;
    char buf[32];
 
@@ -1573,7 +1573,7 @@ void Session::DoIdle(char *args) // Do /idle command.
    Set<Session> who;
    String errors,msg,tmp;
    int idle,days,hours,minutes;
-   int now = time(NULL);
+   int now = time(0);
    int col = 0;
 
    // Handle arguments.
@@ -1635,7 +1635,7 @@ void Session::DoIdle(char *args) // Do /idle command.
 void Session::DoWhat(char *args) // Do /what command.
 {
    Pointer<Sendlist> sendlist = new Sendlist(*this,args,true,false,true);
-   int idle,days,hours,minutes,now = time(NULL);
+   int idle,days,hours,minutes,now = time(0);
    int i,extend = 0;
    char buf[32];
 
@@ -1782,7 +1782,7 @@ void Session::DoSend(char *args) // Do /send command.
 	 return;
       }
    } else if (!strcasecmp(args,"off")) { // Turn sendlist off.
-      default_sendlist = NULL;
+      default_sendlist = 0;
       output("Your default sendlist has been turned off.\n");
       return;
    } else {			// Set new sendlist.
@@ -1849,7 +1849,7 @@ void Session::DoBlurb(char *start,boolean entry = false)
       for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
       if (end == start + 2 && !strncasecmp(start,"off",3)) {
 	 if (entry || blurb) {
-	    SetBlurb(NULL);
+	    SetBlurb(0);
 	    if (!entry) output("Your blurb has been turned off.\n");
 	 } else {
 	    if (!entry) output("Your blurb was already turned off.\n");
@@ -1862,7 +1862,7 @@ void Session::DoBlurb(char *start,boolean entry = false)
 	 if (!entry) print("Your blurb has been set to%s.\n",~blurb);
       }
    } else if (entry) {
-      SetBlurb(NULL);
+      SetBlurb(0);
    } else if (blurb) {
       print("Your blurb is currently set to%s.\n",~blurb);
    } else {
@@ -2582,7 +2582,7 @@ void Session::SendMessage(Sendlist *sendlist,char *msg)
 {
    Set<Session> recipients;
    int count = sendlist->Expand(recipients,this);
-   int now = time(NULL);
+   int now = time(0);
    boolean first,flag;
 
    if (!count) {

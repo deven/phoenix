@@ -46,7 +46,7 @@ void OutputStream::OutputObject::output(Telnet *telnet)
 
 void OutputStream::Attach(Telnet *telnet) // Review detached output.
 {
-   sent = NULL;
+   sent = 0;
    Acknowledged = Sent = 0;
    if (telnet && telnet->acknowledge) while (SendNext(telnet)) ;
 }

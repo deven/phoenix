@@ -21,7 +21,7 @@ public:
    char *free;			// start of free area
    char block[BlockSize];	// actual data block
    Block() {			// block constructor
-      next = NULL;
+      next = 0;
       data = free = block;
    }
 };

@@ -388,7 +388,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Name *from,Sendlist *to,
    print(" [%s]\n - ",date(time,11,5)); // assumes within last day ***
 
    while (*start) {
-      wrap = NULL;
+      wrap = 0;
       for (p = start, col = 0; *p && col < width - 4; p++, col++) {
 	 if (*p == Space) wrap = p;
       }
@@ -487,10 +487,10 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    data = new char[InputSize];	// Allocate input line buffer.
    end = data + InputSize;	// Save end of allocated block.
    point = free = data;		// Mark input line as empty.
-   mark = NULL;			// No mark set initially.
+   mark = 0;			// No mark set initially.
    history = History;		// Initialize history iterator.
    Yank = KillRing;		// Initialize kill-ring iterator.
-   reply_to = NULL;		// No last sender.
+   reply_to = 0;		// No last sender.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
    blocked = false;		// output not blocked
@@ -504,7 +504,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    LSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (local)
    RSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (remote)
 
-   fd = accept(lfd,NULL,NULL);	// Accept TCP connection.
+   fd = accept(lfd,0,0);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
 
    count++;			// Increment connection count.
@@ -557,7 +557,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
 
       // Detach associated session.
       if (session) session->Detach(this,boolean(closing));
-      session = NULL;
+      session = 0;
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
    }
@@ -567,11 +567,11 @@ void Telnet::Closed()		// Connection is closed.
 {
    // Detach associated session.
    if (session) session->Detach(this,boolean(closing));
-   session = NULL;
+   session = 0;
 
    // Free input line buffer.
    if (data) delete [] data;
-   data = NULL;
+   data = 0;
 
    if (fd == -1) return;	// Skip the rest if there's no connection.
 
@@ -729,7 +729,7 @@ inline void Telnet::erase_line() // Erase input line.
       echo("\033[J");		// ANSI! ***
       free = data;		// Truncate input buffer.
    }
-   mark = NULL;
+   mark = 0;
 }
 
 inline void Telnet::previous_line() // Go to previous input line.
@@ -814,7 +814,7 @@ inline void Telnet::accept_input() // Accept input line.
       // Assume this is a raw TCP connection.
       LSGA = RSGA = (TelnetWillWont | TelnetDoDont);
       Echo = 0;
-      Echo_callback = LSGA_callback = RSGA_callback = NULL;
+      Echo_callback = LSGA_callback = RSGA_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
              "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
              "if you need it.)\n\n");
@@ -843,7 +843,7 @@ inline void Telnet::accept_input() // Accept input line.
 
       // Done with this input line, but leave prompt if any.
       point = free = data;	// Wipe input line. (data intact)
-      mark = NULL;		// Wipe mark.
+      mark = 0;			// Wipe mark.
       return;
    }
 
@@ -880,8 +880,8 @@ inline void Telnet::accept_input() // Accept input line.
    }
 
    point = free = data;		// Wipe input line. (data intact)
-   mark = NULL;			// Wipe mark.
-   prompt = NULL;		// Wipe prompt.
+   mark = 0;			// Wipe mark.
+   prompt = 0;			// Wipe prompt.
 
    session->Input(data);	// Call state-specific input line processor.
 
@@ -889,7 +889,7 @@ inline void Telnet::accept_input() // Accept input line.
       delete [] data;
       point = free = data = new char[InputSize];
       end = data + InputSize;
-      mark = NULL;
+      mark = 0;
    }
 }
 
@@ -1090,7 +1090,7 @@ void Telnet::InputReady()	// telnet stream can input data
 		  Output.head = block->next;
 		  delete block;
 	       }
-	       Output.tail = NULL;
+	       Output.tail = 0;
 	       state = 0;
 	       break;
 	    case TelnetAreYouThere:
@@ -1163,7 +1163,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       }
 	       if (RSGA_callback) {
 		  (this->*RSGA_callback)();
-		  RSGA_callback = NULL;
+		  RSGA_callback = 0;
 	       }
 	       break;
 	    case TelnetTimingMark:
@@ -1200,7 +1200,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       }
 	       if (Echo_callback) {
 		  (this->*Echo_callback)();
-		  Echo_callback = NULL;
+		  Echo_callback = 0;
 	       }
 	       break;
 	    case TelnetSuppressGoAhead:
@@ -1228,7 +1228,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       }
 	       if (LSGA_callback) {
 		  (this->*LSGA_callback)();
-		  LSGA_callback = NULL;
+		  LSGA_callback = 0;
 	       }
 	       break;
 	    default:
@@ -1430,7 +1430,7 @@ void Telnet::OutputReady()	// telnet stream can output data
 	    if (block->next) {
 	       Command.head = block->next;
 	    } else {
-	       Command.head = Command.tail = NULL;
+	       Command.head = Command.tail = 0;
 	    }
 	    delete block;
 	 }
@@ -1474,7 +1474,7 @@ void Telnet::OutputReady()	// telnet stream can output data
 	       if (block->next) {
 		  Output.head = block->next;
 	       } else {
-		  Output.head = Output.tail = NULL;
+		  Output.head = Output.tail = 0;
 	       }
 	       delete block;
 	    }

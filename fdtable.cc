@@ -61,7 +61,7 @@ FDTable::FDTable() {		// constructor
 }
 
 FDTable::~FDTable() {		// destructor
-   for (int i = 0; i < used; i++) array[i] = NULL;
+   for (int i = 0; i < used; i++) array[i] = 0;
    delete [] array;
 }
 
@@ -81,9 +81,9 @@ void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
 }
 
 Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
-   if (fd < 0 || fd >= used) return NULL;
+   if (fd < 0 || fd >= used) return 0;
    Pointer<FD> FD(array[fd]);
-   array[fd] = NULL;
+   array[fd] = 0;
    if (fd == used - 1) {	// Fix highest used index if necessary.
       while (used > 0) {
 	 if (array[--used]) {
@@ -109,7 +109,7 @@ void FDTable::Select()		// Select across all ready connections.
 {
    fd_set rfds = readfds;
    fd_set wfds = writefds;
-   int found = select(size,&rfds,&wfds,NULL,NULL);
+   int found = select(size,&rfds,&wfds,0,0);
 
    if (found == -1) {
       if (errno == EINTR) return;
