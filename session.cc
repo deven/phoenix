@@ -2461,12 +2461,12 @@ void Session::DoReset()		// Do <space><return> idle time reset.
 }
 
 char *message_start(char *line,String &sendlist,String &last_explicit_sendlist,
-   boolean &explicit)
+   boolean &is_explicit)
 {
    char *p;
    int i;
 
-   explicit = false;		// Assume implicit sendlist.
+   is_explicit = false;		// Assume implicit sendlist.
 
    // Attempt to detect smileys that shouldn't be sendlists...
    if (!isalpha(*line) && !isspace(*line)) {
@@ -2497,7 +2497,7 @@ char *message_start(char *line,String &sendlist,String &last_explicit_sendlist,
          return line + (*line == Space);
       case Colon:
       case Semicolon:
-         explicit = true;
+         is_explicit = true;
          last_explicit_sendlist = String(line,p - line);
          if (*++p == Space) p++;
          return p;
@@ -2534,9 +2534,9 @@ void Session::DoMessage(char *line) // Do message send.
 {
    Pointer<Sendlist> sendlist;
    String send;
-   boolean explicit = false;	// Assume implicit sendlist.
+   boolean is_explicit = false;	// Assume implicit sendlist.
 
-   line = message_start(line,send,last_explicit,explicit);
+   line = message_start(line,send,last_explicit,is_explicit);
    trim(line);
 
    // Use last sendlist if none specified.
@@ -2562,7 +2562,7 @@ void Session::DoMessage(char *line) // Do message send.
    if (!sendlist) sendlist = new Sendlist(*this,send);
 
    // Save last sendlist if explicit.
-   if (explicit && sendlist) last_sendlist = sendlist;
+   if (is_explicit && sendlist) last_sendlist = sendlist;
 
    SendMessage(sendlist,line);
 }
