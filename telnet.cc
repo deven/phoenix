@@ -234,6 +234,7 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
    int col;
    boolean flag;
 
+   if (!session) return;
    switch (type) {
    case PublicMessage:
       // Print message header.
@@ -384,7 +385,7 @@ void Telnet::Welcome()
    if (Shutdown) output("*** This server is about to shut down! ***\n\n");
 
    // Initialize user input processing function, send login prompt.
-   session->InitInputFunction();
+   if (session) session->InitInputFunction();
 }
 
 // Set telnet ECHO option. (local)
@@ -533,7 +534,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 }
 
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
-   session->EnqueueOutput();
+   if (session) session->EnqueueOutput();
    prompt = p;
    if (!undrawn) output(~prompt);
 }
@@ -551,7 +552,9 @@ void Telnet::Close(boolean drain) // Close telnet connection.
       if (acknowledge) {
 	 TimingMark();		// Send final acknowledgement.
       } else {
-	 while (session->OutputNext(this)) session->AcknowledgeOutput();
+	 while (session && session->OutputNext(this)) {
+	    session->AcknowledgeOutput();
+	 }
       }
       WriteSelect();
 
