@@ -4,7 +4,7 @@
 //
 // Phoenix conferencing system server -- General header file.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
 // Revision 1.21  2000/03/22 04:03:32  deven

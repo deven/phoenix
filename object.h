@@ -4,7 +4,7 @@
 //
 // Object class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: object.h,v $
 // Revision 1.5  2000/03/22 04:03:16  deven

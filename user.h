@@ -4,7 +4,7 @@
 //
 // User class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
 // Revision 1.8  2000/03/22 04:07:04  deven

@@ -4,7 +4,7 @@
 //
 // Output and derived classes, interfaces.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
 // Revision 1.14  2000/04/25 04:56:26  deven

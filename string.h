@@ -4,7 +4,7 @@
 //
 // String class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
 // Revision 1.9  2000/03/22 23:57:28  deven

@@ -4,7 +4,7 @@
 //
 // OutputStream class implementation.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
 // Revision 1.10  2000/03/22 04:09:06  deven
