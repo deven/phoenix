@@ -1,0 +1,319 @@
+[/w|ho,who,/i|dle,idle]
+The /who and /idle commands are used to list users on Gangplank.  Both /who
+and /idle take identical arguments, but the output differs.  /who will give
+more information, while /idle will give a more compact presentation.
+
+Both /who and /idle will accept either categorical keywords or strings to
+match against names and discussions; all matches found are listed.  If any
+discussions are matched, all users in the discussions are listed.  The known
+categorical keywords for /who and /idle are:
+
+   here   away   attached   active     idle     privileged   all
+   busy   gone   detached   inactive   unidle   guests       everyone
+
+The categorical keywords match users in the given state.  The "active"
+state is special, and defined as follows:
+
+   "here", attached, idle < 1 hour; or
+   "here", detached, idle < 10 minutes; or
+   "away", attached, idle < 10 minutes.
+
+The keyword "all" is treated as "active,attached", while "everyone"
+matches all users.  "unidle" matches users with idle < 10 minutes.  The
+default if no arguments are given is to match "everyone" for now.  (When
+more people are using the system, the default will change back to "active".)
+Match strings and multiple categorical keywords can be piled together as
+desired.  When only a single person is printed by /who, long blurbs are
+printed in full.
+[/bl|urb,blurb]
+The /blurb command allows you to set a descriptive "blurb".  It is usually
+printed along with your name in most messages and notifications.  There is
+no set limit to blurb length, but out of courtesy, try to keep it short.
+Under 30 characters is a good size.  Long blurbs are normally truncated in
+/who and /idle listings, so your entire blurb may not be seen at all times.
+When only one person is printed by /who, long blurbs are printed in full.
+
+Syntax: /blurb [blurb]
+        /blurb "blurb"
+        /blurb blurb
+
+"/blurb off" turns off your blurb.  "/blurb" alone reports your blurb.
+
+In many cases, it is preferable to use one of the away-state commands (/here,
+/away, /busy, /gone) instead of /blurb.  All of the away-state commands will
+take blurb arguments exactly like /blurb, but will set a meaningful status
+at the same time, so their use is encouraged.  Also, every away-state command
+may be abbreviated to a single letter, while /bl is the minimum abbreviation
+for the /blurb command, since /busy abbreviates to /b.
+
+See also: /here, /away, /busy, /gone.
+[/h|ere,here]
+The /here command accepts /blurb arguments to set the blurb, and then sets
+your away status to "here".  Even if you are already "here", others will
+still be notified that you are now "here".
+
+Being "here" implies that you are willing to engage in new conversations,
+and that you are reasonably likely to respond to messages quickly.
+
+If you wish to actively talk to certain people but not anyone else in general,
+then you should use /busy instead.
+
+Since people sometimes forget to set a new away status when they leave, the
+default /who target of "active" will only list "here" people if they are
+under one hour idle if attached, or if they are under ten minutes idle if
+detached.  (On the assumption they intend to return almost immediately.)
+Overly-idle "here" people aren't normally listed, so their away state is
+not changed due to idle time.
+
+The /here command may be abbreviated to /h.
+
+See also: /blurb, /away, /busy, /gone.
+[/a|way,away]
+The /away command accepts /blurb arguments to set the blurb, and then sets
+your away status to "away".  Even if you are already "away", others will
+still be notified you are now "away".
+
+Being "away" implies you are either gone for a brief period (maybe around
+5-10 minutes), or you are around but likely to be inattentive.  It implies
+you are not unwilling to engage in new conversations, but may well be slow
+to respond.  "away" is a good state to use if you're reading Usenet news
+in another window, watching TV across the room from the keyboard, or taking
+a shower.  Your blurb should reflect your present activity, ideally.
+
+If you wish to actively talk to certain people but not anyone else in general,
+then you should use /busy instead.
+
+Since people sometimes forget to set a new away status when they leave, the
+default /who target of "active" will only list "away" people if they are
+attached and under ten minutes idle.  Overly-idle "away" people aren't
+normally listed, so their away state is not changed due to idle time.
+
+The /away command may be abbreviated to /a.
+
+See also: /blurb, /here, /busy, /gone.
+[/b|usy,busy]
+The /busy command accepts /blurb arguments to set the blurb, and then sets
+your away status to "busy".  Even if you are already "busy", others will
+still be notified you are now "busy".
+
+Being "busy" implies you are either engaged in conversation with others
+on the system, or around but busy doing something else.  In either case,
+"busy" implies you would not appreciate interruptions that aren't very
+inportant, especially if they would require a reply.  Those whose messages
+are welcome would already know so.  Don't bother a person who is "busy"
+without having a reason to do so.  "busy" is a good state if you're in a
+deep conversation with someone, or if you're washing dishes, for example.
+Your blurb should reflect what you're busy with, ideally.
+
+The default /who target of "active" will never list "busy" people on the
+assumption that they do not wish to be unduly disturbed.  Idle time will not
+cause the away state to change, but if you become unidle while "busy" and
+at least ten minutes idle, you will get a warning message that you are still
+listed as "busy", in case it no longer applies and you forgot about it.
+
+The /busy command may be abbreviated to /b.
+
+See also: /blurb, /here, /away, /gone.
+[/g|one,gone]
+The /gone command accepts /blurb arguments to set the blurb, and then sets
+your away status to "gone".  Even if you are already "gone", others will
+still be notified you are now "gone".
+
+Being "gone" implies you are gone and should not be expected to respond to
+messages at all until you return, regardless of whether you are attached or
+detached.  "gone" implies you are not having any conversations at all, and
+all messages received will be seen later, much like an answering machine.
+"gone" is a good state to use if you're asleep, off to work or class, etc.
+Your blurb should reflect where you went, ideally.  (e.g. "/gone [-> work]")
+
+If you wish to actively talk to certain people but not anyone else in general,
+then you should use /busy instead.
+
+The default /who target of "active" will never list "gone" people on the
+assumption that they are truly gone.  Idle time will not cause the away state
+to change, but if you send a message while "gone", you will be warned,
+for every message you send while "gone".
+
+The /gone command may be abbreviated to /g.
+
+See also: /blurb, /here, /away, /busy.
+[/h|elp,help]
+The /help command is used to request helpful information about commands or
+concepts.  For example, for help on the /gone command, you can type either
+"/help gone" or "/help /gone".  If the slash form for command help is
+used, the command name may be abbreviated in the same way as the actual
+command.  Since the minimum abbreviation for /gone is /g, "/help /g" is
+sufficient, although "/help g" is not.
+[/s|end,send]
+The /send command is used to redirect your "default sendlist".  Simply type
+"/send <sendlist>" and <sendlist> becomes the new destination for any
+message which does not contain an explicit sendlist, including recognized
+smileys.  (See "/help smileys".)  "/send off" will turn off your default
+sendlist completely.  "/send" alone will display your current default
+sendlist without changing it.  /send may be abbreviated to /s.
+[/bye,bye]
+The /bye command is used to leave Gangplank completely.  If you sign off, you
+will be disconnected from the system and unable to receive messages at all.
+You may wish to consider using the /detach command instead.
+[/wha|t,what]
+The /what command is used to list currently existing discussions.
+[/j|oin,join]
+The /join command is used to join one or more discussions.
+[/q|uit,quit]
+The /quit command is used to quit one or more discussions.
+[/cr|eate,create]
+The /create command is used to create a new discussion.
+[/des|troy,destroy]
+The /destroy command is used to destroy one or more discussions.
+[/per|mit,permit]
+The /permit command is used to permit one or more members to a discussion.
+[/dep|ermit,depermit]
+The /depermit command is used to depermit one or more members from a
+discussion.
+[/app|oint,appoint]
+The /appoint command is used to appoint one or more moderators to a discussion.
+[/unappoint,unappoint]
+The /unappoint command is used to unappoint one or more moderators from a
+discussion.
+[/rename,rename]
+The /rename command is used to change your name in the system.  There are
+currently some bugs with this, so use of /rename is presently discouraged
+until those bugs are fixed.
+[/cl|ear,clear]
+The /clear command simply clears the terminal screen.
+
+Alternatively, type Escape then Control-L to clear the screen.
+[/unidle,unidle]
+The /unidle command simply resets your idle time as if you sent a message.
+
+Alternatively, send a line consisting of a single space only.  There is a
+slight difference in that <space><return> is silent if idle under one minute,
+while /unidle will report that the idle time was reset.  For both, if the
+idle time was at least one minute, it is reported before being reset.
+
+In general, when you become unidle, you will receive a report of the previous
+idle time if it exceeded the normal threshold of ten minutes.
+[/det|ach,detach]
+The /detach command is used to disconnect from Gangplank without signing off.
+You can still receive messages while detached, to be reviewed later.  When
+the /detach command is used, others are notified that you intentionally
+detached.  If any other event causes you to become detached (e.g. network
+failure), then others are notified that you accidentally detached.
+
+To reattach to a detached session, simply sign back on with the same account
+and name, and you will be automatically attached.  Currently, all pending
+output will be output very quickly; local scrollback is highly recommended.
+If you miss some of the detached output, do NOT press return, but disconnect
+instead locally.  When you reattach, the same output will be reviewed again.
+Output is only discarded when it has crossed the network (acknowledgements
+are used) and the user has entered an input line.
+[/how|many,howmany,how]
+The /howmany command shows how many users are "here", "away", "busy"
+and "gone", how many users are attached and detached, total number of
+users signed on, and how many discussions are active.
+[/why,why]
+The /why command is pretty self-explanatory. (try it!)
+[/da|te,date]
+The /date command prints the current date and time like the date(1) command.
+[/si|gnal,signal]
+The /signal command is used to control whether or not to ring the terminal
+bell when incoming messages arrive.  There are separate controls for public
+and private messages.  The default is on for both.
+
+Syntax: /signal [public|private] [on|off]
+[smileys]
+The following are recognized smileys:
+
+   :-)   :-(   :-P   ;-)   :_)   :_(   :)   :(   :P   ;)
+
+When a message begins with one of these recognized smileys, either alone or
+followed immediately by whitespace, the smiley as assumed to be part of the
+message and sent to the default sendlist, instead of attempting to interpret
+the smiley as an explicit sendlist.  This does not attempt to special-case
+every type of smiley, but it does attempt to catch the common ones likely
+to be typed reflexively.  Only smileys containing a semicolon or colon are
+an issue here, since a smiley like "8-)" will already go to the default.
+
+In general, any message can be forced to be interpreted as either explicit
+or default sendlist sending by proper use of a space.  If a space leads the
+input line, it guarantees sending to the default sendlist.  If a space is
+immediately following a semicolon or colon in what would otherwise be one
+of the recognized smileys, it guarantees the explicit sendlist interpretation.
+In all cases, a single leading space in the message text will be removed
+if it is present, to allow such control over sending without changing the
+body of the message.
+
+Since this technique makes a single space alone on a line effectively the
+same as a blank line, this special case was used instead to reset idle time
+without actually sending any message.  (See "/help unidle".)
+[/set,set]
+The /set command is used to set both system variables and user variables.
+System variables are specified with predefined keywords, and user variables
+must be prefixed with a dollar sign.  (e.g. "idle" is a system variable
+with a predefined purpose, and "$idle" is a user variable with no such
+predefined purpose.)
+
+Known system variables:
+
+   uptime   idle     time_format
+[/set uptime,set uptime]
+Server uptime is a readonly system variable and cannot be set.
+[/set idle,set idle]
+The "/set idle" command is used to set an arbitrary idle time.  Arguments
+are a time specification in the format used by /who. (<d>d<hh>:<mm>)  You
+may not make yourself idle longer than you've been signed on.  Use of this
+command is actually discouraged.  In fact, it exists solely to discourage
+people from using idle time as a reason not to be active on the system.
+Idle time has no inherent value, and to hoard it is silly.  Yet this has
+been done, if only because of the time needed to build up a high idle time.
+This command is intended to take all the fun out of this game by eliminating
+the challenge of accumulating a high idle time, to discourage such misuse.
+[/set time_format,set time_format]
+The "/set time_format" command will set the current format used to display
+times in a verbose context.
+
+Valid options are: terse, verbose, both, default.
+[/set *,set *]
+No help available for "/set %s".
+[/display,display]
+The /display command is used to display both system variables and user
+variables.  System variables are specified with predefined keywords, and
+user variables must be prefixed with a dollar sign.  (e.g. "idle" is a
+system variable with a predefined purpose, and "$idle" is a user variable
+with no such predefined purpose.)
+
+Known system variables:
+
+   uptime   idle     time_format
+[/display uptime,display uptime]
+The "/display uptime" command will display how long the server has been
+running, and may also display how long the machine has been running.
+[/display idle,display idle]
+The "/display idle" command will display your idle time, without resetting it.
+[/display time_format,display time_format]
+The "/display time_format" command will display the current format used to
+display times in a verbose context.
+
+Valid options are: terse, verbose, both, default.
+[/display *,display *]
+No help available for "/display %s".
+[/al|so,also]
+The /also command is used to send a copy of the last message to another
+sendlist.
+[/oo|ps,oops]
+The /oops command is used to send an "oops" message to the (unintended)
+recipient of the last message, and to resend the last message to another
+sendlist.  The "/oops text <message>" form can be used to change the
+text of the "oops" message.
+[]
+Known commands:
+
+   /who     /blurb    /create    /permit     /clear     /howmany
+   /what    /here     /destroy   /depermit   /unidle    /detach
+   /why     /away     /join      /appoint    /date      /bye
+   /idle    /busy     /quit      /unappoint  /set
+   /help    /gone     /send      /rename     /signal
+
+Type "/help <command>" for more information about a particular command.
+[*]
+No help available for "%s".
