@@ -269,16 +269,34 @@ void login(Telnet *telnet,char *line)
       telnet->SetInputFunction(name);
 
       return;
-   } else if (!strcmp(line,"deven")) {
-      // Password and all other user accounts have been redacted.
-      strcpy(telnet->session->user->user,line);
-      strcpy(telnet->session->user->password,"REDACTED");
-      strcpy(telnet->session->name,"Deven");
-      telnet->session->user->priv = 100;
    } else {
-      telnet->output("Login incorrect.\n");
-      telnet->Prompt("login: ");
-      return;
+      int found = 0;
+      char buf[256],*user,*password,*name,*priv,*p;
+      FILE *pw = fopen("passwd","r");
+      if (pw) {
+	 while (fgets(buf,256,pw)) {
+	    p = user = buf;
+	    password = name = priv = 0;
+	    while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
+	    while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
+	    while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
+	    if (!priv) continue;
+	    if (!strcmp(line,user)) {
+	       found = 1;
+	       strcpy(telnet->session->user->user,user);
+	       strcpy(telnet->session->user->password,password);
+	       strcpy(telnet->session->name_only,name);
+	       telnet->session->user->priv = atoi(priv ? priv : "0");
+	       break;
+	    }
+	 }
+      }
+      fclose(pw);
+      if (!found) {
+	 telnet->output("Login incorrect.\n");
+	 telnet->Prompt("login: ");
+	 return;
+      }
    }
 
    // Disable echoing.
