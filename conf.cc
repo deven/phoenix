@@ -292,6 +292,7 @@ void login(Telnet *telnet,char *line)
       FILE *pw = fopen("passwd","r");
       if (pw) {
 	 while (fgets(buf,256,pw)) {
+	    if (buf[0] == '#') continue;
 	    p = user = buf;
 	    password = name = priv = 0;
 	    while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
