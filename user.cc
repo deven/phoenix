@@ -57,7 +57,7 @@ void User::UpdateAll()		// Update all user entries from password file.
 	 while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
 	 while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
 	 if (!priv) continue;
-	 Update(username,password,name,NULL,atoi(priv ? priv : "0"));
+	 Update(username,password,name,NULL,priv ? atoi(priv) : 0);
       }
       fclose(pw);
    }
