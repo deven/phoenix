@@ -659,8 +659,9 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 
 	       // Initiate shutdown.
 	       log("Shutdown requested by new server in 30 seconds.");
-	       fdtable.announce("%c%c>>> A new server is starting.  This server "
-			"will shutdown in 30 seconds... <<<\n%c%c",Bell,Bell,Bell,Bell);
+	       fdtable.announce("\a\a>>> A new server is starting.  This "
+				"server will shutdown in 30 seconds... <<<"
+				"\n\a\a");
 	       alarm(30);
 	       Shutdown = 1;
 	       break;

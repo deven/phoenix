@@ -123,15 +123,10 @@ void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
    array[fd]->OutputReady(fd);
 }
 
-void FDTable::announce(char *format,...) // formatted write to all connections
+void FDTable::announce(char *buf) // unformatted write to all connections
 {
-   char buf[BufSize];
    Telnet *t;
-   va_list ap;
 
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
-   va_end(ap);
    for (int i = 0; i < used; i++) {
       if ((t = (Telnet *) array[i]) && t->type == TelnetFD) {
 	 t->OutputWithRedraw(buf);
