@@ -72,7 +72,7 @@ EXEC = phoenixd
 HDRS = phoenix.h other.h boolean.h object.h string.h assoc.h list.h set.h \
 	general.h line.h block.h outbuf.h name.h output.h outstr.h \
 	discussion.h sendlist.h session.h user.h fdtable.h fd.h listen.h \
-	telnet.h pointer.h timestamp.h constants.h functions.h
+	telnet.h pointer.h timestamp.h constants.h functions.h globals.h
 SRCS = assoc.cc discussion.cc fdtable.cc listen.cc output.cc outstr.cc \
 	phoenix.cc session.cc sendlist.cc string.cc telnet.cc timestamp.cc \
 	user.cc
