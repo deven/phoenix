@@ -1,3 +1,78 @@
+Instead of dequoting sendlist items in message_start(), do it elsewhere, and
+call from DoWho(), etc.  Maybe do dequoting in Sendlist::set()?
+
+Write String::sprintf() (how to buffer?)...
+
+Modify "busy" state to discourage others sending to busy people.  Does this
+need a /confirm command or something else?  Also, discourage sending while
+state is "gone"...
+
+As well as I/O modules, have "sendable" modules which define sendlist targets.
+For example, sessions, offline users, discussions, logical groups (e.g. all),
+bridged lily users, etc.  (how to handle permissions in general form?)  Maybe
+have "default" keyword be a "sendable" target instead of special-case code...
+
+Can UI's also be modular?  Would they be considered I/O modules or another
+basic type instead?
+
+Allow ASCII ShiftIn/ShiftOut (C-n/C-o or C-o/C-n) for Latin-1 input and output.
+(only use for output if binary mode refused)
+
+Sundance requested tuning for tinyfugue...
+
+Use C-o to embed newlines in messages and make formatted multiline messages?
+
+Add general code to interpret time values (Timestamp(String) constructor?), as
+relative offsets or absolute.  Add parsing code for durations, as static class
+function, use from string constructor/absdate parse for relative...  Allow for
+user-level Timestamps in /eval...
+
+*** Add time limits for "away" states.
+
+*** Timed messages -- delayed send, timeouts.  (Allow a message in a detach
+    buffer to expire if undelivered.)
+
+*** Add /leave command.  Force disconnect unless /leave cancel is done.
+
+*** Allow /set date to adjust server time relative to system time...
+
+"trolling" flag? :-)  [Maybe allow "sealed" messages?]
+
+Fix TCP detection to require a minimum time delay before giving up on telnet.
+After this timeout, perhaps give a prompt for TCP users?  Do event queue first.
+
+When printing a message, if the destination name doesn't match the current
+name, show the original destination name.
+
+implement notifications and messages as events, include event queue in session
+for past events while detached, have global or per-session future events in
+another event queue to allow for future message sending...  No bell for any
+messages played back from being detached.
+
+info files
+
+*** use identd (port 113) server:
+    request of the form: <port-on-identd-server-host>, <port-on-client> [6789]
+    response: <echoed ports> : <response-type> : <additional-info>
+    e.g. 2351, 6789 : USER-ID : UNIX : deven
+    e.g. 2351, 6789 : ERROR : NO-USER
+    [ignore whitespace]
+    [use event queue timeout on server response]
+    Have a response event in event queue?  make action event queue or set?
+
+/msg command for multiline sends. (ideally allowing multiline edit)
+Allow multiline message sends, info file entry, etc. using "." to terminate
+input?  Postpone notifications/messages in event queue a la detach for the
+duration, but still ring bell.  Maybe allow emacs-style editing between lines
+or such?  possibly create a second screen window?
+
+*** use accept() 3rd arg instead of getpeername()
+
+fix hang after /det (use final option negotiation different from TIMING-MARK?)
+*** Use shutdown()
+
+Allow system variables (e.g. uptime) to be abbreviated?
+
 *** Integrate Berkeley DB library for external data storage at least, if not
 *** actual persistent objects. (multiple access issues?)
 
@@ -38,26 +113,30 @@ filters (e.g. pager) and others are single stream sources/sinks (e.g. tcp) and
 others may have more complex configurations (e.g. tee) -- adding and removing
 modules should be possible on the fly...
 
+Latin-1 -> ASCII as 2 types of I/O stream modules -- one doing something like
+e' to simulate accents, another to discard accents.  Enable filter whenever
+TRANSMIT-BINARY option is refused.
+
+Do Latin-1 character compose filter as I/O stream module also...
+
 Maybe use canonical names in ; expansion?
 
 TAB sendlist completion & cycling.
 
 Telnet::PrintMessage still has an "everyone" send -- is this used?
 
+Change message sending to empty discussion; save in discussion review, don't
+say "message not sent", whatever.
+
 If a client is doing local echo, does ;/: expansion happen invisibly?
 
 Add some option to implicitly copy message to self?  If so, erase input line?
-
-Allow system variables (e.g. uptime) to be abbreviated?
 
 Make more generalized parser and keyword matching?  (needs to be tunable)
 
 Abstract out terminal handling, editing (emacs-style vs. basic input line vs.
 possibly vi-style?) and telnet protocol itself into separate classes that can
 be disabled, perhaps a la STREAMS modules or such.
-
-Given event queue, have raw TCP connections require a time delay, so telnet
-won't be faked out as easily.
 
 -------------------------------------------------------------------------------
 "Enter name: " prompt should not have appeared below!
@@ -101,8 +180,6 @@ Move some Session string fields into sys_vars?
 Allow $variables in general command parameters. (need better parser)
 
 Modify String class to allow initialization/cast from int->String.
-
-Create timestamp and duration classes, use internally and for user /eval's.
 
 Allow /save command to save user or system variables persistently.
 
@@ -218,8 +295,6 @@ the processing of the input line.  Client should keep redrawing input until
 the IAC WILL/WONT TIMING-MARK comes back, then fix ONE input line and continue
 to redraw any remaining input lines.
 
-"trolling" flag? :-)
-
 Add more info to /howmany command?  e.g. idle/active/etc  maximums?
 
 full-screen -- when reviewing log, if message arrives, create split window at
@@ -253,22 +328,6 @@ guest questionnaire
 /review
 
 better attach review, no beeps, filter, session list
-
-*** event queue -- have shutdown/cancel use event queue instead of alarm().
-
-*** use identd (port 113) server:
-    request of the form: <port-on-identd-server-host>, <port-on-client> [6789]
-    response: <echoed ports> : <response-type> : <additional-info>
-    e.g. 2351, 6789 : USER-ID : UNIX : deven
-    e.g. 2351, 6789 : ERROR : NO-USER
-    [ignore whitespace]
-    [use event queue timeout on server response]
-    Have a response event in event queue?  make action event queue or set?
-
-*** use accept() 3rd arg instead of getpeername()
-
-fix hang after /det (use final option negotiation different from TIMING-MARK?)
-*** Use shutdown()
 
 Optimize character input in telnet.cc -- if a group of characters comes in,
 only queue the block of characters to output buffer, not each one.  Replace
@@ -333,8 +392,6 @@ unappoint.
 
 Let name/blurb use an extra column when there's a date in the "On Since".
 (But not one with a year!)
-
-Have output routines handle timestamps differently if not on the same day.
 
 /notify status on => *** You are "away", with blurb [shower]. ***
 
@@ -441,8 +498,6 @@ block - 1st word - & ~0x0f = logical address (link)
                                          0xfff0 = 1048576
 ===============================================================================
 
-add time limits for "away" states.
-
 *** make output streams persistent, and sessions.  (Pending stream should not
 *** be persistent, only Output stream in Session.) [flag on constructor?]
 
@@ -477,17 +532,6 @@ needs to output '\n', not 10, need "out << endl" too, probably, and also
 use <<, >> operators for logfile, other files, telnet connection, buffer, etc.
 have all outputting classes be derived from some base output class?
 
-implement notifications and messages as events, include event queue in session
-for past events while detached, have global or per-session future events in
-another event queue to allow for future message sending...  No bell for any
-messages played back from being detached.
-
-/msg command for multiline sends. (ideally allowing multiline edit)
-Allow multiline message sends, info file entry, etc. using "." to terminate
-input?  Postpone notifications/messages in event queue a la detach for the
-duration, but still ring bell.  Maybe allow emacs-style editing between lines
-or such?  possibly create a second screen window?
-
 Add "/mode line" and "/mode char" commands to have server initiate change.
 Ideally have "/mode auto" (default?) which switches to/from line mode as
 network speed varies...  (measure round-trip time of TIMING-MARKs?)
@@ -519,22 +563,12 @@ restart migration
 
 !force
 
-When printing a message, if the destination name doesn't match the current
-name, show the original destination name.  If the timestamp is old, print
-longer format.
-
 handle name [blurb] at Name: prompt.
 
 /who & /idle keywords: here, away, idle (>5?), unidle (<=5?), idle < #,
 idle > #, idle <= #, idle >= #, active (here/unidle), inactive (away/idle)
 
 history
-
-info files
-
-Allow /date command adjust server time relative to system time...
-
-/help args
 
 make two output streams in session, one for all output (no clear screen) and
 another for pending output to be sent (including reviews of the other output)
@@ -605,17 +639,11 @@ Do reference counting in objects and share as many objects as possible.  For
 example, share notification event objects until they have been delivered to
 all parties.  (all have reattached)
 
-put in hash functions, symbol tables/variables for each user/ session, etc?
+put in hash functions, symbol tables/variables for each user/session, etc?
 
 improve editing support (kill-ring)
 
 abstract terminal handling
-
-add general code to interpret time values, as relative offsets or absolute.
-
-timed messages -- delayed send, timeouts
-
-add /leave command.  Force disconnect unless /leave cancel is done.
 
 allow for minimum-privilege level required for entry.
 
@@ -630,11 +658,9 @@ no go aheads unless sga *refused*  no block at least
 
 check options against 0 or 3,could be 1 or 2!!
 
-real command parser (allow /idle=<nn> as well as /idle =<nn>)
+real command parser
 
 improve account handling
-
-users all in memory
 
 add /notify
 
@@ -663,10 +689,6 @@ allow file transfers between users? (storage?)
 Have new-handler to toss less important structures, like notifications?
 
 Have operator new and operator delete for Block, etc. save "free" blocks?
-
-maybe handle Listen::RequestShutdown() differently?  Can waiting for a
-response be entwined with attempting to bind on the port?  Can binding to
-the port be integrated into the main loop?
 
 User message logging?  deliver with email/ftp?  conversation/thread logging?
 
