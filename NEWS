@@ -1,5 +1,14 @@
 $Id: NEWS,v 1.9 2003/02/21 04:43:16 deven Exp $
 
+February 24, 2003: Version 1.0.0.beta.10
+
+ * This release now uses configured directories instead of "~/lib/gangplank"
+   under the running user.  Most required functions now fail at configure
+   time instead of compile time.  The "restart" utility has been retired, in
+   favor of a new "-cron" option to the server.  The "most.cc" hack has also
+   been retired as the argument for it is no longer compelling.  A minor bug
+   involving session transfer has also been fixed.
+
 February 21, 2003: Version 1.0.0.beta.9
 
  * [SECURITY] This release fixes a buffer overflow vulnerability present in
