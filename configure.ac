@@ -33,9 +33,33 @@ AC_CHECK_HEADERS([arpa/inet.h crypt.h fcntl.h memory.h netdb.h netinet/in.h stdd
 AC_C_CONST
 AC_C_INLINE
 AC_CXX_BOOL
+AC_CXX_EXCEPTIONS
+AC_CXX_RTTI
 AC_HEADER_TIME
 AC_STRUCT_TM
 AC_CHECK_TYPE([socklen_t], [int])
+
+# Apply GCC-specific options only if GCC is in use.
+if test "$GCC" = yes; then
+  # Use "gcc" driver instead of "g++" driver, since libstdc++ is not needed.
+  CXX="$CC"
+
+  # Add "-Wall" option to enable all warnings.
+  CFLAGS="$CFLAGS -Wall"
+  CXXFLAGS="$CXXFLAGS -Wall"
+
+  # Add "-fno-exceptions" option to disable exceptions, if supported.
+  if test "$ac_cv_cxx_exceptions" = yes; then
+    CFLAGS="$CFLAGS -fno-exceptions"
+    CXXFLAGS="$CXXFLAGS -fno-exceptions"
+  fi
+
+  # Add "-fno-rtti" option to disable RTTI, if supported.
+  if test "$ac_cv_cxx_rtti" = yes; then
+    CFLAGS="$CFLAGS -fno-rtti"
+    CXXFLAGS="$CXXFLAGS -fno-rtti"
+  fi
+fi
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
