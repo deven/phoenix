@@ -127,17 +127,6 @@ void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
    array[fd]->OutputReady(fd);
 }
 
-void FDTable::announce(char *buf) // unformatted write to all connections ***
-{
-   for (int i = 0; i < used; i++) {
-      if (array[i] && array[i]->type == TelnetFD) {
-	 array[i]->UndrawInput();
-	 array[i]->output(buf);
-	 array[i]->RedrawInput();
-      }
-   }
-}
-
 void FDTable::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
 {
    if (fd >= 0 && fd < used && array[fd] && array[fd]->type == TelnetFD) {
