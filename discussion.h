@@ -4,7 +4,7 @@
 //
 // Discussion class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.h,v $
 // Revision 1.6  2000/03/22 04:06:55  deven

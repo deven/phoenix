@@ -4,7 +4,7 @@
 //
 // EventQueue class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: eventqueue.h,v $
 // Revision 1.2  2000/03/22 04:06:34  deven

@@ -4,7 +4,7 @@
 //
 // Block class interface.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: block.h,v $
 // Revision 1.4  2000/03/22 04:05:32  deven

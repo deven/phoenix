@@ -4,7 +4,7 @@
 //
 // Phoenix conferencing system server -- Other (system) include files.
 //
-// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
 // Revision 1.13  2000/03/22 07:10:52  deven
