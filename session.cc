@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.5 1994/01/02 12:09:23 deven Exp $
+// $Id: session.cc,v 1.6 1994/01/02 22:41:59 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.6  1994/01/02 22:41:59  deven
+// Fixed !nuke command.
+//
 // Revision 1.5  1994/01/02 12:09:23  deven
 // Updated copyright notice, modified to use smart pointers, added Close(),
 // Attach(), Detach() and announce() functions, updated DoNuke(), gave exact
