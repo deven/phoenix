@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.2 2002/09/18 02:21:35 deven Exp $
+// $Id: discussion.cc,v 1.3 2002/11/26 06:38:49 deven Exp $
 //
 // Discussion class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: discussion.cc,v $
+// Revision 1.3  2002/11/26 06:38:49  deven
+// Added missing ~ operator where String objects were being passed as char *.
+//
 // Revision 1.2  2002/09/18 02:21:35  deven
 // Generate a compile-time error if strcasecmp() not available.
 //
