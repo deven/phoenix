@@ -193,7 +193,7 @@ String &String::prepend(char c)
       char *tmp = str;
       extra = Extra;
       str = new char[len + extra + 2];
-      strncpy(str,tmp,len);
+      strncpy(str + 1,tmp,len);
       delete [] tmp;
    }
    *str = c;
