@@ -1,0 +1,23 @@
+* Update NEWS and RELEASES files.
+
+* Make sure all files are checked into RCS.
+
+* Build and test the programs!
+
+* Run "make clean".
+
+* Copy entire directory to new release directory.
+
+* In the copy, change permissions to make files writeable!
+
+* Remove RCS directory and this file from the copy.
+
+* Create tarball of new release.
+
+* Create patch from previous release with "diff -urN".
+
+* Sign tarball and patch.
+
+* Place online on FTP server.
+
+* Announce release on Freshmeat and gangplank homepage.
