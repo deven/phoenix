@@ -96,3 +96,23 @@ void Session::CheckShutdown()   // Exit if shutting down and no users are left.
       exit(0);
    }
 }
+
+// Send private message by fd #.
+void Session::SendByFD(int fd,char *sendlist,int explicit,char *msg)
+{
+   // Save last sendlist if explicit.
+   if (explicit && *sendlist) {
+      strncpy(last_sendlist,sendlist,SendlistLen);
+      last_sendlist[SendlistLen - 1] = 0;
+   }
+
+   for (Session *session = sessions; session; session = session->next) {
+      if (session->telnet->fd == fd) {
+	 ResetIdle(10);
+	 telnet->print("(message sent to %s.)\n",session->name);
+	 session->telnet->PrintMessage(Private,name,name_only,0,msg);
+	 return;
+      }
+   }
+   telnet->print("\a\aThere is no user on fd #%d. (message not sent)\n");
+}

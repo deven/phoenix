@@ -30,5 +30,6 @@ public:
    ~Session();			// destructor
    void Link();			// Link session into global list.
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
+   void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

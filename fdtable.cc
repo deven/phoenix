@@ -157,29 +157,6 @@ void FDTable::nuke(Telnet *telnet,int fd,int drain)
    }
 }
 
-// Send private message by fd #.
-void FDTable::SendByFD(Telnet *telnet,int fd,char *sendlist,int explicit,
-		       char *msg)
-{
-   Telnet *t;
-
-   // Save last sendlist if explicit.
-   if (explicit && *sendlist) {
-      strncpy(telnet->session->last_sendlist,sendlist,SendlistLen);
-      telnet->session->last_sendlist[SendlistLen - 1] = 0;
-   }
-
-   if ((t = (Telnet *) array[fd]) && t->type == TelnetFD) {
-      telnet->session->ResetIdle(10);
-      telnet->print("(message sent to %s.)\n",t->session->name);
-      t->PrintMessage(Private,telnet->session->name,
-		      telnet->session->name_only,0,msg);
-   } else {
-      telnet->print("%c%cThere is no user on fd #%d. (message not sent)\n",
-		    Bell,Bell,fd);
-   }
-}
-
 void FDTable::SendEveryone(Telnet *telnet,char *msg)
 {
    Session *s;
