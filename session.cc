@@ -559,7 +559,7 @@ void Session::Login(char *line)
 	 telnet->output(Newline);
       }
       telnet->Prompt("Enter name: "); // Prompt for name.
-      SetInputFunction(Name);	   // Set name input routine.
+      SetInputFunction(EnteredName);  // Set name input routine.
    }
 }
 
@@ -586,10 +586,10 @@ void Session::Password(char *line)
       telnet->output(Newline);
    }
    telnet->Prompt("Enter name: "); // Prompt for name.
-   SetInputFunction(Name);	   // Set name input routine.
+   SetInputFunction(EnteredName);  // Set name input routine.
 }
 
-void Session::Name(char *line)
+void Session::EnteredName(char *line)
 {
    Pointer<Session> session;
    Set<Session> sessionmatches;
@@ -661,7 +661,7 @@ void Session::TransferSession(char *line)
    if (!match(line,"yes",1)) {
       telnet->output("Session not transferred.\n");
       telnet->Prompt("Enter name: ");
-      SetInputFunction(Name);
+      SetInputFunction(EnteredName);
       return;
    }
    if (user->FindReserved(name,u)) {
@@ -687,14 +687,14 @@ void Session::TransferSession(char *line)
 	 } else {
 	    telnet->output("That name is now taken.  Choose another.\n");
 	    telnet->Prompt("Enter name: ");
-	    SetInputFunction(Name);
+	    SetInputFunction(EnteredName);
 	    return;
 	 }
       } else {
 	 print("There is now a discussion named \"%s\".  Choose another "
 	       "name.\n",~discussion->name);
 	 telnet->Prompt("Enter name: ");
-	 SetInputFunction(Name);
+	 SetInputFunction(EnteredName);
 	 return;
       }
    }

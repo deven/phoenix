@@ -70,7 +70,7 @@ boolean Discussion::Permitted(Session *session) {
    return true;
 }
 
-void Discussion::EnqueueOthers(Pointer<Output> &out,Session *sender) {
+void Discussion::EnqueueOthers(Pointer<OutputObj> &out,Session *sender) {
    SetIter<Session> session(members);
    while (session++) if (session != sender) session->Enqueue(out);
 }

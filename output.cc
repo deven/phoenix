@@ -130,7 +130,7 @@ void CreateNotify::output(Pointer<Telnet> &telnet)
 
 DestroyNotify::DestroyNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 			     time_t when = 0):
-			     Output(DestroyOutput,NotificationClass,when)
+			     OutputObj(DestroyOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -144,7 +144,7 @@ void DestroyNotify::output(Pointer<Telnet> &telnet)
 
 JoinNotify::JoinNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 		       time_t when = 0):
-		       Output(JoinOutput,NotificationClass,when)
+		       OutputObj(JoinOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -158,7 +158,7 @@ void JoinNotify::output(Pointer<Telnet> &telnet)
 
 QuitNotify::QuitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 		       time_t when = 0):
-		       Output(QuitOutput,NotificationClass,when)
+		       OutputObj(QuitOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -172,7 +172,7 @@ void QuitNotify::output(Pointer<Telnet> &telnet)
 
 PublicNotify::PublicNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 			   time_t when = 0):
-			   Output(PublicOutput,NotificationClass,when)
+			   OutputObj(PublicOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -186,7 +186,7 @@ void PublicNotify::output(Pointer<Telnet> &telnet)
 
 PrivateNotify::PrivateNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 			     time_t when = 0):
-			     Output(PrivateOutput,NotificationClass,when)
+			     OutputObj(PrivateOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -200,7 +200,7 @@ void PrivateNotify::output(Pointer<Telnet> &telnet)
 
 PermitNotify::PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 			   boolean flag,time_t when = 0):
-			   Output(PermitOutput,NotificationClass,when)
+			   OutputObj(PermitOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -235,7 +235,7 @@ void PermitNotify::output(Pointer<Telnet> &telnet)
 DepermitNotify::DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 			       boolean flag,Pointer<Session> &who,
 			       time_t when = 0):
-			       Output(DepermitOutput,NotificationClass,when)
+			       OutputObj(DepermitOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
@@ -288,7 +288,7 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
 
 AppointNotify::AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
 			     Pointer<Session> &s2, time_t when = 0):
-			     Output(AppointOutput,NotificationClass,when)
+			     OutputObj(AppointOutput,NotificationClass,when)
 {
    discussion = d;
    appointer = s1->name_obj;
@@ -311,7 +311,8 @@ void AppointNotify::output(Pointer<Telnet> &telnet)
 
 UnappointNotify::UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
 				 Pointer<Session> &s2, time_t when = 0):
-				 Output(UnappointOutput,NotificationClass,when)
+				 OutputObj(UnappointOutput,NotificationClass,
+				 when)
 {
    discussion = d;
    unappointer = s1->name_obj;
