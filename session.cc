@@ -98,7 +98,7 @@ void Session::SetInputFunction(InputFuncPtr input)
    InputFunc = input;
 
    // Process lines as long as we still have a defined input function.
-   while (InputFunc && lines) {
+   while (InputFunc != NULL && lines) {
       p = lines;
       lines = p->next;
       (this->*InputFunc)(p->line);

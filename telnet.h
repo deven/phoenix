@@ -91,7 +91,7 @@ public:
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Prompt(char *p);
-   boolean AtEnd() { return point == free; }
+   boolean AtEnd() { return boolean(point == free); }
    int Start() { return prompt_len; }
    int StartLine() { return Start() / width; }
    int StartColumn() { return Start() % width; }
