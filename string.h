@@ -38,11 +38,11 @@ public:
    int operator ==(const String &s) {
       return len == s.len && !strncmp(str,s.str,len);
    }
-   int operator ==(const char *s) { return !strcmp(str,s); }
+   int operator ==(const char *s) { return !strcmp(str,s ? s : ""); }
    int operator !=(const String &s) {
       return len != s.len || strncmp(str,s.str,len) != 0;
    }
-   int operator !=(const char *s) { return strcmp(str,s) != 0; }
+   int operator !=(const char *s) { return strcmp(str,s ? s : "") != 0; }
    operator const char *() const { return str; }
    operator char *() { return str; }
    int length() { return len; }
