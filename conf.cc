@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.10 1994/01/19 22:14:48 deven Exp $
+// $Id: conf.cc,v 1.11 1994/02/05 18:29:50 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.11  1994/02/05 18:29:50  deven
+// Only avoid fork() if last argument is -debug, do signal handling always.
+//
 // Revision 1.10  1994/01/19 22:14:48  deven
 // Removed strerror() definition, reworked into warn() and error() directly,
 // modified match_name() to be iterative instead of recursive, returning a
