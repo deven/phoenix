@@ -1,12 +1,5 @@
 $Id: KLUDGES,v 1.4 2003/02/21 03:01:00 deven Exp $
 
-Most of the C++ modules are compiled as a single "most.cc" module via #include
-directives.  This is actually faster than compiling all the modules separately
-and the executable size is smaller because GCC doesn't include redundant debug
-information in each object file.  This seems clumsy, but actually works well.
-(Originally, all modules were separately compiled in the traditional fashion,
-but it took longer to compile and generated larger executables.)
-
 All help text for the /help command is currently hardcoded into the source
 code, as an expedient kludge to minimize file I/O.  This is important, since
 blocking on file I/O would cause the server to appear to freeze from the
