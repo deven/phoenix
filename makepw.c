@@ -22,6 +22,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
+#include <crypt.h>
 
 main(int argc, char **argv)
 {
