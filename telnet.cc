@@ -584,7 +584,6 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 
 void Telnet::InsertString(String &s) // Insert string at point.
 {
-   char *p = point;
    int n,slen = s.length();
 
    if (!s) return;
@@ -612,7 +611,7 @@ void Telnet::InsertString(String &s) // Insert string at point.
       for (p = s; *p; p++) *point++ = *p;
       free += slen;
    }
-   echo(p,free - p);
+   echo(point - slen,(free - point) + slen);
    if (!AtEnd()) {		// Move cursor back to point.
       int lines = EndLine() - PointLine();
       int columns = EndColumn() - PointColumn();
@@ -669,7 +668,7 @@ inline void Telnet::kill_line()	// Kill from point to end of line.
       if (KillRing.Count() >= KillRingMax) KillRing.RemHead();
 
       // Add new kill.
-      KillRing.AddTail(new StringObj(data));
+      KillRing.AddTail(new StringObj(point,free - point));
 
       free = point;		// Truncate input buffer.
       if (mark > point) mark = point;
@@ -730,7 +729,7 @@ inline void Telnet::accept_input() // Accept input line.
       if (History.Count() >= HistoryMax) History.RemHead();
 
       // Add new history line.
-      History.AddTail(new StringObj(data));
+      History.AddTail(new StringObj(data,free - data));
    }
 
    // If either side has Go Aheads suppressed, then the hell with it.
