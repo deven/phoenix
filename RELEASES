@@ -12,6 +12,14 @@ Stable Releases
 Development/Test Releases
 -------------------------
 
+ * December 12, 2001: Version 1.0.0.beta.3
+
+   This is a portability release.  The previous release was only tested under
+   Red Hat Linux 6.1, but it did not compile on Red Hat Linux 7.2 or other
+   current Linux distributions due to glibc changes.  This release has been
+   fixed to build on older and newer Linux systems, BSD systems, Solaris, and
+   using either GCC 2 or GCC 3.
+
  * December 2, 2001: Version 1.0.0.beta.2
 
    This release simply renames Hash::Hash() to Hash::HashFunction() to

@@ -1,5 +1,13 @@
 $Id: NEWS,v 1.2 2001/12/02 08:41:56 deven Exp $
 
+December 12, 2001:
+
+ * Release Version: 1.0.0.beta.3
+
+ * This is a portability release.  Gangplank now builds with GCC 2 or 3 on
+   Linux (including newer distributions), BSD systems, and Solaris.  See the
+   RELEASES and PORTING files for more details.
+
 December 2, 2001:
 
  * Release Version: 1.0.0.beta.2
