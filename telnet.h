@@ -114,11 +114,13 @@ private:
    static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
 public:
-   static const int default_width = 80;	// Hardcoded default screen width ***
-   static const int height = 24; // Hardcoded screen height ***
+   static const int default_width = 80; // Hardcoded default screen width ***
+   static const int minimum_width = 10; // Hardcoded minimum screen width ***
+   static const int default_height = 24; // Hardcoded default screen height ***
    static const int HistoryMax = 200; // Save last 200 input lines. ***
    static const int KillRingMax = 1; // Save last kill. ***
    int width;			// current screen width
+   int height;			// current screen height
    Pointer<Session> session;	// back-pointer to session structure
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
@@ -189,6 +191,8 @@ public:
    void Welcome();
    void UndrawInput();		// Erase input line from screen.
    void RedrawInput();		// Redraw input line on screen.
+   int SetWidth(int n);		// Set terminal width.
+   int SetHeight(int n);	// Set terminal height.
    void set_Echo(CallbackFuncPtr callback, int state);
    void set_LSGA(CallbackFuncPtr callback, int state);
    void set_RSGA(CallbackFuncPtr callback, int state);

@@ -561,7 +561,8 @@ void Telnet::set_RBin(CallbackFuncPtr callback, int state)
 
 Telnet::Telnet(int lfd)		// Telnet constructor.
 {
-   width = default_width;	// Initialize terminal width to default.
+   SetWidth(0);			// Set default terminal width.
+   SetHeight(0);		// Set default terminal height.
    type = TelnetFD;		// Identify as a Telnet FD.
    data = new char[InputSize];	// Allocate input line buffer.
    end = data + InputSize;	// Save end of allocated block.
@@ -711,6 +712,43 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 	 }
       }
    }
+}
+
+int Telnet::SetWidth(int n)	// Set terminal width.
+{
+   int new_width = width;
+
+   // Determine new terminal width, if any.
+   if (n == 0) {
+      new_width = default_width;
+   } else if (n > 0 && n < minimum_width) {
+      new_width = minimum_width;
+   } else if (n > 0) {
+      new_width = n;
+   }
+
+   // Redraw line if terminal width changed.
+   if (width != new_width) {
+      UndrawInput();
+      width = new_width;
+      RedrawInput();
+   }
+
+   // Return new terminal width.
+   return width;
+}
+
+int Telnet::SetHeight(int n)	// Set terminal height.
+{
+   // Keep this one simple; height isn't currently used. ***
+   if (n == 0) {
+      height = default_height;
+   } else if (n > 0) {
+      height = n;
+   }
+
+   // Return new terminal height.
+   return height;
 }
 
 void Telnet::InsertString(String &s) // Insert string at point.
@@ -943,8 +981,7 @@ void Telnet::accept_input()	// Accept input line.
          // Check for numeric value for width.
          char *param = getword(tmp);
          int value = param ? atoi(param) : 0;
-         if (value > 10) width = value; // Use 10 as a minimum width.
-         print("Terminal width is now set to %d.\n", width);
+         print("Terminal width is now set to %d.\n", SetWidth(value));
 
          // Done with this input line, but leave prompt if any.
          point = free = data;	// Wipe input line. (data intact)
