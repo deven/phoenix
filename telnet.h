@@ -80,6 +80,7 @@ public:
    Pointer<Name> reply_to;	// sender of last private message
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
+   int outstanding;		// outstanding acknowledgement count
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
    char undrawn;		// input line undrawn for output? (boolean)
    char blocked;		// output blocked? (boolean)
