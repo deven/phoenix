@@ -51,6 +51,10 @@ public:
    String(const String &s);
    String(const char *s);
    String(const char *s, int n);
+   String(int n);
+   String(unsigned int n);
+   String(long n);
+   String(unsigned long n);
    ~String() { delete [] str; }
    String &operator =(const String &s);
    String &operator =(const char *s);
