@@ -1,5 +1,19 @@
 $Id: NEWS,v 1.10 2003/02/24 06:58:12 deven Exp $
 
+September 18, 2003: Version 1.0.0.beta.11
+
+ * Modified server startup to double-fork and close I/O to better disconnect
+   from the parent process.  (Without this, crond was waiting with -cron.)
+
+ * Added support for multiple reserved names per user account.
+
+ * Added support for application-mode cursor sequences.
+
+ * Added privileged session override to /appoint command.
+
+ * Fixed various bugs (including several crashing bugs) related to the log
+   file, backslashes at the end of input lines, login timeout and double join.
+
 February 24, 2003: Version 1.0.0.beta.10
 
  * This release now uses configured directories instead of "~/lib/gangplank"
