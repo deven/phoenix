@@ -108,6 +108,7 @@ public:
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
    void DoBye();		// Do /bye command.
+   void DoClear();		// Do /clear command.
    void DoDetach();		// Do /detach command.
    void DoWho();		// Do /who command.
    void DoIdle();		// Do /idle command.
