@@ -518,6 +518,8 @@ void Session::Blurb(char *line)
 	  "Type \"/help\" for a list of commands.\n\n");
    DoWho("");			// Enqueues output.
 
+   telnet->History.Reset();	// Reset input history.
+
    SetInputFunction(ProcessInput); // Set normal input routine.
 }
 
