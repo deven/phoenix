@@ -180,7 +180,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
    case PublicMessage:
       // Print message header.
       if (session->SignalPublic) output(Bell);
-      print("\n -> From %s%s to everyone:",-from->name,-from->blurb);
+      print("\n -> From %s%s to everyone:",~from->name,~from->blurb);
       break;
    case PrivateMessage:
       // Save name to reply to.
@@ -213,8 +213,8 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 	 if (session->SignalPublic) output(Bell);
 	 output("\n -> From ");
       }
-      output(-from->name);
-      output(-from->blurb);
+      output(~from->name);
+      output(~from->blurb);
       if (to->sessions.Count() > 1 || to->discussions.Count() > 0) {
 	 output(" to ");
 	 boolean first = true;
@@ -226,7 +226,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 	    } else {
 	       output(", ");
 	    }
-	    output(-s->name);
+	    output(~s->name);
 	 }
 
 	 if (to->discussions.Count()) {
@@ -241,7 +241,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 	       } else {
 		  output(", ");
 	       }
-	       output(-discussion->name);
+	       output(~discussion->name);
 	    }
 	 }
       }
@@ -395,7 +395,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
    session->EnqueueOutput();
    prompt = p;
-   if (!undrawn) output(-prompt);
+   if (!undrawn) output(~prompt);
 }
 
 Telnet::~Telnet()		// Destructor, might be re-executed.
@@ -473,7 +473,7 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 
    if (!undrawn) return;
    undrawn = false;
-   if (prompt) output(-prompt);
+   if (prompt) output(~prompt);
    if (End()) {
       echo(data,End());
       if (!AtEnd()) {		// Move cursor back to point.
