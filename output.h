@@ -34,7 +34,7 @@ enum OutputType {
    ExitOutput,TransferOutput,AttachOutput,DetachOutput,HereOutput,
    AwayOutput,BusyOutput,GoneOutput,CreateOutput,DestroyOutput,JoinOutput,
    QuitOutput,PublicOutput,PrivateOutput,PermitOutput,DepermitOutput,
-   AppointOutput,UnappointOutput
+   AppointOutput,UnappointOutput,RenameOutput
 };
 
 // Classifications of Output subclasses.
@@ -252,5 +252,16 @@ private:
    Pointer<Name> name;
 public:
    UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   void output(Pointer<Telnet> &telnet);
+};
+
+class RenameNotify: public Output {
+private:
+   String oldname;
+   String newname;
+public:
+   RenameNotify(String oldstr,String newstr,time_t when = 0):
+   Output(RenameOutput,NotificationClass,when),oldname(oldstr),
+   newname(newstr) { }
    void output(Pointer<Telnet> &telnet);
 };
