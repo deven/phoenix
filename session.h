@@ -46,6 +46,7 @@ public:
    void DoWhy();		// Do /why command.
    int DoBlurb(char *start,boolean entry = false); // Do /blurb command.
    void DoHelp();		// Do /help command.
+   void DoReset();		// Do <space><return> idle time reset.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);
