@@ -22,10 +22,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_STRCHR
-#error strchr() required!
-#endif
-
 Sendlist::Sendlist(Session &session, char *sendlist, boolean multi,
 		   boolean do_sessions, boolean do_discussions)
 {
