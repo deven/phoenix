@@ -50,6 +50,7 @@ Session::Session(Telnet *t)
 Session::~Session()
 {
    Session *s;
+   Telnet *t;
    Block *block;
    int found;
 
@@ -67,8 +68,13 @@ Session::~Session()
       }
    }
 
-   // Notify and log exit if session found.
-   if (found) NotifyExit();
+   if (found) NotifyExit();	// Notify and log exit if session found.
+
+   if (telnet) {
+      t = telnet;
+      telnet = NULL;
+      t->Close();		// Drain connection, then close.
+   }
 
    delete user;			// make user stay around ***
 }
@@ -265,6 +271,8 @@ void Session::ProcessInput(char *line)
    } else if (*line == '/') {
       if (!strncasecmp(line,"/bye",4)) {
 	 DoBye();
+      } else if (!strncasecmp(line,"/detach",4)) {
+	 DoDetach();
       } else if (!strncasecmp(line,"/who",4)) {
 	 DoWho();
       } else if (!strncasecmp(line,"/idle",3)) {
@@ -301,7 +309,11 @@ void Session::NotifyEntry() {	// Notify other users of entry and log.
 }
 
 void Session::NotifyExit() {	// Notify other users of exit and log.
-   log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   if (telnet) {
+      log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   } else {
+      log("Exit: %s (%s), detached.",name_only,user->user);
+   }
    EnqueueOthers(new ExitNotify(name_obj));
 }
 
@@ -374,7 +386,12 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
 void Session::DoBye()		// Do /bye command.
 {
-   telnet->Close(true);		// Drain connection, then close.
+   delete this;			// Destroy session. (closes connection)
+}
+
+void Session::DoDetach()	// Do /detach command.
+{
+   if (telnet) telnet->Close(); // Drain connection, then close.
 }
 
 void Session::DoWho()		// Do /who command.
@@ -396,12 +413,16 @@ void Session::DoWho()		// Do /who command.
    // Output data about each user.
    for (Session *session = sessions; session; session = session->next) {
       print(" %-32s  ",session->name);
-      if ((now - session->login_time) < 86400) {
-	 output(date(session->login_time,11,8));
+      if (session->telnet) {
+	 if ((now - session->login_time) < 86400) {
+	    output(date(session->login_time,11,8));
+	 } else {
+	    output(Space);
+	    output(date(session->login_time,4,6));
+	    output(Space);
+	 }
       } else {
-	 output(Space);
-	 output(date(session->login_time,4,6));
-	 output(Space);
+	 output("detached");
       }
       idle = (now - session->message_time) / 60;
       if (idle) {
@@ -409,7 +430,7 @@ void Session::DoWho()		// Do /who command.
 	 minutes = idle - hours * 60;
 	 days = hours / 24;
 	 hours -= days * 24;
-	 if (days > 9) {
+	 if (days > 9 || days && !session->telnet) {
 	    print("%2dd%02d:%02d ",days,hours,minutes);
 	 } else if (days) {
 	    print("%dd%02d:%02d  ",days,hours,minutes);
@@ -421,7 +442,12 @@ void Session::DoWho()		// Do /who command.
       } else {
 	 output("         ");
       }
-      print("%-8s  %2d\n",session->user->user,session->telnet->fd);
+      print("%-8s  ",session->user->user);
+      if (session->telnet) {
+	 print("%2d\n",session->telnet->fd);
+      } else {
+	 output("--\n");
+      }
    }
 }
 
@@ -449,21 +475,24 @@ void Session::DoIdle()		// Do /idle command.
 
    // Output data about each user.
    for (Session *session = sessions; session; session = session->next) {
+      print(" %-32s ",session->name);
       idle = (now - session->message_time) / 60;
       if (idle) {
 	 hours = idle / 60;
 	 minutes = idle - hours * 60;
 	 days = hours / 24;
 	 hours -= days * 24;
-	 if (days) {
-	    print(" %-32s %2dd%02d",session->name,days,hours);
+	 if (days > 9) {
+	    print("%2dd%02d",days,hours);
+	 } else if (days) {
+	    print("%dd%02dh",days,hours);
 	 } else if (hours) {
-	    print(" %-32s %2d:%02d",session->name,hours,minutes);
+	    print("%2d:%02d",hours,minutes);
 	 } else {
-	    print(" %-32s    %2d",session->name,minutes);
+	    print("   %2d",minutes);
 	 }
       } else {
-	 print(" %-32s      ",session->name);
+	 output("     ");
       }
       output(col ? Newline : Space);
       col = !col;
@@ -668,7 +697,7 @@ void Session::DoMessage(char *line) // Do message send.
 void Session::SendByFD(int fd,char *msg)
 {
    for (Session *session = sessions; session; session = session->next) {
-      if (session->telnet->fd == fd) {
+      if (session->telnet && session->telnet->fd == fd) {
 	 ResetIdle(10);
 	 print("(message sent to %s.)\n",session->name);
 	 session->Enqueue(new Message(PrivateMessage,name_obj,msg));
