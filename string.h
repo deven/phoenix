@@ -79,7 +79,7 @@ public:
    operator const char *() { return str; }
    operator char *() { return str; }
    operator int() { return len; }
-#ifdef BOOL_TYPE
+#ifdef HAVE_BOOL
    operator bool() { return len != 0; }
 #endif
    int length() { return len; }
