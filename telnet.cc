@@ -201,7 +201,10 @@ void Telnet::command(char *buf,int len) // queue command data (with length)
 
 void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
 {
-   if (acknowledge) Output.out(TelnetIAC,TelnetDo,TelnetTimingMark);
+   if (acknowledge) {
+      outstanding++;
+      Output.out(TelnetIAC,TelnetDo,TelnetTimingMark);
+   }
 }
 
 void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> from,
@@ -328,6 +331,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    prompt = NULL;		// No prompt initially.
    prompt_len = 0;		// Length of prompt
    reply_to = NULL;		// No last sender.
+   outstanding = 0;		// No outstanding acknowledgements.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
    blocked = 0;			// output not blocked
@@ -378,8 +382,17 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
    closing = true;		// Closing intentionally.
    if (Output.head && drain) {	// Drain connection, then close.
       blocked = false;
-      NoReadSelect();
+      DoEcho = false;
+      if (acknowledge) {
+	 TimingMark();		// Send final acknowledgement.
+      } else {
+	 while (session->OutputNext(this)) session->AcknowledgeOutput();
+      }
       WriteSelect();
+
+      // Detach associated session.
+      if (!session.Null()) session->Detach(boolean(closing));
+      session = NULL;
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
    }
@@ -515,6 +528,8 @@ inline void Telnet::yank()	// Yank from kill-ring.
 
 inline void Telnet::accept_input() // Accept input line.
 {
+   if (session.Null()) return;
+
    *free = 0;			// Make input line null-terminated.
 
    // If either side has Go Aheads suppressed, then the hell with it.
@@ -780,7 +795,8 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       break;
 	    case TelnetTimingMark:
 	       if (acknowledge) {
-		  session->AcknowledgeOutput();
+		  if (outstanding) outstanding--;
+		  if (!session.Null()) session->AcknowledgeOutput();
 	       } else if (Echo == TelnetWillWont) {
 		  acknowledge = true;
 	       }
@@ -963,6 +979,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
       }
       break;
    }
+   if (closing && !outstanding && !Command.head && !Output.head) Closed();
 }
 
 void Telnet::OutputReady(int fd) // telnet stream can output data
@@ -1005,7 +1022,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
    }
 
    // Don't write any user data if output is blocked.
-   if (blocked || !Output.head) {
+   if (blocked) {
       NoWriteSelect();
       return;
    }
@@ -1054,7 +1071,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
       // If acknowledgements are enabled, all output is dumped to the
       // Telnet buffers as it is queued.
 
-      if (!acknowledge) {
+      if (!acknowledge && !session.Null()) {
 	 session->AcknowledgeOutput();
 	 session->OutputNext(this);
       }
@@ -1064,7 +1081,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
    NoWriteSelect();
 
    // Close connection if ready to.
-   if (closing) {
+   if (closing && !outstanding) {
       Closed();
       return;
    }
