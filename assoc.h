@@ -24,8 +24,8 @@ public:
    operator String() { return value; }
    operator const char *() const { return value; }
    operator char *() { return value; }
-   const char *operator ~() const { return value; }
-   char *operator ~() { return value; }
+   const char *operator ~() const { return ~value; }
+   char *operator ~() { return ~value; }
 };
 
 class Assoc {
@@ -60,5 +60,5 @@ public:
    AssocIter &operator =(Assoc *a) { array = a; entry = 0; bucket = 0; }
    Pointer<AssocEntry> operator ++();
    operator Pointer<AssocEntry>() { return entry; }
-   char *operator ~() { return entry->value; }
+   char *operator ~() { return ~(entry->value); }
 };
