@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.19 2000/03/22 06:16:02 deven Exp $
+# $Id: Makefile,v 1.20 2000/03/22 07:10:24 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.20  2000/03/22 07:10:24  deven
+# Added -lcrypt when linking.
+#
 # Revision 1.19  2000/03/22 06:16:02  deven
 # Modified to use "./checkin" instead of "checkin", assuming "." not in PATH.
 #
