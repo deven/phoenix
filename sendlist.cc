@@ -58,8 +58,8 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
       separator = strchr(start,Separator);
       if (separator) *separator = 0;
       if (sender.FindSendable(start,session,sessionmatches,discussion,
-			      discussionmatches,true,false,do_sessions,
-			      do_discussions)) {
+			      discussionmatches,boolean(!multi),false,
+			      boolean(do_sessions),boolean(do_discussions))) {
 	 if (session) sessions.Add(session);
 	 if (discussion) discussions.Add(discussion);
       } else {
@@ -78,7 +78,8 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
 	    } else {
 	       errors.append('"');
 	       errors.append(tmp);
-	       sprintf(buf,"\" matches %d names: ",sessionmatches.Count());
+	       sprintf(buf,"\" matches %d name%s: ",sessionmatches.Count(),
+		       sessionmatches.Count() == 1 ? "" : "s");
 	       errors.append(buf);
 	       errors.append(session++->name);
 	       while (session++) {
@@ -103,7 +104,8 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
 		  errors.append(tmp);
 		  errors.append("\" matches ");
 	       }
-	       sprintf(buf,"%d discussions: ",discussionmatches.Count());
+	       sprintf(buf,"%d discussion%s: ",discussionmatches.Count(),
+		       discussionmatches.Count() == 1 ? "" : "s");
 	       errors.append(buf);
 	       errors.append(discussion++->name);
 	       while (discussion++) {
