@@ -1,0 +1,74 @@
+I'll try to explain the filter/pipeline design in Crypto++.
+
+The (abstract) base class is BufferedTransformation, with main member
+functions:
+    virtual void Put(const byte *inString, unsigned int length) =0;
+    virtual unsigned int Get(byte *outString, unsigned int getMax) =0;
+
+The idea is that you put some bytes into a BufferedTransformation object,
+it does some transformation on them and buffers them, and then you get
+them back later (possibly with the length changed).  One example of a
+BufferedTransformation is the ByteQueue, which just stores whatever you
+put in and then gives them back to you when you ask.
+
+The Filter abstract class derives from BufferedTransformation.  A Filter
+is a BufferedTransformation on which you can attach another
+BufferedTransformation object.  Instead of buffering up the transformed
+bytes, it would Put() them into the attached object.  When you call Get()
+on a Filter, it calls Get() on the attached object and returns what the
+attached object returns without change.  By default the object
+attached is a ByteQueue, but you can specify another filter or link a
+series of filters into a pipeline.
+
+Other classes derived from BufferedTransformation include Source, which
+adds the Pump() member function (it pumps a specified number of bytes from
+its resevoir into the attached object) and Sink, which always returns 0 on
+Get().
+
+There are two ways to use filters.  The first is defining your own Source
+and Sink classes (or use ones already in the library), and then link your
+Source and Sink objects with a series of filters.  Examples:
+
+void EncryptFile(const char *filein, const char *fileout, const char
+*passPhrase)
+{
+    FileSource f(filein, TRUE, new DefaultEncryptor(passPhrase,
+        new FileSink(fileout)));
+}
+
+and
+
+void GzipFile(const char *filein, const char *fileout, int deflate_level)
+{
+    FileSource f(filein, TRUE, new Gzip(deflate_level, new FileSink(fileout)));
+}
+
+The TRUE argument tells FileSource to immediately pump everything in
+filein.
+
+The second method is to link a series of filters into a pipeline, manually
+Put() some bytes into it and then Get() them back.  For example:
+
+// encode a string using passPhrase and encode it in hex
+// returns the ciphertext, which should be deleted by caller
+char *EncryptString(const char *instr, const char *passPhrase)
+{
+	unsigned int len=strlen(instr);
+	char* outstr;
+
+	DefaultEncryptor encryptor(passPhrase, new HexEncoder());
+	encryptor.Put((byte *)instr, len);
+	encryptor.Close();
+
+	unsigned int outputLength = encryptor.MaxRetrieveable();
+	outstr = new char[outputLength+1];
+	encryptor.Get((byte *)outstr, outputLength);
+	outstr[outputLength] = 0;
+	return outstr;
+}
+
+The filter/pipeline design has some more advanced features, such as fork
+and join (useful for secret sharing), but the basic ideas are not too
+complex.
+
+Wei Dai
