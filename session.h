@@ -33,5 +33,6 @@ public:
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);
+   static void notify(char *format,...); // formatted write to all sessions
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

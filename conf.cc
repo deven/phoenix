@@ -112,20 +112,6 @@ void error(char *format,...)	// print error message and exit ***
    exit(1);
 }
 
-void notify(char *format,...)	// formatted write to all sessions
-{
-   char buf[BufSize];
-   Session *session;
-   va_list ap;
-
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
-   va_end(ap);
-   for (session = sessions; session; session = session->next) {
-      session->telnet->OutputWithRedraw(buf);
-   }
-}
-
 char *message_start(char *line,char *sendlist,int len,int *explicit)
 {
    char *p;
@@ -402,7 +388,7 @@ void blurb(Telnet *telnet,char *line)
    }
 
    // Announce entry.
-   notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
+   Session::notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
 	  date(time(&telnet->session->login_time),11,5));
    telnet->session->message_time = telnet->session->login_time;
    log("Enter: %s (%s) on fd %d.",telnet->session->name_only,
