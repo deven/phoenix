@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.5 2003/02/22 05:04:55 deven Exp $
+# $Id: Makefile.am,v 1.6 2003/02/24 06:23:12 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,10 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile.am,v $
+# Revision 1.6  2003/02/24 06:23:12  deven
+# Added -D options for SERVER_PATH and LIBDIR, moved server to sbin directory
+# and removed restart program.
+#
 # Revision 1.5  2003/02/22 05:04:55  deven
 # Removed "most.cc" hack -- its benefits are no longer compelling.
 #

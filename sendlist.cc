@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.5 2003/02/18 05:08:56 deven Exp $
+// $Id: sendlist.cc,v 1.6 2003/02/24 06:34:22 deven Exp $
 //
 // Sendlist class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.6  2003/02/24 06:34:22  deven
+// Removed strchr() check.
+//
 // Revision 1.5  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //

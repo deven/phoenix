@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.11 2003/02/18 05:08:56 deven Exp $
+// $Id: gangplank.cc,v 1.12 2003/02/24 06:29:36 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,11 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.12  2003/02/24 06:29:36  deven
+// Removed mkdir() check.  Modified to use LIBDIR instead of "~/lib/gangplank"
+// directory.  Added options processing, required -port to specify port number.
+// When -cron is specified, exit silently if the port is busy.
+//
 // Revision 1.11  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.15 2003/02/22 04:39:59 deven Exp $
+// $Id: session.cc,v 1.16 2003/02/24 06:35:24 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.16  2003/02/24 06:35:24  deven
+// Removed crypt(), strcasecmp(), strncasecmp() and strchr() checks.
+//
 // Revision 1.15  2003/02/22 04:39:59  deven
 // Modified Session::SetInputFunction() to set prompt with input function.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: event.cc,v 1.3 2003/02/21 03:14:23 deven Exp $
+// $Id: event.cc,v 1.4 2003/02/24 06:26:43 deven Exp $
 //
 // Event and derived classes, implementations.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: event.cc,v $
+// Revision 1.4  2003/02/24 06:26:43  deven
+// Modified to use SERVER_PATH variable from configure script.
+//
 // Revision 1.3  2003/02/21 03:14:23  deven
 // Added login timeout event.  Changed SetRelTime() parameter from time_t to
 // int.  Added constants for final warning time in shutdown/restart events.

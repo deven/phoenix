@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.5 2003/02/18 05:08:57 deven Exp $
+// $Id: user.cc,v 1.6 2003/02/24 06:35:58 deven Exp $
 //
 // User class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: user.cc,v $
+// Revision 1.6  2003/02/24 06:35:58  deven
+// Removed strcasecmp() check.
+//
 // Revision 1.5  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //
