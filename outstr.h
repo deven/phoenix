@@ -22,10 +22,7 @@ private:
       OutputObject *next;
       Pointer<Output> Output;
 
-      OutputObject(Pointer<Output> out) { // constructor
-	 next = NULL;
-	 Output = out;
-      }
+      OutputObject(Pointer<Output> out): Output(out) { next = NULL; }
       void output(Pointer<Telnet> telnet);
    };
 public:
