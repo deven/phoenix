@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.16 1994/02/17 05:15:56 deven Exp $
+// $Id: session.cc,v 1.17 1994/02/17 06:30:59 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.17  1994/02/17 06:30:59  deven
+// Modified not to truncate idle time to logged-in time; make 'em guess!
+//
 // Revision 1.16  1994/02/17 05:15:56  deven
 // Added PrintTimeLong() function, cleaned up SetIdle() a bit.
 //
