@@ -438,9 +438,10 @@ void blurb(Telnet *telnet,char *line)
 
 void process_input(Telnet *telnet,char *line)
 {
-   // Make ! normal for average users?  normal if not a valid command?
+   // Make ! normal for average users?  normal if not a valid command? ***
    if (*line == '!') {
-      // add !priv command? do individual privilege levels? ***
+      // add !priv command? ***
+      // do individual privilege levels for each !command? ***
       if (telnet->session->user->priv < 50) {
          telnet->output("Sorry, all !commands are privileged.\n");
          return;
