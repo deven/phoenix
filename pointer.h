@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Pointer class inline/template functions.
+// Pointer class implementation (inline template functions).
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
