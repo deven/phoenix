@@ -78,12 +78,10 @@ HDRS = phoenix.h other.h boolean.h object.h general.h constants.h functions.h \
 	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
 	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
 	globals.h
-SRCS = assoc.cc discussion.cc fdtable.cc listen.cc output.cc outstr.cc \
-	event.cc eventqueue.cc phoenix.cc session.cc sendlist.cc string.cc \
-	telnet.cc timestamp.cc user.cc
-OBJS = assoc.o discussion.o fdtable.o listen.o output.o outstr.o \
-	event.o eventqueue.o phoenix.o session.o sendlist.o string.o \
-	telnet.o timestamp.o user.o
+SRCS = assoc.cc string.cc discussion.cc fdtable.cc listen.cc output.cc \
+	outstr.cc event.cc eventqueue.cc phoenix.cc session.cc sendlist.cc \
+	string.cc telnet.cc timestamp.cc user.cc most.cc
+OBJS = assoc.o string.o most.o
 
 all: $(EXEC) restart
 
