@@ -1,31 +1,39 @@
 $Id: KLUDGES,v 1.2 2001/12/12 05:49:33 deven Exp $
 
-The Object class arbitrarily sets the reference count to -1000 when deleting
-itself, to avoid recursive destruction of objects due to temporary references.
-This is an arbitrary number and a bit of a kludge, but doesn't carry the space
-or performance costs of storing a separate flag or checking a sentinel value.
-This could only cause a problem if 1000 simultaneous temporary references are
-created during the destruction of an object, which is extremely unlikely.
-
 Most of the C++ modules are compiled as a single "most.cc" module via #include
 directives.  This is actually faster than compiling all the modules separately
 and the executable size is smaller because GCC doesn't include redundant debug
 information in each object file.  This seems clumsy, but actually works well.
+(Originally, all modules were separately compiled in the traditional fashion,
+but it took longer to compile and generated larger executables.)
 
-All help text for the /help command is hardcoded into the source code.  This
-kludge was for expediency, to avoid unnecessary file I/O that could block the
-single-threaded server and cause network connections to become unresponsive.
-No, it's not elegant or convenient.  Yes, this will be changed.
+All help text for the /help command is currently hardcoded into the source
+code, as an expedient kludge to minimize file I/O.  This is important, since
+blocking on file I/O would cause the server to appear to freeze from the
+user's perspective -- basic typing echo depends on the main loop to execute
+quickly without blocking.  The help text was hardcoded to minimize this risk.
+No, this isn't elegant or convenient.  Yes, this will be changed.
 
 The Session and Telnet classes are larger than they ought to be.  They have
 grown and are in need of splitting into further classes when time permits.
 
+The Session class could use a proper command parser (in a separate class, of
+course); the current code is ugly and relies on brute force, not finesse.
+
 The Telnet class currently performs all input editing and terminal handling
 functions directly; these should be implemented in separate classes.
 
-Only the ANSI terminal type is supported for user connections.  The "screen"
-program mostly works as a workaround.  There are some known bugs in the ANSI
-terminal handling for non-Amiga ANSI implementations, including "screen".
+The editing and terminal handling code does not belong in the Telnet class;
+separate editor and terminal classes should be created.
+
+The state machines in the Telnet class are based on switch/case statements,
+which is effective but verbose.  Table-driven state machines would probably
+be preferable and more flexible.
+
+Only the Amiga ANSI terminal type is fully supported for user connections.
+The "screen" program is a basic workaround for completely non-ANSI terminals,
+but there are some known bugs in the terminal handling (related to wrapping)
+for non-Amiga ANSI terminal types, including "screen".
 
 Currently, the guest account ("guest") is hardcoded in the "user.cc" file.
 This entry overrides any "guest" entry in the password file.  To disable
