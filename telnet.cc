@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
+// $Id: telnet.cc,v 1.4 2002/07/28 05:50:34 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.4  2002/07/28 05:50:34  deven
+// Changed third argument of getpeername() to socklen_t for more compatibility.
+//
 // Revision 1.3  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //

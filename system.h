@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.2 2001/12/12 05:44:36 deven Exp $
+// $Id: system.h,v 1.3 2002/08/14 00:25:45 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.3  2002/08/14 00:25:45  deven
+// Added Macintosh OS X (__APPLE__ && __MACH__) test to list of BSD-derived
+// systems, defined "socklen_t" for BSD-derived systems.
+//
 // Revision 1.2  2001/12/12 05:44:36  deven
 // Added <time.h> header, avoid including <crypt.h> on BSD systems.
 //
