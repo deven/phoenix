@@ -783,27 +783,25 @@ int Session::DoBlurb(char *start,boolean entry = false)
 
 void Session::DoHelp()		// Do /help command.
 {
-   output("Currently known commands:\n\n"
-	  "/blurb -- set a descriptive blurb\n"
-	  "/bye -- leave conf\n"
-	  "/date -- display current date and time\n"
-	  "/help -- gives this thrilling message\n"
-	  "/send -- specify default sendlist\n"
-	  "/signal -- turns public/private signals on/off\n"
-	  "/who -- gives a list of who is connected\n"
-	  "No other /commands are implemented yet. [except /why! :-)]\n\n"
-	  "There are two ways to specify a user to send a private message.  "
-	  "You can use\n"
-	  "either a '#' and the fd number for the user, (as listed by /who) "
-	  "or any\n"
-	  "substring of the user's name. (case-insensitive)  Follow either "
-	  "form with\n"
-	  "a semicolon or colon and the message. (e.g. \"#4;hi\", \"dev;hi\","
-	  " ...)\n\n"
-	  "Any other line not beginning with a slash is simply sent to "
-	  "everyone.\n\n"
-	  "The following are recognized as smileys instead of as sendlists:"
-	  "\n\n\t:-) :-( :-P ;-) :_) :_( :) :( :P ;)\n\n");
+   output("Known commands: /blurb (set a descriptive blurb), /bye (leave conf)"
+	  ", /date\n(display current date and time), /detach (disconnect witho"
+	  "ut leaving), /help,\n/send (specify default sendlist), /signal (tur"
+	  "ns public/private signals on or\noff), /who (gives a list of who is"
+	  " signed on), /why (because we like you!).\n\nTo send a private mess"
+	  "age to a user, type the user's full name or any\nunique substring o"
+	  "f the user's name (case-insensitive) followed by either\na semicolo"
+	  "n or a colon and the message.  If you're in the mood to talk to\nyo"
+	  "urself, you can use your own name or \"me\" as a keyword.  (e.g. \""
+	  "me;hi\")\n\nAny line beginning with a slash is a user command.  Lin"
+	  "es beginning with an\nexclamation point are privileged commands.  A"
+	  "ny other line that does not\nmatch the form of an explicit sendlist"
+	  " is sent to your default sendlist,\ninitially everyone.  (/send eve"
+	  "ryone)  Any message can be prefixed with a\nspace to be sent to the"
+	  " default sendlist.  (The space will be stripped out.)\n\nYour idle "
+	  "time can be manually reset by typing <space><return> on a line.\nOt"
+	  "herwise, only sending a message resets the idle time.\n\nThe follow"
+	  "ing are recognized smileys:  :-) :-( :-P ;-) :_) :_( :) :( :P ;)\n"
+	  "\n");
 }
 
 void Session::DoReset()		// Do <space><return> idle time reset.
