@@ -184,6 +184,7 @@ public:
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
    void DoBye(char *args);	// Do /bye command.
+   void DoSet(char *args);	// Do /set command.
    void DoClear(char *args);	// Do /clear command.
    void DoDetach(char *args);	// Do /detach command.
    void DoHowMany(char *args);	// Do /howmany command.
