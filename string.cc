@@ -9,6 +9,7 @@
 // $Log$
 
 #include <string.h>
+#include "boolean.h"
 #include "object.h"
 #include "string.h"
 
