@@ -70,6 +70,7 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
    EnqueueOthers(new TransferNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
+   ResetIdle(10);
    EnqueueOutput();
 }
 
@@ -81,6 +82,7 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
+   ResetIdle(10);
    EnqueueOutput();
 }
 
@@ -643,6 +645,7 @@ void Session::DoClear()		// Do /clear command.
 
 void Session::DoDetach()	// Do /detach command.
 {
+   ResetIdle(10);
    output("You have been detached.\n");
    EnqueueOutput();
    if (telnet) telnet->Close(); // Drain connection, then close.
@@ -910,6 +913,7 @@ int Session::DoBlurb(char *start,boolean entry = false)
 
 void Session::DoHere(char *args) // Do /here command.
 {
+   ResetIdle(10);
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"here\".\n");
@@ -919,6 +923,7 @@ void Session::DoHere(char *args) // Do /here command.
 
 void Session::DoAway(char *args) // Do /away command.
 {
+   ResetIdle(10);
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"away\".\n");
@@ -928,6 +933,7 @@ void Session::DoAway(char *args) // Do /away command.
 
 void Session::DoBusy(char *args) // Do /busy command.
 {
+   ResetIdle(10);
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"busy\".\n");
@@ -937,6 +943,7 @@ void Session::DoBusy(char *args) // Do /busy command.
 
 void Session::DoGone(char *args) // Do /gone command.
 {
+   ResetIdle(10);
    while (*args == Space) args++;
    if (*args) DoBlurb(args);
    output("You are now \"gone\".\n");
