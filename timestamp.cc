@@ -25,7 +25,7 @@
 
 #include "gangplank.h"
 
-char *Timestamp::date(int start = 0, int len = 0) // Get part of date string.
+char *Timestamp::date(int start, int len) // Get part of date string.
 {
    static char buf[32];
 

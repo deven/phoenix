@@ -146,7 +146,7 @@ void trim(char *&input) {
    *p = 0;
 }
 
-char *getword(char *&input, char separator = 0) {
+char *getword(char *&input, char separator) {
    while (*input && isspace(*input)) input++;
    char *p = input;
    while (*input && !isspace(*input) && *input != separator) input++;
@@ -158,7 +158,7 @@ char *getword(char *&input, char separator = 0) {
    return *p ? p : 0;
 }
 
-char *match(char *&input, char *keyword, int min = 0) {
+char *match(char *&input, char *keyword, int min) {
    char *p = input, *q = keyword;
    int i;
 
