@@ -38,7 +38,7 @@ List<User> User::users;
 User *User::GetUser(char *login)
 {
    ListIter<User> u(users);
-   while (u++) if (!strcasecmp(u->user, login)) return u;
+   while (u++) if (!strcasecmp(~u->user, login)) return u;
    return 0;
 }
 
@@ -90,7 +90,7 @@ boolean User::FindReserved(char *name, User *&user)
 
    ListIter<User> u(users);
    while (u++) {
-      if (u->reserved && !strcasecmp(u->reserved, name)) {
+      if (u->reserved && !strcasecmp(~u->reserved, name)) {
          user = u;
 	 return boolean(u != this);
       }

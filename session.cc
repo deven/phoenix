@@ -267,10 +267,10 @@ boolean Session::FindSendable(char *sendlist, Session *&session,
       }
 
       while (s++) {
-	 if (!strcasecmp(s->name, sendlist)) {
+	 if (!strcasecmp(~s->name, sendlist)) {
 	    session = s;
 	    sessionmatches.Add(session);
-	 } else if (!exact && (pos = match_name(s->name, sendlist))) {
+	 } else if (!exact && (pos = match_name(~s->name, sendlist))) {
 	    if (pos == 1) {
 	       count++;
 	       sessionlead = s;
@@ -283,10 +283,10 @@ boolean Session::FindSendable(char *sendlist, Session *&session,
    if (do_discussions) {
       while (d++) {
 	 if (member && !d->members.In(this)) continue;
-	 if (!strcasecmp(d->name, sendlist)) {
+	 if (!strcasecmp(~d->name, sendlist)) {
 	    discussion = d;
 	    discussionmatches.Add(discussion);
-	 } else if (!exact && (pos = match_name(d->name, sendlist))) {
+	 } else if (!exact && (pos = match_name(~d->name, sendlist))) {
 	    if (pos == 1) {
 	       count++;
 	       discussionlead = d;
@@ -489,18 +489,18 @@ void Session::EnteredName(char *line)
    } else {
       name = line;		// Save user's name.
    }
-   if (!strcasecmp(name, "me")) {
+   if (!strcasecmp(~name, "me")) {
       output("The keyword \"me\" is reserved.  Choose another name.\n");
       telnet->Prompt("Enter name: ");
       return;
    }
-   if (user->FindReserved(name, u)) {
+   if (user->FindReserved(~name, u)) {
       telnet->print("\"%s\" is a reserved name.  Choose another.\n",
          ~u->reserved);
       telnet->Prompt("Enter name: ");
       return;
    }
-   if (FindSendable(name, session, sessionmatches, discussion,
+   if (FindSendable(~name, session, sessionmatches, discussion,
 		    discussionmatches, false, true)) {
       if (session) {
 	 if (session->user == user) {
@@ -2573,7 +2573,7 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Use default sendlist if indicated.
-   if (!strcasecmp(send, "default")) {
+   if (!strcasecmp(~send, "default")) {
       if (default_sendlist) {
 	 sendlist = default_sendlist;
       } else {
