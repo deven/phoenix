@@ -44,6 +44,13 @@ inline Pointer<Type>::Pointer(Type &p)
    if (ptr) ptr->NewReference();
 }
 
+template <class Type>
+inline Pointer<Type>::Pointer(int n)
+{
+   if (n) abort();
+   ptr = 0;
+}
+
 template <class Type> Pointer<Type>::~Pointer()
 {
    if (ptr) ptr->DeleteReference();
