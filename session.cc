@@ -1061,7 +1061,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
    }
 }
 
-void Session::DoBye(char *args)	// Do /bye command.
+void Session::DoBye(char *)	// Do /bye command.
 {
    Close();			// Close session.
 }
@@ -1160,12 +1160,12 @@ void Session::DoDisplay(char *args) // Do /display command.
    }
 }
 
-void Session::DoClear(char *args) // Do /clear command.
+void Session::DoClear(char *)	// Do /clear command.
 {
    output("\033[H\033[J");	// ANSI! ***
 }
 
-void Session::DoDetach(char *args) // Do /detach command.
+void Session::DoDetach(char *)	// Do /detach command.
 {
    if (priv > 0) {
       ResetIdle(10);
@@ -1178,7 +1178,7 @@ void Session::DoDetach(char *args) // Do /detach command.
    }
 }
 
-void Session::DoHowMany(char *args) // Do /howmany command.
+void Session::DoHowMany(char *)	// Do /howmany command.
 {
    int here = 0,away = 0,busy = 0,gone = 0,attached = 0,detached = 0,total = 0;
 
@@ -1713,7 +1713,7 @@ void Session::DoWhat(char *args) // Do /what command.
    }
 }
 
-void Session::DoDate(char *args) // Do /date command.
+void Session::DoDate(char *)	// Do /date command.
 {
    print("%s\n",date(0,0,0));	// Print current date and time.
 }
