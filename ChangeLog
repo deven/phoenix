@@ -1,0 +1,210 @@
+$Id$
+
+2002-11-21  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.6 released.
+
+ * NEWS, RELEASES: Updated release information.
+
+ * ChangeLog: New file.
+
+2002-10-30  Deven T. Corzine  <deven@ties.org>
+
+ * telnet.cc (Telnet::RedrawInput, Telnet::InsertString, Telnet::insert_char,
+   Telnet::erase_char, Telnet::delete_char, Telnet::transpose_chars,
+   Telnet::upcase_word, Telnet::downcase_word, Telnet::capitalize_word): Fixed
+   ANSI terminal-handling problems related to line wrapping.  (This code was
+   originally developed for the Amiga ANSI terminal emulation, which may not
+   work correctly with this new code, but the new code works correctly with
+   standard ANSI terminals, which is more important.)
+
+ * telnet.cc (Telnet::erase_line): Modified erase_line() to call kill_line()
+   to place the erased line into the kill-ring instead of discarding it.
+
+2002-09-20  Deven T. Corzine  <deven@ties.org>
+
+ * session.cc (Session::DoDisplay): Added "/display version" command to show
+   Gangplank version.
+ * telnet.cc (Telnet::Telnet): Added gangplank version number to the server
+   banner message.
+
+ * telnet.cc (Telnet::InputReady, Telnet::OutputReady): Removed EWOULDBLOCK
+   and EAGAIN from switch statements because it causes a duplicate-case error
+   on some platforms when the same numeric value is used twice.
+
+ * gangplank.cc (OpenLog) [SETVBUF_REVERSED]: Reverse parameters to setvbuf()
+   if configure determines it to be necessary.
+
+ * gangplank.cc (main): Avoid compiling the code to background the server
+   unless configure found a working fork() function.
+
+2002-09-17  Deven T. Corzine  <deven@ties.org>
+
+ * INSTALL: Modified instructions to use the new configure script and options.
+ * constants.h: Modified DefaultPort to use PORT value from configure script.
+ * restart.c: Removed definition of PORT; inherit value from configure script.
+ * telnet.cc (Telnet::Welcome): Modified to only output banner message about
+   guest access if enabled by configure.
+ * user.cc (User::UpdateAll): Modified to only create guest account if
+   enabled by configure.
+
+ * makepw.c, restart.c, discussion.cc, fdtable.cc, gangplank.cc, listen.cc,
+   sendlist.cc, session.cc, telnet.cc, user.cc: Generate compile-time errors
+   if various required functions tested by configure are not available.
+
+ * acinclude.m4: New file.  (Contains configure macro for HAVE_BOOL test.)
+ * boolean.h: Modified to rely on configure to determine if builtin "bool"
+   type is available in the C++ compiler.
+ * string.h: Modified to check HAVE_BOOL (determined by configure) instead of
+   BOOL_TYPE (manually configured).
+
+ * bootstrap, depcomp, install-sh, missing, mkinstalldirs, AUTHORS, COPYING:
+   New files.
+
+2002-09-16  Deven T. Corzine  <deven@ties.org>
+
+ * Makefile: Removed file.  (Now auto-generated instead.)
+ * configure.ac, Makefile.am: New files.
+ * system.h, makepw.c: Removed BSD-specific tests.
+ * general.h: Stop defining ECONNTIMEDOUT as ETIMEDOUT if missing.
+ * telnet.cc: Made ECONNRESET, ECONNTIMEDOUT and ETIMEDOUT cases conditional.
+ * gangplank.h, hash.cc, string.cc, makepw.c, restart.c: Included config.h.
+ * system.h, string.cc, makepw.c, restart.c: Added conditional checks for some
+   includes, based on configure's tests.
+
+2002-09-10  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.5 released.
+
+ * Thanks to Ron Frederick <frederick@timeheart.net>, this release supports
+   Cygwin on Win32 systems, and no longer depends on "-lstdc++" under GCC 3.x.
+
+ * NEWS, RELEASES: Updated release information.
+
+ * CREDITS: New file.
+
+ * TODO: Added new items to TODO list.
+
+ * session.cc (Session::DoWho): Changed /who continuations from "]+...+[" to
+   "+...>" in case names are long.  (The original was only appropriate for
+   blurb continuations, not name continuations.)
+
+ * fdtable.cc (FDTable::Select): Changed select() call to pass only the used
+   number of file descriptor slots (which was already being tracked) instead
+   of the full size.  (This change is solely for efficiency purposes.)
+
+ * Makefile: Added Cygwin/Win32 support.
+ * fdtable.cc (FDTable::FDTable): Modified to take FD_SETSIZE into account.
+   This was the portability flaw which kept Cygwin from working.
+
+ * Makefile: Added GCC options to disable RTTI and exceptions (both unused).
+   Coupled with other changes to the code, this obviates the need for using
+   the "g++" driver to link with -lstdc++.
+ * event.h (Event::Execute), fd.h (FD::InputReady, FD::OutputReady,
+   FD::Closed), output.h (OutputObj::output): Changed all pure virtual
+   functions to call abort() instead, to avoid pulling an error routine
+   from libstdc++.
+ * general.h, gangplank.cc: Provided basic new/delete operators using malloc
+   and free, to avoid pulling a default implementation from libstdc++.
+ * gangplank.h: Resequenced include files to include "general.h" before
+   "object.h" due to the addition of new/delete prototypes.
+
+2002-08-22  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.4 released.
+
+ * NEWS, RELEASES: Updated release information.
+
+2002-08-13  Deven T. Corzine  <deven@ties.org>
+
+ * PORTING: Changed Red Hat Linux notes to 6.x and 7.x, since they should all
+   work equally well.  Added Macintosh OS X (Darwin) and GCC 3.1.
+
+ * KLUDGES: Documented additional existing kludges.
+
+ * system.h, makepw.c [__APPLE__ && __MACH__]: Added Macintosh OS X test to
+   list of BSD-derived systems.
+
+ * system.h: Defined "socklen_t" for BSD-derived systems.
+
+2002-07-28  Deven T. Corzine  <deven@ties.org>
+
+ * KLUDGES: Removed kludge for object reference counting.
+ * object.h (Object::NewReference, Object::DeleteReference): Removed kludge in
+   destructor for reference counting, at the cost of an extra test for each
+   new reference created.
+
+ * telnet.cc (Telnet::LogCaller): Changed third argument of getpeername() to
+   socklen_t for more compatibility.
+
+ * gangplank.cc (OpenLog): Changed setlinebuf() call to setvbuf() equivalent.
+
+ * gangplank.cc, output.cc, sendlist.cc, session.cc, telnet.cc, timestamp.cc:
+   Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
+
+2002-07-09  Deven T. Corzine  <deven@ties.org>
+
+ * Makefile: Removed targets related to "checkin" script (not included in
+   distribution).
+
+2001-12-12  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.3 released.
+
+ * NEWS, RELEASES: Updated release information.
+
+ * INSTALL, PORTING: New files.
+
+ * Makefile: Portability fixes for Linux, BSD, Solaris and GCC 3.  Modified to
+   build and install utility programs as well as server executable.
+
+ * makepw.c, restart.c (main): Changed return value of main() to int.
+
+ * system.h, string.cc, makepw.c, restart.c: Updated include files for more
+   portability.
+ * makepw.c (main): Removed declaration of getpass() routine.
+ * gangplank.cc (warn, error): Modified to use strerror() instead of sys_nerr
+   and sys_errlist.
+
+ * session.cc (Session::DoOops, Session::GetWhoSet, Session::DoWhat): Fixed
+   pointer initializations to be more portable.
+ * telnet.cc (accept_input): Modified to assign null string instead of null
+   pointer to wipe prompt.
+
+ * object.h (Object::~Object): Made Object destructor virtual, just in case.
+
+ * object.h, pointer.h (Pointer::Pointer(int)): Added Pointer constructor for
+   int to allow explicit construction of null pointers.
+ * fdtable.cc (FDTable::Closed): Modified to explicitly construct null-pointer
+   return value.
+
+ * object.h (Object::DeleteReference): Modified DeleteReference() to set a
+   negative reference count to allow for some temporary pointers to the object
+   being destructed, without calling the destructors again in an endless loop
+   when such temporary pointers go out of scope.  Modified the destructor
+   sanity check to only check for a positive reference count, due to the above
+   modification.
+ * KLUDGES: Added description of RefCnt = -1000 kludge in Object class.
+
+ * session.cc (Session::DoDown): Added missing break statements in a switch
+   statement.
+
+ * string.h, string.cc: Added various additional operations for completeness,
+   including const/non-const variants.
+
+2001-12-02  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.2 released.
+
+ * NEWS, RELEASES: Updated release information.
+
+ * hash.cc, hash.h (Hash::Hash -> Hash::HashFunction): Renamed internal hash
+   function which conflicted with the class name.  Changed all callers.
+
+2001-11-30  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.1 released.
+
+ * Initial Open Source release of Gangplank conferencing system.
+
+ * Started a new version control history for the public codebase.
