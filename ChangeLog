@@ -6,6 +6,16 @@ $Id: ChangeLog,v 1.1 2002/11/21 05:33:54 deven Exp $
 
  * NEWS, RELEASES: Updated release information.
 
+ * string.h -> string2.h: Renamed source file to avoid conflict with
+   standard <string.h> include file.
+ * Makefile.am, gangplank.h, hash.cc, string.cc: Changed "string.h" to
+   "string2.h" to reflect the renamed source file.
+ * Makefile.am: Removed DEFAULT_INCLUDES which was suppressing -I of the
+   source directory, to allow using a build directory separate from the
+   source directory.  (Previously, the semantic difference between using
+   #include "string.h" and #include <string.h> resolved the conflict, but
+   this fails when -I is used to include files in the source directory.)
+
  * ChangeLog: New file.
 
 2002-10-30  Deven T. Corzine  <deven@ties.org>
