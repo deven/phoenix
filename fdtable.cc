@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.5 1994/01/02 11:34:19 deven Exp $
+// $Id: fdtable.cc,v 1.6 1994/01/02 22:39:33 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.6  1994/01/02 22:39:33  deven
+// Modified to ignore close on unused fd.
+//
 // Revision 1.5  1994/01/02 11:34:19  deven
 // Updated copyright notice, modified to use smart pointers, removed nuke()
 // and announce() functions.
