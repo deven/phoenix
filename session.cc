@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.9 2003/02/17 08:06:13 deven Exp $
+// $Id: session.cc,v 1.10 2003/02/18 05:00:05 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.10  2003/02/18 05:00:05  deven
+// Modified DoWho() to wrap long names only once when listing in full -- if
+// the name is still too long, it will simply be wrapped by the terminal.
+//
 // Revision 1.9  2003/02/17 08:06:13  deven
 // Added MaxLoginAttempts and removed "Login incorrect" for invalid logins.
 //
