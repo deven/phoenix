@@ -451,13 +451,9 @@ void process_input(Telnet *telnet,char *line)
 	 while (*line && isspace(*line)) line++;
 	 telnet->session->DoDown(line);
       } else if (!strncasecmp(line,"!nuke ",6)) {
-	 int i;
-
-	 if (sscanf(line+6,"%d",&i) == 1) {
-	    Telnet::nuke(telnet,i < 0 ? -i : i,boolean(i >= 0));
-	 } else {
-	    telnet->print("Bad fd #: \"%s\"\n",line+6);
-	 }
+	 while (*line && !isspace(*line)) line++;
+	 while (*line && isspace(*line)) line++;
+	 telnet->session->DoNuke(line);
       } else {
 	 // Unknown !command.
 	 telnet->output("Unknown !command.\n");
