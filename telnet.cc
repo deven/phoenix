@@ -244,7 +244,8 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
    case PublicMessage:
       // Print message header.
       if (session->SignalPublic) output(Bell);
-      print("\n -> From %s to everyone:",(char *) from->name);
+      print("\n -> From %s%s to everyone:",(char *) from->name,
+	    (char *) from->blurb);
       break;
    case PrivateMessage:
       // Save name to reply to.
@@ -252,7 +253,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 
       // Print message header.
       if (session->SignalPrivate) output(Bell);
-      print("\n >> Private message from %s:",(char *) from->name);
+      print("\n >> Private message from %s%s:",(char *) from->name,(char *) from->blurb);
       break;
    }
 
