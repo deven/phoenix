@@ -49,7 +49,12 @@ void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out)
    } else {
       head = tail = new OutputObject(out);
    }
-   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
+   if (!telnet) return;
+   if (telnet->acknowledge) {
+      while (SendNext(telnet)) ;
+   } else {
+      if (!telnet->Output.head) SendNext(telnet);
+   }
 }
 
 void OutputStream::Dequeue()	// Dequeue all acknowledged output.
