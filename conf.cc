@@ -483,28 +483,29 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strncmp(line,"/why",4)) {
 	 telnet->output("Why not?\n");
       } else if (!strncmp(line,"/help",5)) {
-	 // help?  ha!
-	 telnet->output("Help?  Help?!?  This program isn't done, you know.\n");
-	 telnet->output("\nOnly known commands:\n\n");
-	 telnet->output("/bye -- leave conf\n");
-	 telnet->output("/date -- display current date and time\n");
-	 telnet->output("/send -- specify default sendlist\n");
-	 telnet->output("/who -- gives trivial list of who is connected\n");
-	 telnet->output("/help -- gives this dumb message\n\n");
-	 telnet->output("No other /commands are implemented yet.\n\n");
-	 telnet->output("There are two ways to specify a user to send a "
-		"private message.  You can use\n");
-	 telnet->output("either a '#' and the fd number for the user, (as "
-		"listed by /who) or an\n");
-	 telnet->output("substring of the user's name. (case-insensitive)  "
-		"Follow either form with\n");
-	 telnet->output("a semicolon or colon and the message. (e.g. "
-		"\"#4;hi\", \"dev;hi\", ...)\n\n");
-	 telnet->output("Any other line not beginning with a slash is "
-		"simply sent to everyone.\n\n");
-	 telnet->output("The following are recognized as smileys instead of "
-			"as sendlists:\n\n");
-	 telnet->output("\t:-) :-( :-P ;-) :_) :_( :) :( :P ;) (-: )-: (-; "
+	 telnet->output("Currently known commands:\n\n"
+			"/blurb -- set a descriptive blurb\n"
+			"/bye -- leave conf\n"
+			"/date -- display current date and time\n"
+			"/help -- gives this thrilling message\n"
+			"/send -- specify default sendlist\n"
+			"/signal -- turns public/private signals on/off\n"
+			"/who -- gives a list of who is connected\n"
+			"/why -- why not?\n\n"
+			"No other /commands are implemented yet.\n\n"
+			"There are two ways to specify a user to send a "
+			"private message.  You can use\n"
+			"either a '#' and the fd number for the user, (as "
+			"listed by /who) or an\n"
+			"substring of the user's name. (case-insensitive)  "
+			"Follow either form with\n"
+			"a semicolon or colon and the message. (e.g. "
+			"\"#4;hi\", \"dev;hi\", ...)\n\n"
+			"Any other line not beginning with a slash is "
+			"simply sent to everyone.\n\n"
+			"The following are recognized as smileys instead of "
+			"as sendlists:\n\n"
+			"\t:-) :-( :-P ;-) :_) :_( :) :( :P ;) (-: )-: (-; "
 			"(_: )_: (: ): (;\n\n");
       } else {
 	 // Unknown /command.
