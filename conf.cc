@@ -464,8 +464,7 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strncasecmp(line,"/who",4)) {
 	 telnet->session->DoWho();
       } else if (!strcasecmp(line,"/date")) {
-	 // Print current date and time.
-         telnet->print("%s\n",date(0,0,0));
+	 telnet->session->DoDate();
       } else if (!strncasecmp(line,"/signal",7)) {
 	 char *p = line + 7;
 	 while (*p && isspace(*p)) p++;
