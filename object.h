@@ -35,28 +35,13 @@ private:
    Type *ptr;
 public:
    Pointer(): ptr(0) { }
-   Pointer(Pointer &p): ptr(p.ptr) { if (ptr) ptr->NewReference(); }
-   Pointer(Type *p): ptr(p) { if (ptr) ptr->NewReference(); }
-   Pointer(Type &p): ptr(&p) { if (ptr) ptr->NewReference(); }
-   ~Pointer() { if (ptr) ptr->DeleteReference(); }
-   Pointer &operator =(Pointer &p) {
-      if (p.ptr) p.ptr->NewReference();
-      if (ptr) ptr->DeleteReference();
-      ptr = p.ptr;
-      return *this;
-   }
-   Pointer &operator =(Type *p) {
-      if (p) p->NewReference();
-      if (ptr) ptr->DeleteReference();
-      ptr = p;
-      return *this;
-   }
-   Pointer &operator =(int n) {
-      if (n) abort();
-      if (ptr) ptr->DeleteReference();
-      ptr = 0;
-      return *this;
-   }
+   inline Pointer(Pointer &p);
+   inline Pointer(Type *p);
+   inline Pointer(Type &p);
+   ~Pointer();
+   inline Pointer &operator =(Pointer &p);
+   inline Pointer &operator =(Type *p);
+   inline Pointer &operator =(int n);
    Type *operator ->() { return ptr; }
    operator Type *() { return ptr; }
    int operator ==(Pointer &p) { return ptr == p.ptr; }
