@@ -16,6 +16,7 @@ enum FDType {UnknownFD,ListenFD,TelnetFD};
 
 class FD {			// File descriptor.
 public:
+   static FDTable fdtable;	// File descriptor table.
    FDType type;
    int fd;
    virtual void InputReady(int fd) = 0;
@@ -34,15 +35,15 @@ public:
       }
    }
    void ReadSelect() {		// Select fd for reading.
-      FD_SET(fd,&readfds);
+      fdtable.ReadSelect(fd);
    }
    void NoReadSelect() {	// Do not select fd for reading.
-      FD_CLR(fd,&readfds);
+      fdtable.NoReadSelect(fd);
    }
    void WriteSelect() {		// Select fd for writing.
-      FD_SET(fd,&writefds);
+      fdtable.WriteSelect(fd);
    }
    void NoWriteSelect() {	// Do not select fd for writing.
-      FD_CLR(fd,&writefds);
+      fdtable.NoWriteSelect(fd);
    }
 };
