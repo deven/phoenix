@@ -62,6 +62,14 @@ void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out)
    }
 }
 
+void OutputStream::Unenqueue(Pointer<Output> &out)
+{
+   if (!out) return;
+   for (OutputObject *node = head; node; node = node->next) {
+      if (node->Output == out) node->Output = 0;
+   }
+}
+
 void OutputStream::Dequeue()	// Dequeue all acknowledged output.
 {
    OutputObject *out;
