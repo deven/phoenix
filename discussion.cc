@@ -34,10 +34,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_STRCASECMP
-#error strcasecmp() required!
-#endif
-
 Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
    name = Name;
    title = Title;

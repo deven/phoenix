@@ -31,13 +31,7 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_MEMSET
-#error memset() required!
-#endif
 
-#ifndef HAVE_SOCKET
-#error socket() required!
-#endif
 
 void Listen::Open(int port)
 {

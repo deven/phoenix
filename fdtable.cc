@@ -40,10 +40,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_SELECT
-#error select() required!
-#endif
-
 FDTable FD::fdtable;		// File descriptor table.
 fd_set FDTable::readfds;	// read fdset for select()
 fd_set FDTable::writefds;	// write fdset for select()
