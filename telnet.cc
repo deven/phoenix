@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.26 1995/12/05 20:37:45 deven Exp $
+// $Id: telnet.cc,v 1.27 1996/02/17 00:13:17 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.27  1996/02/17 00:13:17  deven
+// Modified to enclose the reply sendlist in quotes if necessary.
+//
 // Revision 1.26  1995/12/05 20:37:45  deven
 // Modified banner; now "Welcome to Phoenix!" is sent immediately; the rest of
 // the banner still waits for option negotiation.  Added support for raw TCP

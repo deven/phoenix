@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.37 1995/12/05 20:55:03 deven Exp $
+// $Id: session.cc,v 1.38 1996/02/16 23:42:36 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.38  1996/02/16 23:42:36  deven
+// Modified to save original input for last explicit sendlist instead of saving
+// parsed sendlist with internal codes.  Fixed parsing of quoted sendlists.
+//
 // Revision 1.37  1995/12/05 20:55:03  deven
 // Changed warning from "password WILL echo" to "password probably WILL echo"
 // to reflect the possibility that it actually won't.  Changed /display uptime

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.2 1994/04/15 23:32:16 deven Exp $
+// $Id: string.cc,v 1.3 1996/02/17 00:14:30 deven Exp $
 //
 // String class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.cc,v $
+// Revision 1.3  1996/02/17 00:14:30  deven
+// Fixed single-character prepend() bug.
+//
 // Revision 1.2  1994/04/15 23:32:16  deven
 // Modified to allow extra characters, append/prepend, require valid pointer.
 //
