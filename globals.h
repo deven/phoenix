@@ -14,10 +14,6 @@
 // Initial revision
 //
 
-extern int errno;		// System error number
-extern char *sys_errlist[];	// System error list
-extern int sys_nerr;		// Size of system error list
-
 extern EventQueue events;	// Server event queue.
 
 extern FILE *logfile;		// log file ***
