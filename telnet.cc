@@ -593,8 +593,8 @@ void Telnet::InsertString(String &s) // Insert string at point.
 	 }
       }
       point = tmp + (point - data) + slen;
-      free = tmp + n + slen;
-      end = free + slen;
+      free = tmp + (free - data) + slen;
+      end = tmp + n + slen;
       delete [] data;
       data = tmp;
    } else {
