@@ -204,7 +204,6 @@ Session::Session(Telnet *t)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
    priv = 0;			// No privileges yet.
-   message_time = time(&login_time);	// Reset timestamps.
    inits.AddTail(this);		// Add session to initializing list.
 }
 
@@ -802,7 +801,7 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
    } else {
       log("Enter: %s (%s), detached.",~name,~user->user);
    }
-   EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
+   EnqueueOthers(new EntryNotify(name_obj,message_time = login_time = 0));
 }
 
 void Session::NotifyExit()	// Notify other users of exit and log.
@@ -861,7 +860,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
 
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 {
-   int now = time(0);
+   Timestamp now;
    int idle = (now - message_time) / 60;
 
    if (min && idle >= min) {
@@ -875,10 +874,10 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 
 void Session::SetIdle(char *args) // Set idle time.
 {
-   int num,now,idle,days,hours,minutes;
+   Timestamp now;
+   int num,idle,days,hours,minutes;
 
    days = hours = minutes = 0;
-   now = time(0);
    idle = (now - message_time) / 60;
 
    while (*args && isspace(*args)) args++;
@@ -1122,8 +1121,10 @@ void Session::DoDisplay(char *args) // Do /display command.
             print("Unknown user variable: \"%s\"\n",var);
          }
       } else if (match(var,"idle")) {
+	 Timestamp now;
+
          output("Your idle time is");
-         PrintTimeLong((time(0) - message_time) / 60);
+         PrintTimeLong((now - message_time) / 60);
          output(".\n");
       } else if (match(var,"time_format")) {
          String time_format;
@@ -1149,7 +1150,9 @@ void Session::DoDisplay(char *args) // Do /display command.
          if (system && ServerStartUptime) {
             uptime = (system - ServerStartUptime) / 60;
          } else {
-            uptime = (time(0) - ServerStartTime) / 60;
+	    Timestamp now;
+
+            uptime = (now - ServerStartTime) / 60;
          }
 
          output("This server has been running for");
@@ -1242,8 +1245,9 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 			   String &msg)
 {
    String send;
+   Timestamp now;
    char *mark;
-   int idle,now = time(0);
+   int idle;
    int count,lastcount = 0;
    boolean here,away,busy,gone,attached,detached,active,inactive,doidle,
       unidle,privileged,guests,everyone;
@@ -1362,7 +1366,8 @@ void Session::DoWho(char *args)	// Do /who command.
 {
    Set<Session> who;
    String errors,msg,tmp;
-   int idle,days,hours,minutes,now = time(0);
+   Timestamp now;
+   int idle,days,hours,minutes;
    int i,extend = 0;
    char buf[32];
 
@@ -1403,14 +1408,14 @@ void Session::DoWho(char *args)	// Do /who command.
       }
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
-	    output(date(session->login_time,11,8));
+	    output(session->login_time.date(11,8));
 	 } else if ((now - session->login_time) < 31536000) {
 	    output(Space);
-	    output(date(session->login_time,4,6));
+	    output(session->login_time.date(4,6));
 	    output(Space);
 	 } else {
-	    output(date(session->login_time,4,4));
-	    output(date(session->login_time,20,4));
+	    output(session->login_time.date(4,4));
+	    output(session->login_time.date(20,4));
 	 }
       } else {
 	 output("detached");
@@ -1473,7 +1478,8 @@ void Session::DoWhy(char *args)	// Do /why command.
 {
    Set<Session> who;
    String errors,msg,tmp;
-   int idle,days,hours,minutes,now = time(0);
+   Timestamp now;
+   int idle,days,hours,minutes;
    int i,extend = 0;
    char buf[32];
 
@@ -1515,14 +1521,14 @@ void Session::DoWhy(char *args)	// Do /why command.
       tmp.append(session->blurb);
       print("%-32.32s%c ",~tmp,tmp.length() > 32 ? '+' : ' ');
       if ((now - session->login_time) < 86400) {
-	 output(date(session->login_time,11,8));
+	 output(session->login_time.date(11,8));
       } else if ((now - session->login_time) < 31536000) {
 	 output(Space);
-	 output(date(session->login_time,4,6));
+	 output(session->login_time.date(4,6));
 	 output(Space);
       } else {
-	 output(date(session->login_time,4,4));
-	 output(date(session->login_time,20,4));
+	 output(session->login_time.date(4,4));
+	 output(session->login_time.date(20,4));
       }
       idle = (now - session->message_time) / 60;
       if (idle) {
@@ -1578,8 +1584,8 @@ void Session::DoIdle(char *args) // Do /idle command.
 {
    Set<Session> who;
    String errors,msg,tmp;
+   Timestamp now;
    int idle,days,hours,minutes;
-   int now = time(0);
    int col = 0;
 
    // Handle arguments.
@@ -1641,7 +1647,8 @@ void Session::DoIdle(char *args) // Do /idle command.
 void Session::DoWhat(char *args) // Do /what command.
 {
    Pointer<Sendlist> sendlist = new Sendlist(*this,args,true,false,true);
-   int idle,days,hours,minutes,now = time(0);
+   Timestamp now;
+   int idle,days,hours,minutes;
    int i,extend = 0;
    char buf[32];
 
@@ -1723,7 +1730,9 @@ void Session::DoWhat(char *args) // Do /what command.
 
 void Session::DoDate(char *)	// Do /date command.
 {
-   print("%s\n",date(0,0,0));	// Print current date and time.
+   Timestamp t;
+
+   print("%s\n",t.date());	// Print current date and time.
 }
 
 void Session::DoSignal(char *args) // Do /signal command.
@@ -2587,8 +2596,8 @@ void Session::DoMessage(char *line) // Do message send.
 void Session::SendMessage(Sendlist *sendlist,char *msg)
 {
    Set<Session> recipients;
+   Timestamp now;
    int count = sendlist->Expand(recipients,this);
-   int now = time(0);
    boolean first,flag;
 
    if (!count) {

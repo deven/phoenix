@@ -47,6 +47,7 @@
 #include "list.h"
 #include "set.h"
 #include "assoc.h"
+#include "timestamp.h"
 #include "line.h"
 #include "block.h"
 #include "outbuf.h"

@@ -112,8 +112,8 @@ public:
    OutputStream Pending;	// pending output stream
    Assoc user_vars;		// session-level user variables
    Assoc sys_vars;		// session-level system variables
-   time_t login_time;		// time logged in
-   time_t message_time;		// time last message sent (for idle time)
+   Timestamp login_time;	// time logged in
+   Timestamp message_time;	// time last message sent (for idle time)
    AwayState away;		// here/away/busy/gone state
    char SignalPublic;		// Signal for public messages? (boolean)
    char SignalPrivate;		// Signal for private messages? (boolean)

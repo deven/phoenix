@@ -31,8 +31,8 @@ public:
    Set<Name> moderators;
    Set<Name> allowed;
    Set<Name> denied;
-   time_t creation_time;
-   time_t message_time;
+   Timestamp creation_time;
+   Timestamp message_time;
    OutputStream Output;
 
    Discussion(Session *s,char *Name,char *Title,boolean ispublic);

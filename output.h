@@ -60,15 +60,10 @@ class OutputObj: public Object {
 public:
    OutputType Type;		// Output type.
    OutputClass Class;		// Output class.
-   time_t time;			// Timestamp.
+   Timestamp time;		// Timestamp.
 
-   OutputObj(OutputType t,OutputClass c,time_t when = 0): Type(t),Class(c) {
-      if (when) {
-	 time = when;
-      } else {
-	 ::time(&time);
-      }
-   }
+   OutputObj(OutputType t,OutputClass c,time_t when = 0): Type(t),Class(c),
+   time(when) { }
    virtual ~OutputObj() {}	// destructor
    virtual void output(Telnet *telnet) = 0;
 };
