@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.19 1996/02/21 20:56:12 deven Exp $
+// $Id: phoenix.cc,v 1.20 1996/05/12 07:30:11 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.20  1996/05/12 07:30:11  deven
+// Modified to use Timestamp class, moved date() to Timestamp::date().
+//
 // Revision 1.19  1996/02/21 20:56:12  deven
 // Updated copyright notice.  Printed shutdown signal in logfile, ignored other
 // signal numbers in handlers.  Moved declaration for new ANSI "for" scoping,

@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.12 1996/04/05 00:04:51 deven Exp $
+# $Id: Makefile,v 1.13 1996/05/12 07:21:50 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.13  1996/05/12 07:21:50  deven
+# Added Timestamp source files.
+#
 # Revision 1.12  1996/04/05 00:04:51  deven
 # Updated flags for Linux compile, included -static temporarily...
 #

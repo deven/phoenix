@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: timestamp.h,v 1.1 1996/05/12 07:26:37 deven Exp $
 //
 // Timestamp class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: timestamp.h,v $
+// Revision 1.1  1996/05/12 07:26:37  deven
+// Initial revision
+//
 
 class Timestamp {
 private:
