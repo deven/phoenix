@@ -16,11 +16,15 @@ private:
    char *str;
    int len;
 public:
-   String(): str(0),len(0) { }
+   String() {
+      str = new char[1];
+      len = 0;
+      str[len] = 0;
+   }
    String(const String &s);
    String(const char *s);
    String(const char *s,int n);
-   ~String() { if (str) delete [] str; }
+   ~String() { delete [] str; }
    String &operator =(const String &s);
    String &operator =(const char *s);
    int operator ==(const String &s) {

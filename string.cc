@@ -17,69 +17,51 @@
 
 String::String(const String &s)
 {
-   if (s.str) {
-      len = s.len;
-      str = new char[len + 1];
-      strncpy(str,s.str,len);
-   } else {
-      str = 0;
-      len = 0;
-   }
+   len = s.len;
+   str = new char[len + 1];
+   strncpy(str,s.str,len);
+   str[len] = 0;
 }
 
 String::String(const char *s)
 {
-   if (s) {
-      len = strlen(s);
-      str = new char[len + 1];
-      strcpy(str,s);
-   } else {
-      str = 0;
-      len = 0;
-   }
+   if (!s) s = "";
+   len = strlen(s);
+   str = new char[len + 1];
+   strncpy(str,s,len);
+   str[len] = 0;
 }
 
 String::String(const char *s,int n)
 {
+   len = n;
+   str = new char[len + 1];
    if (s) {
-      len = n;
-      str = new char[len + 1];
       strncpy(str,s,len);
+      str[len] = 0;
    } else {
-      str = 0;
-      len = 0;
+      for (int i=0; i<=len; i++) str[i] = 0;
    }
 }
 
 String &String::operator =(const String &s)
 {
-   if (s.str) {
-      if (len != s.len || !str || strncmp(str,s,len)) {
-	 if (str) delete [] str;
-	 len = s.len;
-	 str = new char[len + 1];
-	 strncpy(str,s,len);
-      }
-   } else if (str) {
-      delete [] str;
-      str = 0;
-      len = 0;
-   }
+   delete [] str;
+   str = new char[s.len + 1];
+   len = s.len;
+   strncpy(str,s.str,len);
+   str[len] = 0;
+   return *this;
 }
 
 String &String::operator =(const char *s)
 {
-   if (s) {
-      int n = strlen(s);
-      if (len != n || !str || strcmp(str,s)) {
-	 if (str) delete [] str;
-	 len = n;
-	 str = new char[len + 1];
-	 strcpy(str,s);
-      }
-   } else if (str) {
-      delete [] str;
-      str = 0;
-      len = 0;
-   }
+   if (!s) s = "";
+   int n = strlen(s);
+   delete [] str;
+   str = new char[n + 1];
+   len = n;
+   strncpy(str,s,len);
+   str[len] = 0;
+   return *this;
 }
