@@ -138,7 +138,7 @@ void FDTable::announce(char *buf) // unformatted write to all connections
    }
 }
 
-void FDTable::nuke(Telnet *telnet,int fd,int drain)
+void FDTable::nuke(Telnet *telnet,int fd,boolean drain)
 {
    Telnet *t;
 

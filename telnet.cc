@@ -33,7 +33,7 @@ void Telnet::announce(char *format,...) // formatted write to all connections
    fdtable.announce(buf);
 }
 
-void Telnet::nuke(Telnet *telnet,int fd,int drain)
+void Telnet::nuke(Telnet *telnet,int fd,boolean drain)
 {
    fdtable.nuke(telnet,fd,drain);
 }
@@ -360,7 +360,7 @@ void Telnet::Close()		// Close telnet connection.
    fdtable.Close(fd);
 }
 
-void Telnet::nuke(Telnet *telnet,int drain)
+void Telnet::nuke(Telnet *telnet,boolean drain)
 {
    telnet->print("User \"%s\" (%s) on fd %d has been nuked.\n",
 		 session->name_only,session->user->user,fd);
