@@ -193,7 +193,7 @@ extern int errno;		/* error number */
 
 extern struct telnet *connections; /* telnet connections */
 
-extern int shutdown;		/* shutdown flag */
+extern int Shutdown;		/* shutdown flag */
 
 extern int nfds;		/* number of file descriptors available */
 extern fd_set readfds;		/* read fdset for select() */
