@@ -1,12 +1,16 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.1 1993/12/08 02:36:57 deven Exp $
+# $Id: Makefile,v 1.2 1993/12/13 22:23:28 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1993 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.2  1993/12/13 22:23:28  deven
+# Changed "all" target to depend on $(EXEC) instead of "conf".  Made $(OBJS)
+# depend on $(HDRS) instead of $(SRCS).
+#
 # Revision 1.1  1993/12/08 02:36:57  deven
 # Initial revision
 #
