@@ -40,7 +40,7 @@ gangplank_SOURCES = hash.cc string.cc most.cc gangplank.h system.h boolean.h \
 EXTRA_DIST = discussion.cc event.cc eventqueue.cc fdtable.cc gangplank.cc \
 	listen.cc most.cc output.cc outstr.cc sendlist.cc session.cc \
 	telnet.cc timestamp.cc user.cc CREDITS HISTORY KLUDGES LICENSE.QPL \
-	OVERVIEW PORTING RELEASES TOUR passwd
+	OVERVIEW PORTING RELEASES TOUR bootstrap passwd
 
 dist-hook:
 	chmod -R u+w $(distdir)
