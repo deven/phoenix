@@ -679,8 +679,7 @@ void welcome(struct telnet *telnet)
 
 void login(struct telnet *telnet,char *line)
 {
-   /* Check against hardcoded logins. */
-   /* /// stuff */
+   /* Check against known logins. */
    if (!strcmp(line,"guest")) {
       strcpy(telnet->session->user->user,line);
       strcpy(telnet->session->user->passwd,"guest");
@@ -701,9 +700,33 @@ void login(struct telnet *telnet,char *line)
       strcpy(telnet->session->name,"Deven");
       telnet->session->user->priv = 100;
    } else {
-      output(telnet,"Login incorrect.\n");
-      output(telnet,"login: ");
-      return;
+      char buf[256],*username,*password,*name,*priv,*p;
+      FILE *pw = fopen("passwd","r");
+      if (pw) {
+	 while (fgets(buf,256,pw)) {
+	    if (buf[0] == '#') continue;
+	    p = username = buf;
+	    password = name = priv = 0;
+	    while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
+	    while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
+	    while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
+	    if (!priv) continue;
+	    if (!strcasecmp(line,username)) {
+	       found = 1;
+	       strcpy(telnet->session->user->user,username);
+	       strcpy(telnet->session->user->passwd,password);
+	       strcpy(telnet->session->name,name);
+	       telnet->session->user->priv = atoi(priv);
+	       break;
+	    }
+	 }
+      }
+      fclose(pw);
+      if (!found) {
+	 output(telnet,"Login incorrect.\n");
+	 output(telnet,"login: ");
+	 return;
+      }
    }
 
    /* Disable echoing. */
@@ -724,8 +747,9 @@ void password(struct telnet *telnet,char *line)
    /* Send newline. */
    output(telnet,"\n");
 
-   /* Check against hardcoded password. */
-   if (strcmp(line,telnet->session->user->passwd)) {
+   /* Check against encrypted password. */
+   if (strcmp(crypt(line,telnet->session->user->passwd),
+       telnet->session->user->passwd)) {
       /* Login incorrect. */
       output(telnet,"Login incorrect.\n");
       output(telnet,"login: ");
