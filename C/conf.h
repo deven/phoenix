@@ -191,7 +191,7 @@ void input_ready(struct telnet *telnet);
 void output_ready(struct telnet *telnet);
 void quit(int);
 void alrm(int);
-void main(int argc,char **argv);
+int main(int argc,char **argv);
 
 extern int errno;		/* error number */
 

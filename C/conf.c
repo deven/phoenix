@@ -1789,7 +1789,7 @@ void alrm(int sig)		/* received SIGALRM */
    }
 }
 
-void main(int argc,char **argv) /* main program */
+int main(int argc,char **argv) /* main program */
 {
    struct telnet *telnet;	/* telnet struct pointer */
    fd_set rfds;			/* copy of readfds to pass to select() */
