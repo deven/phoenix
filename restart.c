@@ -1,15 +1,14 @@
 /*
- * $Id$
+ * $Id: restart.c,v 1.1 1993/12/08 02:36:57 deven Exp $
  *
  * Utility program to restart conferencing server from cron.
  *
- * restart.c -- restart code.
+ * Copyright 1993 by Deven T. Corzine.  All rights reserved.
  *
- * Copyright 1993 by Deven T. Corzine.
+ * $Log: restart.c,v $
+ * Revision 1.1  1993/12/08 02:36:57  deven
+ * Initial revision
  *
- * Development began on November 30, 1992.
- *
- * $Log$
  */
 
 #include <sys/types.h>
