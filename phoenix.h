@@ -46,6 +46,9 @@
 // Initial revision
 //
 
+#ifndef _PHOENIX_H
+#define _PHOENIX_H
+
 #include "other.h"
 #include "boolean.h"
 #include "object.h"
@@ -75,3 +78,5 @@
 #include "telnet.h"
 #include "pointer.h"
 #include "globals.h"
+
+#endif
