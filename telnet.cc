@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.21 1994/06/27 05:30:14 deven Exp $
+// $Id: telnet.cc,v 1.22 1994/07/21 02:37:38 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.22  1994/07/21 02:37:38  deven
+// Only toss character following \r if it's \n or \0.
+//
 // Revision 1.21  1994/06/27 05:30:14  deven
 // Changed unary minus to unary tilde on strings.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.27 1994/06/27 13:24:27 deven Exp $
+// $Id: session.cc,v 1.28 1994/07/21 02:54:56 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.28  1994/07/21 02:54:56  deven
+// Fixed /send for multiple sendlists.
+//
 // Revision 1.27  1994/06/27 13:24:27  deven
 // Changed CheckReserved() to FindReserved(), disallowed discussion creation
 // with own reserved name.
