@@ -74,15 +74,9 @@ void warn(char *format, ...)	// print error message ***
    va_start(ap, format);
    (void) vsprintf(buf, format, ap);
    va_end(ap);
-   if (errno >= 0 && errno < sys_nerr) {
-      (void) fprintf(stderr, "\n%s: %s\n", buf, sys_errlist[errno]);
-      (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
-		     sys_errlist[errno]);
-   } else {
-      (void) fprintf(stderr, "\n%s: Error %d\n", buf, errno);
-      (void) fprintf(logfile, "[%s] %s: Error %d\n", t.date(4, 15), buf,
-		     errno);
-   }
+   (void) fprintf(stderr, "\n%s: %s\n", buf, strerror(errno));
+   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
+		  strerror(errno));
 }
 
 void error(char *format, ...)	// print error message and exit ***
@@ -94,15 +88,9 @@ void error(char *format, ...)	// print error message and exit ***
    va_start(ap, format);
    (void) vsprintf(buf, format, ap);
    va_end(ap);
-   if (errno >= 0 && errno < sys_nerr) {
-      (void) fprintf(stderr, "\n%s: %s\n", buf, sys_errlist[errno]);
-      (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
-		     sys_errlist[errno]);
-   } else {
-      (void) fprintf(stderr, "\n%s: Error %d\n", buf, errno);
-      (void) fprintf(logfile, "[%s] %s: Error %d\n", t.date(4, 15), buf,
-		     errno);
-   }
+   (void) fprintf(stderr, "\n%s: %s\n", buf, strerror(errno));
+   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
+		  strerror(errno));
    if (logfile) fclose(logfile);
    exit(1);
 }
