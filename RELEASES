@@ -12,12 +12,22 @@ Stable Releases
 Development/Test Releases
 -------------------------
 
- * August 22, 2002: Version 1.0.0.beta.4
+ * Version 1.0.0.beta.5 (September 10, 2002)
+
+   Special thanks are due to Ron Frederick <frederick@timeheart.net> for this
+   release, which now compiles and runs under Cygwin on Win32 systems, and no
+   longer depends on "-lstdc++" under GCC 3.x versions, allowing the "gcc"
+   driver to build the server as under GCC 2.x versions.  (Specifically, the
+   "-fno-rtti" and "-fno-exceptions" options were needed on the GCC command
+   line, pure virtual functions had to be avoided, and new/delete operators
+   had to be defined -- these changes removed the dependencies on "-lstdc++".)
+
+ * Version 1.0.0.beta.4 (August 22, 2002)
 
    Added portability fixes for Macintosh OS X.  Also cleaned up warnings from
    GCC 3.1, mainly from duplicate default parameter initializers.
 
- * December 12, 2001: Version 1.0.0.beta.3
+ * Version 1.0.0.beta.3 (December 12, 2001)
 
    This is a portability release.  The previous release was only tested under
    Red Hat Linux 6.1, but it did not compile on Red Hat Linux 7.2 or other
@@ -25,12 +35,12 @@ Development/Test Releases
    fixed to build on older and newer Linux systems, BSD systems, Solaris, and
    using either GCC 2 or GCC 3.
 
- * December 2, 2001: Version 1.0.0.beta.2
+ * Version 1.0.0.beta.2 (December 2, 2001)
 
    This release simply renames Hash::Hash() to Hash::HashFunction() to
    fix the compilation error in the version 1.0.0.beta.1 release.
 
- * November 30, 2001: Version 1.0.0.beta.1 [BROKEN]
+ * Version 1.0.0.beta.1 (November 30, 2001) [BROKEN]
 
    This was a "brown paper bag" release.  Forgot to test the release, and
    as it happens, this release doesn't compile.  A class was renamed from
