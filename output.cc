@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.2 2002/07/28 05:46:09 deven Exp $
+// $Id: output.cc,v 1.3 2003/02/18 05:08:56 deven Exp $
 //
 // Output and derived classes, implementations.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: output.cc,v $
+// Revision 1.3  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.2  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //

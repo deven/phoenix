@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.3 2003/02/17 06:22:29 deven Exp $
+// $Id: telnet.h,v 1.4 2003/02/18 05:08:57 deven Exp $
 //
 // Telnet class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.h,v $
+// Revision 1.4  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.3  2003/02/17 06:22:29  deven
 // Moved InputSize constant into Telnet class, increased size to 1024 bytes.
 //

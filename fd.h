@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.2 2002/09/10 04:10:51 deven Exp $
+// $Id: fd.h,v 1.3 2003/02/18 05:08:56 deven Exp $
 //
 // FD class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: fd.h,v $
+// Revision 1.3  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.2  2002/09/10 04:10:51  deven
 // Changed pure virtual functions to call abort() instead.
 //

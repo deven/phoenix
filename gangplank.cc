@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.10 2003/02/17 06:40:06 deven Exp $
+// $Id: gangplank.cc,v 1.11 2003/02/18 05:08:56 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.11  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.10  2003/02/17 06:40:06  deven
 // Modified to use String::vsprintf() and String::sprintf() in preference to
 // the system vsprintf() and sprintf() functions, to avoid buffer overflows.

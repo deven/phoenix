@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.5 2002/11/26 04:27:51 deven Exp $
+// $Id: system.h,v 1.6 2003/02/18 05:08:57 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.6  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.5  2002/11/26 04:27:51  deven
 // Modified to include both <string.h> and <strings.h> if both are available.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.4 2003/02/17 07:24:42 deven Exp $
+// $Id: user.cc,v 1.5 2003/02/18 05:08:57 deven Exp $
 //
 // User class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: user.cc,v $
+// Revision 1.5  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.4  2003/02/17 07:24:42  deven
 // Added BufSize constant, increased size to 1024 bytes.
 //

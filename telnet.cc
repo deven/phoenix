@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.7 2003/02/17 06:40:06 deven Exp $
+// $Id: telnet.cc,v 1.8 2003/02/18 05:08:57 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.8  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.7  2003/02/17 06:40:06  deven
 // Modified to use String::vsprintf() and String::sprintf() in preference to
 // the system vsprintf() and sprintf() functions, to avoid buffer overflows.

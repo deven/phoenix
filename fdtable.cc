@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.4 2002/09/18 02:09:14 deven Exp $
+// $Id: fdtable.cc,v 1.5 2003/02/18 05:08:56 deven Exp $
 //
 // FDTable class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.5  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.4  2002/09/18 02:09:14  deven
 // Generate a compile-time error if select() not available.
 //
