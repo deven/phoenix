@@ -675,7 +675,7 @@ void Telnet::InsertString(String &s) // Insert string at point.
    }
 }
 
-inline void Telnet::beginning_of_line() // Jump to beginning of line.
+void Telnet::beginning_of_line() // Jump to beginning of line.
 {
    int lines,columns;
 
@@ -692,7 +692,7 @@ inline void Telnet::beginning_of_line() // Jump to beginning of line.
    point = data;
 }
 
-inline void Telnet::end_of_line() // Jump to end of line.
+void Telnet::end_of_line()	// Jump to end of line.
 {
    int lines,columns;
 
@@ -709,7 +709,7 @@ inline void Telnet::end_of_line() // Jump to end of line.
    point = free;
 }
 
-inline void Telnet::kill_line()	// Kill from point to end of line.
+void Telnet::kill_line()	// Kill from point to end of line.
 {
    if (!AtEnd()) {
       echo("\033[J"); // ANSI! ***
@@ -725,7 +725,7 @@ inline void Telnet::kill_line()	// Kill from point to end of line.
    }
 }
 
-inline void Telnet::erase_line() // Erase input line.
+void Telnet::erase_line()	// Erase input line.
 {
    beginning_of_line();
    if (End()) {
@@ -735,7 +735,7 @@ inline void Telnet::erase_line() // Erase input line.
    mark = 0;
 }
 
-inline void Telnet::previous_line() // Go to previous input line.
+void Telnet::previous_line()	// Go to previous input line.
 {
    // Check if at the start of the current line.
    if (Point()) {
@@ -759,7 +759,7 @@ inline void Telnet::previous_line() // Go to previous input line.
    }
 }
 
-inline void Telnet::next_line()	// Go to next input line.
+void Telnet::next_line()	// Go to next input line.
 {
    // Check if at the end of the current line.
    if (AtEnd()) {
@@ -782,7 +782,7 @@ inline void Telnet::next_line()	// Go to next input line.
    }
 }
 
-inline void Telnet::yank()	// Yank from kill-ring.
+void Telnet::yank()		// Yank from kill-ring.
 {
    // Handle previous yanks.
    Yank = KillRing;
@@ -793,19 +793,19 @@ inline void Telnet::yank()	// Yank from kill-ring.
    }
 }
 
-inline void Telnet::do_semicolon() // Do semicolon processing.
+void Telnet::do_semicolon()	 // Do semicolon processing.
 {
    if (AtStart() && session) InsertString(session->last_explicit);
    insert_char(Semicolon);
 }
 
-inline void Telnet::do_colon()	// Do colon processing.
+void Telnet::do_colon()		// Do colon processing.
 {
    if (AtStart() && session) InsertString(session->reply_sendlist);
    insert_char(Colon);
 }
 
-inline void Telnet::accept_input() // Accept input line.
+void Telnet::accept_input()	// Accept input line.
 {
    if (!session) return;
 
@@ -896,7 +896,7 @@ inline void Telnet::accept_input() // Accept input line.
    }
 }
 
-inline void Telnet::insert_char(int ch) // Insert character at point.
+void Telnet::insert_char(int ch) // Insert character at point.
 {
    if (ch >= 32 && ch < Delete) {
       for (char *p = free++; p > point; p--) *p = p[-1];
@@ -909,7 +909,7 @@ inline void Telnet::insert_char(int ch) // Insert character at point.
    }
 }
 
-inline void Telnet::forward_char() // Move point forward one character.
+void Telnet::forward_char()	// Move point forward one character.
 {
    if (!AtEnd()) {
       point++;			// Change point in buffer.
@@ -921,7 +921,7 @@ inline void Telnet::forward_char() // Move point forward one character.
    }
 }
 
-inline void Telnet::backward_char() // Move point backward one character.
+void Telnet::backward_char()	// Move point backward one character.
 {
    if (Point()) {
       if (PointColumn()) {	// Backspace on current screen line.
@@ -933,7 +933,7 @@ inline void Telnet::backward_char() // Move point backward one character.
    }
 }
 
-inline void Telnet::erase_char() // Erase character before point.
+void Telnet::erase_char()	// Erase character before point.
 {
    if (point > data) {
       point--;
@@ -947,7 +947,7 @@ inline void Telnet::erase_char() // Erase character before point.
    }
 }
 
-inline void Telnet::delete_char() // Delete character at point.
+void Telnet::delete_char()	// Delete character at point.
 {
    if (End() && !AtEnd()) {
       free--;
@@ -956,7 +956,7 @@ inline void Telnet::delete_char() // Delete character at point.
    }
 }
 
-inline void Telnet::transpose_chars() // Exchange two characters at point.
+void Telnet::transpose_chars()	// Exchange two characters at point.
 {
    if (!Point() || End() < 2) {
       output(Bell);
@@ -972,31 +972,31 @@ inline void Telnet::transpose_chars() // Exchange two characters at point.
    }
 }
 
-inline void Telnet::forward_word() // Move point forward one word.
+void Telnet::forward_word()	// Move point forward one word.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) forward_char();
 }
 
-inline void Telnet::backward_word() // Move point backward one word.
+void Telnet::backward_word()	// Move point backward one word.
 {
    while (point > data && !isalpha(point[-1])) backward_char();
    while (point > data && isalpha(point[-1])) backward_char();
 }
 
-inline void Telnet::erase_word() // Erase word before point.
+void Telnet::erase_word()	// Erase word before point.
 {
    while (point > data && !isalpha(point[-1])) erase_char();
    while (point > data && isalpha(point[-1])) erase_char();
 }
 
-inline void Telnet::delete_word() // Delete word at point.
+void Telnet::delete_word()	// Delete word at point.
 {
    while (point < free && !isalpha(*point)) delete_char();
    while (point < free && isalpha(*point)) delete_char();
 }
 
-inline void Telnet::upcase_word() // Upcase word at point.
+void Telnet::upcase_word()	// Upcase word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) {
@@ -1005,7 +1005,7 @@ inline void Telnet::upcase_word() // Upcase word at point.
    }
 }
 
-inline void Telnet::downcase_word() // Downcase word at point.
+void Telnet::downcase_word()	// Downcase word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) {
@@ -1027,7 +1027,7 @@ void Telnet::capitalize_word()	// Capitalize word at point.
    }
 }
 
-inline void Telnet::transpose_words() // Exchange two words at point.
+void Telnet::transpose_words()	// Exchange two words at point.
 {
    output(Bell);
 }
