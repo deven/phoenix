@@ -244,7 +244,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
    case PublicMessage:
       // Print message header.
       if (session->SignalPublic) output(Bell);
-      print("\n -> From %s to everyone:",from->name);
+      print("\n -> From %s to everyone:",(char *) from->name);
       break;
    case PrivateMessage:
       // Save name to reply to.
@@ -252,7 +252,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 
       // Print message header.
       if (session->SignalPrivate) output(Bell);
-      print("\n >> Private message from %s:",from->name);
+      print("\n >> Private message from %s:",(char *) from->name);
       break;
    }
 
@@ -360,8 +360,6 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    end = data + InputSize;	// Save end of allocated block.
    point = free = data;		// Mark input line as empty.
    mark = NULL;			// No mark set initially.
-   prompt = NULL;		// No prompt initially.
-   prompt_len = 0;		// Length of prompt
    reply_to = NULL;		// No last sender.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
@@ -402,11 +400,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
    session->EnqueueOutput();
-   prompt_len = strlen(p);
-   if (prompt) delete [] prompt;
-   prompt = new char[prompt_len + 1];
-   strcpy(prompt,p);
-   if (!undrawn) output(prompt);
+   prompt = p;
+   if (!undrawn) output((char *) prompt);
 }
 
 Telnet::~Telnet()		// Destructor, might be re-executed.
@@ -484,7 +479,7 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 
    if (!undrawn) return;
    undrawn = false;
-   if (prompt) output(prompt);
+   if (prompt) output((char *) prompt);
    if (End()) {
       echo(data,End());
       if (!AtEnd()) {		// Move cursor back to point.
@@ -596,11 +591,7 @@ inline void Telnet::accept_input() // Accept input line.
 
    point = free = data;		// Wipe input line. (data intact)
    mark = NULL;			// Wipe mark.
-   if (prompt) {		// Wipe prompt, if any.
-      delete [] prompt;
-      prompt = NULL;
-   }
-   prompt_len = 0;		// Wipe prompt length.
+   prompt = NULL;		// Wipe prompt.
 
    session->Input(data);	// Call state-specific input line processor.
 

@@ -92,16 +92,11 @@ Session::Session(Pointer<Telnet> &t)
    telnet = t;			// Save Telnet pointer.
    InputFunc = NULL;		// No input function.
    lines = NULL;		// No pending input lines.
-   name_only[0] = 0;		// No name.
-   name[0] = 0;			// No name/blurb.
-   blurb[0] = 0;		// No blurb.
    away = Here;			// Default to "here".
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
-   last_sendlist[0] = 0;	// No previous sendlist yet.
-   reply_sendlist[0] = 0;	// No reply sendlist yet.
-   strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
+   default_sendlist = "everyone"; // Default sendlist is "everyone".
    message_time = time(&login_time);	// Reset timestamps.
    inits.AddTail(this);		// Add session to initializing list.
 }
@@ -136,8 +131,8 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet = t;
    telnet->session = this;
-   log("Transfer: %s (%s) from fd %d to fd %d.",name_only,(char *) user->user,
-       old->fd,t->fd);
+   log("Transfer: %s (%s) from fd %d to fd %d.",(char *) name_only,
+       (char *) user->user,old->fd,t->fd);
    old->output("*** This session has been transferred to a new connection. ***"
 	       "\n");
    old->Close();
@@ -152,7 +147,8 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
    telnet = t;
    telnet->session = this;
-   log("Attach: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
+   log("Attach: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+       telnet->fd);
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
@@ -165,11 +161,11 @@ void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
    if (SignedOn && telnet) {
       if (telnet == t) {
 	 if (intentional) {
-	    log("Detach: %s (%s) on fd %d. (intentional)",name_only,(char *)
-		user->user,t->fd);
+	    log("Detach: %s (%s) on fd %d. (intentional)",(char *) name_only,
+		(char *) user->user,t->fd);
 	 } else {
-	    log("Detach: %s (%s) on fd %d. (accidental)",name_only,(char *)
-		user->user,t->fd);
+	    log("Detach: %s (%s) on fd %d. (accidental)",(char *) name_only,
+		(char *) user->user,t->fd);
 	 }
 	 EnqueueOthers(new DetachNotify(name_obj,intentional));
 	 telnet = NULL;
@@ -368,15 +364,13 @@ void Session::Name(char *line)
 {
    if (!*line) {		// blank line
       if (user->reserved) {
-	 strncpy(name_only,(char *) user->reserved,NameLen);
-	 name_only[NameLen - 1] = 0;
+	 name_only = user->reserved;
       } else {
 	 telnet->Prompt("Enter name: ");
 	 return;
       }
    } else {
-      strncpy(name_only,line,NameLen); // Save user's name.
-      name_only[NameLen - 1] = 0;
+      name_only = line;		// Save user's name.
    }
    User::UpdateAll();		// Update user accounts.
    if (user->CheckReserved(name_only)) {
@@ -455,13 +449,7 @@ void Session::Blurb(char *line)
 {
    if (!line || !*line) line = user->blurb;
    if (!line) line = "";
-   int over = DoBlurb(line,true);
-   if (over) {
-      telnet->print("The combination of your name and blurb is %d "
-		    "character%s too long.\n",over,over == 1 ? "" : "s");
-      telnet->Prompt("Enter blurb: ");
-      return;
-   }
+   DoBlurb(line,true);
 
    SignedOn = true;		// Session is signed on.
    sessions.AddHead(this);	// Add session to signed-on list.
@@ -557,9 +545,10 @@ void Session::ProcessInput(char *line)
 void Session::NotifyEntry()	// Notify other users of entry and log.
 {
    if (telnet) {
-      log("Enter: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
+      log("Enter: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+	  telnet->fd);
    } else {
-      log("Enter: %s (%s), detached.",name_only,(char *) user->user);
+      log("Enter: %s (%s), detached.",(char *) name_only,(char *) user->user);
    }
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
 }
@@ -567,9 +556,10 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
 void Session::NotifyExit()	// Notify other users of exit and log.
 {
    if (telnet) {
-      log("Exit: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
+      log("Exit: %s (%s) on fd %d.",(char *) name_only,(char *) user->user,
+	  telnet->fd);
    } else {
-      log("Exit: %s (%s), detached.",name_only,(char *) user->user);
+      log("Exit: %s (%s), detached.",(char *) name_only,(char *) user->user);
    }
    EnqueueOthers(new ExitNotify(name_obj));
 }
@@ -678,11 +668,14 @@ void Session::SetBlurb(char *newblurb) // Set a new blurb.
 {
    ResetIdle(10);
    if (newblurb) {
-      strcpy(blurb,newblurb);
-      sprintf(name,"%s [%s]",name_only,blurb);
+      blurb = newblurb;
+      name = name_only;
+      name.append(" [");
+      name.append(blurb);
+      name.append(']');
    } else {
-      blurb[0] = 0;
-      strcpy(name,name_only);
+      blurb = "";
+      name = name_only;
    }
    name_obj = new Name(this,name_obj,name);
 }
@@ -690,10 +683,10 @@ void Session::SetBlurb(char *newblurb) // Set a new blurb.
 void Session::DoRestart(char *args) // Do !restart command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate restart requested by %s (%s).",name_only,(char *)
-	  user->user);
+      log("Immediate restart requested by %s (%s).",(char *) name_only,
+	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s has restarted conf! ***\n",name);
+      announce("*** %s has restarted conf! ***\n",(char *) name);
       announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 4;
@@ -701,22 +694,26 @@ void Session::DoRestart(char *args) // Do !restart command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",name_only,(char *) user->user);
-	 announce("*** %s has cancelled the server restart. ***\n",name);
+	 log("Restart cancelled by %s (%s).",(char *) name_only,
+	     (char *) user->user);
+	 announce("*** %s has cancelled the server restart. ***\n",
+		  (char *) name);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",name_only,(char *) user->user);
-	 announce("*** %s has cancelled the server shutdown. ***\n",name);
+	 log("Shutdown cancelled by %s (%s).",(char *) name_only,
+	     (char *) user->user);
+	 announce("*** %s has cancelled the server shutdown. ***\n",
+		  (char *) name);
       } else {
 	 output("The server was not about to restart.\n");
       }
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Restart requested by %s (%s) in %d seconds.",name_only,(char *)
-	  user->user,seconds);
-      announce("*** %s has restarted conf! ***\n",name);
+      log("Restart requested by %s (%s) in %d seconds.",(char *) name_only,
+	  (char *) user->user,seconds);
+      announce("*** %s has restarted conf! ***\n",(char *) name);
       announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
 	       seconds);
       alarm(seconds);
@@ -727,10 +724,10 @@ void Session::DoRestart(char *args) // Do !restart command.
 void Session::DoDown(char *args) // Do !down command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate shutdown requested by %s (%s).",name_only,(char *)
-	  user->user);
+      log("Immediate shutdown requested by %s (%s).",(char *) name_only,
+	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s has shut down conf! ***\n",name);
+      announce("*** %s has shut down conf! ***\n",(char *) name);
       announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 2;
@@ -738,22 +735,26 @@ void Session::DoDown(char *args) // Do !down command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",name_only,(char *) user->user);
-	 announce("*** %s has cancelled the server restart. ***\n",name);
+	 log("Restart cancelled by %s (%s).",(char *) name_only,
+	     (char *) user->user);
+	 announce("*** %s has cancelled the server restart. ***\n",
+		  (char *) name);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",name_only,(char *) user->user);
-	 announce("*** %s has cancelled the server shutdown. ***\n",name);
+	 log("Shutdown cancelled by %s (%s).",(char *) name_only,
+	     (char *) user->user);
+	 announce("*** %s has cancelled the server shutdown. ***\n",
+		  (char *) name);
       } else {
 	 output("The server was not about to shut down.\n");
       }
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Shutdown requested by %s (%s) in %d seconds.",name_only,(char *)
-	  user->user,seconds);
-      announce("*** %s has shut down conf! ***\n",name);
+      log("Shutdown requested by %s (%s) in %d seconds.",(char *) name_only,
+	  (char *) user->user,seconds);
+      announce("*** %s has shut down conf! ***\n",(char *) name);
       announce("\a\a>>> This server will shutdown in %d seconds... <<<\n\a\a",
 	       seconds);
       alarm(seconds);
@@ -772,45 +773,48 @@ void Session::DoNuke(char *args) // Do !nuke command.
    if (session = FindSession(args,matches)) {
       // Nuke target session.  // Should require confirmation! ***
       if (drain) {
-	 print("\"%s\" has been nuked.\n",session->name_only);
+	 print("\"%s\" has been nuked.\n",(char *) session->name_only);
       } else {
-	 print("\"%s\" has been nuked immediately.\n",session->name_only);
+	 print("\"%s\" has been nuked immediately.\n",(char *) session->name_only);
       }
 
       if (session->telnet) {
 	 Pointer<Telnet> telnet(session->telnet);
 	 session->telnet = NULL;
-	 log("%s (%s) on fd %d has been nuked by %s (%s).",session->name_only,
-	     (char *) session->user->user,telnet->fd,name_only,(char *)
-	     user->user);
+	 log("%s (%s) on fd %d has been nuked by %s (%s).",
+	     (char *) session->name_only,(char *) session->user->user,telnet->fd,
+	     (char *) name_only,(char *) user->user);
 	 telnet->UndrawInput();
-	 telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
+	 telnet->print("\a\a\a*** You have been nuked by %s. ***\n",
+		       (char *) name);
 	 telnet->RedrawInput();
 	 telnet->Close(drain);
       } else {
 	 log("%s (%s), detached, has been nuked by %s (%s).",
-	     session->name_only,(char *) session->user->user,name_only,
+	     (char *) session->name_only,(char *) session->user->user,(char *) name_only,
 	     (char *) user->user);
 	 session->Close();
       }
    } else {
-      // kludge ***
-      for (unsigned char *p = (unsigned char *) args; *p; p++) {
-	 if (*p == UnquotedUnderscore) *p = Underscore;
+      String tmp(args);
+      for (char *p = tmp; *p; p++) {
+	 if (*((unsigned char *) p) == UnquotedUnderscore) {
+	    *p = Underscore;
+	 }
       }
 
       if (matches.Count()) {
 	 SetIter<Session> session(matches);
 
-	 print("\a\a\"%s\" matches %d names: ",args,matches.Count());
-	 output(session++->name_only);
+	 print("\a\a\"%s\" matches %d names: ",(char *) tmp,matches.Count());
+	 output((char *) session++->name_only);
 	 while (session++) {
 	    output(", ");
-	    output(session->name_only);
+	    output((char *) session->name_only);
 	 }
 	 output(". (nobody nuked)\n");
       } else {
-	 print("\a\aNo names matched \"%s\". (nobody nuked)\n",args);
+	 print("\a\aNo names matched \"%s\". (nobody nuked)\n",(char *) tmp);
       }
    }
 }
@@ -870,7 +874,7 @@ void Session::DoWho()		// Do /who command.
       } else {
 	 output(Tilde);
       }
-      print("%-32s  ",session->name);
+      print("%-32.32s%c ",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
@@ -962,7 +966,7 @@ void Session::DoWhy()		// Do /why command.
       } else {
 	 output(Tilde);
       }
-      print("%-32s  ",session->name);
+      print("%-32.32s%c ",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
       if ((now - session->login_time) < 86400) {
 	 output(date(session->login_time,11,8));
       } else {
@@ -1051,7 +1055,7 @@ void Session::DoIdle(char *args) // Do /idle command.
       } else {
 	 output(Tilde);
       }
-      print("%-32s ",session->name);
+      print("%-32.32s%c",(char *) session->name,session->name.length() > 32 ? '+' : ' ');
       idle = (now - session->message_time) / 60;
       if (idle) {
 	 hours = idle / 60;
@@ -1123,28 +1127,29 @@ void Session::DoSend(char *p)	// Do /send command.
 {
    while (*p && isspace(*p)) p++;
    if (!*p) {			// Display current sendlist.
-      if (!default_sendlist[0]) {
+      if (!default_sendlist) {
 	 output("Your default sendlist is turned off.\n");
       } else if (!strcasecmp(default_sendlist,"everyone")) {
 	 output("You are sending to everyone.\n");
       } else {
-	 print("Your default sendlist is set to \"%s\".\n",default_sendlist);
+	 print("Your default sendlist is set to \"%s\".\n",
+	       (char *) default_sendlist);
       }
    } else if (!strcasecmp(p,"off")) {
-      default_sendlist[0] = 0;
+      default_sendlist = (char *) NULL;
       output("Your default sendlist has been turned off.\n");
    } else if (!strcasecmp(p,"everyone")) {
-      strcpy(default_sendlist,p);
+      default_sendlist = "everyone";
       output("You are now sending to everyone.\n");
    } else {
-      strncpy(default_sendlist,p,SendlistLen);
-      default_sendlist[SendlistLen - 1] = 0;
-      print("Your default sendlist is now set to \"%s\".\n",default_sendlist);
+      default_sendlist = p;
+      print("Your default sendlist is now set to \"%s\".\n",
+	    (char *) default_sendlist);
    }
 }
 
-// Do /blurb command (or blurb set on entry), return number of bytes truncated.
-int Session::DoBlurb(char *start,boolean entry = false)
+// Do /blurb command (or blurb set on entry).
+void Session::DoBlurb(char *start,boolean entry = false)
 {
    char *end;
    while (*start && isspace(*start)) start++;
@@ -1153,17 +1158,11 @@ int Session::DoBlurb(char *start,boolean entry = false)
       if (strncasecmp(start,"off",end - start + 1)) {
 	 if (*start == '\"' && *end == '\"' && start < end ||
 	     *start == '[' && *end == ']') start++; else end++;
-	 int len = end - start;
-	 int over = len - (NameLen - strlen(name_only) - 4);
-	 if (over < 0) over = 0;
-	 len -= over;
-	 start[len] = 0;
+	 start[end - start] = 0;
 	 SetBlurb(start);
-	 if (!entry) print("Your blurb has been %s to [%s].\n",over ?
-			   "truncated" : "set",blurb);
-	 return over;
+	 if (!entry) print("Your blurb has been set to [%s].\n",(char *) blurb);
       } else {
-	 if (entry || blurb[0]) {
+	 if (entry || blurb) {
 	    SetBlurb(NULL);
 	    if (!entry) output("Your blurb has been turned off.\n");
 	 } else {
@@ -1173,13 +1172,12 @@ int Session::DoBlurb(char *start,boolean entry = false)
    } else if (entry) {
       SetBlurb(NULL);
    } else {
-      if (blurb[0]) {
-	 if (!entry) print("Your blurb is currently set to [%s].\n",blurb);
+      if (blurb) {
+	 print("Your blurb is currently set to [%s].\n",(char *) blurb);
       } else {
-	 if (!entry) output("You do not currently have a blurb set.\n");
+	 output("You do not currently have a blurb set.\n");
       }
    }
-   return 0;
 }
 
 void Session::DoHere(char *args) // Do /here command.
@@ -1245,7 +1243,7 @@ void Session::DoHelp()		// Do /help command.
 	  "\n");
 }
 
-char *message_start(char *line,char *sendlist,int len,boolean &explicit)
+char *message_start(char *line,String &sendlist,boolean &explicit)
 {
    char *p;
    int i;
@@ -1265,7 +1263,7 @@ char *message_start(char *line,char *sendlist,int len,boolean &explicit)
 	  !strcmp(line,":)") || !strcmp(line,":(") || !strcmp(line,":P") ||
 	  !strcmp(line,";)")) {
 	 *p = i;
-	 strcpy(sendlist,"default");
+	 sendlist = "default";
 	 return line;
       } else {
 	 *p = i;
@@ -1273,44 +1271,44 @@ char *message_start(char *line,char *sendlist,int len,boolean &explicit)
    }
 
    // Doesn't appear to be a smiley, check for explicit sendlist.
-   i = 0;
-   len--;
    for (p = line; *p; p++) {
       switch (*p) {
       case Space:
       case Tab:
-         strcpy(sendlist,"default");
+         sendlist = "default";
          return line + (*line == Space);
       case Colon:
       case Semicolon:
-         sendlist[i] = 0;
          if (*++p == Space) p++;
          explicit = true;
          return p;
       case Backslash:
-	 if (*++p && i < len) sendlist[i++] = *p;
+	 if (*++p) sendlist.append(*p);
          break;
       case Quote:
 	 while (*p) {
 	    if (*p == Quote) {
 	       break;
 	    } else if (*p == Backslash) {
-	       if (*++p && i < len) sendlist[i++] = *p;
+	       if (*++p) sendlist.append(*p);
 	    } else {
-	       if (i < len) sendlist[i++] = *p;
+	       sendlist.append(*p);
 	    }
 	    p++;
 	 }
          break;
       case Underscore:
-         if (i < len) sendlist[i++] = UnquotedUnderscore;
+         sendlist.append(UnquotedUnderscore);
          break;
+      case Comma:
+	 sendlist.append(Separator);
+	 break;
       default:
-         if (i < len) sendlist[i++] = *p;
+         sendlist.append(*p);
          break;
       }
    }
-   strcpy(sendlist,"default");
+   sendlist = "default";
    return line + (*line == Space);
 }
 
@@ -1327,14 +1325,14 @@ void Session::DoUnidle()	// Do /unidle idle time reset.
 void Session::DoMessage(char *line) // Do message send.
 {
    boolean explicit;
-   char sendlist[SendlistLen];
+   String sendlist;
 
-   char *p = message_start(line,sendlist,SendlistLen,explicit);
+   line = message_start(line,sendlist,explicit);
 
    // Use last sendlist if none specified.
-   if (!*sendlist) {
-      if (*last_sendlist) {
-	 strcpy(sendlist,last_sendlist);
+   if (!sendlist) {
+      if (last_sendlist) {
+	 sendlist = last_sendlist;
       } else {
 	 output("\a\aYou have no previous sendlist. (message not sent)\n");
 	 return;
@@ -1342,9 +1340,9 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Use default sendlist if indicated.
-   if (!strcasecmp(sendlist,"default")) {
-      if (*default_sendlist) {
-	 strcpy(sendlist,default_sendlist);
+   if (!strcasecmp((char *) sendlist,"default")) {
+      if (default_sendlist) {
+	 sendlist = default_sendlist;
       } else {
 	 output("\a\aYou have no default sendlist. (message not sent)\n");
 	 return;
@@ -1352,15 +1350,12 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Save last sendlist if explicit.
-   if (explicit && *sendlist) {
-      strncpy(last_sendlist,sendlist,SendlistLen);
-      last_sendlist[SendlistLen - 1] = 0;
-   }
+   if (explicit && sendlist) last_sendlist = sendlist;
 
-   if (!strcasecmp(sendlist,"everyone")) {
-      SendEveryone(p);
+   if (!strcasecmp((char *) sendlist,"everyone")) {
+      SendEveryone(line);
    } else {
-      SendPrivate(sendlist,p);
+      SendPrivate(sendlist,line);
    }
 }
 
@@ -1404,7 +1399,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
       if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
       ResetIdle(10);
       output("(message sent to ");
-      output(session->name);
+      output((char *) session->name);
       if (!session->telnet) output(", detached");
       switch (session->away) {
       case Here:
@@ -1435,10 +1430,10 @@ void Session::SendPrivate(char *sendlist,char *msg)
 	 SetIter<Session> session(matches);
 
 	 print("\a\a\"%s\" matches %d names: ",sendlist,matches.Count());
-	 output(session++->name_only);
+	 output((char *) session++->name_only);
 	 while (session++) {
 	    output(", ");
-	    output(session->name_only);
+	    output((char *) session->name_only);
 	 }
 	 output(". (message not sent)\n");
       } else {

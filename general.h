@@ -72,8 +72,6 @@ class User;
 const int BlockSize = 1024;	// data size for block
 const int BufSize = 32768;	// general temporary buffer size
 const int InputSize = 256;	// default size of input line buffer
-const int NameLen = 33;		// maximum length of name (including null)
-const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int DefaultPort = 6789;	// TCP port to run on
 
 extern int errno;		// System error number
@@ -101,7 +99,8 @@ enum Char {			// Character codes.
    Bell = '\007', Backspace = '\010', Tab = '\t', Linefeed = '\n',
    Newline = '\n', Return = '\r', Space = ' ', Quote = '\"', Colon = ':',
    Semicolon = ';', Backslash = '\\', Underscore = '_', Tilde = '~',
-   Delete = 127, CSI = 155, UnquotedUnderscore = 128
+   Comma = ',', Delete = 127, CSI = 155, UnquotedUnderscore = 128,
+   Separator = 129
 };
 
 // Input function pointer type.

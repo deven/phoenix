@@ -26,15 +26,10 @@
 
 class Line: public Object {
 public:
-   char *line;			// input line
+   String line;			// input line
    Pointer<Line> next;		// next input line
-   Line(char *p) {		// constructor
-      line = new char[strlen(p) + 1];
-      strcpy(line,p);
+   Line(char *p): line(p) {	// constructor
       next = 0;
-   }
-   ~Line() {			// destructor
-      delete [] line;
    }
    void Append(Pointer<Line> &p) { // Add new line at end of list.
       if (next) {
