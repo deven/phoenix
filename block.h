@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: block.h,v 1.3 1996/02/21 20:34:06 deven Exp $
+// $Id: block.h,v 1.4 2000/03/22 04:05:32 deven Exp $
 //
 // Block class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: block.h,v $
+// Revision 1.4  2000/03/22 04:05:32  deven
+// Updated copyright dates.
+//
 // Revision 1.3  1996/02/21 20:34:06  deven
 // Updated copyright notice.  Changed NULL to 0.
 //

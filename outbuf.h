@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outbuf.h,v 1.6 1996/02/21 20:34:57 deven Exp $
+// $Id: outbuf.h,v 1.7 2000/03/22 04:05:42 deven Exp $
 //
 // OutputBuffer class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outbuf.h,v $
+// Revision 1.7  2000/03/22 04:05:42  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.6  1996/02/21 20:34:57  deven
 // Updated copyright notice.  Changed NULL to 0.
 //

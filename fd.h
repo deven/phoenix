@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.8 1996/05/13 18:32:33 deven Exp $
+// $Id: fd.h,v 1.9 2000/03/22 04:07:24 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.9  2000/03/22 04:07:24  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.8  1996/05/13 18:32:33  deven
 // Added timeout parameter to Select() function.
 //

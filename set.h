@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.6 1996/02/21 20:31:16 deven Exp $
+// $Id: set.h,v 1.7 2000/03/22 04:04:31 deven Exp $
 //
 // Set class interface & implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: set.h,v $
+// Revision 1.7  2000/03/22 04:04:31  deven
+// Updated copyright dates.
+//
 // Revision 1.6  1996/02/21 20:31:16  deven
 // Updated copyright notice.  Fixed operator =() to return *this.  Removed
 // operator --().  Changed return type of Remove() to void.  Changed temporary

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.7 1996/05/29 04:23:29 deven Exp $
+// $Id: sendlist.cc,v 1.8 2000/03/22 04:09:43 deven Exp $
 //
 // Sendlist class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.8  2000/03/22 04:09:43  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.7  1996/05/29 04:23:29  deven
 // Modified to maintain a list of strings which didn't match any sendable, in
 // order to eliminate duplicates and not accidently drop trailing empty items.

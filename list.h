@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.8 1996/05/13 18:31:24 deven Exp $
+// $Id: list.h,v 1.9 2000/03/22 04:04:23 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.9  2000/03/22 04:04:23  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.8  1996/05/13 18:31:24  deven
 // Added PriorityEnqueue() function.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.34 1996/05/20 05:15:11 deven Exp $
+// $Id: telnet.cc,v 1.35 2000/03/22 04:09:59 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.35  2000/03/22 04:09:59  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.34  1996/05/20 05:15:11  deven
 // Modified to NEVER block, regardless of SUPPRESS-GO-AHEAD option results.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.9 1996/05/12 07:28:17 deven Exp $
+// $Id: discussion.cc,v 1.10 2000/03/22 04:08:38 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.10  2000/03/22 04:08:38  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.9  1996/05/12 07:28:17  deven
 // Removed explicit initializations for message_time and creation_time since
 // Timestamp constructor will do the same thing.

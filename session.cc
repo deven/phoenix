@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.45 1996/05/13 18:44:32 deven Exp $
+// $Id: session.cc,v 1.46 2000/03/22 04:09:35 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.46  2000/03/22 04:09:35  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.45  1996/05/13 18:44:32  deven
 // Modified shutdown/restart code to use new ShutdownEvent and RestartEvent
 // classes in event queue.

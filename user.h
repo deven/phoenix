@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.7 1996/02/21 20:41:17 deven Exp $
+// $Id: user.h,v 1.8 2000/03/22 04:07:04 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.8  2000/03/22 04:07:04  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.7  1996/02/21 20:41:17  deven
 // Updated copyright notice.  Changed return type of AddSession() to void.
 // Changed temporary smart pointer back to real pointer.

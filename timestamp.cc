@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: timestamp.cc,v 1.1 1996/05/12 07:34:56 deven Exp $
+// $Id: timestamp.cc,v 1.2 2000/03/22 04:10:11 deven Exp $
 //
 // Timestamp class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: timestamp.cc,v $
+// Revision 1.2  2000/03/22 04:10:11  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.1  1996/05/12 07:34:56  deven
 // Initial revision
 //

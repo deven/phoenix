@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.4 1996/02/21 21:02:23 deven Exp $
+// $Id: string.cc,v 1.5 2000/03/22 04:08:12 deven Exp $
 //
 // String class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.cc,v $
+// Revision 1.5  2000/03/22 04:08:12  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.4  1996/02/21 21:02:23  deven
 // Updated copyright notice.  Included boolean.h header.
 //

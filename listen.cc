@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.7 1996/02/21 20:53:17 deven Exp $
+// $Id: listen.cc,v 1.8 2000/03/22 04:08:56 deven Exp $
 //
 // Listen class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
+// Revision 1.8  2000/03/22 04:08:56  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.7  1996/02/21 20:53:17  deven
 // Updated copyright notice.
 //

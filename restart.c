@@ -1,11 +1,14 @@
 /*
- * $Id: restart.c,v 1.2 1994/05/13 04:10:48 deven Exp $
+ * $Id: restart.c,v 1.3 2000/03/22 06:05:23 deven Exp $
  *
  * Utility program to restart Phoenix conferencing server from cron.
  *
  * Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
  *
  * $Log: restart.c,v $
+ * Revision 1.3  2000/03/22 06:05:23  deven
+ * Updated copyright dates and whitespace conventions.
+ *
  * Revision 1.2  1994/05/13 04:10:48  deven
  * Renamed to Phoenix, simplified and updated.
  *
