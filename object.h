@@ -8,8 +8,6 @@
 //
 // $Log$
 
-extern "C" volatile void abort();
-
 class Object {
 private:
    int RefCnt;			// Reference count.
