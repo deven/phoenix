@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.8 2002/11/26 06:43:22 deven Exp $
+// $Id: gangplank.cc,v 1.9 2003/02/17 06:25:14 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.9  2003/02/17 06:25:14  deven
+// Removed DefaultPort constant in favor of using configured PORT parameter.
+//
 // Revision 1.8  2002/11/26 06:43:22  deven
 // If configure did not find strerror(), define an implementation.  (For very
 // old BSD systems.)  Fixed getpid() back to pid, from last update to startup
