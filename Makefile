@@ -1,29 +1,27 @@
+# -*- Makefile -*-
 #
 # $Id$
 #
-# Conferencing system server.
-#
-# Makefile -- commands for building conf server.
+# Conferencing system server -- Makefile.
 #
 # Copyright 1992-1993 by Deven T. Corzine.  All rights reserved.
-#
-# Development began on November 30, 1992.
 #
 # $Log$
 
 # ESIX:
-# CFLAGS = -DUSE_SIGIGNORE
-# LDFLAGS = -bsd
+CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
+LDFLAGS = -bsd
 
 # Sun:
-CFLAGS = -g -I. -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
-LDFLAGS =
+# CFLAGS = -g -I. -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
+# LDFLAGS =
 
 CC = gcc
 EXEC = conf
-HDRS = conf.h
-SRCS = conf.cc
-OBJS = $(SRCS:.cc=.o)
+HDRS = conf.h other.h general.h line.h block.h outbuf.h session.h user.h \
+	fd.h listen.h telnet.h fdtable.h
+SRCS = conf.cc session.cc user.cc listen.cc telnet.cc fdtable.cc
+OBJS = conf.o session.o user.o listen.o telnet.o fdtable.o
 
 all: conf restart
 
@@ -31,8 +29,10 @@ $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
 	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
 
-$(OBJS): $(HDRS)
-	$(CC) $(CFLAGS) -c $(SRCS)
+$(SRCS): $(HDRS)
+
+.cc.o:
+	$(CC) $(CFLAGS) -c $<
 
 restart.o: conf.h
 
