@@ -1,12 +1,20 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.2 1993/12/11 07:45:33 deven Exp $
+// $Id: conf.cc,v 1.3 1993/12/12 00:05:04 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.3  1993/12/12 00:05:04  deven
+// Removed definition and initialization for global variable sessions.  Removed
+// global functions notify() and who_cmd().  Added code to handle "/bye" typed
+// at login: prompt.  Made accounts, commands and keywords case-insensitive.
+// Changed around various calls to call new methods.  Made /blurb command say
+// "truncated" if the blurb was too long.  Added calls to Session::Link() and
+// Session::CheckShutdown().
+//
 // Revision 1.2  1993/12/11 07:45:33  deven
 // Removed global buffers, added buffers local to functions instead.  Removed
 // definition for fdtable. (now static member in class FD) Removed definitions

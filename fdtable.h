@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.h,v 1.2 1993/12/11 07:35:40 deven Exp $
+// $Id: fdtable.h,v 1.3 1993/12/11 23:45:57 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
+// Revision 1.3  1993/12/11 23:45:57  deven
+// Changed announce() member function to unformatted.  Removed SendByFD(),
+// SendEveryone() and SendPrivate() member functions.
+//
 // Revision 1.2  1993/12/11 07:35:40  deven
 // Added static members readfds and writefds of type fd_set to class FDTable.
 // Added declaration for new member function FD *Closed(int fd).

@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: session.h,v 1.2 1993/12/11 23:57:41 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.2  1993/12/11 23:57:41  deven
+// Added static member sessions.  Added member functions SendEveryone(),
+// SendByFD(), SendPrivate() and Link().  Added static member functions
+// notify(), who_cmd(), CheckShutdown().
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
