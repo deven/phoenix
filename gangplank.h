@@ -23,7 +23,7 @@
 #ifndef _PHOENIX_H
 #define _PHOENIX_H
 
-#include "other.h"
+#include "system.h"
 #include "boolean.h"
 #include "object.h"
 #include "general.h"
@@ -32,7 +32,7 @@
 #include "string.h"
 #include "list.h"
 #include "set.h"
-#include "assoc.h"
+#include "hash.h"
 #include "timestamp.h"
 #include "line.h"
 #include "block.h"
