@@ -1450,6 +1450,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	 case Escape:
 	    switch (n) {
 	    case '\[':
+	    case 'O':
 	       state = CSI;
 	       break;
 	    case ControlL:
