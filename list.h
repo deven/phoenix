@@ -58,6 +58,8 @@ public:
    Pointer<Type> Pop() { return RemTail(); }
    int Shift(Pointer<Type> &ptr) { return AddHead(ptr); }
    Pointer<Type> Unshift() { return RemHead(); }
+   Pointer<Type> First();
+   void Remove(Pointer<Type> &obj);
 };
 
 template <class Type>
@@ -121,6 +123,49 @@ Pointer<Type> List<Type>::RemTail() {
    }
    node->next = node->prev = 0;
    return node->obj;
+}
+
+template <class Type>
+Pointer<Type> List<Type>::First() {
+   if (!head) return Pointer<Type>();
+   return head->obj;
+}
+
+template <class Type>
+void List<Type>::Remove(Pointer<Type> &obj) {
+   Pointer<NodeType> node(head);
+
+   while (node) {
+      while (node && node->obj == obj) {
+	 count--;
+	 if (node == head) {
+	    head = node->next;
+	    if (head) {
+	       head->prev = 0;
+	    } else {
+	       tail = 0;
+	    }
+	    node->next = node->prev = 0;
+	    node = head;
+	 } else if (node == tail) {
+	    tail = node->prev;
+	    if (tail) {
+	       tail->next = 0;
+	    } else {
+	       head = 0;
+	    }
+	    node->next = node->prev = 0;
+	    node = tail;
+	 } else {
+	    Pointer<NodeType> ptr(node->prev);
+	    node->prev->next = node->next;
+	    node->next->prev = node->prev;
+	    node->next = node->prev = 0;
+	    node = ptr;
+	 }
+      }
+      if (node) node = node->next;
+   }
 }
 
 template <class Type>
