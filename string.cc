@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: string.cc,v 1.1 1994/02/05 18:34:13 deven Exp $
 //
 // String class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: string.cc,v $
+// Revision 1.1  1994/02/05 18:34:13  deven
+// Initial revision
+//
 
 #include <string.h>
 #include "object.h"

@@ -1,12 +1,20 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.13 1994/01/20 05:34:12 deven Exp $
+// $Id: session.cc,v 1.14 1994/02/05 18:41:18 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.14  1994/02/05 18:41:18  deven
+// Added here/away/busy/gone states, added (char *) case to all user->user
+// references for String class, fixed SaveInputLine() if/else inversion,
+// fixed SetInputFunction(), rewrote login sequence for persistent User
+// objects and reserved names, fixed ResetIdle() message, made "Idle" column
+// in /who output dynamically sized, added warning for messages sent while
+// "gone", added detached and away states to message send confirmation.
+//
 // Revision 1.13  1994/01/20 05:34:12  deven
 // Added Transfer() and TransferSession(), modified Attach(), Detach(),
 // Name(), NotifyEntry() and CheckShutdown().

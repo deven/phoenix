@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: line.h,v 1.4 1994/01/19 22:00:44 deven Exp $
+// $Id: line.h,v 1.5 1994/02/05 18:25:35 deven Exp $
 //
 // Line class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: line.h,v $
+// Revision 1.5  1994/02/05 18:25:35  deven
+// Added [] to array delete.
+//
 // Revision 1.4  1994/01/19 22:00:44  deven
 // Changed Pointer parameter to a reference parameter.
 //

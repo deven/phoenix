@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.8 1994/01/19 22:40:48 deven Exp $
+// $Id: fdtable.cc,v 1.9 1994/02/05 18:30:22 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.9  1994/02/05 18:30:22  deven
+// Added [] to array delete.
+//
 // Revision 1.8  1994/01/19 22:40:48  deven
 // Used Pointer constructors, removed range errors, added CloseAll(), added
 // check for validity of array entry before using.

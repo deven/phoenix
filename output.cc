@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.4 1994/01/20 05:33:20 deven Exp $
+// $Id: output.cc,v 1.5 1994/02/05 18:30:33 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.5  1994/02/05 18:30:33  deven
+// Added here/away/busy/gone output types.
+//
 // Revision 1.4  1994/01/20 05:33:20  deven
 // Added transfer notification.
 //

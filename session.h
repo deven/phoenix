@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.11 1994/01/20 05:32:35 deven Exp $
+// $Id: session.h,v 1.12 1994/02/05 18:27:07 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.12  1994/02/05 18:27:07  deven
+// Added here/away/busy/gone states.
+//
 // Revision 1.11  1994/01/20 05:32:35  deven
 // Added Transfer() and TransferSession(), modified Detach().
 //

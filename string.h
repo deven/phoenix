@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: string.h,v 1.1 1994/02/05 18:19:01 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: string.h,v $
+// Revision 1.1  1994/02/05 18:19:01  deven
+// Initial revision
+//
 
 class String: public Object {
 private:

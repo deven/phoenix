@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.4 1994/01/20 05:31:53 deven Exp $
+// $Id: output.h,v 1.5 1994/02/05 18:26:06 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.5  1994/02/05 18:26:06  deven
+// Added [] to array deletes, added here/away/busy/gone output types.
+//
 // Revision 1.4  1994/01/20 05:31:53  deven
 // Added transfer notification.
 //

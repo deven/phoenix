@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.10 1994/01/20 05:35:20 deven Exp $
+// $Id: telnet.cc,v 1.11 1994/02/05 18:37:21 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.11  1994/02/05 18:37:21  deven
+// Added [] to array deletes, handled EWOULDBLOCK and EAGAIN independently.
+//
 // Revision 1.10  1994/01/20 05:35:20  deven
 // Added count and support code, modified Session::Detach() calls.
 //

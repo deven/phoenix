@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.9 1994/01/19 21:52:31 deven Exp $
+// $Id: general.h,v 1.10 1994/02/05 18:18:35 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.10  1994/02/05 18:18:35  deven
+// Removed #define of EWOULDBLOCK to EAGAIN. (handled individually now)
+//
 // Revision 1.9  1994/01/19 21:52:31  deven
 // Changed Port to DefaultPort, added declarations for RestartServer() and
 // ShutdownServer() functions.
