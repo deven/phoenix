@@ -49,6 +49,8 @@
 // Initial revision
 //
 
+enum AwayState {Here,Away,Busy,Gone}; // Degrees of "away" status.
+
 class Session: public Object {
    static List<Session> inits;	// List of sessions initializing.
    static List<Session> sessions; // List of signed-on sessions.
@@ -61,6 +63,7 @@ public:
    OutputStream Pending;	// pending output stream
    time_t login_time;		// time logged in
    time_t message_time;		// time last message sent (for idle time)
+   AwayState away;		// here/away/busy/gone state
    char SignalPublic;		// Signal for public messages? (boolean)
    char SignalPrivate;		// Signal for private messages? (boolean)
    char SignedOn;		// Session signed on? (boolean)
@@ -74,9 +77,9 @@ public:
    char reply_sendlist[SendlistLen];   // reply sendlist for last sender
    Pointer<Message> last_message;      // last message sent
 
-   Session(Pointer<Telnet> &t);	// constructor
-   ~Session();			// destructor
-   void Close(boolean drain = true); // Close session.
+   Session(Pointer<Telnet> &t);
+   ~Session();
+   void Close(boolean drain = true);
    void Transfer(Pointer<Telnet> &t);
    void Attach(Pointer<Telnet> &t);
    void Detach(Telnet *t,boolean intentional);
@@ -137,6 +140,10 @@ public:
    void DoSend(char *p);	// Do /send command.
    void DoWhy();		// Do /why command.
    int DoBlurb(char *start,boolean entry = false); // Do /blurb command.
+   void DoHere(char *args);	// Do /here command.
+   void DoAway(char *args);	// Do /away command.
+   void DoBusy(char *args);	// Do /busy command.
+   void DoGone(char *args);	// Do /gone command.
    void DoHelp();		// Do /help command.
    void DoReset();		// Do <space><return> idle time reset.
    void DoMessage(char *line);	// Do message send.
