@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.6 1996/02/21 19:33:02 deven Exp $
+// $Id: string.h,v 1.7 2000/03/22 04:04:09 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.7  2000/03/22 04:04:09  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.6  1996/02/21 19:33:02  deven
 // Updated copyright notice.  Added String->bool conversion, for when "bool" is
 // a valid builtin data type.

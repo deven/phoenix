@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.21 1996/05/13 18:33:49 deven Exp $
+// $Id: phoenix.cc,v 1.22 2000/03/22 04:09:27 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.22  2000/03/22 04:09:27  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.21  1996/05/13 18:33:49  deven
 // Added main server EventQueue object.  Modified type of Shutdown variable to
 // Pointer<Event> instead of int.  Removed alrm(), modified to ignore SIGALRM.

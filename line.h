@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: line.h,v 1.7 1996/02/21 20:33:39 deven Exp $
+// $Id: line.h,v 1.8 2000/03/22 04:04:58 deven Exp $
 //
 // Line class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: line.h,v $
+// Revision 1.8  2000/03/22 04:04:58  deven
+// Updated copyright dates.
+//
 // Revision 1.7  1996/02/21 20:33:39  deven
 // Updated copyright notice.  Changed temporary smart pointer back to real
 // pointer.

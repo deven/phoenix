@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: assoc.cc,v 1.3 1996/02/21 20:50:40 deven Exp $
+// $Id: assoc.cc,v 1.4 2000/03/22 04:08:03 deven Exp $
 //
 // Assoc (associative array) class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.cc,v $
+// Revision 1.4  2000/03/22 04:08:03  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.3  1996/02/21 20:50:40  deven
 // Updated copyright notice.  Changed "String &" references to "char *" where
 // applicable.  Changed some "String &" return values to "String" to make new

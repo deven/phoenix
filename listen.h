@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.h,v 1.5 1996/02/21 20:42:10 deven Exp $
+// $Id: listen.h,v 1.6 2000/03/22 04:07:30 deven Exp $
 //
 // Listen class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.h,v $
+// Revision 1.6  2000/03/22 04:07:30  deven
+// Updated copyright dates.
+//
 // Revision 1.5  1996/02/21 20:42:10  deven
 // Updated copyright notice.
 //

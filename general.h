@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.20 1996/05/13 18:24:49 deven Exp $
+// $Id: general.h,v 1.21 2000/03/22 04:03:32 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.21  2000/03/22 04:03:32  deven
+// Updated copyright dates.
+//
 // Revision 1.20  1996/05/13 18:24:49  deven
 // Added Event and EventQueue forward class declarations.  Moved all constants
 // to new constants.h file.  Moved all function prototypes to new functions.h

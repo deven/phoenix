@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: other.h,v 1.11 1996/02/21 11:58:39 deven Exp $
+// $Id: other.h,v 1.12 2000/03/22 04:02:37 deven Exp $
 //
 // Phoenix conferencing system server -- Other (system) include files.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
+// Revision 1.12  2000/03/22 04:02:37  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.11  1996/02/21 11:58:39  deven
 // Updated copyright notice.
 //

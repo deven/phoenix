@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.h,v 1.8 1996/05/13 18:32:11 deven Exp $
+// $Id: fdtable.h,v 1.9 2000/03/22 04:07:12 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
+// Revision 1.9  2000/03/22 04:07:12  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.8  1996/05/13 18:32:11  deven
 // Added timeout parameter to Select() function.
 //

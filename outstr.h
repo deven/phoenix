@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.h,v 1.7 1996/02/21 20:37:44 deven Exp $
+// $Id: outstr.h,v 1.8 2000/03/22 04:06:07 deven Exp $
 //
 // OutputStream class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.h,v $
+// Revision 1.8  2000/03/22 04:06:07  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.7  1996/02/21 20:37:44  deven
 // Updated copyright notice.  Moved nested class OutputStream::OutputObject to
 // top-level class OutputStreamObject.  Changed NULL to 0.  Changed temporary

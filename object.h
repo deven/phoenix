@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.4 1996/02/21 12:13:26 deven Exp $
+// $Id: object.h,v 1.5 2000/03/22 04:03:16 deven Exp $
 //
 // Object class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: object.h,v $
+// Revision 1.5  2000/03/22 04:03:16  deven
+// Updated copyright dates.
+//
 // Revision 1.4  1996/02/21 12:13:26  deven
 // Updated copyright notice.  Removed abort() declaration.  Moved definitions
 // of reference-counting member functions to pointer.h to be included last.

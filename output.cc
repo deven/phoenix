@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.14 1996/05/12 07:29:06 deven Exp $
+// $Id: output.cc,v 1.15 2000/03/22 04:09:00 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.15  2000/03/22 04:09:00  deven
+// Updated copyright dates and whitespace conventions.
+//
 // Revision 1.14  1996/05/12 07:29:06  deven
 // Modified to use Timestamp class and print results of Timestamp::stamp().
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: constants.h,v 1.1 1996/05/13 18:26:16 deven Exp $
+// $Id: constants.h,v 1.2 2000/03/22 04:03:41 deven Exp $
 //
 // Phoenix conferencing system server -- Global constants header file.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: constants.h,v $
+// Revision 1.2  2000/03/22 04:03:41  deven
+// Updated copyright dates.
+//
 // Revision 1.1  1996/05/13 18:26:16  deven
 // Initial revision
 //
