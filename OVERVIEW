@@ -1,0 +1,15 @@
+$Id$
+
+This is a short overview of some coding conventions in the Gangplank source.
+
+String objects use a unary ~ (tilde) operator as a shorthand for casting the
+string to a (char *).  This syntax is used extensively throughout the source.
+
+The Object base class is used for objects which are to be reference-counted.
+Only smart pointers in the Pointer class are counted as official references
+for this counting, but some sections of code use real pointers temporarily.
+Real pointers will not keep the object from being destroyed when the last
+smart pointer to the object is destroyed or stops referring to that object,
+which is why real pointers to reference-counted Objects are only temporary.
+(Some object classes are NOT derived from Object, when the reference-counting
+semantics are deemed unnecessary.)
