@@ -1,0 +1,59 @@
+$Id$
+
+This document describes how to build and install the Gangplank CMC server.
+
+Before compiling, check the Makefile for platform-specific changes which
+may need to be made by hand.  (For example, Solaris requires "-lsocket -lnsl"
+and BSD does not use "-lcrypt".)  Building static executables is optional.
+
+The default TCP port number is 9999.  To use a different port number, change
+the definitions of "DefaultPort" in "constants.h" and "PORT" in "restart.c".
+To use the standard telnet port (port 23), it would be necessary to run the
+server as root.  There is currently no code to give up root privileges, so
+use caution.  If a port number over 1024 is used, any user can run the server.
+
+If a "guest" login is not desired, comment out the relevant line in "user.cc".
+
+The default server executable pathname is "/usr/local/bin/gangplank"; change
+this in "restart.c" and "event.cc" if the server is to be installed elsewhere.
+
+After verifying the Makefile and making any necessary changes in the source,
+type "make" to build the server binary.  If this results in errors, please
+send relevant information to <build-help@gangplank.org> for assistance.
+
+Only use "make install" to install the server as "/usr/local/bin/gangplank".
+Otherwise, copy or move the binary to the installation location.  Also, copy
+or move the "restart" and "makepw" programs to suitable locations if they are
+to be used.
+
+The server expectes to find a "~/lib/gangplank" directory under the user it
+runs as.  If this directory does not exist, it will be created to store the
+server logs.  The server's password file should also be placed in this same
+directory.  (Since the password file is read dynamically when needed, there
+is no need to restart the server after modifying the password file.)
+
+Copy the example password file to "~/lib/gangplank/passwd" for the correct
+user, and edit it to create server accounts.  The default file contains a
+sample administrative account for the author.  The field containing "100" is
+a privilege level (NOT a user ID number!) -- guest users have a privilege
+level of 0 (and are not allowed to detach), while normal users should have a
+privilege level of 10.  Only administrative users should have a privilege
+level as high as 100; they are allowed to nuke user sessions and shut down
+the server, etc.
+
+If the password file is not found, only accounts hardcoded in "user.cc" will
+work until a password file is put in place.  By default, this is the "guest"
+account only, but administrative and/or accounts can easily be added also.
+
+The "restart" program was designed to run every minute from cron, to ensure
+that the server remains running.  It attempts to bind to the server's port,
+and assumes the server is running okay if it CANNOT bind to the port.  If it
+successfully binds to the port, it assumes the server is not running, and
+launches it.  To use this program, add an appropriate "* * * * *" entry to
+the crontab of the user which will run the server.  It is critical that the
+server pathname and port number hardcoded in "restart.c" be correct.
+
+The "makepw" program is a simple utility to encrypt Unix-style passwords,
+either by prompting for input or taking a cleartext password as an argument.
+This is a straightforward way to apply crypt(3) encryption to passwords for
+use in the password file.
