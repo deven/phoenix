@@ -45,6 +45,7 @@ Session::Session(Pointer<Telnet> t)
    name_obj = NULL;		// No name object.
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
+   SignedOn = false;		// No signed on yet.
    last_sendlist[0] = 0;	// No previous sendlist yet.
    reply_sendlist[0] = 0;	// No reply sendlist yet.
    strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
@@ -85,6 +86,34 @@ void Session::Close(boolean drain = true) // Close session.
    }
 
    user = NULL;
+}
+
+void Session::Attach(Pointer<Telnet> t) // Attach session to telnet connection.
+{
+   if (!t.Null()) {
+      telnet = t;
+      telnet->session = this;
+      log("Attach: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+      EnqueueOthers(new AttachNotify(name_obj));
+      Pending.Attach(telnet);
+   }
+}
+
+void Session::Detach(boolean intentional) // Detach session from connection.
+{
+   if (SignedOn && !telnet.Null()) {
+      if (intentional) {
+	 log("Detach: %s (%s) on fd %d. (intentional)",name_only,user->user,
+	     telnet->fd);
+      } else {
+	 log("Detach: %s (%s) on fd %d. (accidental)",name_only,user->user,
+	     telnet->fd);
+      }
+      EnqueueOthers(new DetachNotify(name_obj,intentional));
+      telnet = NULL;
+   } else {
+      Close();
+   }
 }
 
 void Session::SaveInputLine(char *line)
@@ -246,6 +275,23 @@ void Session::Name(char *line)
       strncpy(name_only,line,NameLen); // Save user's name.
       name_only[NameLen - 1] = 0;
    }
+   Pointer<Session> session;
+   for (session = sessions; !session.Null(); session = session->next) {
+      if (!strcasecmp(session->name_only,name_only)) {
+	 if (!strcmp(session->user->user,user->user) &&
+	     session->telnet.Null()) {
+	    telnet->output("Re-attaching to detached session...\n");
+	    session->Attach(telnet);
+	    telnet = NULL;
+	    Close();
+	    return;
+	 } else {
+	    telnet->output("That name is already in use.  Choose another.\n");
+	    telnet->Prompt("Enter name: ");
+	    return;
+	 }
+      }
+   }
    telnet->Prompt("Enter blurb: "); // Prompt for blurb.
    SetInputFunction(Blurb);	    // Set blurb input routine.
 }
@@ -260,6 +306,8 @@ void Session::Blurb(char *line)
       telnet->Prompt("Enter blurb: ");
       return;
    }
+
+   SignedOn = true;		// Session is signed on.
 
    NotifyEntry();		// Notify other users of entry.
 
@@ -473,6 +521,8 @@ void Session::DoBye()		// Do /bye command.
 
 void Session::DoDetach()	// Do /detach command.
 {
+   output("You have been detached.\n");
+   EnqueueOutput();
    if (!telnet.Null()) telnet->Close(); // Drain connection, then close.
 }
 
