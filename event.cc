@@ -87,8 +87,8 @@ void RestartEvent::RestartServer()
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
-   execl("/usr/local/bin/gangplank", "gangplank", 0);
-   error("gangplank");
+   execl(SERVER_PATH, SERVER_PATH, 0);
+   error(SERVER_PATH);
 }
 
 boolean RestartEvent::Execute()

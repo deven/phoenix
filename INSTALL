@@ -4,7 +4,10 @@ This document describes how to build and install the Gangplank CMC server.
 
 Use "./configure --help" to see the configuration options available.  Use
 "./configure" alone to configure with the defaults.  After configuring,
-build the server with "make" and install it with "make install".
+build the server with "make" and install it with "make install".  Include
+the "--prefix" option if an installation prefix other than "/usr/local" is
+desired.  (For users without root access, the user's home directory could
+be used as the prefix.)
 
 The default TCP port number is 9999.  Use the "--enable-port" configure
 option to change this.  For example, "--enable-port=23" will use the
@@ -15,26 +18,18 @@ used, any user can run the server.
 
 If a "guest" login is not desired, use the "--disable-guest" option.
 
-The default server executable pathname is "/usr/local/bin/gangplank"; change
-this in "restart.c" and "event.cc" if the server is to be installed elsewhere.
+If any errors occur during the build, please email relevant information to
+<build-help@gangplank.org> for assistance.
 
-After verifying the Makefile and making any necessary changes in the source,
-type "make" to build the server binary.  If this results in errors, please
-send relevant information to <build-help@gangplank.org> for assistance.
+By default, the server is installed as "/usr/local/sbin/gangplank", and the
+"makepw" utility program is installed as "/usr/local/bin/makepw".  Logs and
+the "passwd" file are stored in "/usr/local/lib/gangplank".  The "passwd"
+file in the distribution may be used as an example.  (Since the password file
+is read dynamically when needed, there is no need to restart the server after
+modifying the password file.)
 
-Only use "make install" to install the server as "/usr/local/bin/gangplank".
-Otherwise, copy or move the binary to the installation location.  Also, copy
-or move the "restart" and "makepw" programs to suitable locations if they are
-to be used.
-
-The server expectes to find a "~/lib/gangplank" directory under the user it
-runs as.  If this directory does not exist, it will be created to store the
-server logs.  The server's password file should also be placed in this same
-directory.  (Since the password file is read dynamically when needed, there
-is no need to restart the server after modifying the password file.)
-
-Copy the example password file to "~/lib/gangplank/passwd" for the correct
-user, and edit it to create server accounts.  The default file contains a
+Copy the example password file to "/usr/local/lib/gangplank/passwd" and edit
+it to create server accounts.  The default file contains a (commented-out)
 sample administrative account for the author.  The field containing "100" is
 a privilege level (NOT a user ID number!) -- guest users have a privilege
 level of 0 (and are not allowed to detach), while normal users should have a
