@@ -43,6 +43,12 @@ void ExitNotify::output(Pointer<Telnet> &telnet)
 		 date(time,11,5));
 }
 
+void TransferNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s has transferred to new connection. [%s] ***\n",
+		 name->name,date(time,11,5));
+}
+
 void AttachNotify::output(Pointer<Telnet> &telnet)
 {
    telnet->print("*** %s is now attached. [%s] ***\n",name->name,
