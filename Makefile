@@ -5,7 +5,7 @@
 #
 # Makefile -- commands for building conf server.
 #
-# Copyright 1992-1993 by Deven T. Corzine.
+# Copyright 1992-1993 by Deven T. Corzine.  All rights reserved.
 #
 # Development began on November 30, 1992.
 #
