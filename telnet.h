@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.7 1994/01/19 22:12:22 deven Exp $
+// $Id: telnet.h,v 1.8 1994/01/20 05:33:01 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.8  1994/01/20 05:33:01  deven
+// Added count and Count().
+//
 // Revision 1.7  1994/01/19 22:12:22  deven
 // Changed Pointer parameter to a reference parameter, updated InputReady()
 // and OutputReady(), removed fake ShutdownCommand.

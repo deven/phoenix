@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.10 1994/01/20 02:19:05 deven Exp $
+// $Id: session.h,v 1.11 1994/01/20 05:32:35 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.11  1994/01/20 05:32:35  deven
+// Added Transfer() and TransferSession(), modified Detach().
+//
 // Revision 1.10  1994/01/20 02:19:05  deven
 // Added Session::inits as List<Session> for initializing sessions.
 //
