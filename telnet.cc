@@ -388,6 +388,21 @@ inline void Telnet::erase_line() // Erase input line.
    kill_line();
 }
 
+inline void Telnet::previous_line() // Go to previous input line.
+{
+   output(Bell);		// not implemented yet.
+}
+
+inline void Telnet::next_line()	// Go to next input line.
+{
+   output(Bell);		// not implemented yet.
+}
+
+inline void Telnet::yank()	// Yank from kill-ring.
+{
+   output(Bell);		// not implemented yet.
+}
+
 inline void Telnet::accept_input() // Accept input line.
 {
    *free = 0;			// Make input line null-terminated.
@@ -497,8 +512,26 @@ inline void Telnet::delete_char() // Delete character at point.
       for (char *p = point; p < free; p++) *p = p[1];
       if (echo == TelnetEnabled && do_echo) {
 	 // ANSI! ***
-	 output("\033[P"); // Backspace, delete character.
+	 output("\033[P");	// Delete character. ***
       }
+   }
+}
+
+inline void Telnet::transpose_chars() // Exchange two characters at point.
+{
+   if (!Point() || End() < 2) {
+      output(Bell);
+   } else {
+      if (AtEnd()) backward_char();
+      char tmp = point[0];
+      point[0] = point[-1];
+      point[-1] = tmp;
+      if (echo == TelnetEnabled && do_echo) {
+	 output(Backspace);
+	 output(point[-1]);
+	 output(point[0]);
+      }
+      point++;
    }
 }
 
@@ -544,7 +577,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	    delete data;
 	    data = tmp;
 	 }
-	 n = *((unsigned char *) from);
+	 n = *((unsigned char *) from++);
 	 switch (state) {
 	 case TelnetIAC:
 	    switch (n) {
@@ -611,7 +644,6 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       state = 0;
 	       break;
 	    }
-	    from++;		// Next input character.
 	    break;
 	 case TelnetWill:
 	 case TelnetWont:
@@ -653,7 +685,6 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       break;
 	    }
 	    state = 0;
-	    from++;		// Next input character.
 	    break;
 	 case TelnetDo:
 	 case TelnetDont:
@@ -716,15 +747,51 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       break;
 	    }
 	    state = 0;
-	    from++;		// Next input character.
 	    break;
 	 case Return:
 	    // Throw away next character.
 	    state = 0;
-	    from++;		// Next input character.
+	    break;
+	 case Escape:
+	    switch (n) {
+	    case '\[':
+	       state = CSI;
+	       break;
+	    case ControlL:
+	       UndrawInput();
+	       output("\033[H\033[J");	// ANSI! ***
+	       RedrawInput();
+	       state = 0;
+	       break;
+	    default:
+	       output(Bell);
+	       state = 0;
+	       break;
+	    }
+	    break;
+	 case CSI:
+	    switch (n) {
+	    case 'A':
+	       previous_line();
+	       break;
+	    case 'B':
+	       next_line();
+	       break;
+	    case 'C':
+	       forward_char();
+	       break;
+	    case 'D':
+	       backward_char();
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
 	    break;
 	 default:		// Normal data.
 	    state = 0;
+	    from--;		// Backup to current input character.
 	    while (!state && from < from_end && free < end) {
 	       switch (n = *((unsigned char *) from++)) {
 	       case TelnetIAC:
@@ -745,15 +812,27 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       case ControlF:
 		  forward_char();
 		  break;
-	       case Backspace:
-	       case Delete:
-		  erase_char();
-		  break;
 	       case ControlK:
 		  kill_line();
 		  break;
 	       case ControlL:
 		  OutputWithRedraw("");
+		  break;
+	       case ControlN:
+		  next_line();
+		  break;
+	       case ControlP:
+		  previous_line();
+		  break;
+	       case ControlT:
+		  transpose_chars();
+		  break;
+	       case ControlY:
+		  yank();
+		  break;
+	       case Backspace:
+	       case Delete:
+		  erase_char();
 		  break;
 	       case Return:
 		  state = Return;
@@ -761,7 +840,13 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	       case Newline:
 		  accept_input();
 		  break;
-	       default:
+	       case Escape:
+		  state = Escape;
+		  break;
+	       case CSI:
+		  state = CSI;
+		  break;
+	       default:		// Add : and ; rules! ***
 		  insert_char(n);
 		  break;
 	       }
