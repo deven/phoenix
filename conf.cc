@@ -17,10 +17,6 @@ Session *sessions;		// active sessions ***
 
 int Shutdown;			// shutdown flag ***
 
-FDTable fdtable;		// File descriptor table. ***
-fd_set readfds;			// read fdset for select() ***
-fd_set writefds;		// write fdset for select() ***
-
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
 
@@ -433,9 +429,9 @@ void process_input(Telnet *telnet,char *line)
 	    log("Immediate shutdown requested by %s (%s).",
 		telnet->session->name_only,telnet->session->user->user);
 	    log("Final shutdown warning.");
-	    fdtable.announce("*** %s has shut down conf! ***\n",
+	    FD::fdtable.announce("*** %s has shut down conf! ***\n",
 			     telnet->session->name);
-	    fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
+	    FD::fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
 			     "\n%c%c",Bell,Bell,Bell,Bell);
 	    alarm(5);
 	    Shutdown = 2;
@@ -445,7 +441,7 @@ void process_input(Telnet *telnet,char *line)
 	       alarm(0);
 	       log("Shutdown cancelled by %s (%s).",telnet->session->name_only,
 		   telnet->session->user->user);
-	       fdtable.announce("*** %s has cancelled the server shutdown. ***"
+	       FD::fdtable.announce("*** %s has cancelled the server shutdown. ***"
 				"\n",telnet->session->name);
 	    } else {
 	       telnet->output("The server was not about to shut down.\n");
@@ -456,9 +452,9 @@ void process_input(Telnet *telnet,char *line)
 	    if (sscanf(line+5,"%d",&i) != 1) i = 30;
 	    log("Shutdown requested by %s (%s) in %d seconds.",
 		telnet->session->name_only,telnet->session->user->user,i);
-	    fdtable.announce("*** %s has shut down conf! ***\n",
+	    FD::fdtable.announce("*** %s has shut down conf! ***\n",
 			     telnet->session->name);
-	    fdtable.announce("%c%c>>> This server will shutdown in %d seconds"
+	    FD::fdtable.announce("%c%c>>> This server will shutdown in %d seconds"
 			     "... <<<\n%c%c",Bell,Bell,i,Bell,Bell);
 	    alarm(i);
 	    Shutdown = 1;
@@ -467,7 +463,7 @@ void process_input(Telnet *telnet,char *line)
 	 int i;
 
 	 if (sscanf(line+6,"%d",&i) == 1) {
-	    fdtable.nuke(telnet,i < 0 ? -i : i,i >= 0);
+	    FD::fdtable.nuke(telnet,i < 0 ? -i : i,i >= 0);
 	 } else {
 	    telnet->print("Bad fd #: \"%s\"\n",line+6);
 	 }
@@ -660,11 +656,11 @@ void process_input(Telnet *telnet,char *line)
       }
 
       if (sscanf(sendlist,"#%d%c",&i,&c) == 1) {
-	 fdtable.SendByFD(telnet,i,sendlist,explicit,p);
+	 FD::fdtable.SendByFD(telnet,i,sendlist,explicit,p);
       } else if (!strcmp(sendlist,"everyone")) {
-	 fdtable.SendEveryone(telnet,p);
+	 FD::fdtable.SendEveryone(telnet,p);
       } else {
-	 fdtable.SendPrivate(telnet,sendlist,explicit,p);
+	 FD::fdtable.SendPrivate(telnet,sendlist,explicit,p);
       }
    }
 }
@@ -713,7 +709,7 @@ void who_cmd(Telnet *telnet)
 void quit(int sig)		// received SIGQUIT or SIGTERM
 {
    log("Shutdown requested by signal in 30 seconds.");
-   fdtable.announce("%c%c>>> This server will shutdown in 30 seconds... <<<"
+   FD::fdtable.announce("%c%c>>> This server will shutdown in 30 seconds... <<<"
 		    "\n%c%c",Bell,Bell,Bell,Bell);
    alarm(30);
    Shutdown = 1;
@@ -727,7 +723,7 @@ void alrm(int sig)		// received SIGALRM
    if (Shutdown) {
       if (Shutdown == 1) {
 	 log("Final shutdown warning.");
-	 fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
+	 FD::fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
 			  "\n%c%c",Bell,Bell,Bell,Bell);
 	 alarm(5);
 	 Shutdown++;;
@@ -752,9 +748,7 @@ int main(int argc,char **argv)	// main program
    sessions = NULL;
    if (chdir(HOME)) error("main(): chdir(%s)",HOME);
    OpenLog();
-   FD_ZERO(&readfds);
-   FD_ZERO(&writefds);
-   fdtable.OpenListen(Port);
+   FD::fdtable.OpenListen(Port);
 
    // fork subprocess and exit parent
    if (argc == 1 || strcmp(argv[1],"-debug")) {
@@ -794,6 +788,6 @@ int main(int argc,char **argv)	// main program
 	 if (logfile) fclose(logfile);
 	 exit(0);
       }
-      fdtable.Select();
+      FD::fdtable.Select();
    }
 }

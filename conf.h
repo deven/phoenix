@@ -18,7 +18,7 @@
 #include "outbuf.h"
 #include "session.h"
 #include "user.h"
+#include "fdtable.h"
 #include "fd.h"
 #include "listen.h"
 #include "telnet.h"
-#include "fdtable.h"
