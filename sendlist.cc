@@ -25,15 +25,14 @@
 
 #include "gangplank.h"
 
-Sendlist::Sendlist(Session &session, char *sendlist, boolean multi = false,
-		   boolean do_sessions = true, boolean do_discussions = true)
+Sendlist::Sendlist(Session &session, char *sendlist, boolean multi,
+		   boolean do_sessions, boolean do_discussions)
 {
    set(session, sendlist, multi, do_sessions, do_discussions);
 }
 
-Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi = false,
-			boolean do_sessions = true,
-			boolean do_discussions = true)
+Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
+			boolean do_sessions, boolean do_discussions)
 {
    Session *session = 0;
    Discussion *discussion = 0;

@@ -501,7 +501,7 @@ Telnet::~Telnet()		// Destructor, might be re-executed.
    Closed();
 }
 
-void Telnet::Close(boolean drain = true) // Close telnet connection.
+void Telnet::Close(boolean drain) // Close telnet connection.
 {
    closing = true;		// Closing intentionally.
    if (Output.head && drain) {	// Drain connection, then close.
