@@ -318,7 +318,7 @@ void Session::SetInputFunction(InputFuncPtr input)
 
 void Session::InitInputFunction() // Initialize input function to Login.
 {
-   SetInputFunction(Login);
+   SetInputFunction(&Session::Login);
 }
 
 void Session::Input(char *line)	// Process an input line.
@@ -572,7 +572,7 @@ void Session::Login(char *line)
       }
       telnet->Prompt("Password: "); // Prompt for password.
       telnet->DoEcho = false;	    // Disable echoing.
-      SetInputFunction(Password);   // Set password input routine.
+      SetInputFunction(&Session::Password); // Set password input routine.
    } else {
       // No password required. (guest account)
       if (user->reserved) {
@@ -582,7 +582,7 @@ void Session::Login(char *line)
 	 telnet->output(Newline);
       }
       telnet->Prompt("Enter name: "); // Prompt for name.
-      SetInputFunction(EnteredName);  // Set name input routine.
+      SetInputFunction(&Session::EnteredName); // Set name input routine.
    }
 }
 
@@ -597,7 +597,7 @@ void Session::Password(char *line)
    if (strcmp(crypt(line, user->password), user->password)) {
       telnet->output("Login incorrect.\n");
       telnet->Prompt("login: "); // Prompt for login.
-      SetInputFunction(Login);	 // Set login input routine.
+      SetInputFunction(&Session::Login); // Set login input routine.
       user = 0;
       return;
    }
@@ -609,7 +609,7 @@ void Session::Password(char *line)
       telnet->output(Newline);
    }
    telnet->Prompt("Enter name: "); // Prompt for name.
-   SetInputFunction(EnteredName);  // Set name input routine.
+   SetInputFunction(&Session::EnteredName); // Set name input routine.
 }
 
 void Session::EnteredName(char *line)
@@ -648,7 +648,7 @@ void Session::EnteredName(char *line)
 	    if (session->telnet) {
 	       telnet->output("You are attached elsewhere under that name.\n");
 	       telnet->Prompt("Transfer active session? [no] ");
-	       SetInputFunction(TransferSession);
+	       SetInputFunction(&Session::TransferSession);
 	       return;
 	    } else {
 	       telnet->output("Re-attaching to detached session...\n");
@@ -670,7 +670,7 @@ void Session::EnteredName(char *line)
       }
    }
    telnet->Prompt("Enter blurb: "); // Prompt for blurb.
-   SetInputFunction(Blurb);	    // Set blurb input routine.
+   SetInputFunction(&Session::Blurb); // Set blurb input routine.
 }
 
 void Session::TransferSession(char *line)
@@ -684,7 +684,7 @@ void Session::TransferSession(char *line)
    if (!match(line, "yes", 1)) {
       telnet->output("Session not transferred.\n");
       telnet->Prompt("Enter name: ");
-      SetInputFunction(EnteredName);
+      SetInputFunction(&Session::EnteredName);
       return;
    }
    if (user->FindReserved(name, u)) {
@@ -710,19 +710,19 @@ void Session::TransferSession(char *line)
 	 } else {
 	    telnet->output("That name is now taken.  Choose another.\n");
 	    telnet->Prompt("Enter name: ");
-	    SetInputFunction(EnteredName);
+	    SetInputFunction(&Session::EnteredName);
 	    return;
 	 }
       } else {
 	 print("There is now a discussion named \"%s\".  Choose another "
 	       "name.\n", ~discussion->name);
 	 telnet->Prompt("Enter name: ");
-	 SetInputFunction(EnteredName);
+	 SetInputFunction(&Session::EnteredName);
 	 return;
       }
    }
    telnet->Prompt("Enter blurb: "); // Prompt for blurb.
-   SetInputFunction(Blurb);	    // Set blurb input routine.
+   SetInputFunction(&Session::Blurb); // Set blurb input routine.
 }
 
 void Session::Blurb(char *line)
@@ -747,7 +747,7 @@ void Session::Blurb(char *line)
 
    telnet->History.Reset();	// Reset input history.
 
-   SetInputFunction(ProcessInput); // Set normal input routine.
+   SetInputFunction(&Session::ProcessInput); // Set normal input routine.
 }
 
 void Session::ProcessInput(char *line)

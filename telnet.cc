@@ -596,11 +596,11 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    outstanding = 2;		// Two outstanding acknowledgements.
 
    // Start initial options negotiations.
-   set_LSGA(Welcome, true);
-   set_RSGA(Welcome, true);
-   set_LBin(Welcome, true);
-   set_RBin(Welcome, true);
-   set_Echo(Welcome, true);
+   set_LSGA(&Telnet::Welcome, true);
+   set_RSGA(&Telnet::Welcome, true);
+   set_LBin(&Telnet::Welcome, true);
+   set_RBin(&Telnet::Welcome, true);
+   set_Echo(&Telnet::Welcome, true);
 
    // Send welcome banner.
    output("\nWelcome to Phoenix!\n\n");
@@ -884,9 +884,11 @@ void Telnet::accept_input()	// Accept input line.
    *free = 0;			// Make input line null-terminated.
 
    // Check if initial option negotiations are pending.
-   if (Echo_callback == Welcome && LSGA_callback == Welcome &&
-      RSGA_callback == Welcome && LBin_callback == Welcome &&
-      RBin_callback == Welcome) {
+   if (Echo_callback == &Telnet::Welcome &&
+      LSGA_callback == &Telnet::Welcome &&
+      RSGA_callback == &Telnet::Welcome &&
+      LBin_callback == &Telnet::Welcome &&
+      RBin_callback == &Telnet::Welcome) {
       // Assume this is a raw TCP connection.
       LSGA = RSGA = LBin = RBin = TelnetEnabled;
       Echo = 0;
