@@ -875,11 +875,8 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    case TelnetTimingMark:
 	       if (outstanding) outstanding--;
-	       if (acknowledge) {
-		  if (session) session->AcknowledgeOutput();
-	       } else if (Echo == TelnetWillWont) {
-		  if (!outstanding) acknowledge = true;
-	       }
+	       if (acknowledge && session) session->AcknowledgeOutput();
+	       if (!outstanding) acknowledge = true;
 	       break;
 	    default:
 	       // Don't know this option, refuse it.
