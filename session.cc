@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.20 1994/04/21 06:13:49 deven Exp $
+// $Id: session.cc,v 1.21 1994/04/21 08:22:42 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.21  1994/04/21 08:22:42  deven
+// Avoid dereference of null user pointer.
+//
 // Revision 1.20  1994/04/21 06:13:49  deven
 // Renamed "conf" to "Phoenix", various Sendlist and Discussion changes.
 //
