@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.13 2000/03/22 04:05:57 deven Exp $
+// $Id: output.h,v 1.14 2000/04/25 04:56:26 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.14  2000/04/25 04:56:26  deven
+// Added Session as a friend class to Message.  (Maybe a poor solution.)
+//
 // Revision 1.13  2000/03/22 04:05:57  deven
 // Updated copyright dates and whitespace conventions.
 //

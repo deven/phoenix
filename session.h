@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.28 2000/03/22 07:13:37 deven Exp $
+// $Id: session.h,v 1.29 2000/04/25 04:57:13 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.29  2000/04/25 04:57:13  deven
+// Added DoAlso(), DoOops() and oops_text field.
+//
 // Revision 1.28  2000/03/22 07:13:37  deven
 // Added output(const char *buf).
 //

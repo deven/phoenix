@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.48 2000/04/25 04:04:38 deven Exp $
+// $Id: session.cc,v 1.49 2000/04/25 04:57:51 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.49  2000/04/25 04:57:51  deven
+// Implemented /also and /oops.
+//
 // Revision 1.48  2000/04/25 04:04:38  deven
 // Changed default "/who" target from "active" to "everyone" until the userbase
 // is larger.
