@@ -193,7 +193,7 @@ void crash(char *format,...)	// print error message and crash ***
 
 void quit(int sig)		// received SIGQUIT or SIGTERM
 {
-   log("Shutdown requested by signal in 30 seconds.");
+   log("Shutdown requested by signal %d in 30 seconds.",sig);
    Session::announce("\a\a>>> This server will shutdown in 30 seconds... "
 		     "<<<\n\a\a");
    alarm(30);
