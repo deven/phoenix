@@ -60,7 +60,7 @@ public:
 class Assoc {
 friend class AssocIter;
 private:
-   const int Size = 211;
+   static const int Size = 211;
    int count;
    Pointer<AssocEntry> bucket[Size];
 
