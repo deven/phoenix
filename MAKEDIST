@@ -8,15 +8,18 @@
 
 * Run "./update_copyrights", checkin to CVS if necessary.
 
+* Use the HOURS file to double-check dates of changes for ChangeLog, in case
+  CVS checkins were delayed.
+
 * Edit the ChangeLog, NEWS, RELEASES and CREDITS files and checkin to CVS.
 
 * Run "./bootstrap; ./configure; make distcheck".
 
-* Create patch from previous release with "diff -urN".
+* Create patch from previous release with "diff -urN", compress with "gzip -9".
 
-* Build new RPMs.  (Maybe sign here instead of below?)
+* Sign tarball and patch.
 
-* Sign tarball, patch and RPM packages.
+* Build and sign new RPM packages.
 
 * Place online on FTP server.
 
