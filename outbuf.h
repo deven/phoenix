@@ -25,9 +25,8 @@ public:
       }
       tail = 0;
    }
-   int out(int byte) {		// Output one byte.
-      int select;
-
+   boolean out(int byte) {	// Output one byte, return if new.
+      boolean select;
       if (select = !tail) {
 	 head = tail = new Block;
       } else if (tail->free >= tail->block + BlockSize) {
@@ -37,9 +36,8 @@ public:
       *tail->free++ = byte;
       return select;
    }
-   int out(int byte1,int byte2) { // Output two bytes.
-      int select;
-
+   boolean out(int byte1,int byte2) { // Output two bytes, return if new.
+      boolean select;
       if (select = !tail) {
 	 head = tail = new Block;
       } else if (tail->free >= tail->block + BlockSize - 1) {
@@ -50,9 +48,8 @@ public:
       *tail->free++ = byte2;
       return select;
    }
-   int out(int byte1,int byte2,int byte3) { // Output three bytes.
-      int select;
-
+   boolean out(int byte1,int byte2,int byte3) { // Output three bytes, return
+      boolean select;				// if new.
       if (select = !tail) {
 	 head = tail = new Block;
       } else if (tail->free >= tail->block + BlockSize - 2) {
