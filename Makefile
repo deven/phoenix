@@ -19,6 +19,10 @@ LDFLAGS = -bsd
 # CFLAGS = -g -I. -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
 # LDFLAGS =
 
+# Mach:
+# CFLAGS = -g -DHOME='"/u/deven/src/conf"'
+# LDFLAGS =
+
 CC = gcc
 EXEC = conf
 HDRS = conf.h other.h general.h line.h block.h outbuf.h session.h user.h \
