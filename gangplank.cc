@@ -310,19 +310,34 @@ int main(int argc, char **argv)	// main program
    } else {
       switch (pid = fork()) {
       case 0:
-	 setsid();
-         log("Started Gangplank server, version %s.", VERSION);
-         log("Listening for connections on TCP port %d. (pid %d)", port,
-	     getpid());
+         switch (pid = fork()) {
+         case 0:
+	    setsid();
+	    close(0);
+	    close(1);
+	    close(2);
+            log("Started Gangplank server, version %s.", VERSION);
+            log("Listening for connections on TCP port %d. (pid %d)", port,
+	        getpid());
+	    break;
+         case -1:
+	    error("main(): fork()");
+	    break;
+         default:
+	    fprintf(stderr, "Started Gangplank server, version %s.\n"
+		    "Listening for connections on TCP port %d. (pid %d)\n",
+		    VERSION, port, pid);
+	    exit(0);
+	    break;
+         }
 	 break;
       case -1:
 	 error("main(): fork()");
 	 break;
       default:
-	 fprintf(stderr, "Started Gangplank server, version %s.\n", VERSION);
-	 fprintf(stderr, "Listening for connections on TCP port %d. (pid %d)\n",
-		 port, pid);
-	 exit(0);
+	 int status;
+	 wait(&status);
+	 exit(!WIFEXITED(status) || WEXITSTATUS(status));
 	 break;
       }
    }
