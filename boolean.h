@@ -22,6 +22,6 @@
 #ifdef BOOL_TYPE
 typedef bool boolean;		// builtin boolean data type
 #else
-enum boolean {false,true};	// boolean data type
+enum boolean { false, true };	// boolean data type
 #endif
 #endif

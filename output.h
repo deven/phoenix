@@ -10,15 +10,15 @@
 
 // Types of Output subclasses.
 enum OutputType {
-   UnknownOutput,TextOutput,PublicMessage,PrivateMessage,EntryOutput,
-   ExitOutput,TransferOutput,AttachOutput,DetachOutput,HereOutput,
-   AwayOutput,BusyOutput,GoneOutput,CreateOutput,DestroyOutput,JoinOutput,
-   QuitOutput,PublicOutput,PrivateOutput,PermitOutput,DepermitOutput,
-   AppointOutput,UnappointOutput,RenameOutput
+   UnknownOutput, TextOutput, PublicMessage, PrivateMessage, EntryOutput,
+   ExitOutput, TransferOutput, AttachOutput, DetachOutput, HereOutput,
+   AwayOutput, BusyOutput, GoneOutput, CreateOutput, DestroyOutput, JoinOutput,
+   QuitOutput, PublicOutput, PrivateOutput, PermitOutput, DepermitOutput,
+   AppointOutput, UnappointOutput, RenameOutput
 };
 
 // Classifications of Output subclasses.
-enum OutputClass {UnknownClass,TextClass,MessageClass,NotificationClass};
+enum OutputClass { UnknownClass, TextClass, MessageClass, NotificationClass };
 
 class OutputObj: public Object {
 public:
@@ -26,9 +26,9 @@ public:
    OutputClass Class;		// Output class.
    Timestamp time;		// Timestamp.
 
-   OutputObj(OutputType t,OutputClass c,time_t when = 0): Type(t),Class(c),
+   OutputObj(OutputType t, OutputClass c, time_t when = 0): Type(t), Class(c),
    time(when) { }
-   virtual ~OutputObj() {}	// destructor
+   virtual ~OutputObj() { }	// destructor
    virtual void output(Telnet *telnet) = 0;
 };
 
@@ -36,7 +36,7 @@ class Text: public OutputObj {
 private:
    char *text;
 public:
-   Text(char *buf): OutputObj(TextOutput,TextClass),text(buf) { }
+   Text(char *buf): OutputObj(TextOutput, TextClass), text(buf) { }
    ~Text() { delete [] text; }
    void output(Telnet *telnet);
 };
@@ -47,8 +47,8 @@ private:
    Pointer<Sendlist> to;
    String text;
 public:
-   Message(OutputType type,Name *sender,Sendlist *dest,char *msg):
-   OutputObj(type,MessageClass),from(sender),to(dest),text(msg) { }
+   Message(OutputType type, Name *sender, Sendlist *dest, char *msg):
+   OutputObj(type, MessageClass), from(sender), to(dest), text(msg) { }
    void output(Telnet *telnet);
 };
 
@@ -56,8 +56,8 @@ class EntryNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   EntryNotify(Name *who,time_t when = 0):
-   OutputObj(EntryOutput,NotificationClass,when),name(who) { }
+   EntryNotify(Name *who, time_t when = 0):
+   OutputObj(EntryOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -65,8 +65,8 @@ class ExitNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   ExitNotify(Name *who,time_t when = 0):
-   OutputObj(ExitOutput,NotificationClass,when),name(who) { }
+   ExitNotify(Name *who, time_t when = 0):
+   OutputObj(ExitOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -74,8 +74,8 @@ class TransferNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   TransferNotify(Name *who,time_t when = 0):
-   OutputObj(TransferOutput,NotificationClass,when),name(who) { }
+   TransferNotify(Name *who, time_t when = 0):
+   OutputObj(TransferOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -83,8 +83,8 @@ class AttachNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   AttachNotify(Name *who,time_t when = 0):
-   OutputObj(AttachOutput,NotificationClass,when),name(who) { }
+   AttachNotify(Name *who, time_t when = 0):
+   OutputObj(AttachOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -93,8 +93,9 @@ private:
    Pointer<Name> name;
    boolean intentional;
 public:
-   DetachNotify(Name *who,boolean i,time_t when = 0):
-   OutputObj(DetachOutput,NotificationClass,when),name(who),intentional(i) { }
+   DetachNotify(Name *who, boolean i, time_t when = 0):
+   OutputObj(DetachOutput, NotificationClass, when), name(who), intentional(i)
+   { }
    void output(Telnet *telnet);
 };
 
@@ -102,8 +103,8 @@ class HereNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   HereNotify(Name *who,time_t when = 0):
-   OutputObj(HereOutput,NotificationClass,when),name(who) { }
+   HereNotify(Name *who, time_t when = 0):
+   OutputObj(HereOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -111,8 +112,8 @@ class AwayNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   AwayNotify(Name *who,time_t when = 0):
-   OutputObj(AwayOutput,NotificationClass,when),name(who) { }
+   AwayNotify(Name *who, time_t when = 0):
+   OutputObj(AwayOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -120,8 +121,8 @@ class BusyNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   BusyNotify(Name *who,time_t when = 0):
-   OutputObj(BusyOutput,NotificationClass,when),name(who) { }
+   BusyNotify(Name *who, time_t when = 0):
+   OutputObj(BusyOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -129,8 +130,8 @@ class GoneNotify: public OutputObj {
 private:
    Pointer<Name> name;
 public:
-   GoneNotify(Name *who,time_t when = 0):
-   OutputObj(GoneOutput,NotificationClass,when),name(who) { }
+   GoneNotify(Name *who, time_t when = 0):
+   OutputObj(GoneOutput, NotificationClass, when), name(who) { }
    void output(Telnet *telnet);
 };
 
@@ -138,8 +139,8 @@ class CreateNotify: public OutputObj {
 private:
    Pointer<Discussion> discussion;
 public:
-   CreateNotify(Discussion *d,time_t when = 0):
-   OutputObj(CreateOutput,NotificationClass,when),discussion(d) { }
+   CreateNotify(Discussion *d, time_t when = 0):
+   OutputObj(CreateOutput, NotificationClass, when), discussion(d) { }
    void output(Telnet *telnet);
 };
 
@@ -148,7 +149,7 @@ private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
 public:
-   DestroyNotify(Discussion *d,Session *s,time_t when = 0);
+   DestroyNotify(Discussion *d, Session *s, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -157,7 +158,7 @@ private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
 public:
-   JoinNotify(Discussion *d,Session *s,time_t when = 0);
+   JoinNotify(Discussion *d, Session *s, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -166,7 +167,7 @@ private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
 public:
-   QuitNotify(Discussion *d,Session *s,time_t when = 0);
+   QuitNotify(Discussion *d, Session *s, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -175,7 +176,7 @@ private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
 public:
-   PublicNotify(Discussion *d,Session *s,time_t when = 0);
+   PublicNotify(Discussion *d, Session *s, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -184,7 +185,7 @@ private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
 public:
-   PrivateNotify(Discussion *d,Session *s,time_t when = 0);
+   PrivateNotify(Discussion *d, Session *s, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -194,7 +195,7 @@ private:
    Pointer<Name> name;
    boolean is_explicit;
 public:
-   PermitNotify(Discussion *d,Session *s,boolean flag,time_t when = 0);
+   PermitNotify(Discussion *d, Session *s, boolean flag, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -205,7 +206,7 @@ private:
    boolean is_explicit;
    Pointer<Name> removed;
 public:
-   DepermitNotify(Discussion *d,Session *s,boolean flag,Session *who,
+   DepermitNotify(Discussion *d, Session *s, boolean flag, Session *who,
 		  time_t when = 0);
    void output(Telnet *telnet);
 };
@@ -216,7 +217,7 @@ private:
    Pointer<Name> appointer;
    Pointer<Name> appointee;
 public:
-   AppointNotify(Discussion *d,Session *s1,Session *s2,time_t when = 0);
+   AppointNotify(Discussion *d, Session *s1, Session *s2, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -226,7 +227,7 @@ private:
    Pointer<Name> unappointer;
    Pointer<Name> unappointee;
 public:
-   UnappointNotify(Discussion *d,Session *s1,Session *s2,time_t when = 0);
+   UnappointNotify(Discussion *d, Session *s1, Session *s2, time_t when = 0);
    void output(Telnet *telnet);
 };
 
@@ -235,8 +236,8 @@ private:
    String oldname;
    String newname;
 public:
-   RenameNotify(String oldstr,String newstr,time_t when = 0):
-   OutputObj(RenameOutput,NotificationClass,when),oldname(oldstr),
+   RenameNotify(String oldstr, String newstr, time_t when = 0):
+   OutputObj(RenameOutput, NotificationClass, when), oldname(oldstr),
    newname(newstr) { }
    void output(Telnet *telnet);
 };
