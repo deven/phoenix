@@ -21,8 +21,6 @@
 
 #include "conf.h"
 
-Session *sessions;		// active sessions ***
-
 int Shutdown;			// shutdown flag ***
 
 // have to use non-blocking code instead? ***
@@ -692,7 +690,6 @@ int main(int argc,char **argv)	// main program
    int pid;			// server process number
 
    Shutdown = 0;
-   sessions = NULL;
    if (chdir(HOME)) error("main(): chdir(%s)",HOME);
    OpenLog();
    Listen::Open(Port);
