@@ -10,7 +10,7 @@
 
 class String {
 private:
-   const int Extra = 16;
+   static const int Extra = 16;
    char *str;
    int len;
    int extra;
