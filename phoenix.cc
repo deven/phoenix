@@ -274,8 +274,10 @@ char *getword(char *&input,char separator = 0) {
 
 char *match(char *&input,char *keyword,int min = 0) {
    char *p = input,*q = keyword;
+   int i;
+
    if (!min) min = strlen(keyword);
-   for (int i = 0; *q; p++, q++, i++) {
+   for (i = 0; *q; p++, q++, i++) {
       if (isspace(*p) || !*p) break;
       if ((isupper(*p) ? tolower(*p) : *p) !=
 	  (isupper(*q) ? tolower(*q) : *q)) return 0;

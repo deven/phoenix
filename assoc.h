@@ -25,8 +25,14 @@ private:
 public:
    String &Key() { return key; }
    String &Value() { return value; }
-   AssocEntry &operator =(AssocEntry &entry) { value = entry.value; }
-   AssocEntry &operator =(String &v) { value = v; }
+   AssocEntry &operator =(AssocEntry &entry) {
+      value = entry.value;
+      return *this;
+   }
+   AssocEntry &operator =(String &v) {
+      value = v;
+      return *this;
+   }
    operator String() { return value; }
    operator const char *() const { return value; }
    operator char *() { return value; }
@@ -62,8 +68,18 @@ public:
    AssocIter(): bucket(0) { }
    AssocIter(Assoc &a): array(&a),bucket(0) { }
    AssocIter(Assoc *a): array(a),bucket(0) { }
-   AssocIter &operator =(Assoc &a) { array = &a; entry = 0; bucket = 0; }
-   AssocIter &operator =(Assoc *a) { array = a; entry = 0; bucket = 0; }
+   AssocIter &operator =(Assoc &a) {
+      array = &a;
+      entry = 0;
+      bucket = 0;
+      return *this;
+   }
+   AssocIter &operator =(Assoc *a) {
+      array = a;
+      entry = 0;
+      bucket = 0;
+      return *this;
+   }
    Pointer<AssocEntry> operator ++();
    operator Pointer<AssocEntry>() { return entry; }
    char *operator ~() { return ~(entry->value); }
