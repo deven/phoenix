@@ -381,10 +381,7 @@ void Telnet::Welcome()
    // Warn if about to shut down!
    if (Shutdown) output("*** This server is about to shut down! ***\n\n");
 
-   // Send login prompt.
-   Prompt("login: ");
-
-   // Initialize user input processing function.
+   // Initialize user input processing function, send login prompt.
    session->InitInputFunction();
 }
 
