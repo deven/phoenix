@@ -761,6 +761,12 @@ void name(struct telnet *telnet,char *line)
       telnet->session->name[NAMELEN - 1] = 0;
    }
 
+   /* Link new session into list. */
+   telnet->session->next = sessions;
+   sessions = telnet->session;
+
+   /* /// Link new session into user list. */
+
    /* Announce entry. */
    notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
 	    date(time(&telnet->session->login_time),11,5));
@@ -1173,12 +1179,6 @@ void new_connection(int lfd)	/* accept a new connection */
    telnet->next = connections;
    connections = telnet;
 
-   /* Link new session into list. */
-   session->next = sessions;
-   sessions = session;
-
-   /* /// Link new session into user list. */
-
    /* Select new connection for reading. */
    FD_SET(telnet->fd,&readfds);
 
@@ -1190,23 +1190,46 @@ void new_connection(int lfd)	/* accept a new connection */
 
 void close_connection(struct telnet *telnet)
 {
-   struct telnet *telnet2;
+   struct session *session;
+   struct telnet *t;
+   struct session *s;
    struct block *block;
+   int found;
 
+   /* Unlink telnet connection from list. */
    if (connections == telnet) {
       connections = telnet->next;
    } else {
-      telnet2 = connections;
-      while (telnet2 && telnet2->next != telnet) telnet2 = telnet2->next;
-      telnet2->next = telnet->next;
+      t = connections;
+      while (t && t->next != telnet) t = t->next;
+      t->next = telnet->next;
    }
-   if (strcmp(telnet->session->name,"[logging in]")) {
+
+   /* Unlink session from list, remember if found. */
+   found = 0;
+   session = telnet->session;
+   if (sessions = session) {
+      sessions = session->next;
+      found++;
+   } else {
+      s = sessions;
+      while (s && s->next != session) s = s->next;
+      if (s->next == session) {
+	 s->next = session->next;
+	 found++;
+      }
+   }
+
+   /* Notify and log exit if session found. */
+   if (found) {
       notify("*** %s has left conf! [%s] ***\n",session->name,date(0,11,5));
-      log("Exit: %s (%s) on fd %d.",telnet->session->name,
-	  telnet->session->user->user,telnet->fd);
+      log("Exit: %s (%s) on fd %d.",session->name,session->user->user,
+	  telnet->fd);
    }
+
    close(telnet->fd);		/* Close the connection. */
-   free_user(telnet->session->user);	/* Free user structure. */
+   free_user(session->user);	/* Free user structure. */
+   free(session);		/* Free session structure. */
    free(telnet->input.data);	/* Free input line buffer. */
 
    /* Free blocks in command output queue. */
