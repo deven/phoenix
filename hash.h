@@ -1,34 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: assoc.h,v 1.6 2000/03/22 07:13:20 deven Exp $
+// $Id$
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: assoc.h,v $
-// Revision 1.6  2000/03/22 07:13:20  deven
-// Marked constant Size as static.
-//
-// Revision 1.5  2000/03/22 04:04:43  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.4  1996/02/21 20:49:46  deven
-// Updated copyright notice.  Changed "String &" references to "char *" where
-// applicable.  Changed some "String &" return values to "String" to make new
-// copies.  Changed temporary smart pointers back to real pointers.  Added a
-// definition for postfix ++ to keep GCC 2.7.2 happy.
-//
-// Revision 1.3  1996/02/19 22:21:43  deven
-// Fixed bug illuminated by GCC 2.7.2 -- the operator =() methods didn't return
-// any value; now they return *this as intended.
-//
-// Revision 1.2  1995/10/27 02:51:58  deven
-// Added Known() boolean test, fixed tilde operator to call tilde on String.
-//
-// Revision 1.1  1994/10/09 22:51:25  deven
-// Initial revision
-//
+// $Log$
 
 class AssocEntry: public Object {
 friend class Assoc;

@@ -1,3 +1,14 @@
+/* -*- C -*-
+ *
+ * $Id$
+ *
+ * Utility program to encrypt a single password in standard Unix "crypt" form.
+ *
+ * Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
+ *
+ * $Log$
+ */
+
 #include <stdio.h>
 
 main(int argc,char **argv)

@@ -1,48 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.11 2000/11/29 08:18:45 deven Exp $
+// $Id$
 //
 // Discussion class implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: discussion.cc,v $
-// Revision 1.11  2000/11/29 08:18:45  deven
-// Modified to allow system-created discussions to not have a creator.
-//
-// Revision 1.10  2000/03/22 04:08:38  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.9  1996/05/12 07:28:17  deven
-// Removed explicit initializations for message_time and creation_time since
-// Timestamp constructor will do the same thing.
-//
-// Revision 1.8  1996/02/21 20:52:19  deven
-// Updated copyright notice.  Changed temporary smart pointers back to real
-// pointers.  Added extra parens around assignment in conditional context to
-// make GCC 2.7.2 happy.
-//
-// Revision 1.7  1996/02/19 23:51:17  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.6  1995/10/26 15:47:00  deven
-// Changed getword() parameters.
-//
-// Revision 1.5  1995/04/05 22:11:14  deven
-// Modified to quit discussions silently when signed off.
-//
-// Revision 1.4  1994/07/21 05:56:18  deven
-// Fixed /appoint and /unappoint notification messages.
-//
-// Revision 1.3  1994/06/27 05:27:40  deven
-// Changed unary minus to unary tilde on strings.
-//
-// Revision 1.2  1994/05/13 04:27:33  deven
-// Changed (char *) casts to unary operator -() instead.
-//
-// Revision 1.1  1994/04/21 06:07:38  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 

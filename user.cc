@@ -1,41 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.9 2000/03/22 04:10:17 deven Exp $
+// $Id$
 //
 // User class implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: user.cc,v $
-// Revision 1.9  2000/03/22 04:10:17  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.8  1996/05/12 07:35:15  deven
-// Modified to make sure my account always exists as well as guest account.
-//
-// Revision 1.7  1996/02/21 21:05:47  deven
-// Updated copyright notice.  Changed temporary smart pointer back to real
-// pointer.  Changed NULL to 0.
-//
-// Revision 1.6  1994/06/27 13:29:20  deven
-// Replaced CheckReserved() with FindReserved(), stat() on passwd file, read
-// only if changed, don't call atoi("0").
-//
-// Revision 1.5  1994/04/21 06:19:03  deven
-// Renamed "conf" to "Phoenix".
-//
-// Revision 1.4  1994/02/05 18:37:51  deven
-// Completely reorganized User class.
-//
-// Revision 1.3  1994/01/19 22:27:07  deven
-// Changed Pointer parameter to a reference parameter.
-//
-// Revision 1.2  1994/01/02 12:15:53  deven
-// Updated copyright notice, modified to use smart pointers.
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 

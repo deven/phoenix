@@ -1,43 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.9 2000/03/22 23:57:28 deven Exp $
+// $Id$
 //
 // String class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: string.h,v $
-// Revision 1.9  2000/03/22 23:57:28  deven
-// Added constructors for integer types.
-//
-// Revision 1.8  2000/03/22 07:11:53  deven
-// Marked Extra constant as static.  Added operator const char *().
-//
-// Revision 1.7  2000/03/22 04:04:09  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.6  1996/02/21 19:33:02  deven
-// Updated copyright notice.  Added String->bool conversion, for when "bool" is
-// a valid builtin data type.
-//
-// Revision 1.5  1994/06/27 05:26:37  deven
-// Changed unary minus to unary tilde on strings.
-//
-// Revision 1.4  1994/05/13 04:25:24  deven
-// Added unary operator -() to return (char *) or (const char *) to avoid
-// having to cast manually.
-//
-// Revision 1.3  1994/04/21 05:54:32  deven
-// Added StringObj class for shared strings, using multiple inheritance from
-// both String and Object classes.
-//
-// Revision 1.2  1994/04/15 22:08:55  deven
-// Changed String objects to non-reference-counted, modified to include extra
-// bytes in string and to always have a non-null pointer allocated.
-//
-// Revision 1.1  1994/02/05 18:19:01  deven
-// Initial revision
-//
+// $Log$
 
 class String {
 private:

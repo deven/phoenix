@@ -1,39 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: outstr.h,v 1.8 2000/03/22 04:06:07 deven Exp $
+// $Id$
 //
 // OutputStream class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: outstr.h,v $
-// Revision 1.8  2000/03/22 04:06:07  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.7  1996/02/21 20:37:44  deven
-// Updated copyright notice.  Moved nested class OutputStream::OutputObject to
-// top-level class OutputStreamObject.  Changed NULL to 0.  Changed temporary
-// smart pointers back to real pointers.
-//
-// Revision 1.6  1996/02/19 23:50:34  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.5  1994/04/21 05:59:03  deven
-// Added declaration for Unenqueue() function.
-//
-// Revision 1.4  1994/01/19 22:02:48  deven
-// Changed Pointer parameters to reference parameters.
-//
-// Revision 1.3  1994/01/02 12:03:08  deven
-// Updated copyright notice, modified to use smart pointers, added Attach().
-//
-// Revision 1.2  1993/12/31 07:57:37  deven
-// Updated output stream buffering code to allow for variable-sized output
-// window using the standard telnet TIMING-MARK option as an acknowledgement.
-//
-// Revision 1.1  1993/12/21 15:36:30  deven
-// Initial revision
-//
+// $Log$
 
 class OutputStreamObject {
 friend class OutputStream;

@@ -1,27 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: assoc.cc,v 1.4 2000/03/22 04:08:03 deven Exp $
+// $Id$
 //
 // Assoc (associative array) class implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: assoc.cc,v $
-// Revision 1.4  2000/03/22 04:08:03  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.3  1996/02/21 20:50:40  deven
-// Updated copyright notice.  Changed "String &" references to "char *" where
-// applicable.  Changed some "String &" return values to "String" to make new
-// copies.  Changed temporary smart pointers back to real pointers.  Included
-// boolean.h and pointer.h headers.
-//
-// Revision 1.2  1995/10/27 03:04:21  deven
-// Added Known() boolean test.
-//
-// Revision 1.1  1994/10/09 10:09:34  deven
-// Initial revision
-//
+// $Log$
 
 #include "other.h"
 #include "boolean.h"

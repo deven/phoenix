@@ -1,38 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: line.h,v 1.8 2000/03/22 04:04:58 deven Exp $
+// $Id$
 //
 // Line class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: line.h,v $
-// Revision 1.8  2000/03/22 04:04:58  deven
-// Updated copyright dates.
-//
-// Revision 1.7  1996/02/21 20:33:39  deven
-// Updated copyright notice.  Changed temporary smart pointer back to real
-// pointer.
-//
-// Revision 1.6  1994/04/15 22:19:10  deven
-// Modified to use String class.
-//
-// Revision 1.5  1994/02/05 18:25:35  deven
-// Added [] to array delete.
-//
-// Revision 1.4  1994/01/19 22:00:44  deven
-// Changed Pointer parameter to a reference parameter.
-//
-// Revision 1.3  1994/01/09 05:09:33  deven
-// Removed Null() construct for Pointers.
-//
-// Revision 1.2  1994/01/02 11:39:27  deven
-// Updated copyright notice, made class Line derived from Object, modified
-// to use smart pointers.
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 class Line: public Object {
 public:

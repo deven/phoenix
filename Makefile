@@ -1,77 +1,12 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.20 2000/03/22 07:10:24 deven Exp $
+# $Id$
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 #
-# $Log: Makefile,v $
-# Revision 1.20  2000/03/22 07:10:24  deven
-# Added -lcrypt when linking.
-#
-# Revision 1.19  2000/03/22 06:16:02  deven
-# Modified to use "./checkin" instead of "checkin", assuming "." not in PATH.
-#
-# Revision 1.18  2000/03/22 04:01:52  deven
-# Updated copyright dates.
-#
-# Revision 1.17  1996/05/29 04:22:38  deven
-# Fixed module dependencies.
-#
-# Revision 1.16  1996/05/20 05:18:41  deven
-# Modified to build with "most.cc" module, which simply includes all modules
-# that include "phoenix.h" -- compiler spends most time on header files, not
-# module code, so this is faster and help eliminate highly-redundant debug
-# information in the final executable.  So much for separate compilation...
-#
-# Revision 1.15  1996/05/13 18:17:56  deven
-# Added new files split out from general.h: constants.h, functions.h and
-# globals.h.  Added event.h, eventqueue.h, event.cc and eventqueue.cc files.
-#
-# Revision 1.14  1996/05/12 07:51:57  deven
-# Added install target to install target binary on asylum with ssh.
-#
-# Revision 1.13  1996/05/12 07:21:50  deven
-# Added Timestamp source files.
-#
-# Revision 1.12  1996/04/05 00:04:51  deven
-# Updated flags for Linux compile, included -static temporarily...
-#
-# Revision 1.11  1996/02/21 11:55:22  deven
-# Added -Wall flag to CFLAGS.  Added boolean.h and pointer.h header files.
-#
-# Revision 1.10  1994/10/09 09:17:12  deven
-# Added Assoc (associative array) source files.
-#
-# Revision 1.9  1994/04/21 05:52:53  deven
-# Renamed "conf" to "Phoenix".
-#
-# Revision 1.8  1994/04/16 05:43:16  deven
-# Updated Makefile to include new source files.
-#
-# Revision 1.7  1994/02/05 18:13:45  deven
-# Added string.h and string.cc modules.
-#
-# Revision 1.6  1994/01/19 21:50:32  deven
-# Removed several source files, removed default checkin of checkin script.
-#
-# Revision 1.5  1994/01/09 05:32:46  deven
-# Changed default environment to Sun, added checkin and done targets.
-#
-# Revision 1.4  1994/01/02 11:26:40  deven
-# Updated copyright, removed -I. flag from Sun CFLAGS, added source files.
-#
-# Revision 1.3  1993/12/21 15:10:07  deven
-# Added new source files.
-#
-# Revision 1.2  1993/12/13 22:23:28  deven
-# Changed "all" target to depend on $(EXEC) instead of "conf".  Made $(OBJS)
-# depend on $(HDRS) instead of $(SRCS).
-#
-# Revision 1.1  1993/12/08 02:36:57  deven
-# Initial revision
-#
+# $Log$
 
 # ESIX:
 # CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN

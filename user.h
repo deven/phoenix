@@ -1,38 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.8 2000/03/22 04:07:04 deven Exp $
+// $Id$
 //
 // User class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: user.h,v $
-// Revision 1.8  2000/03/22 04:07:04  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.7  1996/02/21 20:41:17  deven
-// Updated copyright notice.  Changed return type of AddSession() to void.
-// Changed temporary smart pointer back to real pointer.
-//
-// Revision 1.6  1994/06/27 13:21:09  deven
-// Replaced CheckReserved() with FindReserved().
-//
-// Revision 1.5  1994/04/21 06:06:48  deven
-// Updated to use List::Remove().
-//
-// Revision 1.4  1994/02/05 18:28:23  deven
-// Completely reorganized User class.
-//
-// Revision 1.3  1994/01/19 22:10:10  deven
-// Changed Pointer parameter to a reference parameter.
-//
-// Revision 1.2  1994/01/02 12:15:11  deven
-// Updated copyright notice, made class User derived from Object, modified
-// to use smart pointers.
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 class User: public Object {
    static List<User> users;	// List of users in system.

@@ -1,30 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.6 2000/03/22 23:57:42 deven Exp $
+// $Id$
 //
 // String class implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: string.cc,v $
-// Revision 1.6  2000/03/22 23:57:42  deven
-// Added constructors for integer types.
-//
-// Revision 1.5  2000/03/22 04:08:12  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.4  1996/02/21 21:02:23  deven
-// Updated copyright notice.  Included boolean.h header.
-//
-// Revision 1.3  1996/02/17 00:14:30  deven
-// Fixed single-character prepend() bug.
-//
-// Revision 1.2  1994/04/15 23:32:16  deven
-// Modified to allow extra characters, append/prepend, require valid pointer.
-//
-// Revision 1.1  1994/02/05 18:34:13  deven
-// Initial revision
-//
+// $Log$
 
 #include <stdio.h>
 #include <string.h>

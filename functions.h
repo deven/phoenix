@@ -1,18 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: functions.h,v 1.2 2000/03/22 04:03:53 deven Exp $
+// $Id$
 //
 // Phoenix conferencing system server -- Function prototypes.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: functions.h,v $
-// Revision 1.2  2000/03/22 04:03:53  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.1  1996/05/13 18:26:25  deven
-// Initial revision
-//
+// $Log$
 
 // Input function pointer type.
 typedef void (Session::*InputFuncPtr)(char *line);

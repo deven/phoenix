@@ -1,34 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: name.h,v 1.7 2000/03/22 04:05:48 deven Exp $
+// $Id$
 //
 // Name class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: name.h,v $
-// Revision 1.7  2000/03/22 04:05:48  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.6  1996/02/21 20:35:20  deven
-// Updated copyright notice.
-//
-// Revision 1.5  1994/04/15 22:20:00  deven
-// Use String class, save name and blurb separately, include pointer to User.
-//
-// Revision 1.4  1994/01/19 22:01:27  deven
-// Changed Pointer parameter to a reference parameter.
-//
-// Revision 1.3  1994/01/09 05:13:12  deven
-// Removed Null() construct for Pointers.
-//
-// Revision 1.2  1994/01/02 11:54:23  deven
-// Updated copyright notice, made class Name derived from Object, modified
-// to use smart pointers.
-//
-// Revision 1.1  1993/12/21 15:28:36  deven
-// Initial revision
-//
+// $Log$
 
 class Name: public Object {
 public:

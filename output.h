@@ -1,57 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.14 2000/04/25 04:56:26 deven Exp $
+// $Id$
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: output.h,v $
-// Revision 1.14  2000/04/25 04:56:26  deven
-// Added Session as a friend class to Message.  (Maybe a poor solution.)
-//
-// Revision 1.13  2000/03/22 04:05:57  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.12  1996/05/12 07:24:09  deven
-// Modified to use Timestamp class for OutputObj::time variable.
-//
-// Revision 1.11  1996/02/21 20:35:50  deven
-// Updated copyright notice.  Changed temporary smart pointers back to real
-// pointers.
-//
-// Revision 1.10  1996/02/19 23:49:05  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.9  1996/02/19 23:25:06  deven
-// Changed "explicit" to "is_explicit" to make GCC 2.7.2 happy.
-//
-// Revision 1.8  1994/07/21 05:55:16  deven
-// Fixed /appoint and /unappoint notification messages.
-//
-// Revision 1.7  1994/04/21 05:57:34  deven
-// Added discussion-related notifications and /rename notification.
-//
-// Revision 1.6  1994/04/15 22:20:47  deven
-// Modified Message class to use String class and Sendlist class.
-//
-// Revision 1.5  1994/02/05 18:26:06  deven
-// Added [] to array deletes, added here/away/busy/gone output types.
-//
-// Revision 1.4  1994/01/20 05:31:53  deven
-// Added transfer notification.
-//
-// Revision 1.3  1994/01/19 22:02:26  deven
-// Changed pointer parameters to reference parameters.
-//
-// Revision 1.2  1994/01/02 12:00:55  deven
-// Updated copyright notice, added notifications for attach and detach,
-// made class Output derived from Object, modified to use smart pointers,
-// reogranized constructors and code in general.
-//
-// Revision 1.1  1993/12/21 15:33:22  deven
-// Initial revision
-//
+// $Log$
 
 // Types of Output subclasses.
 enum OutputType {

@@ -1,31 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: discussion.h,v 1.6 2000/03/22 04:06:55 deven Exp $
+// $Id$
 //
 // Discussion class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: discussion.h,v $
-// Revision 1.6  2000/03/22 04:06:55  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.5  1996/05/12 07:24:43  deven
-// Changed creation_time and message_time to Timestamp objects.
-//
-// Revision 1.4  1996/02/21 20:39:01  deven
-// Updated copyright notice.  Changed temporary smart pointer back to real
-// pointer.
-//
-// Revision 1.3  1996/02/19 23:50:44  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.2  1994/04/21 05:59:50  deven
-// Added timestamps, all function declarations.
-//
-// Revision 1.1  1994/04/15 22:21:04  deven
-// Initial revision
-//
+// $Log$
 
 class Discussion: public Object {
 public:
