@@ -42,6 +42,7 @@ CC = gcc
 # GCC 3.0:
 #CC = g++
 
+UTIL = makepw restart
 EXEC = gangplank
 HDRS = gangplank.h system.h boolean.h object.h general.h constants.h \
 	functions.h string.h list.h set.h hash.h timestamp.h line.h block.h \
@@ -54,7 +55,19 @@ MOST = discussion.cc fdtable.cc listen.cc output.cc outstr.cc event.cc \
 SRCS = hash.cc string.cc most.cc $(MOST)
 OBJS = hash.o string.o most.o
 
-all: $(EXEC)
+all: $(EXEC) $(UTIL)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+.cc.o:
+	$(CC) $(CFLAGS) -c $<
+
+makepw: makepw.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+restart: restart.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
@@ -65,11 +78,8 @@ hash.o: system.h boolean.h object.h string.h general.h hash.h pointer.h \
 	hash.cc
 string.o: boolean.h object.h string.h string.cc
 
-.cc.o:
-	$(CC) $(CFLAGS) -c $<
-
 clean:
-	rm -f restart restart.o $(EXEC) $(OBJS) core *~
+	rm -f makepw makepw.o restart restart.o $(EXEC) $(OBJS) core *~
 
 checkin: FORCE
 	./checkin Makefile $(HDRS) $(SRCS) passwd
@@ -79,4 +89,4 @@ FORCE:
 done: checkin all
 
 install: done
-	install -c $(EXEC) /usr/local/bin/$(EXEC)
+	install -c $(EXEC) $(UTIL) /usr/local/bin/$(EXEC)
