@@ -30,11 +30,11 @@
 
 char *Timestamp::date(int start, int len) // Get part of date string.
 {
-   static char buf[32];
+   static char buf[MaxFormattedLength + 1];
 
-   strcpy(buf, ctime(&time));	// Make a copy of date string.
-   buf[24] = 0;			// Ditch the newline.
-   if (len > 0 && len < 24) {
+   strncpy(buf, ctime(&time), MaxFormattedLength); // Copy date string.
+   buf[MaxFormattedLength] = 0;	// Ditch the newline.
+   if (len > 0 && len < MaxFormattedLength) {
       buf[start + len] = 0;	// Truncate further if requested.
    }
    return buf + start;		// Return (sub)string.

@@ -27,6 +27,7 @@ class Timestamp {
 private:
    time_t time;
 public:
+   static const int MaxFormattedLength = 24; // maximum length when formatted
    Timestamp(time_t t = 0) {
       time = t;
       if (!time) ::time(&time);
