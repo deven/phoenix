@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.11 2003/02/18 05:08:56 deven Exp $
+// $Id: session.cc,v 1.12 2003/02/18 05:43:41 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.12  2003/02/18 05:43:41  deven
+// Implemented CloseOnEOF flag to close on Ctrl-D during login sequence.
+//
 // Revision 1.11  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.8 2003/02/18 05:08:57 deven Exp $
+// $Id: telnet.cc,v 1.9 2003/02/18 05:43:41 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.9  2003/02/18 05:43:41  deven
+// Implemented CloseOnEOF flag to close on Ctrl-D during login sequence.
+//
 // Revision 1.8  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //
