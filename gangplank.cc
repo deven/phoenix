@@ -249,7 +249,24 @@ char *match(char *&input, char *keyword, int min) {
 int main(int argc, char **argv)	// main program
 {
    int pid;			// server process number
-   int port;			// TCP port to use
+   int port = 0;		// TCP port to use
+   int arg;			// current argument
+   boolean debug = false;	// -debug option
+
+   // Check for command-line options.
+   for (arg = 1; arg < argc && argv[arg]; arg++) {
+      if (!strcmp(argv[arg], "-debug")) {
+	 debug = true;
+      } else if (!strcmp(argv[arg], "-port") && ++arg < argc && argv[arg]) {
+	 port = atoi(argv[arg]);
+      } else {
+	 fprintf(stderr, "Usage: %s [-debug] [-port %d]\n", argv[0], PORT);
+	 exit(1);
+      }
+   }
+
+   // Use configured default port if not specified.
+   if (!port) port = PORT;
 
    // Mark server start with current time and system uptime if available.
    ServerStartTime = 0;
@@ -264,15 +281,17 @@ int main(int argc, char **argv)	// main program
    // Create logs subdirectory (ignore errors since it may exist), open log.
    mkdir("logs", 0700);		// ignore errors
    OpenLog();
-   port = argc > 1 ? atoi(argv[1]) : 0;
-   if (!port) port = PORT;
 
    // Open listening port.
    Listen::Open(port);
 
 #if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
-   // fork subprocess and exit parent
-   if (strcmp(argv[argc - 1], "-debug")) {
+   // Fork subprocess and exit parent.
+   if (debug) {
+      log("Started Gangplank server, version %s.", VERSION);
+      log("Listening for connections on TCP port %d. (pid %d)", port,
+	  getpid());
+   } else {
       switch (pid = fork()) {
       case 0:
 	 setsid();
@@ -290,10 +309,6 @@ int main(int argc, char **argv)	// main program
 	 exit(0);
 	 break;
       }
-   } else {
-      log("Started Gangplank server, version %s.", VERSION);
-      log("Listening for connections on TCP port %d. (pid %d)", port,
-	  getpid());
    }
 #else
    log("Started Gangplank server, version %s. (pid %d)"), VERSION,
