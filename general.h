@@ -103,26 +103,17 @@ extern int Shutdown;		// shutdown flag
 extern time_t ServerStartTime;	// time server started
 extern int ServerStartUptime;	// system uptime when server started
 
-// enumerations
-#ifdef NO_BOOLEAN
-#define boolean int
-#define false (0)
-#define true (1)
-#else
-enum boolean {false,true};	// boolean data type
-#endif
-
-enum Char {			// Character codes.
-   Null, ControlA, ControlB, ControlC, ControlD, ControlE, ControlF, ControlG,
-   ControlH, ControlI, ControlJ, ControlK, ControlL, ControlM, ControlN,
-   ControlO, ControlP, ControlQ, ControlR, ControlS, ControlT, ControlU,
-   ControlV, ControlW, ControlX, ControlY, ControlZ, Escape,
-   Bell = '\007', Backspace = '\010', Tab = '\t', Linefeed = '\n',
-   Newline = '\n', Return = '\r', Space = ' ', Quote = '\"', Colon = ':',
-   Semicolon = ';', Backslash = '\\', Underscore = '_', Tilde = '~',
-   Equals = '=', Comma = ',', DollarSign = '$', Delete = 127, CSI = 155,
-   UnquotedUnderscore = 128, Separator = 129
-};
+// Character constants.
+const unsigned char ControlA = 1, ControlB = 2, ControlC = 3, ControlD = 4,
+   ControlE = 5, ControlF = 6, ControlG = 7, ControlH = 8, ControlI = 9,
+   ControlJ = 10, ControlK = 11, ControlL = 12, ControlM = 13, ControlN = 14,
+   ControlO = 15, ControlP = 16, ControlQ = 17, ControlR = 18, ControlS = 19,
+   ControlT = 20, ControlU = 21, ControlV = 22, ControlW = 23, ControlX = 24,
+   ControlY = 25, ControlZ = 26, Escape = 27, Null = 0, Bell = 7, Space = ' ',
+   Backspace = 8, Tab = '\t', Linefeed = '\n', Newline = '\n', Return = '\r',
+   Quote = '\"', Colon = ':', Semicolon = ';', Backslash = '\\', Tilde = '~',
+   Underscore = '_', Equals = '=', Comma = ',', DollarSign = '$', Delete = 127,
+   CSI = 155, UnquotedUnderscore = 128, Separator = 129;
 
 // Input function pointer type.
 typedef void (Session::*InputFuncPtr)(char *line);
