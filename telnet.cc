@@ -593,6 +593,7 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
    if (prompt) output(~prompt);
    if (End()) {
       echo(data, End());
+      if (!EndColumn()) echo(" \010"); // Force line wrap.
       if (!AtEnd()) {		// Move cursor back to point.
 	 lines = EndLine() - PointLine();
 	 columns = EndColumn() - PointColumn();
@@ -674,7 +675,9 @@ void Telnet::InsertString(String &s) // Insert string at point.
       for (p = s; *p; p++) *point++ = *p;
       free += slen;
    }
+   // This kludge simply redraws the rest of the line! ***
    echo(point - slen, (free - point) + slen);
+   if (!EndColumn()) echo(" \010"); // Force line wrap.
    if (!AtEnd()) {		// Move cursor back to point.
       int lines = EndLine() - PointLine();
       int columns = EndColumn() - PointColumn();
@@ -858,11 +861,42 @@ void Telnet::accept_input()	// Accept input line.
 void Telnet::insert_char(int ch) // Insert character at point.
 {
    if (ch >= Space && ch < Delete || ch >= NBSpace && ch <= y_umlaut) {
-      for (char *p = free++; p > point; p--) *p = p[-1];
-      *point++ = ch;
-      // Echo character if necessary.
-      if (!AtEnd()) echo("\033[@"); // ANSI! ***
-      echo(ch);
+      // Make room for the new character if necessary.
+      if (AtEnd()) {
+	 // Insert character at point (end), echo if necessary.
+	 free++;
+	 *point++ = ch;
+	 echo(ch);
+	 if (!PointColumn()) echo(" \010"); // Force line wrapping.
+      } else {
+	 for (char *p = free++; p > point; p--) *p = p[-1];
+	 int lines = EndLine() - PointLine();
+	 char *wrap = point - PointColumn();
+	 echo("\033[@");	// Insert character. // ANSI! ***
+	 while (lines-- > 0) {	// Handle line wrapping.
+	    // Go to the start of the next line and insert a character.
+	    echo("\r\n\033[@");	// ANSI! ***
+	    wrap += width;	// Find wrapped character.
+	    echo(wrap < free ? *wrap : Space); // Echo wrapped character.
+	 }
+	 if (EndLine() > PointLine()) { // Move cursor back to point.
+	    int columns = 1 - PointColumn();
+	    // ANSI! ***
+	    echo_print("\033[%dA", EndLine() - PointLine());
+	    if (columns > 0) {
+	       echo_print("\033[%dD", columns);
+	    } else if (columns < 0) {
+	       echo_print("\033[%dC", -columns);
+	    }
+	 }
+	 // Insert character at point, echo if necessary.
+	 *point++ = ch;
+	 echo(ch);
+	 if (!PointColumn()) {	// Force line wrapping.
+	    echo(point[1]);
+	    echo(Backspace);
+	 }
+      }
    } else {
       output(Bell);
    }
@@ -894,24 +928,41 @@ void Telnet::backward_char()	// Move point backward one character.
 
 void Telnet::erase_char()	// Erase character before point.
 {
-   if (point > data) {
-      point--;
-      free--;
-      for (char *p = point; p < free; p++) *p = p[1];
-      if (AtEnd()) {
-	 echo("\010 \010");	// Echo backspace, space, backspace.
-      } else {
-	 echo("\010\033[P");	// Backspace, delete character. // ANSI! ***
-      }
+   if (Point()) {
+      backward_char();
+      delete_char();
    }
 }
 
 void Telnet::delete_char()	// Delete character at point.
 {
    if (End() && !AtEnd()) {
+      echo("\033[P");		// Delete character. // ANSI! ***
+      // Make room for the new character if necessary.
+      if (!AtEnd()) {
+	 int lines = EndLine() - PointLine();
+	 char *wrap = point - PointColumn();
+	 while (lines-- > 0) {	// Handle line wrapping.
+	    // Go to the end of the current line.
+	    echo_print("\r\033[%dC", width - 1); // ANSI! ***
+	    wrap += width;	// Find wrapped character.
+	    echo(wrap < free ? *wrap : Space); // Echo wrapped character.
+	    // Force line wrap and delete a character.
+	    echo(" \010\033[P"); // ANSI! ***
+	 }
+	 if (EndLine() > PointLine()) { // Move cursor back to point.
+	    int columns = -PointColumn();
+	    // ANSI! ***
+	    echo_print("\033[%dA", EndLine() - PointLine());
+	    if (columns > 0) {
+	       echo_print("\033[%dD", columns);
+	    } else if (columns < 0) {
+	       echo_print("\033[%dC", -columns);
+	    }
+	 }
+      }
       free--;
       for (char *p = point; p < free; p++) *p = p[1];
-      echo("\033[P");	// Delete character. *** // ANSI! ***
    }
 }
 
@@ -928,6 +979,10 @@ void Telnet::transpose_chars()	// Exchange two characters at point.
       echo(point[-1]);
       echo(point[0]);
       point++;
+      if (!PointColumn()) {	// Force line wrapping.
+	 echo(AtEnd() ? Space : point[1]);
+	 echo(Backspace);
+      }
    }
 }
 
@@ -962,6 +1017,10 @@ void Telnet::upcase_word()	// Upcase word at point.
       if (islower(*point)) *point = toupper(*point);
       echo(*point++);
    }
+   if (!PointColumn()) {	// Force line wrapping.
+      echo(AtEnd() ? Space : point[1]);
+      echo(Backspace);
+   }
 }
 
 void Telnet::downcase_word()	// Downcase word at point.
@@ -970,6 +1029,10 @@ void Telnet::downcase_word()	// Downcase word at point.
    while (point < free && isalpha(*point)) {
       if (isupper(*point)) *point = tolower(*point);
       echo(*point++);
+   }
+   if (!PointColumn()) {	// Force line wrapping.
+      echo(AtEnd() ? Space : point[1]);
+      echo(Backspace);
    }
 }
 
@@ -983,6 +1046,10 @@ void Telnet::capitalize_word()	// Capitalize word at point.
    while (point < free && isalpha(*point)) {
       if (isupper(*point)) *point = tolower(*point);
       echo(*point++);
+   }
+   if (!PointColumn()) {	// Force line wrapping.
+      echo(AtEnd() ? Space : point[1]);
+      echo(Backspace);
    }
 }
 
