@@ -50,12 +50,12 @@ LDFLAGS =
 
 CC = gcc
 EXEC = phoenixd
-HDRS = phoenix.h other.h object.h string.h list.h set.h general.h line.h \
-	block.h outbuf.h name.h output.h outstr.h discussion.h sendlist.h \
-	session.h user.h fdtable.h fd.h listen.h telnet.h
-SRCS = discussion.cc fdtable.cc listen.cc output.cc outstr.cc phoenix.cc \
-	session.cc sendlist.cc string.cc telnet.cc user.cc
-OBJS = discussion.o fdtable.o listen.o output.o outstr.o phoenix.o \
+HDRS = phoenix.h other.h object.h string.h assoc.h list.h set.h general.h \
+	line.h block.h outbuf.h name.h output.h outstr.h discussion.h \
+	sendlist.h session.h user.h fdtable.h fd.h listen.h telnet.h
+SRCS = assoc.cc discussion.cc fdtable.cc listen.cc output.cc outstr.cc \
+	phoenix.cc session.cc sendlist.cc string.cc telnet.cc user.cc
+OBJS = assoc.o discussion.o fdtable.o listen.o output.o outstr.o phoenix.o \
 	session.o sendlist.o string.o telnet.o user.o
 
 all: $(EXEC) restart
