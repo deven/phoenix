@@ -408,7 +408,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
       WriteSelect();
 
       // Detach associated session.
-      if (session) session->Detach(boolean(closing));
+      if (session) session->Detach(this,boolean(closing));
       session = NULL;
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
@@ -418,7 +418,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
 void Telnet::Closed()		// Connection is closed.
 {
    // Detach associated session.
-   if (session) session->Detach(boolean(closing));
+   if (session) session->Detach(this,boolean(closing));
    session = NULL;
 
    // Free input line buffer.

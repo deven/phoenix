@@ -76,7 +76,7 @@ public:
    void Close(boolean drain = true); // Close session.
    void Transfer(Pointer<Telnet> &t);
    void Attach(Pointer<Telnet> &t);
-   void Detach(boolean intentional);
+   void Detach(Telnet *t,boolean intentional);
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
    void InitInputFunction();
