@@ -25,13 +25,11 @@ class Name: public Object {
 public:
    Pointer<Name> next;		// Next name used by this session.
    Pointer<Session> session;	// Session this name refers to.
-   char name[NameLen];		// Name string.
+   String name;			// Current name (pseudo) for this session.
 
-   Name(Pointer<Session> &s,Pointer<Name> &prev,char *str): session(s) {
+   Name(Pointer<Session> &s,Pointer<Name> &prev,char *str): session(s),name(str) {
       // Delete leading unused names. (may not work)
       while (prev && prev->References() == 1) prev = prev->next;
-      strncpy(name,str,NameLen); // Save name string.
-      name[NameLen - 1] = 0;	 // Make sure name is terminated.
       next = prev;		 // Save pointer to previous used name.
    }
 };

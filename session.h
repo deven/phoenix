@@ -77,14 +77,14 @@ public:
    char SignalPrivate;		// Signal for private messages? (boolean)
    char SignedOn;		// Session signed on? (boolean)
    char closing;		// Session closing? (boolean)
-   char name_only[NameLen];	// current user name (pseudo) alone
-   char name[NameLen];		// current user name (pseudo) with blurb
-   char blurb[NameLen];		// current user blurb
+   String name_only;		// current user name (pseudo) alone
+   String name;			// current user name (pseudo)
+   String blurb;		// current user blurb
    Pointer<Name> name_obj;	// current name object.
-   char default_sendlist[SendlistLen]; // current default sendlist
-   char last_sendlist[SendlistLen];    // last explicit sendlist
-   char reply_sendlist[SendlistLen];   // reply sendlist for last sender
-   Pointer<Message> last_message;      // last message sent
+   String default_sendlist;	// current default sendlist
+   String last_sendlist;	// last explicit sendlist
+   String reply_sendlist;	// reply sendlist for last sender
+   Pointer<Message> last_message; // last message sent
 
    Session(Pointer<Telnet> &t);
    ~Session();
@@ -151,7 +151,7 @@ public:
    void DoSignal(char *p);	// Do /signal command.
    void DoSend(char *p);	// Do /send command.
    void DoWhy();		// Do /why command.
-   int DoBlurb(char *start,boolean entry = false); // Do /blurb command.
+   void DoBlurb(char *start,boolean entry = false); // Do /blurb command.
    void DoHere(char *args);	// Do /here command.
    void DoAway(char *args);	// Do /away command.
    void DoBusy(char *args);	// Do /busy command.
