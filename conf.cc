@@ -738,10 +738,6 @@ void alrm(int sig)		// received SIGALRM
 int main(int argc,char **argv)	// main program
 {
    Telnet *telnet;		// telnet struct pointer
-   fd_set rfds;			// copy of readfds to pass to select()
-   fd_set wfds;			// copy of writefds to pass to select()
-   int found;			// number of file descriptors found
-   int lfd;			// listening file descriptor
    int pid;			// server process number
 
    Shutdown = 0;
