@@ -294,6 +294,12 @@ void Telnet::Welcome()
 	     "duplex mode.\n\n");
    }
 
+   if (!acknowledge) {
+      // Sigh.  Timing marks not acknowledged properly.  Inform the user.
+      output("Sorry, your telnet client is broken.  Output may be lost by "
+	     "the network.\n\n");
+   }
+
    // Warn if about to shut down!
    if (Shutdown) output("*** This server is about to shut down! ***\n\n");
 
@@ -346,7 +352,6 @@ void Telnet::set_RSGA(CallbackFuncPtr callback,int state)
 Telnet::Telnet(int lfd)		// Telnet constructor.
 {
    type = TelnetFD;		// Identify as a Telnet FD.
-   session = NULL;		// no Session (yet)
    data = new char[InputSize];	// Allocate input line buffer.
    end = data + InputSize;	// Save end of allocated block.
    point = free = data;		// Mark input line as empty.
@@ -354,7 +359,6 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    prompt = NULL;		// No prompt initially.
    prompt_len = 0;		// Length of prompt
    reply_to = NULL;		// No last sender.
-   outstanding = 0;		// No outstanding acknowledgements.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
    blocked = false;		// output not blocked
@@ -384,6 +388,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 
    // Test TIMING-MARK option before sending initial option negotions.
    command(TelnetIAC,TelnetDo,TelnetTimingMark);
+   command(TelnetIAC,TelnetDo,TelnetTimingMark);
+   outstanding = 2;		// Two outstanding acknowledgements.
 
    set_LSGA(Welcome,true);	// Start initial options negotiations.
    set_RSGA(Welcome,true);
@@ -816,11 +822,11 @@ void Telnet::InputReady()	// telnet stream can input data
 	       }
 	       break;
 	    case TelnetTimingMark:
+	       if (outstanding) outstanding--;
 	       if (acknowledge) {
-		  if (outstanding) outstanding--;
 		  if (session) session->AcknowledgeOutput();
 	       } else if (Echo == TelnetWillWont) {
-		  acknowledge = true;
+		  if (!outstanding) acknowledge = true;
 	       }
 	       break;
 	    default:
