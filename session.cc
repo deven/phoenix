@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.42 1996/02/21 20:59:47 deven Exp $
+// $Id: session.cc,v 1.43 1996/03/06 07:39:05 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.43  1996/03/06 07:39:05  deven
+// Added an explicit variable initialization to deal with a GCC 2.7.2 warning.
+//
 // Revision 1.42  1996/02/21 20:59:47  deven
 // Updated copyright notice.  Changed temporary smart pointers back to real
 // pointers.  Changed NULL to 0.  Removed ResetIdle() from Transfer().  Added
