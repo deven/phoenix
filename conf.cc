@@ -309,22 +309,10 @@ int main(int argc,char **argv)	// main program
    Listen::Open(port);
 
    // fork subprocess and exit parent
-   if (argc >= 1 || strcmp(argv[argc],"-debug")) {
+   if (strcmp(argv[argc - 1],"-debug")) {
       switch (pid = fork()) {
       case 0:
 	 setsid();
-#ifdef USE_SIGIGNORE
-	 sigignore(SIGHUP);
-	 sigignore(SIGINT);
-	 sigignore(SIGPIPE);
-#else
-	 signal(SIGHUP,SIG_IGN);
-	 signal(SIGINT,SIG_IGN);
-	 signal(SIGPIPE,SIG_IGN);
-#endif
-	 signal(SIGQUIT,quit);
-	 signal(SIGTERM,quit);
-	 signal(SIGALRM,alrm);
 	 log("Server started, running on port %d. (pid %d)",port,getpid());
 	 break;
       case -1:
@@ -339,6 +327,19 @@ int main(int argc,char **argv)	// main program
    } else {
       log("Server started, running on port %d. (pid %d)",port,getpid());
    }
+
+#ifdef USE_SIGIGNORE
+   sigignore(SIGHUP);
+   sigignore(SIGINT);
+   sigignore(SIGPIPE);
+#else
+   signal(SIGHUP,SIG_IGN);
+   signal(SIGINT,SIG_IGN);
+   signal(SIGPIPE,SIG_IGN);
+#endif
+   signal(SIGQUIT,quit);
+   signal(SIGTERM,quit);
+   signal(SIGALRM,alrm);
 
    while(1) {
       Session::CheckShutdown();
