@@ -38,17 +38,17 @@ LIBS = -lcrypt
 # LDFLAGS =
 
 CC = gcc
-EXEC = phoenixd
-HDRS = phoenix.h other.h boolean.h object.h general.h constants.h functions.h \
-	string.h list.h set.h assoc.h timestamp.h line.h block.h outbuf.h \
-	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
-	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
-	globals.h
+EXEC = gangplank
+HDRS = gangplank.h system.h boolean.h object.h general.h constants.h \
+	functions.h string.h list.h set.h hash.h timestamp.h line.h block.h \
+	outbuf.h name.h output.h outstr.h event.h eventqueue.h sendlist.h \
+	session.h discussion.h user.h fdtable.h fd.h listen.h telnet.h \
+	pointer.h globals.h
 MOST = discussion.cc fdtable.cc listen.cc output.cc outstr.cc event.cc \
-	eventqueue.cc phoenix.cc session.cc sendlist.cc string.cc telnet.cc \
+	eventqueue.cc gangplank.cc session.cc sendlist.cc string.cc telnet.cc \
 	timestamp.cc user.cc
-SRCS = assoc.cc string.cc most.cc $(MOST)
-OBJS = assoc.o string.o most.o
+SRCS = hash.cc string.cc most.cc $(MOST)
+OBJS = hash.o string.o most.o
 
 all: $(EXEC) restart
 
@@ -58,8 +58,8 @@ $(EXEC): $(OBJS)
 	strip $(EXEC)
 
 most.o: $(HDRS) $(MOST)
-assoc.o: other.h boolean.h object.h string.h general.h assoc.h pointer.h \
-	assoc.cc
+hash.o: system.h boolean.h object.h string.h general.h hash.h pointer.h \
+	hash.cc
 string.o: boolean.h object.h string.h string.cc
 
 .cc.o:
