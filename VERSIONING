@@ -1,0 +1,159 @@
+$Id$
+
+Release Version Numbering System
+--------------------------------
+
+This document describes the release version numbering system used by this
+project.  Other projects are welcome to adopt this system; this description
+is kept intentionally generic to facilitate this...
+
+This system was inspired by the dual-track even/odd version numbering system
+popularized by the Linux kernel project.  However, this system approaches the
+problem differently.  While it also makes "stable" releases distinguishable
+from "development" releases, it tries to provide more flexibility and more
+information at the same time.
+
+In this system, "stable" releases follow the familiar "major.minor.revision"
+form (e.g. 1.0.0), with integers for the three parts:
+
+ * Major numbers of 0.x.x are reserved for "unfinished" projects that are
+   still taking form.  Such projects are "stable" in relative terms only, and
+   make no API or feature guarantees in general; even "stable" releases may
+   not be suitable for production use until the 1.0.0 version.
+
+ * The first "stable" release in a stable form should be version 1.0.0 -- from
+   this point onward, efforts should be made to keep the API and features more
+   consistent, and automated regression testing would be particularly helpful.
+
+ * The major version number should never be incremented without a good reason,
+   such as a massive rewrite or restructuring of the majority of the code or
+   API, or similarly disruptive changes.  Version number inflation should be
+   avoided if possible.
+
+ * The minor version
+
+
+BRANCHES
+
+ -- the major number should be 0.x.x for unfinished projects
+that are still taking shape.
+
+===============================================================================
+This is a generic description of the release versioning system used by this
+project.  This system was inspired by the Linux kernel's even/odd versioning
+system (which was subsequently adopted by many other projects), but attempts
+to improve on that system.  Other projects are welcome to adopt or adapt this
+release versioning system as desired....
+
+This system was originally inspired by the dual-track even/odd versioning
+system adopted by the Linux kernel project to distinguish "stable" releases
+from "development" releases, but seeks to improve on that approach:
+
+* "Stable" releases are distinguished by having all-numeric version numbers
+  (except branch releases, which contain a branch tag).  By contrast, every
+  "development" release contains an alphabetic status tag such as "beta" or
+  "rc" (for "release candidate"), which distinguishes development releases
+  while providing useful status information in the version number.
+
+* Stable releases are ALWAYS equivalent to a release candidate to avoid any
+  "brown paper bag" releases being inappropriately classified as "stable".
+  Each stable release is a re-release of a release candidate with a stable
+  version number, but no code changes AT ALL.  Even for trivial code changes,
+  a new release candidate is required.  Generally, a release candidate should
+  be out for several weeks (to catch possible issues which may arise) before
+  being re-released as a stable release.
+
+* All version numbers consider of a dot-separated vector of integers (not real
+  numbers) and/or alphabetic tags.  Version 1.9 does NOT precede version 1.2!
+  Note that alphabetic tags are always dot-separated from any neighboring
+  integers. (e.g. "1.0.0.beta.1", not "1.0.0beta1")
+
+* Stable versions normally consist of two or more integers (typically three).
+  (This would generally follow traditional industry customs for major/minor
+  version numbering.)
+
+* Branch release version numbers consist of the version number of the branch
+  point, followed by an arbitrary alphabetic branch tag (name) and one or
+  more integers to specify the version number along that branch.  Whenever
+  possible, branch points should be stable release versions.
+
+* Development releases consist of a target version number (intended for the
+  next stable release), a status tag, and one or more integers to specify the
+  version number within that status level.  For example, "1.0.0.beta.1" would
+  be the first beta release leading up to version "1.0.0" as a target stable
+  release version.  (One integer to specify the revision level should usually
+  be sufficient here.)
+
+* <<< Add "required version" for compatability? >>>
+
+* This versioning system is subject to change with experience (or from project
+  to project), particularly in terms of the defined development status tags.
+
+
+There are many places where identical releases will have different version
+numbers according to the purpose of each version number.  For example, each
+stable release version will be identical to the last release candidate version
+preceding it.  In general, the baseline (xx.xx.xx.0) for any series will be
+identical to a release (typically the last one) in the previous series.  For
+a branch baseline (xx.xx.xx.xx.0), it will be identical to another release in
+the same development level.
+
+Development Release Series
+--------------------------
+
+Development release version numbers are of the form "major.series.level.rev" or
+"major.series.level.branch.rev", where:
+
+* "major" is the (arbitrary) major release version number.
+
+* "series" is the minor release series number.  This is an odd number for a
+  development release series.
+
+* "level" is the development level, as follows:
+
+  Level       How Frozen?          Description
+  -----       -----------          -----------
+  xx.xx.0.xx  feature/code slush   Integration series for any new feature work
+                                   for the previous stable release series.
+  xx.xx.1.xx  completely liquid!   Experimental series -- anything can happen,
+                                   including major architectural changes.
+  xx.xx.2.xx  architecture freeze  New feature series.
+  xx.xx.3.xx  feature slush        Enhancement series.
+  xx.xx.4.xx  feature freeze       Stabilization series.
+  xx.xx.5.xx  code slush           Preview series.
+  xx.xx.6.xx  feature slush        Alpha test series.
+  xx.xx.7.xx  feature freeze       Early beta test series.
+  xx.xx.8.xx  code slush           Late beta test series.
+  xx.xx.9.xx  code freeze          Gamma test series.  (Release candidates for
+                                   the next stable release series.)
+
+* "branch" is a branch number for alternative development branches.  This is
+  only used when necessary; usually it would be omitted.  Alternative branches
+  are most likely to be useful for experiments in the xx.xx.1.xx (experimental)
+  level of development.
+
+* "rev" is an individual release revision within the level or branch.
+
+Stable Release Series
+---------------------
+
+Stable release version numbers are of the form "major.series.minor" or
+"major.series.minor.rev", where:
+
+* "major" is the (arbitrary) major release version number.
+
+* "series" is the minor release series number.  This is an even number for a
+  stable release series.
+
+* "minor" is the minor release version number.  Only minor release numbers at
+  or after the branch point for the next development release series should be
+  considered for mission-critical production use.
+
+* "rev" is the individual release revision of a stable release candidate for
+  the next minor version.  Fully-stable releases don't use this part of the
+  version number, which may be considered to be zero.  All releases in the
+  stable release series should be suitable for production use, but release
+  candidates (where "rev" is non-zero) should not be used for mission-critical
+  production use.  All non-trivial feature work or code changes should occur
+  in the xx.xx.0.xx (integration) level of the next development release series
+  before appearing in a release candidate in the stable release series.
