@@ -20,8 +20,8 @@
 //
 // $Log$
 
-#ifndef _PHOENIX_H
-#define _PHOENIX_H
+#ifndef _GANGPLANK_H
+#define _GANGPLANK_H
 
 #include "system.h"
 #include "boolean.h"
