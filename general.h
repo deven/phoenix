@@ -100,7 +100,7 @@ char *date(time_t clock,int start,int len);
 void log(char *format,...);
 void warn(char *format,...);
 void error(char *format,...);
-char *message_start(char *line,char *sendlist,int len,int *explicit);
+char *message_start(char *line,char *sendlist,int len,boolean &explicit);
 int match_name(char *name,char *sendlist);
 void welcome(Telnet *telnet);
 void login(Telnet *telnet,char *line);
