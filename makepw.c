@@ -36,7 +36,7 @@
 #include <crypt.h>
 #endif
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    char pw[9], salt[3];
    char *key, *getpass();
@@ -53,5 +53,5 @@ main(int argc, char **argv)
    strcpy(pw, getpass("Enter password: "));
    if (strcmp(pw, getpass("Re-enter password to verify: "))) exit(1);
    printf("Encrypted password: %s\n", crypt(pw, salt));
-   exit(0);
+   return 0;
 }
