@@ -20,16 +20,13 @@ private:
    class OutputObject {
    public:
       OutputObject *next;
-      Output *Output;
+      Pointer<Output> Output;
 
-      OutputObject(Output *out) { // constructor
+      OutputObject(Pointer<Output> out) { // constructor
 	 next = NULL;
-	 if (Output = out) Output->RefCnt++;
+	 Output = out;
       }
-      ~OutputObject() {		// destructor
-	 if (Output && --Output->RefCnt == 0) delete Output;
-      }
-      void output(Telnet *telnet);
+      void output(Pointer<Telnet> telnet);
    };
 public:
    OutputObject *head;		// first output object
@@ -53,7 +50,7 @@ public:
    void Acknowledge(void) {	// Acknowledge a block of output.
       if (Acknowledged < Sent) Acknowledged++;
    }
-   void Enqueue(Telnet *telnet,Output *out);
+   void Enqueue(Pointer<Telnet> telnet,Pointer<Output> out);
    void Dequeue(void);
-   boolean SendNext(Telnet *telnet);
+   boolean SendNext(Pointer<Telnet> telnet);
 };

@@ -17,22 +17,23 @@
 
 #include "conf.h"
 
-void OutputStream::OutputObject::output(Telnet *telnet) // Output object.
+void OutputStream::OutputObject::output(Pointer<Telnet> telnet) // Output object.
 {
    Output->output(telnet);
    telnet->TimingMark();
 }
 
-void OutputStream::Enqueue(Telnet *telnet,Output *out) // Enqueue output.
+// Enqueue output.
+void OutputStream::Enqueue(Pointer<Telnet> telnet,Pointer<Output> out)
 {
-   if (!out) return;
+   if (out.Null()) return;
    if (tail) {
       tail->next = new OutputObject(out);
       tail = tail->next;
    } else {
       head = tail = new OutputObject(out);
    }
-   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
+   while (!telnet.Null() && telnet->acknowledge && SendNext(telnet)) ;
 }
 
 void OutputStream::Dequeue()	// Dequeue all acknowledged output.
@@ -53,9 +54,9 @@ void OutputStream::Dequeue()	// Dequeue all acknowledged output.
    }
 }
 
-boolean OutputStream::SendNext(Telnet *telnet) // Send next output object.
+boolean OutputStream::SendNext(Pointer<Telnet> telnet) // Send next output.
 {
-   if (!telnet || !sent && !head) return false;
+   if (telnet.Null() || !sent && !head) return false;
    if (sent && !sent->next) {
       telnet->RedrawInput();
       return false;

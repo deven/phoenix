@@ -11,9 +11,9 @@
 // Initial revision
 //
 
-class User {
+class User: public Object {
 public:
-   Session *session;		// session(s) for this user
+   Pointer<Session> session;	// session(s) for this user
    int priv;			// privilege level
    // change! ***
    char user[32];		// account name
@@ -21,5 +21,5 @@ public:
    // change! ***
    char reserved_name[NameLen];	// reserved user name (pseudo)
    char default_blurb[NameLen];	// default blurb
-   User(Session *s);
+   User(Pointer<Session> s);
 };
