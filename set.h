@@ -51,7 +51,6 @@ public:
    SetIter &operator =(Pointer<SetType> &s) { iter = s->l; }
    Type *operator ->() { return iter; }
    operator Type *() { return iter; }
-   operator int() { return iter; }
    Type *operator --() { return iter--; }
    Type *operator ++() { return iter++; }
    Pointer<Type> Remove() { return iter.Remove(); }
