@@ -5,9 +5,7 @@
  *
  * restart.c -- restart code.
  *
- * Copyright 1992-1993 by Deven T. Corzine.
- *
- * Development began on November 30, 1992.
+ * Copyright 1992-1993 by Deven T. Corzine.  All rights reserved.
  *
  * $Log$
  */
@@ -20,7 +18,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "conf.h"
+#define PORT 6789
 
 int check_for_server(int port)	/* check for running server */
 {
