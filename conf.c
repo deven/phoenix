@@ -974,7 +974,7 @@ void process_input(struct telnet *telnet,char *line)
 	    redraw_line(t); /* redraw input line */
 	 } else {
 	    /* Not found. */
-	    print(telnet,"%c%cThere is no user on fd %d. (message not "
+	    print(telnet,"%c%cThere is no user on fd #%d. (message not "
 		  "sent)\n",7,7,i);
 	 }
       } else if (!strcmp(sendlist,"everyone")) {
