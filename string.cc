@@ -81,7 +81,7 @@ String::String(char *s)
    extra = 0;
 }
 
-String::String(const char *s, int n)
+String::String(const char *s, size_t n)
 {
    len = n;
    str = new char[len + 1];
@@ -89,12 +89,12 @@ String::String(const char *s, int n)
       strncpy(str, s, len);
       str[len] = 0;
    } else {
-      for (int i=0; i<=len; i++) str[i] = 0;
+      for (size_t i = 0; i <= len; i++) str[i] = 0;
    }
    extra = 0;
 }
 
-String::String(char *s, int n)
+String::String(char *s, size_t n)
 {
    len = n;
    str = new char[len + 1];
@@ -102,7 +102,7 @@ String::String(char *s, int n)
       strncpy(str, s, len);
       str[len] = 0;
    } else {
-      for (int i=0; i<=len; i++) str[i] = 0;
+      for (size_t i = 0; i <= len; i++) str[i] = 0;
    }
    extra = 0;
 }
@@ -172,7 +172,7 @@ String &String::operator =(String &s)
 String &String::operator =(const char *s)
 {
    if (!s) s = "";
-   int n = strlen(s);
+   size_t n = strlen(s);
    if (n <= len + extra) {
       extra += len - n;
    } else {
@@ -267,7 +267,7 @@ String &String::append(String &s)
 String &String::append(const char *s)
 {
    if (s && *s) {
-      int n = strlen(s);
+      size_t n = strlen(s);
       if (n <= extra) {
 	 extra -= n;
       } else {
@@ -347,7 +347,7 @@ String &String::prepend(String &s)
 String &String::prepend(const char *s)
 {
    if (s && *s) {
-      int n = strlen(s);
+      size_t n = strlen(s);
       if (n <= extra) {
 	 extra -= n;
 	 char *p = str + len - 1;
@@ -410,14 +410,14 @@ String &String::vsprintf(const char *format, va_list ap)
          boolean zero_padding = false;
          boolean width_specified = false;
          boolean precision_specified = false;
-         int width = 0;
-         int prec = 0;
+         size_t width = 0;
+         size_t prec = 0;
 
          // Temporary values.
          String tmp;
          char *s;
          char c;
-         int n;
+         size_t n;
 
          // Check if format specifies left-justified output.
          if (*p == '-') {
