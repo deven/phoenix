@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.8 1996/02/21 20:52:19 deven Exp $
+// $Id: discussion.cc,v 1.9 1996/05/12 07:28:17 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.9  1996/05/12 07:28:17  deven
+// Removed explicit initializations for message_time and creation_time since
+// Timestamp constructor will do the same thing.
+//
 // Revision 1.8  1996/02/21 20:52:19  deven
 // Updated copyright notice.  Changed temporary smart pointers back to real
 // pointers.  Added extra parens around assignment in conditional context to

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.14 1996/04/05 06:04:46 deven Exp $
+// $Id: telnet.h,v 1.15 1996/05/12 07:26:06 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.15  1996/05/12 07:26:06  deven
+// Changed PrintMessage() to use Timestamp for time argument.
+//
 // Revision 1.14  1996/04/05 06:04:46  deven
 // Added support for telnet TRANSMIT-BINARY option.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.32 1996/04/06 07:43:18 deven Exp $
+// $Id: telnet.cc,v 1.33 1996/05/12 07:34:39 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.33  1996/05/12 07:34:39  deven
+// Modified to use Timestamp class and to print Timestamp::stamp().
+//
 // Revision 1.32  1996/04/06 07:43:18  deven
 // Rearranged some compose sequences and added simpler aliases for the common
 // characters, for Spanish in particular.

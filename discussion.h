@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.h,v 1.4 1996/02/21 20:39:01 deven Exp $
+// $Id: discussion.h,v 1.5 1996/05/12 07:24:43 deven Exp $
 //
 // Discussion class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.h,v $
+// Revision 1.5  1996/05/12 07:24:43  deven
+// Changed creation_time and message_time to Timestamp objects.
+//
 // Revision 1.4  1996/02/21 20:39:01  deven
 // Updated copyright notice.  Changed temporary smart pointer back to real
 // pointer.

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.18 1996/04/05 02:39:36 deven Exp $
+// $Id: general.h,v 1.19 1996/05/12 07:22:57 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.19  1996/05/12 07:22:57  deven
+// Added Timestamp class, changed ServerStartTime to Timestamp, moved date()
+// to Timestamp::date().
+//
 // Revision 1.18  1996/04/05 02:39:36  deven
 // Added Latin-1 characters and expanded on ASCII characters.
 //

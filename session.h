@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.25 1996/02/21 20:40:45 deven Exp $
+// $Id: session.h,v 1.26 1996/05/12 07:25:08 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.26  1996/05/12 07:25:08  deven
+// Changed login_time and message_time to Timestamp objects.  Added default
+// ResetIdle() parameter.
+//
 // Revision 1.25  1996/02/21 20:40:45  deven
 // Updated copyright notice.  Set return type of RemoveDiscussion() to void.
 // Changed temporary smart pointers back to real pointers.

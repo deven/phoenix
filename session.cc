@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.43 1996/03/06 07:39:05 deven Exp $
+// $Id: session.cc,v 1.44 1996/05/12 07:33:58 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.44  1996/05/12 07:33:58  deven
+// Modified to use Timestamp class.  Modified for default ResetIdle() argument.
+//
 // Revision 1.43  1996/03/06 07:39:05  deven
 // Added an explicit variable initialization to deal with a GCC 2.7.2 warning.
 //

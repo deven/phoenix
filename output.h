@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.11 1996/02/21 20:35:50 deven Exp $
+// $Id: output.h,v 1.12 1996/05/12 07:24:09 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.12  1996/05/12 07:24:09  deven
+// Modified to use Timestamp class for OutputObj::time variable.
+//
 // Revision 1.11  1996/02/21 20:35:50  deven
 // Updated copyright notice.  Changed temporary smart pointers back to real
 // pointers.
