@@ -214,41 +214,61 @@ String &String::operator =(const char *s)
 
 String &String::operator =(int n)
 {
-   delete [] str;
-   str = new char[NumberLength];
+   if (len + extra >= NumberLength) {
+      extra += len;
+   } else {
+      delete [] str;
+      str = new char[NumberLength];
+      extra = NumberLength - 1;
+   }
    ::sprintf(str, "%d", n);
    len = strlen(str);
-   extra = NumberLength - len - 1;
+   extra -= len;
    return *this;
 }
 
 String &String::operator =(unsigned int n)
 {
-   delete [] str;
-   str = new char[NumberLength];
+   if (len + extra >= NumberLength) {
+      extra += len;
+   } else {
+      delete [] str;
+      str = new char[NumberLength];
+      extra = NumberLength - 1;
+   }
    ::sprintf(str, "%ud", n);
    len = strlen(str);
-   extra = NumberLength - len - 1;
+   extra -= len;
    return *this;
 }
 
 String &String::operator =(long n)
 {
-   delete [] str;
-   str = new char[NumberLength];
+   if (len + extra >= NumberLength) {
+      extra += len;
+   } else {
+      delete [] str;
+      str = new char[NumberLength];
+      extra = NumberLength - 1;
+   }
    ::sprintf(str, "%ld", n);
    len = strlen(str);
-   extra = NumberLength - len - 1;
+   extra -= len;
    return *this;
 }
 
 String &String::operator =(unsigned long n)
 {
-   delete [] str;
-   str = new char[NumberLength];
+   if (len + extra >= NumberLength) {
+      extra += len;
+   } else {
+      delete [] str;
+      str = new char[NumberLength];
+      extra = NumberLength - 1;
+   }
    ::sprintf(str, "%lud", n);
    len = strlen(str);
-   extra = NumberLength - len - 1;
+   extra -= len;
    return *this;
 }
 
