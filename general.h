@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.13 1994/05/13 04:26:53 deven Exp $
+// $Id: general.h,v 1.14 1995/10/26 15:45:48 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.14  1995/10/26 15:45:48  deven
+// Added Equals and DollarSign characters, changed getword() parameters.
+//
 // Revision 1.13  1994/05/13 04:26:53  deven
 // Removed definition of HOME.
 //

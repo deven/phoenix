@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.15 1994/06/27 05:28:33 deven Exp $
+// $Id: phoenix.cc,v 1.16 1995/10/26 15:47:26 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.16  1995/10/26 15:47:26  deven
+// Changed getword() parameters to accept arbitrary separator instead of just
+// assuming Comma.  Defaults to no additional separator besides whitespace.
+//
 // Revision 1.15  1994/06/27 05:28:33  deven
 // Changed unary minus to unary tilde on strings.
 //

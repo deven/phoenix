@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.34 1995/05/05 04:45:28 deven Exp $
+// $Id: session.cc,v 1.35 1995/10/26 15:48:26 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.35  1995/10/26 15:48:26  deven
+// Removed /setidle command, added /set command and "/set idle" option.
+//
 // Revision 1.34  1995/05/05 04:45:28  deven
 // Added /howmany command.
 //
