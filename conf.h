@@ -10,7 +10,6 @@
 
 #include "other.h"
 #include "object.h"
-#include "pointer.h"
 #include "list.h"
 #include "general.h"
 #include "line.h"
