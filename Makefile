@@ -119,7 +119,7 @@ clean:
 	rm -f restart restart.o $(EXEC) $(OBJS) core *~
 
 checkin: FORCE
-	checkin Makefile $(HDRS) $(SRCS) passwd
+	./checkin Makefile $(HDRS) $(SRCS) passwd
 
 FORCE:
 
