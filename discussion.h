@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.h,v 1.2 1994/04/21 05:59:50 deven Exp $
+// $Id: discussion.h,v 1.3 1996/02/19 23:50:44 deven Exp $
 //
 // Discussion class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.h,v $
+// Revision 1.3  1996/02/19 23:50:44  deven
+// Changed "Output" class to "OutputObj" to avoid conflicts.
+//
 // Revision 1.2  1994/04/21 05:59:50  deven
 // Added timestamps, all function declarations.
 //

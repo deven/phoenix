@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.6 1995/10/26 15:47:00 deven Exp $
+// $Id: discussion.cc,v 1.7 1996/02/19 23:51:17 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.7  1996/02/19 23:51:17  deven
+// Changed "Output" class to "OutputObj" to avoid conflicts.
+//
 // Revision 1.6  1995/10/26 15:47:00  deven
 // Changed getword() parameters.
 //
