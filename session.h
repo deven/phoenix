@@ -183,6 +183,7 @@ public:
    void DoBye(char *args);	// Do /bye command.
    void DoClear(char *args);	// Do /clear command.
    void DoDetach(char *args);	// Do /detach command.
+   void DoHowMany(char *args);	// Do /howmany command.
    void DoWho(char *args);	// Do /who command.
    void DoIdle(char *args);	// Do /idle command.
    void DoDate(char *args);	// Do /date command.
