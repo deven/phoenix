@@ -247,7 +247,24 @@ void login(Telnet *telnet,char *line)
 {
    // Check against hardcoded logins.
    // stuff ***
-   if (!strcasecmp(line,"guest")) {
+   if (!strcasecmp(line,"/bye")) {
+      // Exit conf.
+      if (telnet->Output.head) {
+	 // Queued output, try to send it first.
+	 telnet->blocked = 0;
+	 telnet->closing = 1;
+
+	 // Don't read any more from connection.
+	 telnet->NoReadSelect();
+
+	 // Do write to connection.
+	 telnet->WriteSelect();
+      } else {
+	 // No queued output, close immediately.
+	 telnet->Close();
+      }
+      return;
+   } else if (!strcasecmp(line,"guest")) {
       strcpy(telnet->session->user->user,line);
       strcpy(telnet->session->user->password,"guest");
       telnet->session->name[0] = 0;
