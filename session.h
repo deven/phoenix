@@ -121,7 +121,6 @@ public:
    void DoReset();		// Do <space><return> idle time reset.
    void DoMessage(char *line);	// Do message send.
    void SendEveryone(char *msg);
-   void SendByFD(int fd,char *msg);
    void SendPrivate(char *sendlist,char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

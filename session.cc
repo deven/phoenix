@@ -561,9 +561,9 @@ void Session::DoWho()		// Do /who command.
    }
 
    // Output /who header.
-   output("\n Name                              On Since   Idle  User      fd"
-	  "\n ----                              --------   ----  ----      --"
-	  "\n");
+   output("\n"
+	  " Name                              On Since   Idle  User\n"
+	  " ----                              --------   ----  ----\n");
 
    // Output data about each user.
    Pointer<Session> session;
@@ -603,12 +603,8 @@ void Session::DoWho()		// Do /who command.
       } else {
 	 output("         ");
       }
-      print("%-8s  ",session->user->user);
-      if (session->telnet.Null()) {
-	 output("--\n");
-      } else {
-	 print("%2d\n",session->telnet->fd);
-      }
+      output(session->user->user);
+      output(Newline);
    }
 }
 
@@ -848,30 +844,11 @@ void Session::DoMessage(char *line) // Do message send.
       last_sendlist[SendlistLen - 1] = 0;
    }
 
-   int fd;
-   char c;
-   if (sscanf(sendlist,"#%d%c",&fd,&c) == 1) {
-      SendByFD(fd,p);
-   } else if (!strcasecmp(sendlist,"everyone")) {
+   if (!strcasecmp(sendlist,"everyone")) {
       SendEveryone(p);
    } else {
       SendPrivate(sendlist,p);
    }
-}
-
-// Send private message by fd #.
-void Session::SendByFD(int fd,char *msg)
-{
-   Pointer<Session> session;
-   for (session = sessions; !session.Null(); session = session->next) {
-      if (!session->telnet.Null() && session->telnet->fd == fd) {
-	 ResetIdle(10);
-	 print("(message sent to %s.)\n",session->name);
-	 session->Enqueue(new Message(PrivateMessage,name_obj,msg));
-	 return;
-      }
-   }
-   print("\a\aThere is no user on fd #%d. (message not sent)\n",fd);
 }
 
 // Send a message to everyone else signed on.
