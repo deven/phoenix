@@ -13,6 +13,8 @@
 
 class FDTable {			// File Descriptor Table
 private:
+   static fd_set readfds;	// read fdset for select()
+   static fd_set writefds;	// write fdset for select()
    FD **array;
    int size;
    int used;
@@ -30,4 +32,16 @@ public:
    void SendByFD(Telnet *telnet,int fd,char *sendlist,int explicit,char *msg);
    void SendEveryone(Telnet *telnet,char *msg);
    void SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg);
+   void ReadSelect(int fd) {	// Select fd for reading.
+      FD_SET(fd,&readfds);
+   }
+   void NoReadSelect(int fd) {	// Do not select fd for reading.
+      FD_CLR(fd,&readfds);
+   }
+   void WriteSelect(int fd) {	// Select fd for writing.
+      FD_SET(fd,&writefds);
+   }
+   void NoWriteSelect(int fd) {	// Do not select fd for writing.
+      FD_CLR(fd,&writefds);
+   }
 };
