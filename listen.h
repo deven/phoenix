@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.h,v 1.4 1994/01/19 22:11:42 deven Exp $
+// $Id: listen.h,v 1.5 1996/02/21 20:42:10 deven Exp $
 //
 // Listen class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.h,v $
+// Revision 1.5  1996/02/21 20:42:10  deven
+// Updated copyright notice.
+//
 // Revision 1.4  1994/01/19 22:11:42  deven
 // Removed RequestShutdown(), updated InputReady() and OutputReady().
 //

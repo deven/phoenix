@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outbuf.h,v 1.5 1996/02/19 22:24:52 deven Exp $
+// $Id: outbuf.h,v 1.6 1996/02/21 20:34:57 deven Exp $
 //
 // OutputBuffer class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outbuf.h,v $
+// Revision 1.6  1996/02/21 20:34:57  deven
+// Updated copyright notice.  Changed NULL to 0.
+//
 // Revision 1.5  1996/02/19 22:24:52  deven
 // Removed declarations from for loops due to new ANSI scoping rules.
 //

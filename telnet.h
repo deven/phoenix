@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.12 1994/07/21 06:06:45 deven Exp $
+// $Id: telnet.h,v 1.13 1996/02/21 20:42:27 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.13  1996/02/21 20:42:27  deven
+// Updated copyright notice.  Removed unused Closed() declaration.  Changed
+// temporary smart pointers back to real pointers.
+//
 // Revision 1.12  1994/07/21 06:06:45  deven
 // Added basic colon and semicolon processing.
 //

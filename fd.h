@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.6 1994/01/19 22:10:51 deven Exp $
+// $Id: fd.h,v 1.7 1996/02/21 20:42:03 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.7  1996/02/21 20:42:03  deven
+// Updated copyright notice.
+//
 // Revision 1.6  1994/01/19 22:10:51  deven
 // Added CloseAll(), removed fd parameter to InputReady() and OutputReady(),
 // check fd before doing ReadSelect(), et al.

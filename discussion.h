@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: discussion.h,v 1.3 1996/02/19 23:50:44 deven Exp $
+// $Id: discussion.h,v 1.4 1996/02/21 20:39:01 deven Exp $
 //
 // Discussion class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.h,v $
+// Revision 1.4  1996/02/21 20:39:01  deven
+// Updated copyright notice.  Changed temporary smart pointer back to real
+// pointer.
+//
 // Revision 1.3  1996/02/19 23:50:44  deven
 // Changed "Output" class to "OutputObj" to avoid conflicts.
 //

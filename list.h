@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.6 1994/04/21 05:55:54 deven Exp $
+// $Id: list.h,v 1.7 1996/02/21 20:27:51 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.7  1996/02/21 20:27:51  deven
+// Updated copyright notice.  Fixed (previously reversed) Shift()/Unshift()
+// semantics.  Changed temporary smart pointers back to real pointers.
+//
 // Revision 1.6  1994/04/21 05:55:54  deven
 // Added First() and Remove() functions.
 //

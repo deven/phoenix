@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.3 1994/06/27 08:40:06 deven Exp $
+// $Id: object.h,v 1.4 1996/02/21 12:13:26 deven Exp $
 //
 // Object class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: object.h,v $
+// Revision 1.4  1996/02/21 12:13:26  deven
+// Updated copyright notice.  Removed abort() declaration.  Moved definitions
+// of reference-counting member functions to pointer.h to be included last.
+//
 // Revision 1.3  1994/06/27 08:40:06  deven
 // Fixed assignment operators to call NewReference() before DeleteReference()
 // in case they operate on the same object.  (unlikely but possible)

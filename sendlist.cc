@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.5 1994/05/10 06:38:34 deven Exp $
+// $Id: sendlist.cc,v 1.6 1996/02/21 21:02:07 deven Exp $
 //
 // Sendlist class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.6  1996/02/21 21:02:07  deven
+// Updated copyright notice.  Changed temporary smart pointers back to real
+// pointers.
+//
 // Revision 1.5  1994/05/10 06:38:34  deven
 // Several minor bugfixes.
 //
