@@ -138,7 +138,7 @@ public:
    void InitInputFunction();
    void Input(char *line);
 
-   static RemoveDiscussion(Discussion *discussion) {
+   static void RemoveDiscussion(Discussion *discussion) {
       discussions.Remove(discussion);
    }
    void output(int byte) {	// queue output byte
