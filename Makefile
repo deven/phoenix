@@ -23,12 +23,25 @@
 # Initial revision
 #
 
-# Linux:
 CFLAGS = -g -Wall
-LDFLAGS = -static
+#LDFLAGS = -g -static
+LDFLAGS = -g
+
+# Linux:
 LIBS = -lcrypt
 
+# BSD:
+#LIBS =
+
+# Solaris:
+#LIBS = -lsocket -lnsl
+
+# GCC 2.95:
 CC = gcc
+
+# GCC 3.0:
+#CC = g++
+
 EXEC = gangplank
 HDRS = gangplank.h system.h boolean.h object.h general.h constants.h \
 	functions.h string.h list.h set.h hash.h timestamp.h line.h block.h \
