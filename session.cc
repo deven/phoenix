@@ -186,6 +186,11 @@ void Session::DoWho()		// Do /who command.
    }
 }
 
+void Session::DoDate()		// Do /date command.
+{
+   telnet->print("%s\n",date(0,0,0));	// Print current date and time.
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
