@@ -36,6 +36,7 @@ public:
    Session(Pointer<Telnet> &t);	// constructor
    ~Session();			// destructor
    void Close(boolean drain = true); // Close session.
+   void Transfer(Pointer<Telnet> &t);
    void Attach(Pointer<Telnet> &t);
    void Detach(boolean intentional);
    void SaveInputLine(char *line);
@@ -76,6 +77,7 @@ public:
    void Login(char *line);
    void Password(char *line);
    void Name(char *line);
+   void TransferSession(char *line);
    void Blurb(char *line);
    void ProcessInput(char *line);
    void NotifyEntry();		// Notify other users of entry and log.
