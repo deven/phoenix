@@ -1,5 +1,5 @@
 /*
- * $Id: conf.c,v 1.2 1993/03/17 07:09:05 deven Exp $
+ * $Id: conf.c,v 1.3 1993/03/18 19:06:42 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,9 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.c,v $
+ * Revision 1.3  1993/03/18 19:06:42  deven
+ * Added call to getpeername() and logged calling host and port.
+ *
  * Revision 1.2  1993/03/17 07:09:05  deven
  * Fixed to use *current* input function when processing saved lines, taking
  * into account that those lines may change the input function.  Fixed the
