@@ -86,6 +86,7 @@ public:
    void NotifyEntry();		// Notify other users of entry and log.
    void NotifyExit();		// Notify other users of exit and log.
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
+   void SetIdle(char *args);	// Set idle time.
    void DoRestart(char *args);	// Do !restart command.
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
@@ -93,7 +94,7 @@ public:
    void DoClear();		// Do /clear command.
    void DoDetach();		// Do /detach command.
    void DoWho();		// Do /who command.
-   void DoIdle();		// Do /idle command.
+   void DoIdle(char *args);	// Do /idle command.
    void DoDate();		// Do /date command.
    void DoSignal(char *p);	// Do /signal command.
    void DoSend(char *p);	// Do /send command.
