@@ -4,7 +4,7 @@
 //
 // Conferencing system server -- Main program.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
 // Revision 1.6  1993/12/31 07:45:55  deven

@@ -4,7 +4,7 @@
 //
 // Line class interface.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: line.h,v $
 // Revision 1.1  1993/12/08 02:36:57  deven

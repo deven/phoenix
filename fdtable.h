@@ -4,7 +4,7 @@
 //
 // FDTable class interface.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
 // Revision 1.4  1993/12/21 15:24:21  deven

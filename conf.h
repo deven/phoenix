@@ -4,7 +4,7 @@
 //
 // Conferencing system server -- Primary header file.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.h,v $
 // Revision 1.3  1993/12/21 15:19:25  deven
