@@ -64,7 +64,7 @@ struct session *sessions;	/* active sessions */
 
 static struct block *free_blocks; /* free blocks */
 
-int shutdown;			/* shutdown flag */
+int Shutdown;			/* shutdown flag */
 
 int nfds;			/* number of file descriptors available */
 fd_set readfds;			/* read fdset for select() */
@@ -669,7 +669,7 @@ void welcome(struct telnet *telnet)
    }
 
    /* Warn if about to shut down! */
-   if (shutdown) {
+   if (Shutdown) {
       output(telnet,"*** This server is about to shut down! ***\n\n");
    }
 
@@ -827,10 +827,10 @@ void process_input(struct telnet *telnet,char *line)
 	    announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
 		     7,7,7,7);
 	    alarm(5);
-	    shutdown = 2;
+	    Shutdown = 2;
 	 } else if (!strcmp(line,"!down cancel")) {
-	    if (shutdown) {
-	       shutdown = 0;
+	    if (Shutdown) {
+	       Shutdown = 0;
 	       alarm(0);
 	       log("Shutdown cancelled by %s (%s).",telnet->session->name,
 		   telnet->session->user->user);
@@ -849,7 +849,7 @@ void process_input(struct telnet *telnet,char *line)
 	    announce("%c%c>>> This server will shutdown in %d seconds... "
 		     "<<<\n%c%c",7,7,i,7,7);
 	    alarm(i);
-	    shutdown = 1;
+	    Shutdown = 1;
 	 }
       } else if (!strncmp(line,"!nuke ",6)) {
 	 int i;
@@ -1405,7 +1405,7 @@ void input_ready(struct telnet *telnet) /* telnet stream can input data */
 	       announce("%c%c>>> A new server is starting.  This server "
 			"will shutdown in 30 seconds... <<<\n%c%c",7,7,7,7);
 	       alarm(30);
-	       shutdown = 1;
+	       Shutdown = 1;
 	       break;
 	    case TELNET_ABORT_OUTPUT:
 	       /* Abort all output data. */
@@ -1774,7 +1774,7 @@ void quit(int sig)		/* received SIGQUIT or SIGTERM */
    announce("%c%c>>> This server will shutdown in 30 seconds... <<<\n%c%c",
 	    7,7,7,7);
    alarm(30);
-   shutdown = 1;
+   Shutdown = 1;
 }
 
 void alrm(int sig)		/* received SIGALRM */
@@ -1782,13 +1782,13 @@ void alrm(int sig)		/* received SIGALRM */
    struct telnet *telnet;
 
    /* Ignore unless shutting down. */
-   if (shutdown) {
-      if (shutdown == 1) {
+   if (Shutdown) {
+      if (Shutdown == 1) {
 	 log("Final shutdown warning.");
 	 announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
 		  7,7,7,7);
 	 alarm(5);
-	 shutdown++;;
+	 Shutdown++;;
       } else {
 	 log("Closing connections.");
 	 /* /// close listening socket */
@@ -1813,7 +1813,7 @@ void main(int argc,char **argv) /* main program */
    int errors;			/* number of consecutive select() errors */
 
    errors = 0;
-   shutdown = 0;
+   Shutdown = 0;
    connections = NULL;
    sessions = NULL;
    free_blocks = NULL;
@@ -1850,7 +1850,7 @@ void main(int argc,char **argv) /* main program */
 
    while(1) {
       /* Exit if shutting down and no users are left. */
-      if (shutdown && !connections) {
+      if (Shutdown && !connections) {
 	 log("All connections closed, shutting down.");
 	 log("Server down.");
 	 if (logfile) fclose(logfile);
