@@ -427,6 +427,8 @@ void Telnet::Welcome()
 {
    // Make sure we're done with initial option negotiations.
    // Intentionally use == with bitfield mask to test both bits at once.
+   if (LBin == TelnetWillWont) return;
+   if (RBin == TelnetDoDont) return;
    if (LSGA == TelnetWillWont) return;
    if (RSGA == TelnetDoDont) return;
    if (Echo == TelnetWillWont) return;
@@ -441,6 +443,19 @@ void Telnet::Welcome()
 	     "duplex mode.\n\n");
    }
 
+   // See if local TRANSMIT-BINARY option worked.
+   if (!LBin) {
+      // We were denied binary transmission.  Blow it off and do it anyhow.
+      output("Binary output refused, but the refusal will be ignored...\n");
+   }
+
+   // See if remote TRANSMIT-BINARY option worked.
+   if (!RBin) {
+      // Client refuses to send binary data; that's okay.
+      output("Binary input refused.  Use compose sequences as necessary.\n");
+   }
+
+   // See if TIMING-MARK option worked properly.
    if (!acknowledge) {
       // Sigh.  Timing marks not acknowledged properly.  Inform the user.
       output("Sorry, your telnet client is broken.  Output may be lost by "
@@ -462,10 +477,10 @@ void Telnet::set_Echo(CallbackFuncPtr callback,int state)
 {
    if (state) {
       command(TelnetIAC,TelnetWill,TelnetEcho);
-      Echo |= TelnetWillWont; // mark WILL sent
+      Echo |= TelnetWillWont;	// mark WILL sent
    } else {
       command(TelnetIAC,TelnetWont,TelnetEcho);
-      Echo &= ~TelnetWillWont; // mark WON'T sent
+      Echo &= ~TelnetWillWont;	// mark WON'T sent
    }
    Echo_callback = callback;	// save callback function
 }
@@ -475,10 +490,10 @@ void Telnet::set_LSGA(CallbackFuncPtr callback,int state)
 {
    if (state) {
       command(TelnetIAC,TelnetWill,TelnetSuppressGoAhead);
-      LSGA |= TelnetWillWont; // mark WILL sent
+      LSGA |= TelnetWillWont;	// mark WILL sent
    } else {
       command(TelnetIAC,TelnetWont,TelnetSuppressGoAhead);
-      LSGA &= ~TelnetWillWont; // mark WON'T sent
+      LSGA &= ~TelnetWillWont;	// mark WON'T sent
    }
    LSGA_callback = callback;	// save callback function
 }
@@ -494,6 +509,32 @@ void Telnet::set_RSGA(CallbackFuncPtr callback,int state)
       RSGA &= ~TelnetDoDont;	// mark DON'T sent
    }
    RSGA_callback = callback;	// save callback function
+}
+
+// Set telnet TRANSMIT-BINARY option. (local)
+void Telnet::set_LBin(CallbackFuncPtr callback,int state)
+{
+   if (state) {
+      command(TelnetIAC,TelnetWill,TelnetTransmitBinary);
+      LBin |= TelnetWillWont;	// mark WILL sent
+   } else {
+      command(TelnetIAC,TelnetWont,TelnetTransmitBinary);
+      LBin &= ~TelnetWillWont;	// mark WON'T sent
+   }
+   LBin_callback = callback;	// save callback function
+}
+
+// Set telnet TRANSMIT-BINARY option. (remote)
+void Telnet::set_RBin(CallbackFuncPtr callback,int state)
+{
+   if (state) {
+      command(TelnetIAC,TelnetDo,TelnetTransmitBinary);
+      RBin |= TelnetDoDont;	// mark DO sent
+   } else {
+      command(TelnetIAC,TelnetDont,TelnetTransmitBinary);
+      RBin &= ~TelnetDoDont;	// mark DON'T sent
+   }
+   RBin_callback = callback;	// save callback function
 }
 
 Telnet::Telnet(int lfd)		// Telnet constructor.
@@ -515,9 +556,13 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    Echo = 0;			// ECHO option off (local)
    LSGA = 0;			// SUPPRESS-GO-AHEAD option off (local)
    RSGA = 0;			// SUPPRESS-GO-AHEAD option off (remote)
+   LBin = 0;			// TRANSMIT-BINARY option off (local)
+   RBin = 0;			// TRANSMIT-BINARY option off (remote)
    Echo_callback = 0;		// no ECHO callback (local)
    LSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (local)
    RSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (remote)
+   LBin_callback = 0;		// no TRANSMIT-BINARY callback (local)
+   RBin_callback = 0;		// no TRANSMIT-BINARY callback (remote)
 
    fd = accept(lfd,0,0);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
@@ -538,8 +583,11 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    command(TelnetIAC,TelnetDo,TelnetTimingMark);
    outstanding = 2;		// Two outstanding acknowledgements.
 
-   set_LSGA(Welcome,true);	// Start initial options negotiations.
+   // Start initial options negotiations.
+   set_LSGA(Welcome,true);
    set_RSGA(Welcome,true);
+   set_LBin(Welcome,true);
+   set_RBin(Welcome,true);
    set_Echo(Welcome,true);
 
    // Send welcome banner.
@@ -826,11 +874,13 @@ void Telnet::accept_input()	// Accept input line.
 
    // Check if initial option negotiations are pending.
    if (Echo_callback == Welcome && LSGA_callback == Welcome &&
-      RSGA_callback == Welcome) {
+      RSGA_callback == Welcome && LBin_callback == Welcome &&
+      RBin_callback == Welcome) {
       // Assume this is a raw TCP connection.
-      LSGA = RSGA = (TelnetWillWont | TelnetDoDont);
+      LSGA = RSGA = LBin = RBin = (TelnetWillWont | TelnetDoDont);
       Echo = 0;
-      Echo_callback = LSGA_callback = RSGA_callback = 0;
+      Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
+         RBin_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
 	     "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
 	     "if you need it.)\n\n");
@@ -1153,6 +1203,34 @@ void Telnet::InputReady()	// telnet stream can input data
 	 case TelnetWont:
 	    // Negotiate remote option.
 	    switch (n) {
+	    case TelnetTransmitBinary:
+	       if (state == TelnetWill) {
+		  RBin |= TelnetWillWont;
+		  if (!(RBin & TelnetDoDont)) {
+		     // Turn on TRANSMIT-BINARY option.
+		     RBin |= TelnetDoDont;
+		     command(TelnetIAC,TelnetDo,TelnetTransmitBinary);
+
+		     // Me, too!
+		     if (!LBin) set_LBin(LBin_callback,true);
+
+		     // Unblock output.
+		     if (Output.head) WriteSelect();
+		     blocked = false;
+		  }
+	       } else {
+		  RBin &= ~TelnetWillWont;
+		  if (RBin & TelnetDoDont) {
+		     // Turn off TRANSMIT-BINARY option.
+		     RBin &= ~TelnetDoDont;
+		     command(TelnetIAC,TelnetDont,TelnetTransmitBinary);
+		  }
+	       }
+	       if (RBin_callback) {
+		  (this->*RBin_callback)();
+		  RBin_callback = 0;
+	       }
+	       break;
 	    case TelnetSuppressGoAhead:
 	       if (state == TelnetWill) {
 		  RSGA |= TelnetWillWont;
@@ -1197,6 +1275,34 @@ void Telnet::InputReady()	// telnet stream can input data
 	 case TelnetDont:
 	    // Negotiate local option.
 	    switch (n) {
+	    case TelnetTransmitBinary:
+	       if (state == TelnetDo) {
+		  LBin |= TelnetDoDont;
+		  if (!(LBin & TelnetWillWont)) {
+		     // Turn on TRANSMIT-BINARY option.
+		     LBin |= TelnetWillWont;
+		     command(TelnetIAC,TelnetWill,TelnetTransmitBinary);
+
+		     // You can too.
+		     if (!RBin) set_RBin(RBin_callback,true);
+
+		     // Unblock output.
+		     if (Output.head) WriteSelect();
+		     blocked = false;
+		  }
+	       } else {
+		  LBin &= ~TelnetDoDont;
+		  if (LBin & TelnetWillWont) {
+		     // Turn off TRANSMIT-BINARY option.
+		     LBin &= ~TelnetWillWont;
+		     command(TelnetIAC,TelnetWont,TelnetTransmitBinary);
+		  }
+	       }
+	       if (LBin_callback) {
+		  (this->*LBin_callback)();
+		  LBin_callback = 0;
+	       }
+	       break;
 	    case TelnetEcho:
 	       if (state == TelnetDo) {
 		  Echo |= TelnetDoDont;
