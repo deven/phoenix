@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.14 1994/02/05 18:41:18 deven Exp $
+// $Id: session.cc,v 1.15 1994/02/07 21:50:46 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.15  1994/02/07 21:50:46  deven
+// Added SetIdle(), SetBlurb() and Unidle(), modified DoIdle() for setting idle
+// time (/idle=<time>), took "User" column out of /who, added privileged /why,
+// copy of /who with "On Since" never showing "detached" and "User" and "FD"
+// columns back in.
+//
 // Revision 1.14  1994/02/05 18:41:18  deven
 // Added here/away/busy/gone states, added (char *) case to all user->user
 // references for String class, fixed SaveInputLine() if/else inversion,
