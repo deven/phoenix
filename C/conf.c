@@ -25,6 +25,8 @@
 #include <pwd.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <time.h>
+#include <crypt.h>
 
 #include "conf.h"
 
