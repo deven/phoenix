@@ -81,6 +81,7 @@
 # Linux:
 CFLAGS = -g -Wall
 LDFLAGS = -static
+LIBS = -lcrypt
 
 # Mach:
 # CFLAGS = -g -DHOME='"/u/deven/src/conf"'
@@ -103,7 +104,7 @@ all: $(EXEC) restart
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
-	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 
 most.o: $(HDRS) $(MOST)
 assoc.o: other.h boolean.h object.h string.h general.h assoc.h pointer.h \
