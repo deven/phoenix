@@ -563,7 +563,8 @@ int server_read()		/* process output from server */
 	    writef(server,"%s\r\n",login);
 	    if (log) writef(log,"%s\n",login);
 	    send_next = passwd;
-	    ignore = ignored = "\r\n\007Sorry, password WILL echo.\r\n\r\n";
+	    ignore = ignored = \
+               "\r\n\007Sorry, password probably WILL echo.\r\n\r\n";
 	    wait_for = found = "Password: ";
 	 } else if (send_next == passwd) {
 	    writef(tty,"\r\n");
