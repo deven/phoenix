@@ -80,6 +80,7 @@ public:
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
    static void announce(char *format,...);
+   static void nuke(Telnet *telnet,int fd,int drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Prompt(char *p);
