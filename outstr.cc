@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.5 1994/01/19 22:19:43 deven Exp $
+// $Id: outstr.cc,v 1.6 1994/04/17 11:27:43 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.6  1994/04/17 11:27:43  deven
+// Fixed bug -- when acknowledgements are disabled, the first output block
+// wasn't being sent.  Now it will send it if the output buffers are empty,
+// and the draining will trigger the following ones.
+//
 // Revision 1.5  1994/01/19 22:19:43  deven
 // Changed Pointer parameters to reference parameters.
 //
