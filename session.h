@@ -44,7 +44,8 @@
 //
 
 class Session: public Object {
-   static List<Session> sessions; // List of all sessions. (global)
+   static List<Session> inits;	// List of sessions initializing.
+   static List<Session> sessions; // List of signed-on sessions.
 public:
    Pointer<User> user;		// user this session belongs to
    Pointer<Telnet> telnet;	// telnet connection for this session
@@ -96,8 +97,8 @@ public:
       Pending.Enqueue(telnet,out);
    }
    void EnqueueOthers(Pointer<Output> &out) { // Enqueue output to others.
-      ListIter<Session> iter(sessions);
-      while (iter++) if (iter != this) iter->Enqueue(out);
+      ListIter<Session> session(sessions);
+      while (session++) if (session != this) session->Enqueue(out);
    }
    void AcknowledgeOutput(void) { // Output acknowledgement.
       Pending.Acknowledge();
