@@ -21,6 +21,10 @@
 #define EWOULDBLOCK EAGAIN
 #endif
 
+#ifndef ECONNTIMEDOUT
+#define ECONNTIMEDOUT ETIMEDOUT
+#endif
+
 // Class declarations.
 class Block;
 class FD;
