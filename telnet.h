@@ -88,6 +88,7 @@ class Telnet: public FD {	// Data about a particular telnet connection.
 private:
    static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
+   CallbackFuncPtr keymap[256];	// Keymap table.
 public:
    const width = 80;		// Hardcoded screen width ***
    const height = 24;		// Hardcoded screen height ***
@@ -175,6 +176,12 @@ public:
    void do_semicolon();		// Do semicolon processing.
    void do_colon();		// Do colon processing.
    void accept_input();		// Accept input line.
+   void undefined_key();	// Undefined key.
+   void state_TelnetIAC();	// Set state to TelnetIAC.
+   void state_Return();		// Set state to Return and accept input.
+   void state_Escape();		// Set state to Escape.
+   void state_CSI();		// Set state to CSI.
+   void redraw_input();		// Redraw input line.
    void insert_char(int ch);	// Insert character at point.
    void forward_char();		// Move point forward one character.
    void backward_char();	// Move point backward one character.

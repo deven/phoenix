@@ -479,6 +479,39 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    LSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (local)
    RSGA_callback = 0;		// no SUPPRESS-GO-AHEAD callback (remote)
 
+   // Initialize keymap.
+
+   // Start with all entries as undefined keys.
+   for (int i = 0; i < 256; i++) keymap[i] = undefined_key;
+
+   // Use null pointers for self-inserting characters.
+   for (int i = Space; i < Delete; i++) keymap[i] = 0;
+
+   // Initialize specific keymap entries.
+   keymap[TelnetIAC] = state_TelnetIAC;
+   keymap[Return] = state_Return;
+   keymap[Newline] = accept_input;
+   keymap[Escape] = state_Escape;
+   keymap[CSI] = state_CSI;
+   keymap[Backspace] = erase_char;
+   keymap[Delete] = erase_char;
+   keymap[Semicolon] = do_semicolon;
+   keymap[Colon] = do_colon;
+   keymap[ControlA] = beginning_of_line;
+   keymap[ControlB] = backward_char;
+   keymap[ControlD] = delete_char;
+   keymap[ControlE] = end_of_line;
+   keymap[ControlF] = forward_char;
+   keymap[ControlK] = kill_line;
+   keymap[ControlL] = redraw_input;
+   keymap[ControlN] = next_line;
+   keymap[ControlP] = previous_line;
+   keymap[ControlT] = transpose_chars;
+   keymap[ControlU] = erase_line;
+   keymap[ControlY] = yank;
+
+   // Done initializing keymap.
+
    fd = accept(lfd,NULL,NULL);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
 
@@ -644,7 +677,7 @@ void Telnet::InsertString(String &s) // Insert string at point.
    }
 }
 
-inline void Telnet::beginning_of_line() // Jump to beginning of line.
+void Telnet::beginning_of_line() // Jump to beginning of line.
 {
    int lines,columns;
 
@@ -661,7 +694,7 @@ inline void Telnet::beginning_of_line() // Jump to beginning of line.
    point = data;
 }
 
-inline void Telnet::end_of_line() // Jump to end of line.
+void Telnet::end_of_line() // Jump to end of line.
 {
    int lines,columns;
 
@@ -678,7 +711,7 @@ inline void Telnet::end_of_line() // Jump to end of line.
    point = free;
 }
 
-inline void Telnet::kill_line()	// Kill from point to end of line.
+void Telnet::kill_line()	// Kill from point to end of line.
 {
    if (!AtEnd()) {
       echo("\033[J"); // ANSI! ***
@@ -694,7 +727,7 @@ inline void Telnet::kill_line()	// Kill from point to end of line.
    }
 }
 
-inline void Telnet::erase_line() // Erase input line.
+void Telnet::erase_line() // Erase input line.
 {
    beginning_of_line();
    if (End()) {
@@ -704,7 +737,7 @@ inline void Telnet::erase_line() // Erase input line.
    mark = NULL;
 }
 
-inline void Telnet::previous_line() // Go to previous input line.
+void Telnet::previous_line() // Go to previous input line.
 {
    // Check if at the start of the current line.
    if (Point()) {
@@ -728,7 +761,7 @@ inline void Telnet::previous_line() // Go to previous input line.
    }
 }
 
-inline void Telnet::next_line()	// Go to next input line.
+void Telnet::next_line()	// Go to next input line.
 {
    // Check if at the end of the current line.
    if (AtEnd()) {
@@ -751,7 +784,7 @@ inline void Telnet::next_line()	// Go to next input line.
    }
 }
 
-inline void Telnet::yank()	// Yank from kill-ring.
+void Telnet::yank()	// Yank from kill-ring.
 {
    // Handle previous yanks.
    Yank = KillRing;
@@ -762,19 +795,19 @@ inline void Telnet::yank()	// Yank from kill-ring.
    }
 }
 
-inline void Telnet::do_semicolon() // Do semicolon processing.
+void Telnet::do_semicolon() // Do semicolon processing.
 {
    if (AtStart() && session) InsertString(session->last_explicit);
    insert_char(Semicolon);
 }
 
-inline void Telnet::do_colon()	// Do colon processing.
+void Telnet::do_colon()	// Do colon processing.
 {
    if (AtStart() && session) InsertString(session->reply_sendlist);
    insert_char(Colon);
 }
 
-inline void Telnet::accept_input() // Accept input line.
+void Telnet::accept_input() // Accept input line.
 {
    if (!session) return;
 
@@ -826,7 +859,39 @@ inline void Telnet::accept_input() // Accept input line.
    }
 }
 
-inline void Telnet::insert_char(int ch) // Insert character at point.
+void Telnet::undefined_key()	// Undefined key.
+{
+   output(Bell);
+}
+
+void Telnet::state_TelnetIAC()	// Set state to TelnetIAC.
+{
+   state = TelnetIAC;
+}
+
+void Telnet::state_Return()	// Set state to Return and accept input.
+{
+   state = Return;
+   accept_input();
+}
+
+void Telnet::state_Escape()	// Set state to Escape.
+{
+   state = Escape;
+}
+
+void Telnet::state_CSI()	// Set state to CSI.
+{
+   state = CSI;
+}
+
+void Telnet::redraw_input()	// Redraw input line.
+{
+   UndrawInput();
+   RedrawInput();
+}
+
+void Telnet::insert_char(int ch) // Insert character at point.
 {
    if (ch >= 32 && ch < Delete) {
       for (char *p = free++; p > point; p--) *p = p[-1];
@@ -839,7 +904,7 @@ inline void Telnet::insert_char(int ch) // Insert character at point.
    }
 }
 
-inline void Telnet::forward_char() // Move point forward one character.
+void Telnet::forward_char() // Move point forward one character.
 {
    if (!AtEnd()) {
       point++;			// Change point in buffer.
@@ -851,7 +916,7 @@ inline void Telnet::forward_char() // Move point forward one character.
    }
 }
 
-inline void Telnet::backward_char() // Move point backward one character.
+void Telnet::backward_char() // Move point backward one character.
 {
    if (Point()) {
       if (PointColumn()) {	// Backspace on current screen line.
@@ -863,7 +928,7 @@ inline void Telnet::backward_char() // Move point backward one character.
    }
 }
 
-inline void Telnet::erase_char() // Erase character before point.
+void Telnet::erase_char() // Erase character before point.
 {
    if (point > data) {
       point--;
@@ -877,7 +942,7 @@ inline void Telnet::erase_char() // Erase character before point.
    }
 }
 
-inline void Telnet::delete_char() // Delete character at point.
+void Telnet::delete_char() // Delete character at point.
 {
    if (End() && !AtEnd()) {
       free--;
@@ -886,7 +951,7 @@ inline void Telnet::delete_char() // Delete character at point.
    }
 }
 
-inline void Telnet::transpose_chars() // Exchange two characters at point.
+void Telnet::transpose_chars() // Exchange two characters at point.
 {
    if (!Point() || End() < 2) {
       output(Bell);
@@ -902,31 +967,31 @@ inline void Telnet::transpose_chars() // Exchange two characters at point.
    }
 }
 
-inline void Telnet::forward_word() // Move point forward one word.
+void Telnet::forward_word() // Move point forward one word.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) forward_char();
 }
 
-inline void Telnet::backward_word() // Move point backward one word.
+void Telnet::backward_word() // Move point backward one word.
 {
    while (point > data && !isalpha(point[-1])) backward_char();
    while (point > data && isalpha(point[-1])) backward_char();
 }
 
-inline void Telnet::erase_word() // Erase word before point.
+void Telnet::erase_word() // Erase word before point.
 {
    while (point > data && !isalpha(point[-1])) erase_char();
    while (point > data && isalpha(point[-1])) erase_char();
 }
 
-inline void Telnet::delete_word() // Delete word at point.
+void Telnet::delete_word() // Delete word at point.
 {
    while (point < free && !isalpha(*point)) delete_char();
    while (point < free && isalpha(*point)) delete_char();
 }
 
-inline void Telnet::upcase_word() // Upcase word at point.
+void Telnet::upcase_word() // Upcase word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) {
@@ -935,7 +1000,7 @@ inline void Telnet::upcase_word() // Upcase word at point.
    }
 }
 
-inline void Telnet::downcase_word() // Downcase word at point.
+void Telnet::downcase_word() // Downcase word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    while (point < free && isalpha(*point)) {
@@ -944,7 +1009,7 @@ inline void Telnet::downcase_word() // Downcase word at point.
    }
 }
 
-inline void Telnet::capitalize_word() // Capitalize word at point.
+void Telnet::capitalize_word() // Capitalize word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    if (point < free && isalpha(*point)) {
@@ -957,7 +1022,7 @@ inline void Telnet::capitalize_word() // Capitalize word at point.
    }
 }
 
-inline void Telnet::transpose_words() // Exchange two words at point.
+void Telnet::transpose_words() // Exchange two words at point.
 {
    output(Bell);
 }
@@ -966,7 +1031,7 @@ void Telnet::InputReady()	// telnet stream can input data
 {
    char buf[BufSize];
    Block *block;
-   char *p;
+   char *start;
    register char *from,*from_end;
    register int n;
 
@@ -1248,75 +1313,19 @@ void Telnet::InputReady()	// telnet stream can input data
 	    break;
 	 default:		// Normal data.
 	    state = 0;
-	    from--;		// Backup to current input character.
+	    start = --from;	// Backup to current input character.
 	    while (!state && from < from_end && free < end) {
-	       switch (n = *((unsigned char *) from++)) {
-	       case TelnetIAC:
-		  state = TelnetIAC;
-		  break;
-	       case ControlA:
-		  beginning_of_line();
-		  break;
-	       case ControlB:
-		  backward_char();
-		  break;
-	       case ControlD:
-		  delete_char();
-		  break;
-	       case ControlE:
-		  end_of_line();
-		  break;
-	       case ControlF:
-		  forward_char();
-		  break;
-	       case ControlK:
-		  kill_line();
-		  break;
-	       case ControlL:
-		  UndrawInput();
-		  RedrawInput();
-		  break;
-	       case ControlN:
-		  next_line();
-		  break;
-	       case ControlP:
-		  previous_line();
-		  break;
-	       case ControlT:
-		  transpose_chars();
-		  break;
-	       case ControlU:
-		  erase_line();
-		  break;
-	       case ControlY:
-		  yank();
-		  break;
-	       case Backspace:
-	       case Delete:
-		  erase_char();
-		  break;
-	       case Semicolon:
-		  do_semicolon();
-		  break;
-	       case Colon:
-		  do_colon();
-		  break;
-	       case Return:
-		  state = Return;
-		  // fall through...
-	       case Newline:
-		  accept_input();
-		  break;
-	       case Escape:
-		  state = Escape;
-		  break;
-	       case CSI:
-		  state = CSI;
-		  break;
-	       default:
-		  insert_char(n);
-		  break;
+	       // Check for keymap entry.
+	       if (keymap[n = *((unsigned char *) from++)]) {
+		  if (start < from - 1) { // Insert text if any.
+		     InsertString(String(start,from - start - 1));
+		  }
+		  start = from;	// Save new text start point.
+		  (this->*keymap[n])();	// Call key processing function.
 	       }
+	    }
+	    if (start < from) { // Insert text if any.
+	       InsertString(String(start,from - start));
 	    }
 	    break;
 	 }
