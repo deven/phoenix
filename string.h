@@ -45,5 +45,6 @@ public:
    int operator !=(const char *s) { return strcmp(str,s ? s : "") != 0; }
    operator const char *() const { return str; }
    operator char *() { return str; }
+   operator int() { return len; }
    int length() { return len; }
 };
