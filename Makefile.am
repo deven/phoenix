@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.3 2002/11/22 05:11:02 deven Exp $
+# $Id: Makefile.am,v 1.4 2003/02/18 05:08:56 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,9 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile.am,v $
+# Revision 1.4  2003/02/18 05:08:56  deven
+# Updated copyright dates.
+#
 # Revision 1.3  2002/11/22 05:11:02  deven
 # Removed compiler flags (moved to configure.ac), added "bootstrap" script to
 # distribution archives.

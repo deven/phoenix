@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.3 2002/11/26 06:38:49 deven Exp $
+// $Id: discussion.cc,v 1.4 2003/02/18 05:08:56 deven Exp $
 //
 // Discussion class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: discussion.cc,v $
+// Revision 1.4  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.3  2002/11/26 06:38:49  deven
 // Added missing ~ operator where String objects were being passed as char *.
 //

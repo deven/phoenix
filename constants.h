@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: constants.h,v 1.6 2003/02/17 06:25:14 deven Exp $
+// $Id: constants.h,v 1.7 2003/02/18 05:08:56 deven Exp $
 //
 // Global constants header file.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: constants.h,v $
+// Revision 1.7  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.6  2003/02/17 06:25:14  deven
 // Removed DefaultPort constant in favor of using configured PORT parameter.
 //

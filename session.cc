@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.10 2003/02/18 05:00:05 deven Exp $
+// $Id: session.cc,v 1.11 2003/02/18 05:08:56 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.11  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.10  2003/02/18 05:00:05  deven
 // Modified DoWho() to wrap long names only once when listing in full -- if
 // the name is still too long, it will simply be wrapped by the terminal.

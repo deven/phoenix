@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.3 2002/07/28 05:36:43 deven Exp $
+// $Id: object.h,v 1.4 2003/02/18 05:08:56 deven Exp $
 //
 // Object class interface and implementation, Pointer class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: object.h,v $
+// Revision 1.4  2003/02/18 05:08:56  deven
+// Updated copyright dates.
+//
 // Revision 1.3  2002/07/28 05:36:43  deven
 // Removed destruction kludge in reference counting, at the cost of an extra
 // test for each new reference created.

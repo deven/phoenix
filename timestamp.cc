@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: timestamp.cc,v 1.3 2003/02/17 07:24:01 deven Exp $
+// $Id: timestamp.cc,v 1.4 2003/02/18 05:08:57 deven Exp $
 //
 // Timestamp class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: timestamp.cc,v $
+// Revision 1.4  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.3  2003/02/17 07:24:01  deven
 // Added MaxFormattedLength constant, modified to use strncpy() for safety.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: set.h,v 1.2 2003/02/18 05:08:57 deven Exp $
 //
 // Set class interface and implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: set.h,v $
+// Revision 1.2  2003/02/18 05:08:57  deven
+// Updated copyright dates.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
