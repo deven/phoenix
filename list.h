@@ -195,7 +195,7 @@ public:
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    Type *operator --();
    Type *operator ++();
-   Type *Remove();
+   void Remove();
    int InsertBefore(Type *obj);
    int InsertAfter(Type *obj);
 };
@@ -215,10 +215,19 @@ Type *ListIter<Type>::operator ++() {
 }
 
 template <class Type>
-Type *ListIter<Type>::Remove() {
-   if (!ptr) return Pointer<Type>();
-   if (!ptr->prev) return list->RemHead();
-   if (!ptr->next) return list->RemTail();
+void ListIter<Type>::Remove() {
+   if (!ptr) return;
+
+   if (!ptr->prev) {
+      list->RemHead();
+      return;
+   }
+
+   if (!ptr->next) {
+      list->RemTail();
+      return;
+   }
+
    Pointer<NodeType> node(ptr);
    ptr = last;
    if (ptr == node->prev) {
@@ -232,7 +241,7 @@ Type *ListIter<Type>::Remove() {
    node->prev->next = node->next;
    node->next->prev = node->prev;
    node->next = node->prev = 0;
-   return node->obj;
+   return;
 }
 
 template <class Type>
