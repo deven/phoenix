@@ -4,7 +4,7 @@
 //
 // Timestamp class implementation.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log$
 
