@@ -168,13 +168,13 @@ PermitNotify::PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 {
    discussion = d;
    name = s->name_obj;
-   explicit = flag;
+   is_explicit = flag;
 }
 
 void PermitNotify::output(Pointer<Telnet> &telnet)
 {
    if (discussion->Public) {
-      if (explicit) {
+      if (is_explicit) {
 	 telnet->print("*** %s%s has repermitted you to discussion %s. "
 		       "[%s] ***\n",~name->name,~name->blurb,~discussion->name,
 		       date(time,11,5));
@@ -184,7 +184,7 @@ void PermitNotify::output(Pointer<Telnet> &telnet)
 		       ~discussion->name,date(time,11,5));
       }
    } else {
-      if (explicit) {
+      if (is_explicit) {
 	 telnet->print("*** %s%s has repermitted you to private discussion "
 		       "%s. [%s] ***\n",~name->name,~name->blurb,
 		       ~discussion->name,date(time,11,5));
@@ -203,7 +203,7 @@ DepermitNotify::DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
 {
    discussion = d;
    name = s->name_obj;
-   explicit = flag;
+   is_explicit = flag;
    if (who) removed = who->name_obj;
 }
 
@@ -226,7 +226,7 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
 		       ~discussion->name,date(time,11,5));
       }
    } else {
-      if (explicit) {
+      if (is_explicit) {
 	 telnet->print("*** %s%s has explicitly depermitted you from "
 		       "private discussion %s. [%s] ***\n",~name->name,
 		       ~name->blurb,~discussion->name,date(time,11,5));

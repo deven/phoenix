@@ -198,7 +198,7 @@ class PermitNotify: public Output {
 private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
-   boolean explicit;
+   boolean is_explicit;
 public:
    PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,boolean flag,
 		time_t when = 0);
@@ -209,7 +209,7 @@ class DepermitNotify: public Output {
 private:
    Pointer<Discussion> discussion;
    Pointer<Name> name;
-   boolean explicit;
+   boolean is_explicit;
    Pointer<Name> removed;
 public:
    DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,boolean flag,
