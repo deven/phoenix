@@ -1318,7 +1318,7 @@ void Session::DoWho(char *args)	// Do /who command.
       tmp = session->name;
       tmp.append(session->blurb);
       if (tmp.length() > 33) {
-	 print("%-31.31s]+ ", ~tmp);
+	 print("%-32.32s+ ", ~tmp);
       } else {
 	 print("%-33.33s ", ~tmp);
       }
@@ -1371,13 +1371,13 @@ void Session::DoWho(char *args)	// Do /who command.
 	 break;
       }
       if (tmp.length() > 33 && who.Count() == 1) {
-	 char *p = (~tmp) + 31;
+	 char *p = (~tmp) + 32;
 	 while (*p) {
-	    if (strlen(p) > 77) {
-	       print("+[%-75.75s]+\n", p);
-	       p += 75;
+	    if (strlen(p) > 78) {
+	       print(">%-77.77s+\n", p);
+	       p += 77;
 	    } else {
-	       print("+[%s\n", p);
+	       print(">%s\n", p);
 	       break;
 	    }
 	 }
