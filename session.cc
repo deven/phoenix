@@ -141,3 +141,51 @@ void Session::SendByFD(int fd,char *sendlist,int explicit,char *msg)
    }
    telnet->print("\a\aThere is no user on fd #%d. (message not sent)\n");
 }
+
+// Send private message by partial name match.
+void Session::SendPrivate(char *sendlist,int explicit,char *msg)
+{
+   // Save last sendlist if explicit.
+   if (explicit && *sendlist) {
+      strncpy(last_sendlist,sendlist,SendlistLen);
+      last_sendlist[SendlistLen - 1] = 0;
+   }
+
+   if (!strcmp(sendlist,"me")) {
+      ResetIdle(10);
+      telnet->print("(message sent to %s.)\n",name);
+      telnet->PrintMessage(Private,name,name_only,0,msg);
+      return;
+   }
+
+   Session *dest = NULL;
+   int matches = 0;
+   for (Session *session = sessions; session; session = session->next) {
+      if (match_name(session->name_only,sendlist)) {
+	 if (matches++) break;
+	 dest = session;
+      }
+   }
+
+   // kludge ***
+   for (unsigned char *p = (unsigned char *) sendlist; *p; p++) {
+      if (*p == UnquotedUnderscore) *p = Underscore;
+   }
+
+   switch (matches) {
+   case 0:			// No matches.
+      telnet->print("\a\aNo names matched \"%s\". (message not sent)\n",
+		    sendlist);
+      break;
+   case 1:			// Found single match, send message.
+      ResetIdle(10);
+      telnet->print("(message sent to %s.)\n",dest->name);
+      dest->telnet->PrintMessage(Private,name,name_only,0,msg);
+      break;
+   default:			// Multiple matches.
+      telnet->print("\a\a\"%s\" matches %d names, including \"%s\" and \"%s\""
+		    ". (message not sent)\n",sendlist,matches,dest->name_only,
+		    session->name_only);
+      break;
+   }
+}
