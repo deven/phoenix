@@ -1,5 +1,5 @@
 /*
- * $Id: conf.h,v 1.1 1993/03/05 18:03:14 deven Exp $
+ * $Id: conf.h,v 1.2 1993/04/07 21:41:12 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,9 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.h,v $
+ * Revision 1.2  1993/04/07 21:41:12  deven
+ * Added session layer.
+ *
  * Revision 1.1  1993/03/05 18:03:14  deven
  * Initial revision
  *
