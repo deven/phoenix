@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.12 2003/02/18 05:43:41 deven Exp $
+// $Id: session.cc,v 1.13 2003/02/21 03:22:26 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,16 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.13  2003/02/21 03:22:26  deven
+// Modified to generate a compile-time error if crypt() is not available.
+// Renamed Blurb() to EnteredBlurb().  Fixed bug which caused both connections
+// to close when transferring a guest session, but then disabled the transfer
+// functionality for guests, who weren't meant to have it anyhow.  Added new
+// CheckNameAvailability() function, used to check for availability and later
+// double-check after other prompts to avoid creating duplicate sessions with
+// the same name, or infringing newly-reserved names or new discussions, etc.
+// Modified to call Telnet::LoginSequenceFinished() to support login timeouts.
+//
 // Revision 1.12  2003/02/18 05:43:41  deven
 // Implemented CloseOnEOF flag to close on Ctrl-D during login sequence.
 //
