@@ -550,6 +550,20 @@ void Session::NotifyExit()	// Notify other users of exit and log.
    EnqueueOthers(new ExitNotify(name_obj));
 }
 
+void Session::PrintTimeLong(int minutes) // Print time value, long format.
+{
+   int hours = minutes / 60;
+   int days = hours / 24;
+   minutes -= hours * 60;
+   hours -= days * 24;
+   if (!minutes) output(" exactly");
+   if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
+		   minutes ? "," : hours || minutes ? " and" : "");
+   if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
+		    " and" : "");
+   if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+}
+
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 {
    int now,idle,days,hours,minutes;
@@ -558,17 +572,8 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    idle = (now - message_time) / 60;
 
    if (min && idle >= min) {
-      hours = idle / 60;
-      minutes = idle - hours * 60;
-      days = hours / 24;
-      hours -= days * 24;
       output("[You were idle for");
-      if (!minutes) output(" exactly");
-      if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
-		      minutes ? "," : hours || minutes ? " and" : "");
-      if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
-		       " and" : "");
-      if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+      PrintTimeLong(idle);
       output(".]\n");
    }
    message_time = now;
