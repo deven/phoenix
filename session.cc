@@ -547,7 +547,7 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
       output("[You were idle for");
       if (!minutes) output(" exactly");
       if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
-		      minutes ? "," : " and");
+		      minutes ? "," : hours || minutes ? " and" : "");
       if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
 		       " and" : "");
       if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
