@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id$
+# $Id: Makefile,v 1.1 2001/11/30 23:53:32 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -18,7 +18,10 @@
 # Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 # for more information or if any conditions of this licensing are unclear.
 #
-# $Log$
+# $Log: Makefile,v $
+# Revision 1.1  2001/11/30 23:53:32  deven
+# Initial revision
+#
 
 # Linux:
 CFLAGS = -g -Wall

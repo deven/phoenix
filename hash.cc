@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: hash.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Hash class implementation.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: hash.cc,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 #include "system.h"
 #include "boolean.h"

@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id$
+ * $Id: makepw.c,v 1.1 2001/11/30 23:53:32 deven Exp $
  *
  * Utility program to encrypt a single password in standard Unix "crypt" form.
  *
@@ -18,7 +18,10 @@
  * Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
  * for more information or if any conditions of this licensing are unclear.
  *
- * $Log$
+ * $Log: makepw.c,v $
+ * Revision 1.1  2001/11/30 23:53:32  deven
+ * Initial revision
+ *
  */
 
 #include <stdio.h>

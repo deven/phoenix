@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: constants.h,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Global constants header file.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: constants.h,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 // General parameters.
 const int BlockSize = 1024;	// data size for block

@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id$
+ * $Id: restart.c,v 1.1 2001/11/30 23:53:32 deven Exp $
  *
  * Utility program to restart Gangplank conferencing server from cron.
  *
@@ -18,7 +18,10 @@
  * Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
  * for more information or if any conditions of this licensing are unclear.
  *
- * $Log$
+ * $Log: restart.c,v $
+ * Revision 1.1  2001/11/30 23:53:32  deven
+ * Initial revision
+ *
  */
 
 #include <sys/types.h>

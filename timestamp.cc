@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: timestamp.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Timestamp class implementation.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: timestamp.cc,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 #include "gangplank.h"
 

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: fdtable.h,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // FDTable class interface.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: fdtable.h,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 class FDTable {			// File Descriptor Table
 private:

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: globals.h,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Global variables header file.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: globals.h,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 extern EventQueue events;	// Server event queue.
 
