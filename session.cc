@@ -927,7 +927,7 @@ void Session::SetIdle(char *args) // Set idle time.
       output("Your idle time is still");
       PrintTimeLong(idle);
       output(".\n");
-   } else if (idle = (now - message_time) / 60) {
+   } else if ((idle = (now - message_time) / 60)) {
       output("Your idle time has been set to");
       PrintTimeLong(idle);
       output(".\n");
@@ -1034,7 +1034,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
    if (!(drain = boolean(*args != '!'))) args++;
 
-   if (session = FindSession(args,matches)) {
+   if ((session = FindSession(args,matches))) {
       // Nuke target session.  // Should require confirmation! ***
       if (drain) {
 	 print("\"%s\" has been nuked.\n",~session->name);
@@ -1108,7 +1108,7 @@ void Session::DoDisplay(char *args) // Do /display command.
       output("Usage: /display <variable>[,<variable>...]\n");
       return;
    }
-   while (var = getword(args,Comma)) {
+   while ((var = getword(args,Comma))) {
       if (*var == DollarSign) {
          if (user_vars.Known(var)) {
             print("%s = \"%s\"\n",var,~user_vars[var]);
@@ -1982,7 +1982,7 @@ void Session::DoDestroy(char *args) // Do /destroy command.
    if (discussion) {
       discussion->Destroy(this);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Destroy(this);
       } else {
 	 DiscussionMatches(name,matches);
@@ -2020,7 +2020,7 @@ void Session::DoQuit(char *args) // Do /quit command.
    if (discussion) {
       discussion->Quit(this);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Quit(this);
       } else {
 	 DiscussionMatches(name,matches);
@@ -2041,7 +2041,7 @@ void Session::DoPermit(char *args) // Do /permit command.
    if (discussion) {
       discussion->Permit(this,args);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Permit(this,args);
       } else {
 	 DiscussionMatches(name,matches);
@@ -2062,7 +2062,7 @@ void Session::DoDepermit(char *args) // Do /depermit command.
    if (discussion) {
       discussion->Depermit(this,args);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Depermit(this,args);
       } else {
 	 DiscussionMatches(name,matches);
@@ -2083,7 +2083,7 @@ void Session::DoAppoint(char *args) // Do /appoint command.
    if (discussion) {
       discussion->Appoint(this,args);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Appoint(this,args);
       } else {
 	 DiscussionMatches(name,matches);
@@ -2104,7 +2104,7 @@ void Session::DoUnappoint(char *args) // Do /unappoint command.
    if (discussion) {
       discussion->Unappoint(this,args);
    } else {
-      if (discussion = FindDiscussion(name,matches2,true)) {
+      if ((discussion = FindDiscussion(name,matches2,true))) {
 	 discussion->Unappoint(this,args);
       } else {
 	 DiscussionMatches(name,matches);
