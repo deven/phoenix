@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.8 1994/01/09 05:17:33 deven Exp $
+// $Id: conf.cc,v 1.9 1994/01/09 07:02:47 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.9  1994/01/09 07:02:47  deven
+// Changed setpgrp() to setsid().
+//
 // Revision 1.8  1994/01/09 05:17:33  deven
 // Removed state machine from message_start().
 //
