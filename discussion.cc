@@ -268,7 +268,7 @@ void Discussion::Appoint(Session *session, char *args) {
    Session *s;
    char *user;
 
-   if (IsCreator(session) || IsModerator(session)) {
+   if (IsCreator(session) || IsModerator(session) || session->priv >= 50) {
       while ((user = getword(args, Comma))) {
 	 if ((s = session->FindSession(user, matches))) {
 	    if (IsModerator(s)) {
