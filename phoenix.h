@@ -34,3 +34,4 @@
 #include "listen.h"
 #include "telnet.h"
 #include "pointer.h"
+#include "globals.h"
