@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Conferencing system server -- General header file.
+// Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1994 by Deven T. Corzine.  All rights reserved.
 //
@@ -10,7 +10,7 @@
 
 // Home directory for server to run in.
 #ifndef HOME
-#define HOME "/home/deven/src/conf"
+#define HOME "/home/deven/src/phoenix"
 #endif
 
 // For compatibility.

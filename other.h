@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Conferencing system server -- Other (system) include files.
+// Phoenix conferencing system server -- Other (system) include files.
 //
 // Copyright 1992-1994 by Deven T. Corzine.  All rights reserved.
 //

@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 void OutputStream::OutputObject::output(Pointer<Telnet> &telnet)
 {				// Output object.

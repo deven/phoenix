@@ -2,13 +2,13 @@
 //
 // $Id$
 //
-// Conferencing system server -- Main program.
+// Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 int Shutdown;			// shutdown flag ***
 
@@ -150,8 +150,8 @@ void RestartServer()		// Restart server.
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
-   execl("conf","conf",0);
-   error("conf");
+   execl("phoenixd","phoenixd",0);
+   error("phoenixd");
 }
 
 void ShutdownServer()		// Shutdown server.

@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 Sendlist::Sendlist(Session &session,String &sendlist)
 {

@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 int Telnet::count = 0;
 
@@ -277,7 +277,7 @@ void Telnet::Welcome()
    if (Echo == TelnetWillWont) return;
 
    // Send welcome banner, announce guest account.
-   output("\nWelcome to conf!\n\nA \"guest\" account is available.\n\n");
+   output("\nWelcome to Phoenix!\n\nA \"guest\" account is available.\n\n");
 
    // Let's hope the SUPPRESS-GO-AHEAD option worked.
    if (!LSGA && !RSGA) {
