@@ -1826,7 +1826,7 @@ void main(int argc,char **argv) /* main program */
    FD_ZERO(&writefds);
 
    /* fork subprocess and exit parent */
-   if (strcmp(argv[1],"-debug")) {
+   if (argc > 1 && strcmp(argv[1],"-debug")) {
       switch (pid = fork()) {
       case 0:
 	 setpgrp();
