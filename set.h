@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Set class interface & implementation.
+// Set class interface and implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //

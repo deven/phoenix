@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Phoenix conferencing system server -- Primary header file.
+// Primary header file.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //

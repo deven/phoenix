@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Module which includes most server modules, for compiler efficiency.
+// Module which includes most other modules, for compiler efficiency.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
