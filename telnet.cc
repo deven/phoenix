@@ -179,10 +179,10 @@ void Telnet::PrintWithRedraw(char *format,...)
 {
    va_list ap;
 
+   UndrawInput();
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
-   UndrawInput();
    output(buf);
    RedrawInput();
 }
