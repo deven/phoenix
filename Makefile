@@ -22,12 +22,12 @@
 #
 
 # ESIX:
-CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
-LDFLAGS = -bsd
+# CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
+# LDFLAGS = -bsd
 
 # Sun:
-# CFLAGS = -g -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
-# LDFLAGS =
+CFLAGS = -g -DNEED_STRERROR
+LDFLAGS =
 
 # Mach:
 # CFLAGS = -g -DHOME='"/u/deven/src/conf"'
