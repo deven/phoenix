@@ -66,6 +66,7 @@ public:
    Pointer<Type> Shift() { return RemHead(); }
    int Unshift(Type *ptr) { return AddHead(ptr); }
    Pointer<Type> First();
+   Pointer<Type> Last();
    void Remove(Type *obj);
 };
 
@@ -161,6 +162,12 @@ template <class Type>
 Pointer<Type> List<Type>::First() {
    if (!head) return Pointer<Type>();
    return head->obj;
+}
+
+template <class Type>
+Pointer<Type> List<Type>::Last() {
+   if (!tail) return Pointer<Type>();
+   return tail->obj;
 }
 
 template <class Type>
