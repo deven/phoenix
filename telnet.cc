@@ -499,7 +499,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    set_NAWS(0, true);
 
    // Send welcome banner.
-   output("\nWelcome to Gangplank!\n\n");
+   print("\nWelcome to Gangplank! (%s)\n\n", VERSION);
 }
 
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
