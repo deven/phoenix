@@ -35,9 +35,8 @@ protected:
 public:
    FDType type;
    int fd;
-   static void Select() {
-      fdtable.Select();
-   }
+   static void CloseAll() { fdtable.CloseAll(); }
+   static void Select() { fdtable.Select(); }
    virtual void InputReady() = 0;
    virtual void OutputReady() = 0;
    virtual void Closed() = 0;
