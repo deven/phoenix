@@ -13,7 +13,7 @@ CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
 LDFLAGS = -bsd
 
 # Sun:
-# CFLAGS = -g -I. -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
+# CFLAGS = -g -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
 # LDFLAGS =
 
 # Mach:
