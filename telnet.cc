@@ -801,7 +801,7 @@ void Telnet::accept_input()	// Accept input line.
       LSGA = RSGA = LBin = RBin = TelnetEnabled;
       Echo = NAWS = 0;
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
-         RBin_callback = NAWS_callback = 0;
+	 RBin_callback = NAWS_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
 	     "TCP connection.\n(Use C-x C-e to toggle remote echo if you "\
 	     "need it.)\n\n");
@@ -1975,10 +1975,10 @@ void Telnet::OutputReady()	// telnet stream can output data
       switch (n) {
       case -1:
 #ifdef EWOULDBLOCK
-	 if (errno == EWOULDBLOCK) return;
+         if (errno == EWOULDBLOCK) return;
 #endif
 #ifdef EAGAIN
-	 if (errno == EAGAIN) return;
+         if (errno == EAGAIN) return;
 #endif
 	 switch (errno) {
 	 case EINTR:
@@ -2022,10 +2022,10 @@ void Telnet::OutputReady()	// telnet stream can output data
 	 switch (n) {
 	 case -1:
 #ifdef EWOULDBLOCK
-	    if (errno == EWOULDBLOCK) return;
+            if (errno == EWOULDBLOCK) return;
 #endif
 #ifdef EAGAIN
-	    if (errno == EAGAIN) return;
+            if (errno == EAGAIN) return;
 #endif
 	    switch (errno) {
 	    case EINTR:
