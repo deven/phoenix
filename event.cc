@@ -77,8 +77,8 @@ void RestartEvent::RestartServer()
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
-   execl("phoenixd", "phoenixd", 0);
-   error("phoenixd");
+   execl("/usr/local/bin/gangplank", "gangplank", 0);
+   error("gangplank");
 }
 
 boolean RestartEvent::Execute()

@@ -34,13 +34,13 @@ void Message::output(Telnet *telnet)
 
 void EntryNotify::output(Telnet *telnet)
 {
-   telnet->print("*** %s%s has entered Phoenix! [%s] ***\n", ~name->name,
+   telnet->print("*** %s%s has entered Gangplank! [%s] ***\n", ~name->name,
 		 ~name->blurb, time.stamp());
 }
 
 void ExitNotify::output(Telnet *telnet)
 {
-   telnet->print("*** %s%s has left Phoenix! [%s] ***\n", ~name->name,
+   telnet->print("*** %s%s has left Gangplank! [%s] ***\n", ~name->name,
 		 ~name->blurb, time.stamp());
 }
 

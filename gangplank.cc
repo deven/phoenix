@@ -197,7 +197,7 @@ int main(int argc, char **argv)	// main program
 	 error("mkdir(\"%s\", 0755)", ~home);
       }
       if (chdir(~home)) error("chdir(\"%s\")", ~home);
-      home.append("/phoenix");	// Make sure ~/lib/phoenix exists.
+      home.append("/gangplank"); // Make sure ~/lib/gangplank exists.
       if (chdir(~home) && errno == ENOENT && mkdir(~home, 0700)) {
 	 error("mkdir(\"%s\", 0700)", ~home);
       }
