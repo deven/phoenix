@@ -26,6 +26,7 @@
 class User: public Object {
    static List<User> users;	// List of users in system.
 public:
+   static const int BufSize = 1024; // size of password input buffer
    List<Session> sessions;	// sessions for this user
    String user;			// account name
    String password;		// password for this account (during login)
