@@ -543,6 +543,8 @@ boolean Session::CheckNameAvailability(char *name, boolean double_check,
 	       if (transferring) {
 		  telnet->output("Transferring active session...\n");
 		  session->Transfer(telnet);
+		  telnet = 0;
+		  Close();
 	       } else {
 		  telnet->print("You are%s attached elsewhere under that name."
 				"\n", double_check ? " now" : "");
