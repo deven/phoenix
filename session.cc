@@ -231,6 +231,32 @@ void Session::DoSignal(char *p)	// Do /signal command.
    }
 }
 
+void Session::DoSend(char *p)	// Do /send command.
+{
+   while (*p && isspace(*p)) p++;
+   if (!*p) {			// Display current sendlist.
+      if (!default_sendlist[0]) {
+	 telnet->output("Your default sendlist is turned off.\n");
+      } else if (!strcasecmp(default_sendlist,"everyone")) {
+	 telnet->output("You are sending to everyone.\n");
+      } else {
+	 telnet->print("Your default sendlist is set to \"%s\".\n",
+	       default_sendlist);
+      }
+   } else if (!strcasecmp(p,"off")) {
+      default_sendlist[0] = 0;
+      telnet->output("Your default sendlist has been turned off.\n");
+   } else if (!strcasecmp(p,"everyone")) {
+      strcpy(default_sendlist,p);
+      telnet->output("You are now sending to everyone.\n");
+   } else {
+      strncpy(default_sendlist,p,SendlistLen);
+      default_sendlist[SendlistLen - 1] = 0;
+      telnet->print("Your default sendlist is now set to \"%s\".\n",
+	    default_sendlist);
+   }
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];

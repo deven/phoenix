@@ -468,30 +468,7 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strncasecmp(line,"/signal",7)) {
 	 telnet->session->DoSignal(line + 7);
       } else if (!strncasecmp(line,"/send",5)) {
-	 char *p = line + 5;
-	 while (*p && isspace(*p)) p++;
-	 if (!*p) {
-	    // Display current sendlist.
-	    if (!telnet->session->default_sendlist[0]) {
-	       telnet->print("Your default sendlist is turned off.\n");
-	    } else if (!strcasecmp(telnet->session->default_sendlist,"everyone")) {
-	       telnet->print("You are sending to everyone.\n");
-	    } else {
-	       telnet->print("Your default sendlist is set to \"%s\".\n",
-		     telnet->session->default_sendlist);
-	    }
-	 } else if (!strcasecmp(p,"off")) {
-	    telnet->session->default_sendlist[0] = 0;
-	    telnet->print("Your default sendlist has been turned off.\n");
-	 } else if (!strcasecmp(p,"everyone")) {
-	    strcpy(telnet->session->default_sendlist,p);
-	    telnet->print("You are now sending to everyone.\n");
-	 } else {
-	    strncpy(telnet->session->default_sendlist,p,SendlistLen);
-	    telnet->session->default_sendlist[SendlistLen - 1] = 0;
-	    telnet->print("Your default sendlist is now set to \"%s\".\n",
-		  telnet->session->default_sendlist);
-	 }
+	 telnet->session->DoSend(line + 5);
       } else if (!strncasecmp(line,"/why",4)) {
 	 telnet->output("Why not?\n");
       } else if (!strncasecmp(line,"/blurb",3)) {
