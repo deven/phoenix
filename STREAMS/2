@@ -1,0 +1,81 @@
+From coderpunks-errors@toad.com  Wed Apr 17 20:45:06 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id UAA28791 for <deven@escher.ties.org>; Wed, 17 Apr 1996 20:45:00 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id UAA01883 for <deven@asylum.sf.ca.us>; Wed, 17 Apr 1996 20:44:58 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id UAA21960; Wed, 17 Apr 1996 20:44:55 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id RAA08156 for coderpunks-outgoing; Wed, 17 Apr 1996 17:33:09 -0700 (PDT)
+Received: from infinity.c2.org (infinity.c2.org [140.174.185.11]) by toad.com (8.7.5/8.7.3) with ESMTP id RAA08151 for <coderpunks@toad.com>; Wed, 17 Apr 1996 17:32:55 -0700 (PDT)
+Received: (from raph@localhost) by infinity.c2.org (8.7.4/8.6.9)
+	id RAA28356; Wed, 17 Apr 1996 17:26:31 -0700 (PDT)
+	Community ConneXion: Privacy & Community: <URL:http://www.c2.net>
+Date: Wed, 17 Apr 1996 17:26:30 -0700 (PDT)
+From: Raph Levien <raph@c2.org>
+To: Eric Murray <ericm@lne.com>
+cc: coderpunks@toad.com
+Subject: Re: Stream transformation
+In-Reply-To: <199604171748.KAA28585@slack.lne.com>
+Message-ID: <Pine.SUN.3.91.960417170542.23373G-100000@infinity.c2.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+
+
+On Wed, 17 Apr 1996, Eric Murray wrote:
+>
+> I used something similar in the internals of the SSL library I
+> have written.  It cleans up the code considerably vs. using
+> pointers and buffers.  The problem comes when you need to communicate
+> with a package that uses pointers and buffers- you wind up
+> making a glue layer to talk to it.   That's not nesessarily a
+> bad thing.
+
+   You'd end up having to do something similar anyway if you were using
+multiple different packages with different internal architectures. For
+example, if I were to recode premail in C, I would probably want to link
+in RIPEM for the S/MIME stuff and some other library for PGP. You win if
+the semantics are richer than all of the libraries.
+
+> >    It's a bit early to say, but the pragmatics look fairly decent. I
+> > ran a simple test in which I repeatedly sets up and tears down a
+> > pipeline, lowercasing a very small string. Each iteration takes about
+> > 28 us. Adding an additional transformer into the pipeline costs about
+> > 14 us each. This is a bit heavyweight compared with a simple procedure
+> > call. It turns out to be about the same as an MD5 of a 256 byte block.
+> > However, it's quite lightweight compared with such things as forking
+> > off a shell command, making a network connection, or an RSA operation.
+>
+> The way I implemented it is quite straightforward, depending
+> on malloc()ing and memcopy()ing stuff.  I was expecting to need to
+> rewrite those routines to essentially do my own memory management.
+> However when profiling my SSL library I found that the cost
+> of the mallocs and memcopys was so low im comparison to doing the
+> actual crypto that it is lost in the noise.
+
+   For straightforward stream processing, there is no copying of memory -
+each transformer simply reads out of its input fifo's buffer, and writes
+into its output fifo's. If you set up complicated graph structures, some
+copying will be needed.
+   The only mallocing is in setup and teardown.
+
+   I'm still fussing about overhead, but it's pretty clear that for
+crypto apps, it is insignificant.
+
+> >    My main question is: how useful is this work to other people? I
+> > will probably end up using something like this in the (eventual)
+> > recode of premail in C, but I'm interested in whether anyone else
+> > finds it interesting or potentially useful. I'm toying with writing it
+> > up as a paper, but obviously don't want to if it's "only interesting
+> > to other hippopotamuses."
+>
+> Well, it's interesting only to people who are writing networking apps
+> or crypto code. :-)
+
+   I've gotten a very positive response through private email, so it is
+likely that I will pursue it. One caveat: I haven't worked out the error
+handling yet, and that will make things a bit more complex.
+
+   I'll keep coderpunks up to date.
+
+Raph
