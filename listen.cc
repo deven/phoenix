@@ -28,20 +28,15 @@ Listen::Listen(int port)	// Listen on a port.
 {
    const int Backlog = 8;	// backlog on socket (for listen())
    struct sockaddr_in saddr;	// socket address
-   struct hostent *hp;		// host entry
-   char hostname[32];		// hostname
    int tries = 0;		// number of tries so far
    int option = 1;		// option to set for setsockopt()
 
-   type = ListenFD;		// Identify as a Listen FD.
+   type = ListenFD;		// Identify as a Listen FD.***
 
    // Initialize listening socket.
    memset(&saddr,0,sizeof(saddr));
    saddr.sin_family = AF_INET;
-   gethostname(hostname,sizeof(hostname));
-   hp = gethostbyname(hostname);
-   if (!hp) error("Listen::Listen(): gethostbyname(%s)",hostname);
-   memcpy(&saddr.sin_addr,hp->h_addr,hp->h_length);
+   saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port = htons((u_short) port);
    if ((fd = socket(AF_INET,SOCK_STREAM,0)) == -1) {
       error("Listen::Listen(): socket()");
