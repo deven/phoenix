@@ -169,8 +169,8 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
    }
 }
 
-void Telnet::PrintMessage(OutputType type,time_t time,Name *from,Sendlist *to,
-			  char *start)
+void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
+			  Sendlist *to,char *start)
 {
    char *wrap,*p;
    int col;
@@ -263,7 +263,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Name *from,Sendlist *to,
    }
 
    // Print timestamp. (make optional? ***)
-   print(" [%s]\n - ",date(time,11,5)); // assumes within last day ***
+   print(" [%s]\n - ",time.stamp());
 
    while (*start) {
       wrap = 0;
