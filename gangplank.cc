@@ -44,6 +44,26 @@ FILE *logfile;			// log file ***
 Timestamp ServerStartTime;	// time server started
 int ServerStartUptime;		// system uptime when server started
 
+void *operator new(size_t s)	// Provide a basic new operator.
+{
+   return malloc(s);
+}
+
+void *operator new[](size_t s)	// Provide a basic new[] operator.
+{
+   return malloc(s);
+}
+
+void operator delete(void *p)	// Provide a basic delete operator.
+{
+   free(p);
+}
+
+void operator delete[](void *p)	// Provide a basic delete[] operator.
+{
+   free(p);
+}
+
 void OpenLog()			// class Log? ***
 {
    char buf[32];
