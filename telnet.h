@@ -141,7 +141,6 @@ public:
    int EndLine() { return (Start() + End()) / width; }
    int EndColumn() { return (Start() + End()) % width; }
    void Close(boolean drain = true);
-   void Closed(boolean intentional = false);
    void output(int byte);
    void output(char *buf);
    void output(char *buf,int len);
