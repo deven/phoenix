@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.8 1994/01/09 05:09:03 deven Exp $
+// $Id: general.h,v 1.9 1994/01/19 21:52:31 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.9  1994/01/19 21:52:31  deven
+// Changed Port to DefaultPort, added declarations for RestartServer() and
+// ShutdownServer() functions.
+//
 // Revision 1.8  1994/01/09 05:09:03  deven
 // Added declarations for sys_errlist and sys_nerr.
 //

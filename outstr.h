@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.h,v 1.3 1994/01/02 12:03:08 deven Exp $
+// $Id: outstr.h,v 1.4 1994/01/19 22:02:48 deven Exp $
 //
 // OutputStream class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.h,v $
+// Revision 1.4  1994/01/19 22:02:48  deven
+// Changed Pointer parameters to reference parameters.
+//
 // Revision 1.3  1994/01/02 12:03:08  deven
 // Updated copyright notice, modified to use smart pointers, added Attach().
 //

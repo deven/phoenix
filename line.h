@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: line.h,v 1.3 1994/01/09 05:09:33 deven Exp $
+// $Id: line.h,v 1.4 1994/01/19 22:00:44 deven Exp $
 //
 // Line class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: line.h,v $
+// Revision 1.4  1994/01/19 22:00:44  deven
+// Changed Pointer parameter to a reference parameter.
+//
 // Revision 1.3  1994/01/09 05:09:33  deven
 // Removed Null() construct for Pointers.
 //
