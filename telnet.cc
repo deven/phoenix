@@ -835,8 +835,8 @@ inline void Telnet::transpose_chars() // Exchange two characters at point.
 
 inline void Telnet::forward_word() // Move point forward one word.
 {
-   while (*point && !isalpha(*point)) forward_char();
-   while (*point && isalpha(*point)) forward_char();
+   while (point < free && !isalpha(*point)) forward_char();
+   while (point < free && isalpha(*point)) forward_char();
 }
 
 inline void Telnet::backward_word() // Move point backward one word.
@@ -853,8 +853,8 @@ inline void Telnet::erase_word() // Erase word before point.
 
 inline void Telnet::delete_word() // Delete word at point.
 {
-   while (*point && !isalpha(*point)) delete_char();
-   while (*point && isalpha(*point)) delete_char();
+   while (point < free && !isalpha(*point)) delete_char();
+   while (point < free && isalpha(*point)) delete_char();
 }
 
 inline void Telnet::transpose_words() // Exchange two words at point.
