@@ -22,6 +22,10 @@
 
 #include "gangplank.h"
 
+#ifndef HAVE_STRCASECMP
+#error strcasecmp() required!
+#endif
+
 List<User> User::users;
 
 User *User::GetUser(char *login)
