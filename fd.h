@@ -24,6 +24,9 @@ public:
    static FDTable fdtable;	// File descriptor table.
    FDType type;
    int fd;
+   static void Select() {
+      fdtable.Select();
+   }
    virtual void InputReady(int fd) = 0;
    virtual void OutputReady(int fd) = 0;
    virtual void output(char *buf) {}

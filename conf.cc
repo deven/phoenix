@@ -792,6 +792,6 @@ int main(int argc,char **argv)	// main program
 	 if (logfile) fclose(logfile);
 	 exit(0);
       }
-      FD::fdtable.Select();
+      FD::Select();
    }
 }
