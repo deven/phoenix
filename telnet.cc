@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.23 1994/07/22 00:23:53 deven Exp $
+// $Id: telnet.cc,v 1.24 1994/08/22 07:18:13 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.24  1994/08/22 07:18:13  deven
+// Added ^U as erase_line().
+//
 // Revision 1.23  1994/07/22 00:23:53  deven
 // Added basic colon and semicolon processing.
 //
