@@ -42,7 +42,7 @@
 int main(int argc, char **argv)
 {
    char pw[9], salt[3];
-   char *key, *getpass();
+   char *key;
    key = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
    sleep(1);
    srandom(time(NULL));
