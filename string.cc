@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.8 2003/02/18 03:28:54 deven Exp $
+// $Id: string.cc,v 1.9 2003/02/18 04:32:04 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,13 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.9  2003/02/18 04:32:04  deven
+// Modified to use size_t type.  Changed Extra constant to 128 bytes.  Added
+// assign(), append() and prepend() methods for buffers.  Avoided unnecessary
+// reallocations for numeric assignments.  Modified %s escape in vsprintf() to
+// use new buffer form of append() instead of creating a temporary String, and
+// to remove a redundant call to strlen().
+//
 // Revision 1.8  2003/02/18 03:28:54  deven
 // Moved variable declarations outside of switch statement for portability.
 //

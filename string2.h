@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string2.h,v 1.6 2003/02/17 06:35:51 deven Exp $
+// $Id: string2.h,v 1.7 2003/02/18 04:32:04 deven Exp $
 //
 // String class interface.
 //
@@ -19,6 +19,13 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string2.h,v $
+// Revision 1.7  2003/02/18 04:32:04  deven
+// Modified to use size_t type.  Changed Extra constant to 128 bytes.  Added
+// assign(), append() and prepend() methods for buffers.  Avoided unnecessary
+// reallocations for numeric assignments.  Modified %s escape in vsprintf() to
+// use new buffer form of append() instead of creating a temporary String, and
+// to remove a redundant call to strlen().
+//
 // Revision 1.6  2003/02/17 06:35:51  deven
 // Added String::vsprintf() and String::sprintf() functions.
 //
