@@ -2141,10 +2141,10 @@ void Session::DoRename(char *args) // Do /rename command.
 	 return;
       }
    }
-   SetBlurb(blurb);		// Updates name_obj.
    EnqueueOthers(new RenameNotify(name,args));
    print("You have changed your name to \"%s\".\n",args);
    name = args;
+   name_obj = new Name(this,name,blurb);
 }
 
 void Session::DoHelp(char *args) // Do /help command.
