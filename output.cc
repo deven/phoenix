@@ -104,7 +104,7 @@ void CreateNotify::output(Telnet *telnet)
    }
 }
 
-DestroyNotify::DestroyNotify(Discussion *d, Session *s, time_t when = 0):
+DestroyNotify::DestroyNotify(Discussion *d, Session *s, time_t when):
 			     OutputObj(DestroyOutput, NotificationClass, when)
 {
    discussion = d;
@@ -117,7 +117,7 @@ void DestroyNotify::output(Telnet *telnet)
 		 ~name->name, ~name->blurb, ~discussion->name, time.stamp());
 }
 
-JoinNotify::JoinNotify(Discussion *d, Session *s, time_t when = 0):
+JoinNotify::JoinNotify(Discussion *d, Session *s, time_t when):
 		       OutputObj(JoinOutput, NotificationClass, when)
 {
    discussion = d;
@@ -130,7 +130,7 @@ void JoinNotify::output(Telnet *telnet)
 		 ~name->name, ~name->blurb, ~discussion->name, time.stamp());
 }
 
-QuitNotify::QuitNotify(Discussion *d, Session *s, time_t when = 0):
+QuitNotify::QuitNotify(Discussion *d, Session *s, time_t when):
 		       OutputObj(QuitOutput, NotificationClass, when)
 {
    discussion = d;
@@ -143,7 +143,7 @@ void QuitNotify::output(Telnet *telnet)
 		 ~name->name, ~name->blurb, ~discussion->name, time.stamp());
 }
 
-PublicNotify::PublicNotify(Discussion *d, Session *s, time_t when = 0):
+PublicNotify::PublicNotify(Discussion *d, Session *s, time_t when):
 			   OutputObj(PublicOutput, NotificationClass, when)
 {
    discussion = d;
@@ -156,7 +156,7 @@ void PublicNotify::output(Telnet *telnet)
 		 ~name->name, ~name->blurb, ~discussion->name, time.stamp());
 }
 
-PrivateNotify::PrivateNotify(Discussion *d, Session *s, time_t when = 0):
+PrivateNotify::PrivateNotify(Discussion *d, Session *s, time_t when):
 			     OutputObj(PrivateOutput, NotificationClass, when)
 {
    discussion = d;
@@ -170,7 +170,7 @@ void PrivateNotify::output(Telnet *telnet)
 }
 
 PermitNotify::PermitNotify(Discussion *d, Session *s, boolean flag,
-			   time_t when = 0):
+			   time_t when):
 			   OutputObj(PermitOutput, NotificationClass, when)
 {
    discussion = d;
@@ -204,7 +204,7 @@ void PermitNotify::output(Telnet *telnet)
 }
 
 DepermitNotify::DepermitNotify(Discussion *d, Session *s, boolean flag,
-			       Session *who, time_t when = 0):
+			       Session *who, time_t when):
 			       OutputObj(DepermitOutput, NotificationClass,
 			       when)
 {
@@ -258,7 +258,7 @@ void DepermitNotify::output(Telnet *telnet)
 }
 
 AppointNotify::AppointNotify(Discussion *d, Session *s1, Session *s2,
-			     time_t when = 0):
+			     time_t when):
 			     OutputObj(AppointOutput, NotificationClass, when)
 {
    discussion = d;
@@ -281,7 +281,7 @@ void AppointNotify::output(Telnet *telnet)
 }
 
 UnappointNotify::UnappointNotify(Discussion *d, Session *s1, Session *s2,
-				 time_t when = 0):
+				 time_t when):
 				 OutputObj(UnappointOutput, NotificationClass,
 				 when)
 {
