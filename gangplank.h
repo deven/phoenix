@@ -25,8 +25,8 @@
 
 #include "system.h"
 #include "boolean.h"
-#include "object.h"
 #include "general.h"
+#include "object.h"
 #include "constants.h"
 #include "functions.h"
 #include "string.h"

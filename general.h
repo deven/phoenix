@@ -40,3 +40,8 @@ class Session;
 class Telnet;
 class Timestamp;
 class User;
+
+void *operator new(size_t s);
+void *operator new[](size_t s);
+void operator delete(void *p);
+void operator delete[](void *p);
