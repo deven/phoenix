@@ -123,8 +123,8 @@ void OpenLog()			// class Log? ***
    struct tm *tm;
 
    if (!(tm = t.localtime())) error("OpenLog(): localtime");
-   sprintf(buf, "logs/%02d%02d%02d-%02d%02d", tm->tm_year, tm->tm_mon + 1,
-	   tm->tm_mday, tm->tm_hour, tm->tm_min);
+   sprintf(buf, "logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
+	   tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
    if (!(logfile = fopen(buf, "a"))) error("OpenLog(): %s", buf);
    setlinebuf(logfile);
    unlink("log");
