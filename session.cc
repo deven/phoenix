@@ -762,7 +762,24 @@ void Session::Blurb(char *line)
    // Print welcome banner and do a /who list and a /howmany.
    output("\n\nWelcome to Phoenix.  "
 	  "Type \"/help\" for a list of commands.\n\n");
-   DoWho("");			// Enqueues output.
+
+   Session *session;
+   Discussion *discussion;
+   Set<Session> sessionmatches;
+   Set<Discussion> discussionmatches;
+
+   // Make sure discussion A exists.
+   if (!FindSendable("A", session, sessionmatches, discussion,
+		     discussionmatches, false, true)) {
+      // Silently create the discussion, with logging. (no creator)
+      discussion = new Discussion(0, "A", "General Discussion", true);
+      discussions.AddHead(discussion);
+   }
+
+   // Automatic commands: (all enqueue output)
+   DoJoin("A");
+   DoSend("A");
+   DoWho("");
    DoHowMany("");
 
    telnet->History.Reset();	// Reset input history.
