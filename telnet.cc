@@ -324,6 +324,17 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
       // Print message header.
       if (flag) {
 	 session->reply_sendlist = from->name;
+
+	 // Quote reply sendlist if necessary.
+	 for (p = session->reply_sendlist; *p; p++) {
+	    if (*p == Space || *p == Comma || *p == Colon || *p == Semicolon ||
+	       *p == Underscore) {
+	       session->reply_sendlist.prepend(Quote);
+	       session->reply_sendlist.append(Quote);
+	       break;
+	    }
+	 }
+
 	 if (session->SignalPrivate) output(Bell);
 	 if (to->sessions.In(session)) {
 	    output("\n >> Private message from ");
