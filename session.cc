@@ -124,29 +124,29 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
 
 void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
-   if (t) {
-      telnet = t;
-      telnet->session = this;
-      log("Attach: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
-      EnqueueOthers(new AttachNotify(name_obj));
-      Pending.Attach(telnet);
-      output("*** End of reviewed output. ***\n");
-      EnqueueOutput();
-   }
+   telnet = t;
+   telnet->session = this;
+   log("Attach: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   EnqueueOthers(new AttachNotify(name_obj));
+   Pending.Attach(telnet);
+   output("*** End of reviewed output. ***\n");
+   EnqueueOutput();
 }
 
-void Session::Detach(boolean intentional) // Detach session from connection.
+void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
 {
    if (SignedOn && telnet) {
-      if (intentional) {
-	 log("Detach: %s (%s) on fd %d. (intentional)",name_only,user->user,
-	     telnet->fd);
-      } else {
-	 log("Detach: %s (%s) on fd %d. (accidental)",name_only,user->user,
-	     telnet->fd);
+      if (telnet == t) {
+	 if (intentional) {
+	    log("Detach: %s (%s) on fd %d. (intentional)",name_only,user->user,
+		t->fd);
+	 } else {
+	    log("Detach: %s (%s) on fd %d. (accidental)",name_only,user->user,
+		t->fd);
+	 }
+	 EnqueueOthers(new DetachNotify(name_obj,intentional));
+	 telnet = NULL;
       }
-      EnqueueOthers(new DetachNotify(name_obj,intentional));
-      telnet = NULL;
    } else {
       Close();
    }
@@ -490,7 +490,11 @@ void Session::ProcessInput(char *line)
 
 void Session::NotifyEntry()	// Notify other users of entry and log.
 {
-   log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   if (telnet) {
+      log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   } else {
+      log("Enter: %s (%s), detached.",name_only,user->user);
+   }
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
 }
 
