@@ -52,7 +52,7 @@ public:
    void SetAbsTime(time_t when) {
       time = when;
    }
-   void SetRelTime(time_t when) {
+   void SetRelTime(int when) {
       Timestamp now;
       time = now + when;
    }
