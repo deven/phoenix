@@ -214,8 +214,8 @@ void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
       for (unsigned char *p = (unsigned char *) sendlist; *p; p++) {
 	 if (*p == UnquotedUnderscore) *p = Underscore;
       }
-      telnet->print("%c%cNo names matched \"%s\". (message not sent)\n",Bell,Bell,
-		    sendlist);
+      telnet->print("%c%cNo names matched \"%s\". (message not sent)\n",Bell,
+		    Bell,sendlist);
       break;
    case 1:			// Found single match, send message.
       telnet->session->ResetIdle(10);
