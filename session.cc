@@ -266,18 +266,6 @@ void Session::announce(char *format,...) // formatted output to all sessions
    }
 }
 
-char *match(char *&input,char *keyword,int min = 0) {
-   char *p = input,*q = keyword;
-   if (!min) min = strlen(keyword);
-   for (int i = 0; *q; p++, q++, i++) {
-      if (isspace(*p) || !*p) break;
-      if ((isupper(*p) ? tolower(*p) : *p) != *q) return 0;
-   }
-   if (i < min) return 0;
-   while (isspace(*p)) p++;
-   return input = p;
-}
-
 int match_name(char *name,char *sendlist) // returns position of match or 0.
 {
    char *start,*p,*q;

@@ -216,6 +216,18 @@ void ShutdownServer()		// Shutdown server.
    exit(0);
 }
 
+char *match(char *&input,char *keyword,int min = 0) {
+   char *p = input,*q = keyword;
+   if (!min) min = strlen(keyword);
+   for (int i = 0; *q; p++, q++, i++) {
+      if (isspace(*p) || !*p) break;
+      if ((isupper(*p) ? tolower(*p) : *p) != *q) return 0;
+   }
+   if (i < min) return 0;
+   while (isspace(*p)) p++;
+   return input = p;
+}
+
 int main(int argc,char **argv)	// main program
 {
    int pid;			// server process number
