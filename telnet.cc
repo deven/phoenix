@@ -751,7 +751,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    case TelnetIAC:
 	       // Escaped (doubled) TelnetIAC is data.
-	       *((unsigned char *) free++) = TelnetIAC;
+	       insert_char(TelnetIAC);
 	       state = 0;
 	       break;
 	    default:
