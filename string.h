@@ -63,6 +63,9 @@ public:
    operator const char *() const { return str; }
    operator char *() { return str; }
    operator int() { return len; }
+#ifdef BOOL_TYPE
+   operator bool() { return len != 0; }
+#endif
    int length() { return len; }
 };
 
