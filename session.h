@@ -22,4 +22,5 @@ public:
    time_t message_time;		// time signed on
    Session(Telnet *t);		// constructor
    ~Session();			// destructor
+   int ResetIdle(int min);	// Reset and return idle time, maybe report.
 };
