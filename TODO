@@ -1,0 +1,11 @@
+$Id$
+
+Review old Phoenix TODO list for relevant tasks.
+
+Extract help text into separate files.
+
+Write new command parser, move command implementations from Session class into
+individual command implementation classes.
+
+Create new classes for input editing and terminal handling, instead of having
+the Telnet class deal with these things directly.

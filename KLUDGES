@@ -1,0 +1,25 @@
+$Id$
+
+Most of the C++ modules are compiled as a single "most.cc" module via #include
+directives.  This is actually faster than compiling all the modules separately
+and the executable size is smaller because GCC doesn't include redundant debug
+information in each object file.  This seems clumsy, but actually works well.
+
+All help text for the /help command is hardcoded into the source code.  This
+kludge was for expediency, to avoid unnecessary file I/O that could block the
+single-threaded server and cause network connections to become unresponsive.
+No, it's not elegant or convenient.  Yes, this will be changed.
+
+The Session and Telnet classes are larger than they ought to be.  They have
+grown and are in need of splitting into further classes when time permits.
+
+The Telnet class currently performs all input editing and terminal handling
+functions directly; these should be implemented in separate classes.
+
+Only the ANSI terminal type is supported for user connections.  The "screen"
+program mostly works as a workaround.  There are some known bugs in the ANSI
+terminal handling for non-Amiga ANSI implementations, including "screen".
+
+Currently, the guest account ("guest") is hardcoded in the "user.cc" file.
+This entry overrides any "guest" entry in the password file.  To disable
+guest access, comment out the relevant line in "user.cc".
