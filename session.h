@@ -36,6 +36,7 @@ public:
    ~Session();			// destructor
    void Link();			// Link session into global list.
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
+   void DoDown(char *args);	// Do !down command.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);
