@@ -194,7 +194,6 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
-   ResetIdle(10);
    EnqueueOutput();
 }
 
