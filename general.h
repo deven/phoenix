@@ -59,11 +59,13 @@
 
 // Class declarations.
 class Block;
+class Discussion;
 class FD;
 class FDTable;
 class Line;
 class Listen;
 class OutputBuffer;
+class Sendlist;
 class Session;
 class Telnet;
 class User;
