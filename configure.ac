@@ -1,4 +1,4 @@
-# $Id: configure.ac,v 1.3 2002/11/26 06:28:28 deven Exp $
+# $Id: configure.ac,v 1.4 2003/02/17 06:15:18 deven Exp $
 #
 # Process this file with autoconf to produce a configure script.
 AC_INIT([gangplank], [1.0.0.beta.9], [bugs@gangplank.org])

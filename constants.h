@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: constants.h,v 1.2 2002/09/17 06:20:06 deven Exp $
+// $Id: constants.h,v 1.3 2003/02/17 06:16:20 deven Exp $
 //
 // Global constants header file.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: constants.h,v $
+// Revision 1.3  2003/02/17 06:16:20  deven
+// Moved BufSize constant into Telnet class.
+//
 // Revision 1.2  2002/09/17 06:20:06  deven
 // Modified DefaultPort to use PORT value from configure script.
 //
