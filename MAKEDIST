@@ -10,7 +10,7 @@
 
 * Edit the ChangeLog, NEWS and RELEASES files and checkin to CVS.
 
-* Run "./bootstrap; ./configure; make distcheck; make distclean".
+* Run "./bootstrap; ./configure; make distcheck".
 
 * Create patch from previous release with "diff -urN".
 
