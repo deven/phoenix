@@ -820,7 +820,7 @@ void Telnet::accept_input()	// Accept input line.
 
    point = free = data;		// Wipe input line. (data intact)
    mark = 0;			// Wipe mark.
-   prompt = 0;			// Wipe prompt.
+   prompt = "";			// Wipe prompt.
 
    session->Input(data);	// Call state-specific input line processor.
 
