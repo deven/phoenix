@@ -1,4 +1,4 @@
-$Id$
+$Id: KLUDGES,v 1.1 2001/11/30 23:53:32 deven Exp $
 
 Most of the C++ modules are compiled as a single "most.cc" module via #include
 directives.  This is actually faster than compiling all the modules separately

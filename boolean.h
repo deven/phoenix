@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: boolean.h,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Boolean type header file.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: boolean.h,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 // GCC versions beyond 2.5.8 have builtin "bool" boolean data type.
 #if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ > 5)

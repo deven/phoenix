@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: event.h,v 1.1 2001/11/30 23:53:32 deven Exp $
 //
 // Event and derived classes, interfaces.
 //
@@ -18,7 +18,10 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
+// $Log: event.h,v $
+// Revision 1.1  2001/11/30 23:53:32  deven
+// Initial revision
+//
 
 // Types of Event subclasses.
 enum EventType {
