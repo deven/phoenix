@@ -1704,6 +1704,7 @@ void main(int argc,char **argv) /* main program */
    shutdown = 0;
    connections = NULL;
    free_blocks = NULL;
+   if (chdir("/home/deven/src/conf")) error("chdir");
    open_log();
    nfds = getdtablesize();
    lfd = listen_on(PORT,BACKLOG);
