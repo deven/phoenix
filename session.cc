@@ -20,6 +20,7 @@ Session::Session(Telnet *t)
 
    strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
    last_sendlist[0] = 0;		// No previous sendlist yet.
+   reply_sendlist[0] = 0;		// No reply sendlist yet.
    login_time = message_time = time(0); // Reset timestamps.
 
    user = new User(this);	// Create a new User for this Session.

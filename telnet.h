@@ -107,6 +107,8 @@ public:
    void RedrawInput();		// Redraw input line on screen.
    void OutputWithRedraw(char *buf);
    void PrintWithRedraw(char *format,...);
+   void PrintMessage(MessageType type,char *from,char *reply_to,char *to,
+		     char *msg);
    void set_echo(CallbackFuncPtr callback,int state);
    void set_LSGA(CallbackFuncPtr callback,int state);
    void set_RSGA(CallbackFuncPtr callback,int state);
