@@ -868,7 +868,6 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 void Session::SetIdle(char *args) // Set idle time.
 {
    int num,now,idle,days,hours,minutes;
-   boolean flag;
 
    days = hours = minutes = 0;
    now = time(0);
