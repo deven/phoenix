@@ -20,26 +20,26 @@
 //
 // $Log$
 
-class AssocEntry: public Object {
-friend class Assoc;
-friend class AssocIter;
+class HashEntry: public Object {
+friend class Hash;
+friend class HashIter;
 private:
-   Pointer<AssocEntry> next;	// Next entry on hash chain.
-   String key;			// Key for associative array entry.
-   String value;		// Value for associative array entry.
-   AssocEntry(char *k, char *v): key(k), value(v) { }
+   Pointer<HashEntry> next;	// Next entry on hash chain.
+   String key;			// Key for hash entry.
+   String value;		// Value for hash entry.
+   HashEntry(char *k, char *v): key(k), value(v) { }
 public:
    String Key() { return key; }
    String Value() { return value; }
-   AssocEntry &operator =(AssocEntry &entry) {
+   HashEntry &operator =(HashEntry &entry) {
       value = entry.value;
       return *this;
    }
-   AssocEntry &operator =(String &v) {
+   HashEntry &operator =(String &v) {
       value = v;
       return *this;
    }
-   AssocEntry &operator =(char *v) {
+   HashEntry &operator =(char *v) {
       value = v;
       return *this;
    }
@@ -50,16 +50,16 @@ public:
    char *operator ~() { return ~value; }
 };
 
-class Assoc {
-friend class AssocIter;
+class Hash {
+friend class HashIter;
 private:
    static const int Size = 211;
    int count;
-   Pointer<AssocEntry> bucket[Size];
+   Pointer<HashEntry> bucket[Size];
 
    int Hash(char *key);
 public:
-   Assoc(): count(0) { }
+   Hash(): count(0) { }
    int Count() { return count; }
    void Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
    boolean Known(String &key) { return Known(~key); }
@@ -72,34 +72,34 @@ public:
    void Delete(char *key);
    String Fetch(String &key) { return Fetch(~key); }
    String Fetch(char *key);
-   AssocEntry &operator [](char *key);
-   AssocEntry &operator [](String &key) { return (*this)[~key]; }
+   HashEntry &operator [](char *key);
+   HashEntry &operator [](String &key) { return (*this)[~key]; }
 };
 
-class AssocIter {
+class HashIter {
 private:
-   Assoc *array;
-   Pointer<AssocEntry> entry;
+   Hash *array;
+   Pointer<HashEntry> entry;
    int bucket;
 public:
-   AssocIter(): bucket(0) { }
-   AssocIter(Assoc &a): array(&a), bucket(0) { }
-   AssocIter(Assoc *a): array(a), bucket(0) { }
-   AssocIter &operator =(Assoc &a) {
+   HashIter(): bucket(0) { }
+   HashIter(Hash &a): array(&a), bucket(0) { }
+   HashIter(Hash *a): array(a), bucket(0) { }
+   HashIter &operator =(Hash &a) {
       array = &a;
       entry = 0;
       bucket = 0;
       return *this;
    }
-   AssocIter &operator =(Assoc *a) {
+   HashIter &operator =(Hash *a) {
       array = a;
       entry = 0;
       bucket = 0;
       return *this;
    }
-   AssocEntry *operator ++();
-   AssocEntry *operator ++(int) { return ++(*this); }
-   operator AssocEntry *() { return entry; }
-   operator AssocEntry &() { return *entry; }
+   HashEntry *operator ++();
+   HashEntry *operator ++(int) { return ++(*this); }
+   operator HashEntry *() { return entry; }
+   operator HashEntry &() { return *entry; }
    char *operator ~() { return ~(entry->value); }
 };
