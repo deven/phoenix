@@ -37,16 +37,6 @@ public:
    int AddTail(Pointer<Type> &ptr);
    Pointer<Type> RemHead();
    Pointer<Type> RemTail();
-   Pointer<Type> Delete(Pointer<Node<Type>> node) {
-      if (!node) return Pointer<Type>();
-      if (!node->prev) return RemHead();
-      if (!node->next) return RemTail();
-      count--;
-      node->prev->next = node->next;
-      node->next->prev = node->prev;
-      node->next = node->prev = NULL;
-      return obj;
-   }
    int Enqueue(Pointer<Type> &ptr) { return AddTail(ptr); }
    Pointer<Type> Dequeue() { return RemHead(); }
    int Push(Pointer<Type> &ptr) { return AddTail(ptr); }
