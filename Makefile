@@ -47,9 +47,12 @@ LIBS = -lcrypt
 # Solaris:
 #LIBS = -lsocket -lnsl
 
+# Cygwin/Win32:
+#CFLAGS = -g -Wall -fno-rtti -fno-exceptions -DFD_SETSIZE=256
+#EXT = .exe
 
-UTIL = makepw restart
-EXEC = gangplank
+UTIL = makepw$(EXT) restart$(EXT)
+EXEC = gangplank$(EXT)
 HDRS = gangplank.h system.h boolean.h object.h general.h constants.h \
 	functions.h string.h list.h set.h hash.h timestamp.h line.h block.h \
 	outbuf.h name.h output.h outstr.h event.h eventqueue.h sendlist.h \
@@ -85,7 +88,7 @@ hash.o: system.h boolean.h object.h string.h general.h hash.h pointer.h \
 string.o: boolean.h object.h string.h string.cc
 
 clean:
-	rm -f makepw makepw.o restart restart.o $(EXEC) $(OBJS) core *~
+	rm -f $(EXEC) $(UTIL) makepw.o restart.o $(OBJS) core *~
 
 install: all
 	install -c $(EXEC) $(UTIL) /usr/local/bin/$(EXEC)
