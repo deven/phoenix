@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.9 1994/04/15 22:32:40 deven Exp $
+// $Id: telnet.h,v 1.10 1994/04/21 06:07:14 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.10  1994/04/21 06:07:14  deven
+// Added input history, sort of kill ring, word editing commands.
+//
 // Revision 1.9  1994/04/15 22:32:40  deven
 // Changed prompt to use String class, modified PrintMessage declaration.
 //

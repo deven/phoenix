@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.h,v 1.2 1994/04/16 10:40:00 deven Exp $
+// $Id: sendlist.h,v 1.3 1994/04/21 06:02:53 deven Exp $
 //
 // Sendlist class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.h,v $
+// Revision 1.3  1994/04/21 06:02:53  deven
+// Changed Sendlist constructor and set() arguments.
+//
 // Revision 1.2  1994/04/16 10:40:00  deven
 // Replaced Enqueue() with Expand().
 //

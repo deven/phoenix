@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.2 1994/04/15 22:08:55 deven Exp $
+// $Id: string.h,v 1.3 1994/04/21 05:54:32 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.3  1994/04/21 05:54:32  deven
+// Added StringObj class for shared strings, using multiple inheritance from
+// both String and Object classes.
+//
 // Revision 1.2  1994/04/15 22:08:55  deven
 // Changed String objects to non-reference-counted, modified to include extra
 // bytes in string and to always have a non-null pointer allocated.

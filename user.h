@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.4 1994/02/05 18:28:23 deven Exp $
+// $Id: user.h,v 1.5 1994/04/21 06:06:48 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.5  1994/04/21 06:06:48  deven
+// Updated to use List::Remove().
+//
 // Revision 1.4  1994/02/05 18:28:23  deven
 // Completely reorganized User class.
 //
