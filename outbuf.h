@@ -16,7 +16,7 @@ public:
    Block *head;			// first data block
    Block *tail;			// last data block
    OutputBuffer() {		// constructor
-      head = tail = 0;
+      head = tail = NULL;
    }
    ~OutputBuffer() {		// destructor
       Block *block;
@@ -26,7 +26,25 @@ public:
 	 head = block->next;
 	 delete block;
       }
-      tail = 0;
+      tail = NULL;
+   }
+   char *GetData() {		// Save buffer in string and erase.
+      int len = 0;
+      for (Block *block = head; block; block = block->next) {
+	 len += block->free - block->data;
+      }
+      if (!len) return NULL;
+      char *buf = new char[++len];
+      for (char *p = buf; head; p += len) {
+	 block = head;
+	 head = block->next;
+	 len = block->free - block->data;
+	 strncpy(p,block->data,len);
+	 delete block;
+      }
+      tail = NULL;
+      *p = 0;
+      return buf;
    }
    boolean out(int byte) {	// Output one byte, return if new.
       boolean select;
