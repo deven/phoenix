@@ -470,7 +470,7 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strncasecmp(line,"/send",5)) {
 	 telnet->session->DoSend(line + 5);
       } else if (!strncasecmp(line,"/why",4)) {
-	 telnet->output("Why not?\n");
+	 telnet->session->DoWhy();
       } else if (!strncasecmp(line,"/blurb",3)) {
 	 char *start = line,*end;
 	 int len = NameLen - strlen(telnet->session->name_only) - 4;
