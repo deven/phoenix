@@ -457,7 +457,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
    Pointer<Telnet> telnet;
    int matches = 0;
 
-   if (drain = boolean(*args == '!')) args++;
+   if (!(drain = boolean(*args != '!'))) args++;
 
    if (!strcasecmp(args,"me")) {
       target = this;
@@ -511,7 +511,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
       telnet = target->telnet;
       target->telnet = NULL;
       log("%s (%s) on fd %d has been nuked by %s (%s).",target->name_only,
-	  target->user->user,target->telnet->fd,name_only,user->user);
+	  target->user->user,telnet->fd,name_only,user->user);
       telnet->UndrawInput();
       telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
       telnet->RedrawInput();
