@@ -132,7 +132,7 @@ public:
    void Password(char *line);
    void EnteredName(char *line);
    void TransferSession(char *line);
-   void Blurb(char *line);
+   void EnteredBlurb(char *line);
    void ProcessInput(char *line);
    void ListItem(boolean &flag, String &last, char *str);
    boolean GetWhoSet(char *args, Set<Session> &who, String &errors,
