@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.3 2002/09/17 02:41:30 deven Exp $
+// $Id: string.cc,v 1.4 2002/11/21 06:07:48 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.4  2002/11/21 06:07:48  deven
+// Changed "string.h" to "string2.h" to avoid conflict with <string.h> file.
+//
 // Revision 1.3  2002/09/17 02:41:30  deven
 // Added include file config.h.  Added conditional checks for some includes,
 // based on configure's tests.

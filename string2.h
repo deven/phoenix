@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.3 2002/09/17 04:49:50 deven Exp $
+// $Id: string2.h,v 1.3 2002/09/17 04:49:50 deven Exp $
 //
 // String class interface.
 //
@@ -18,7 +18,7 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: string.h,v $
+// $Log: string2.h,v $
 // Revision 1.3  2002/09/17 04:49:50  deven
 // Modified to check HAVE_BOOL (determined by configure) instead of BOOL_TYPE.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.h,v 1.3 2002/09/17 02:27:33 deven Exp $
+// $Id: gangplank.h,v 1.4 2002/11/21 06:06:33 deven Exp $
 //
 // Primary header file.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.h,v $
+// Revision 1.4  2002/11/21 06:06:33  deven
+// Changed "string.h" to "string2.h" to avoid conflict with <string.h> file.
+//
 // Revision 1.3  2002/09/17 02:27:33  deven
 // Added config.h include file.
 //

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.1 2002/11/19 23:06:34 deven Exp $
+# $Id: Makefile.am,v 1.2 2002/11/21 06:08:26 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,10 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile.am,v $
+# Revision 1.2  2002/11/21 06:08:26  deven
+# Changed "string.h" to "string2.h" to avoid conflict with <string.h> file,
+# removed DEFAULT_INCLUDES which was suppressing -I of the source directory.
+#
 # Revision 1.1  2002/11/19 23:06:34  deven
 # Initial revision
 #

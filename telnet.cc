@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.5 2002/09/20 05:34:42 deven Exp $
+// $Id: telnet.cc,v 1.6 2002/10/30 05:55:05 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,13 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.6  2002/10/30 05:55:05  deven
+// Fixed ANSI terminal-handling problems related to line wrapping.  (This code
+// was originally developed for the Amiga ANSI emulation, which may not work
+// correctly with this new code, but this code works correctly with standard
+// ANSI terminals.)  Also modified erase_line() to call kill_line() to place
+// the erased line into the kill-ring.
+//
 // Revision 1.5  2002/09/20 05:34:42  deven
 // Generate a compile-time error if inet_ntoa() not available.  Modified to
 // only output banner message about guest access if enabled by configure.
