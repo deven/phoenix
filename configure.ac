@@ -100,7 +100,8 @@ AC_FUNC_FORK
 AC_FUNC_SETVBUF_REVERSED
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
-AC_CHECK_FUNCS([crypt getpass inet_ntoa memset mkdir select socket strcasecmp strchr strerror strncasecmp])
+AC_CHECK_FUNCS([getpass strerror])
+AC_CHECK_FUNCS([crypt inet_ntoa memset mkdir select socket strcasecmp strchr strncasecmp], [], [AC_MSG_ERROR([Required function $ac_func() not found!])])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -80,22 +80,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_CRYPT
-#error crypt() required!
-#endif
-
-#ifndef HAVE_STRCASECMP
-#error strcasecmp() required!
-#endif
-
-#ifndef HAVE_STRNCASECMP
-#error strncasecmp() required!
-#endif
-
-#ifndef HAVE_STRCHR
-#error strchr() required!
-#endif
-
 List<Session> Session::inits;
 List<Session> Session::sessions;
 List<Discussion> Session::discussions;

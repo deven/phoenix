@@ -60,10 +60,6 @@
 
 #include "gangplank.h"
 
-#ifndef HAVE_MKDIR
-#error mkdir() required!
-#endif
-
 #ifndef HAVE_STRERROR
 extern int sys_nerr;
 extern char *str_errlist[];
