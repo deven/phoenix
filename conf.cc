@@ -247,7 +247,7 @@ void login(Telnet *telnet,char *line)
 {
    // Check against hardcoded logins.
    // stuff ***
-   if (!strcmp(line,"guest")) {
+   if (!strcasecmp(line,"guest")) {
       strcpy(telnet->session->user->user,line);
       strcpy(telnet->session->user->password,"guest");
       telnet->session->name[0] = 0;
@@ -273,7 +273,7 @@ void login(Telnet *telnet,char *line)
 	    while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
 	    while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
 	    if (!priv) continue;
-	    if (!strcmp(line,user)) {
+	    if (!strcasecmp(line,user)) {
 	       found = 1;
 	       strcpy(telnet->session->user->user,user);
 	       strcpy(telnet->session->user->password,password);
@@ -341,7 +341,7 @@ void name(Telnet *telnet,char *line)
 {
    if (!*line) {
       // blank line
-      if (!strcmp(telnet->session->user->user,"guest")) {
+      if (!strcasecmp(telnet->session->user->user,"guest")) {
 	 // Prompt for name.
 	 telnet->output("\n");
 	 telnet->Prompt("Enter name: ");
@@ -414,8 +414,8 @@ void process_input(Telnet *telnet,char *line)
          telnet->output("Sorry, all !commands are privileged.\n");
          return;
       }
-      if (!strncmp(line,"!down",5)) {
-	 if (!strcmp(line,"!down !")) {
+      if (!strncasecmp(line,"!down",5)) {
+	 if (!strcasecmp(line,"!down !")) {
 	    log("Immediate shutdown requested by %s (%s).",
 		telnet->session->name_only,telnet->session->user->user);
 	    log("Final shutdown warning.");
@@ -425,7 +425,7 @@ void process_input(Telnet *telnet,char *line)
 			     "\n%c%c",Bell,Bell,Bell,Bell);
 	    alarm(5);
 	    Shutdown = 2;
-	 } else if (!strcmp(line,"!down cancel")) {
+	 } else if (!strcasecmp(line,"!down cancel")) {
 	    if (Shutdown) {
 	       Shutdown = 0;
 	       alarm(0);
@@ -449,7 +449,7 @@ void process_input(Telnet *telnet,char *line)
 	    alarm(i);
 	    Shutdown = 1;
 	 }
-      } else if (!strncmp(line,"!nuke ",6)) {
+      } else if (!strncasecmp(line,"!nuke ",6)) {
 	 int i;
 
 	 if (sscanf(line+6,"%d",&i) == 1) {
@@ -462,7 +462,7 @@ void process_input(Telnet *telnet,char *line)
 	 telnet->output("Unknown !command.\n");
       }
    } else if (*line == '/') {
-      if (!strncmp(line,"/bye",4)) {
+      if (!strncasecmp(line,"/bye",4)) {
 	 // Exit conf.
 	 if (telnet->Output.head) {
 	    // Queued output, try to send it first.
@@ -478,42 +478,42 @@ void process_input(Telnet *telnet,char *line)
 	    // No queued output, close immediately.
 	    telnet->Close();
 	 }
-      } else if (!strncmp(line,"/who",4)) {
+      } else if (!strncasecmp(line,"/who",4)) {
 	 // /who list.
 	 Session::who_cmd(telnet);
-      } else if (!strcmp(line,"/date")) {
+      } else if (!strcasecmp(line,"/date")) {
 	 // Print current date and time.
          telnet->print("%s\n",date(0,0,0));
-      } else if (!strncmp(line,"/signal",7)) {
+      } else if (!strncasecmp(line,"/signal",7)) {
 	 char *p = line + 7;
 	 while (*p && isspace(*p)) p++;
-	 if (!strncmp(p,"on",2)) {
+	 if (!strncasecmp(p,"on",2)) {
 	    telnet->SignalPublic = true;
 	    telnet->SignalPrivate = true;
 	    telnet->output("All signals are now on.\n");
-	 } else if (!strncmp(p,"off",3)) {
+	 } else if (!strncasecmp(p,"off",3)) {
 	    telnet->SignalPublic = false;
 	    telnet->SignalPrivate = false;
 	    telnet->output("All signals are now off.\n");
-	 } else if (!strncmp(p,"public",6)) {
+	 } else if (!strncasecmp(p,"public",6)) {
 	    p += 6;
 	    while (*p && isspace(*p)) p++;
-	    if (!strncmp(p,"on",2)) {
+	    if (!strncasecmp(p,"on",2)) {
 	       telnet->SignalPublic = true;
 	       telnet->output("Signals for public messages are now on.\n");
-	    } else if (!strncmp(p,"off",3)) {
+	    } else if (!strncasecmp(p,"off",3)) {
 	       telnet->SignalPublic = false;
 	       telnet->output("Signals for public messages are now off.\n");
 	    } else {
 	       telnet->output("/signal public syntax error!\n");
 	    }
-	 } else if (!strncmp(p,"private",7)) {
+	 } else if (!strncasecmp(p,"private",7)) {
 	    p += 7;
 	    while (*p && isspace(*p)) p++;
-	    if (!strncmp(p,"on",2)) {
+	    if (!strncasecmp(p,"on",2)) {
 	       telnet->SignalPrivate = true;
 	       telnet->output("Signals for private messages are now on.\n");
-	    } else if (!strncmp(p,"off",3)) {
+	    } else if (!strncasecmp(p,"off",3)) {
 	       telnet->SignalPrivate = false;
 	       telnet->output("Signals for private messages are now off.\n");
 	    } else {
@@ -522,23 +522,23 @@ void process_input(Telnet *telnet,char *line)
 	 } else {
 	    telnet->output("/signal syntax error!\n");
 	 }
-      } else if (!strncmp(line,"/send",5)) {
+      } else if (!strncasecmp(line,"/send",5)) {
 	 char *p = line + 5;
 	 while (*p && isspace(*p)) p++;
 	 if (!*p) {
 	    // Display current sendlist.
 	    if (!telnet->session->default_sendlist[0]) {
 	       telnet->print("Your default sendlist is turned off.\n");
-	    } else if (!strcmp(telnet->session->default_sendlist,"everyone")) {
+	    } else if (!strcasecmp(telnet->session->default_sendlist,"everyone")) {
 	       telnet->print("You are sending to everyone.\n");
 	    } else {
 	       telnet->print("Your default sendlist is set to \"%s\".\n",
 		     telnet->session->default_sendlist);
 	    }
-	 } else if (!strcmp(p,"off")) {
+	 } else if (!strcasecmp(p,"off")) {
 	    telnet->session->default_sendlist[0] = 0;
 	    telnet->print("Your default sendlist has been turned off.\n");
-	 } else if (!strcmp(p,"everyone")) {
+	 } else if (!strcasecmp(p,"everyone")) {
 	    strcpy(telnet->session->default_sendlist,p);
 	    telnet->print("You are now sending to everyone.\n");
 	 } else {
@@ -547,9 +547,9 @@ void process_input(Telnet *telnet,char *line)
 	    telnet->print("Your default sendlist is now set to \"%s\".\n",
 		  telnet->session->default_sendlist);
 	 }
-      } else if (!strncmp(line,"/why",4)) {
+      } else if (!strncasecmp(line,"/why",4)) {
 	 telnet->output("Why not?\n");
-      } else if (!strncmp(line,"/blurb",3)) {
+      } else if (!strncasecmp(line,"/blurb",3)) {
 	 char *start = line,*end;
 	 int len = NameLen - strlen(telnet->session->name_only) - 4;
 
@@ -557,7 +557,7 @@ void process_input(Telnet *telnet,char *line)
 	 while (*start && isspace(*start)) start++;
 	 if (*start) {
 	    for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
-	    if (strncmp(start,"off",end - start + 1)) {
+	    if (strncasecmp(start,"off",end - start + 1)) {
 	       if (*start == '\"' && *end == '\"' && start < end ||
 		   *start == '[' && *end == ']') start++; else end++;
 	       if (end - start < len) len = end - start;
@@ -584,7 +584,7 @@ void process_input(Telnet *telnet,char *line)
 	       telnet->output("You do not currently have a blurb set.\n");
 	    }
 	 }
-      } else if (!strncmp(line,"/help",5)) {
+      } else if (!strncasecmp(line,"/help",5)) {
 	 telnet->output("Currently known commands:\n\n"
 			"/blurb -- set a descriptive blurb\n"
 			"/bye -- leave conf\n"
@@ -635,7 +635,7 @@ void process_input(Telnet *telnet,char *line)
 	 return;
       }
 
-      if (!strcmp(sendlist,"default")) {
+      if (!strcasecmp(sendlist,"default")) {
 	 if (*telnet->session->default_sendlist) {
 	    strcpy(sendlist,telnet->session->default_sendlist);
 	 } else {
@@ -647,7 +647,7 @@ void process_input(Telnet *telnet,char *line)
 
       if (sscanf(sendlist,"#%d%c",&i,&c) == 1) {
 	 telnet->session->SendByFD(i,sendlist,explicit,p);
-      } else if (!strcmp(sendlist,"everyone")) {
+      } else if (!strcasecmp(sendlist,"everyone")) {
 	 telnet->session->SendEveryone(p);
       } else {
 	 telnet->session->SendPrivate(sendlist,explicit,p);
