@@ -18,6 +18,7 @@ String::String(const String &s)
    str = new char[len + 1];
    strncpy(str,s.str,len);
    str[len] = 0;
+   extra = 0;
 }
 
 String::String(const char *s)
@@ -27,6 +28,7 @@ String::String(const char *s)
    str = new char[len + 1];
    strncpy(str,s,len);
    str[len] = 0;
+   extra = 0;
 }
 
 String::String(const char *s,int n)
@@ -39,12 +41,18 @@ String::String(const char *s,int n)
    } else {
       for (int i=0; i<=len; i++) str[i] = 0;
    }
+   extra = 0;
 }
 
 String &String::operator =(const String &s)
 {
-   delete [] str;
-   str = new char[s.len + 1];
+   if (s.len <= len + extra) {
+      extra += len - s.len;
+   } else {
+      delete [] str;
+      extra = extra ? Extra : 0;
+      str = new char[s.len + extra + 1];
+   }
    len = s.len;
    strncpy(str,s.str,len);
    str[len] = 0;
@@ -55,8 +63,13 @@ String &String::operator =(const char *s)
 {
    if (!s) s = "";
    int n = strlen(s);
-   delete [] str;
-   str = new char[n + 1];
+   if (n <= len + extra) {
+      extra += len - n;
+   } else {
+      delete [] str;
+      extra = extra ? Extra : 0;
+      str = new char[n + extra + 1];
+   }
    len = n;
    strncpy(str,s,len);
    str[len] = 0;
