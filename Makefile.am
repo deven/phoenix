@@ -20,7 +20,6 @@
 #
 # $Log$
 
-DEFAULT_INCLUDES =
 AM_CFLAGS = -Wall -fno-rtti -fno-exceptions
 AM_CXXFLAGS = -Wall -fno-rtti -fno-exceptions
 bin_PROGRAMS = makepw restart gangplank
