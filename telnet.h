@@ -121,7 +121,6 @@ public:
    int outstanding;		// outstanding acknowledgement count
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
    boolean undrawn;		// input line undrawn for output?
-   boolean blocked;		// output blocked?
    boolean closing;		// connection closing?
    boolean acknowledge;		// use telnet TIMING-MARK option?
    boolean DoEcho;		// should server be echoing?

@@ -175,16 +175,16 @@ void Telnet::output(int byte)	// queue output byte
 {
    switch (byte) {
    case TelnetIAC:		// command escape: double it
-      if (Output.out(TelnetIAC,TelnetIAC) && !blocked) WriteSelect();
+      if (Output.out(TelnetIAC,TelnetIAC)) WriteSelect();
       break;
    case Return:			// carriage return: send "\r\0"
-      if (Output.out(Return,Null) && !blocked) WriteSelect();
+      if (Output.out(Return,Null)) WriteSelect();
       break;
    case Newline:		// newline: send "\r\n"
-      if (Output.out(Return,Newline) && !blocked) WriteSelect();
+      if (Output.out(Return,Newline)) WriteSelect();
       break;
    default:			// normal character: send it
-      if (Output.out(byte) && !blocked) WriteSelect();
+      if (Output.out(byte)) WriteSelect();
       break;
    }
 }
@@ -446,12 +446,9 @@ void Telnet::Welcome()
    // Announce guest account.
    output("A \"guest\" account is available.\n\n");
 
-   // Let's hope the SUPPRESS-GO-AHEAD option worked.
-   if (!LSGA && !RSGA) {
-      // Sigh.  Couldn't suppress Go Aheads.  Inform the user.
-      output("Sorry, unable to suppress Go Aheads.  Must operate in half-"
-	     "duplex mode.\n\n");
-   }
+   // Did the SUPPRESS-GO-AHEAD option work?  I don't care!
+
+   // (Most of the world doesn't do Go Aheads right anyhow, so why bother?)
 
    // See if local TRANSMIT-BINARY option worked.
    if (!LBin) {
@@ -559,7 +556,6 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    reply_to = 0;		// No last sender.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
-   blocked = false;		// output not blocked
    closing = false;		// conection not closing
    acknowledge = false;		// Assume no TIMING-MARK option until tested.
    DoEcho = true;		// Do echoing, if ECHO option enabled.
@@ -619,7 +615,6 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
 {
    closing = true;		// Closing intentionally.
    if (Output.head && drain) {	// Drain connection, then close.
-      blocked = false;
       DoEcho = false;
       if (acknowledge) {
 	 TimingMark();		// Send final acknowledgement.
@@ -887,7 +882,7 @@ void Telnet::accept_input()	// Accept input line.
       RSGA_callback == Welcome && LBin_callback == Welcome &&
       RBin_callback == Welcome) {
       // Assume this is a raw TCP connection.
-      LSGA = RSGA = LBin = RBin = (TelnetWillWont | TelnetDoDont);
+      LSGA = RSGA = LBin = RBin = TelnetEnabled;
       Echo = 0;
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
          RBin_callback = 0;
@@ -908,7 +903,7 @@ void Telnet::accept_input()	// Accept input line.
       // Check for "on" or "off" value for echo.
       char *value = getword(tmp);
       if (value && match(value,"on")) {
-	 Echo = (TelnetWillWont | TelnetDoDont);
+	 Echo = TelnetEnabled;
 	 output("Remote echoing is now enabled.\n");
       } else if (value && match(value,"off")) {
 	 Echo = 0;
@@ -931,14 +926,6 @@ void Telnet::accept_input()	// Accept input line.
 
       // Add new history line.
       History.AddTail(new StringObj(data,free - data));
-   }
-
-   // If either side has Go Aheads suppressed, then the hell with it.
-   // Unblock the damn output.
-
-   if (LSGA || RSGA) {		// Unblock output.
-      if (Output.head) WriteSelect();
-      blocked = false;
    }
 
    // Flush any pending output to connection.
@@ -1170,8 +1157,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    case TelnetAreYouThere:
 	       // Are we here?  Yes!  Queue confirmation to command queue,
-	       // to be output as soon as possible.  (Does NOT wait on a
-	       // Go Ahead if output is blocked!)
+	       // to be output as soon as possible.
 	       command("\r\n[Yes]\r\n");
 	       state = 0;
 	       break;
@@ -1183,12 +1169,6 @@ void Telnet::InputReady()	// telnet stream can input data
 	    case TelnetEraseLine:
 	       // Erase current input line.
 	       erase_line();
-	       state = 0;
-	       break;
-	    case TelnetGoAhead:
-	       // Unblock output.
-	       if (Output.head) WriteSelect();
-	       blocked = false;
 	       state = 0;
 	       break;
 	    case TelnetWill:
@@ -1223,10 +1203,6 @@ void Telnet::InputReady()	// telnet stream can input data
 
 		     // Me, too!
 		     if (!LBin) set_LBin(LBin_callback,true);
-
-		     // Unblock output.
-		     if (Output.head) WriteSelect();
-		     blocked = false;
 		  }
 	       } else {
 		  RBin &= ~TelnetWillWont;
@@ -1251,10 +1227,6 @@ void Telnet::InputReady()	// telnet stream can input data
 
 		     // Me, too!
 		     if (!LSGA) set_LSGA(LSGA_callback,true);
-
-		     // Unblock output.
-		     if (Output.head) WriteSelect();
-		     blocked = false;
 		  }
 	       } else {
 		  RSGA &= ~TelnetWillWont;
@@ -1295,10 +1267,6 @@ void Telnet::InputReady()	// telnet stream can input data
 
 		     // You can too.
 		     if (!RBin) set_RBin(RBin_callback,true);
-
-		     // Unblock output.
-		     if (Output.head) WriteSelect();
-		     blocked = false;
 		  }
 	       } else {
 		  LBin &= ~TelnetDoDont;
@@ -1344,10 +1312,6 @@ void Telnet::InputReady()	// telnet stream can input data
 
 		     // You can too.
 		     if (!RSGA) set_RSGA(RSGA_callback,true);
-
-		     // Unblock output.
-		     if (Output.head) WriteSelect();
-		     blocked = false;
 		  }
 	       } else {
 		  LSGA &= ~TelnetDoDont;
@@ -2036,14 +2000,6 @@ void Telnet::OutputReady()	// telnet stream can output data
       }
    }
 
-   // Don't write any user data if output is blocked.
-   if (blocked) {
-      NoWriteSelect();
-      return;
-   }
-
-   boolean flag = boolean(Output.head != 0);
-
    // Send user data, if any.
    while (Output.head) {
       while (Output.head) {
@@ -2108,11 +2064,5 @@ void Telnet::OutputReady()	// telnet stream can output data
       return;
    }
 
-   // Do the Go Ahead thing, if we must.
-   if (flag && !LSGA) {
-      command(TelnetIAC,TelnetGoAhead);
-
-      // Only block if both sides are doing Go Aheads.
-      if (!RSGA) blocked = true;
-   }
+   // We are NOT going to do the Go Ahead thing, it isn't worth the problems.
 }
