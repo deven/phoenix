@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.6 1994/01/02 22:41:59 deven Exp $
+// $Id: session.cc,v 1.7 1994/01/03 03:47:57 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.7  1994/01/03 03:47:57  deven
+// Fixed !nuke to close detached session.
+//
 // Revision 1.6  1994/01/02 22:41:59  deven
 // Fixed !nuke command.
 //
