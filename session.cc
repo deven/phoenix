@@ -888,11 +888,20 @@ void Session::SendPrivate(char *sendlist,char *msg)
    }
 
    int matches = 0;
-   Pointer<Session> session,dest;
+   Pointer<Session> session,dest,extra;
    for (session = sessions; !session.Null(); session = session->next) {
-      if (match_name(session->name_only,sendlist)) {
-	 if (matches++) break;
+      if (strcasecmp(session->name_only,sendlist)) {
+	 if (match_name(session->name_only,sendlist)) {
+	    if (matches++) {
+	       extra = session;
+	    } else {
+	       dest = session;
+	    }
+	 }
+      } else {			// Found exact match; use it.
 	 dest = session;
+	 matches = 1;
+	 break;
       }
    }
 
@@ -913,7 +922,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
    default:			// Multiple matches.
       print("\a\a\"%s\" matches %d names, including \"%s\" and \"%s\". "
 	    "(message not sent)\n",sendlist,matches,dest->name_only,
-	    session->name_only);
+	    extra->name_only);
       break;
    }
 }
