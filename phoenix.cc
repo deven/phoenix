@@ -87,6 +87,7 @@ int Shutdown;			// shutdown flag ***
 FILE *logfile;			// log file ***
 
 time_t ServerStartTime;		// time server started
+int ServerStartUptime;		// system uptime when server started
 
 // class Date? ***
 char *date(time_t clock,int start,int len) // get part of date string ***
@@ -234,6 +235,18 @@ void ShutdownServer()		// Shutdown server.
    exit(0);
 }
 
+int SystemUptime()		// Get system uptime, if available.
+{
+   int uptime = 0;
+   FILE *fp = fopen("/proc/uptime","r");
+
+   if (fp) {
+      fscanf(fp,"%d",&uptime);
+      fclose(fp);
+   }
+   return uptime;
+}
+
 void trim(char *&input) {
    while (*input && isspace(*input)) input++;
    char *p = input;
@@ -274,7 +287,10 @@ int main(int argc,char **argv)	// main program
    int pid;			// server process number
    int port;			// TCP port to use
 
-   time(&ServerStartTime);	// Mark time server started.
+   // Mark server start with current time and system uptime if available.
+   time(&ServerStartTime);
+   ServerStartUptime = SystemUptime();
+
    Shutdown = 0;
    if (pw = getpwuid(geteuid())) {
       home = pw->pw_dir;
