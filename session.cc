@@ -208,7 +208,7 @@ void Session::SendPrivate(char *sendlist,int explicit,char *msg)
       last_sendlist[SendlistLen - 1] = 0;
    }
 
-   if (!strcmp(sendlist,"me")) {
+   if (!strcasecmp(sendlist,"me")) {
       ResetIdle(10);
       telnet->print("(message sent to %s.)\n",name);
       telnet->PrintMessage(Private,name,name_only,0,msg);
