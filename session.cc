@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.29 1994/07/21 05:57:02 deven Exp $
+// $Id: session.cc,v 1.30 1994/08/22 07:14:52 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.30  1994/08/22 07:14:52  deven
+// Moved trim(line) to after message_start() at least.
+//
 // Revision 1.29  1994/07/21 05:57:02  deven
 // Added basic colon and semicolon processing, removed idle reset on attach.
 //
