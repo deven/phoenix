@@ -1632,7 +1632,7 @@ void Session::DoWhat(char *args) // Do /what command.
 	 print("%*s", extend + 8, "");
       }
       if (discussion->Permitted(this)) {
-	 if (discussion->title.length() > 50) {
+	 if (discussion->title.length() > 49) {
 	    print("%-48.48s+\n", ~discussion->title);
 	 } else {
 	    print("%s\n", ~discussion->title);
