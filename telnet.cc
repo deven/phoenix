@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.7 1994/01/03 09:36:43 deven Exp $
+// $Id: telnet.cc,v 1.8 1994/01/09 05:22:48 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.8  1994/01/09 05:22:48  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.7  1994/01/03 09:36:43  deven
 // Modified to keep track of outstanding acknowledgements on connection and
 // delay close until all output is not only drained, but also acknowledged.

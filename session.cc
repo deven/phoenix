@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.8 1994/01/03 09:32:59 deven Exp $
+// $Id: session.cc,v 1.9 1994/01/09 05:22:22 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.9  1994/01/09 05:22:22  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.8  1994/01/03 09:32:59  deven
 // Added "end of reviewed output" message, added /clear and /unidle commands,
 // removed all fd's from user view, rewrote /help text.

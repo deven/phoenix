@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.4 1994/01/02 11:26:40 deven Exp $
+# $Id: Makefile,v 1.5 1994/01/09 05:32:46 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.5  1994/01/09 05:32:46  deven
+# Changed default environment to Sun, added checkin and done targets.
+#
 # Revision 1.4  1994/01/02 11:26:40  deven
 # Updated copyright, removed -I. flag from Sun CFLAGS, added source files.
 #
