@@ -85,7 +85,7 @@ void Session::Close(boolean drain = true) // Close session.
       sessions = next;
       found = true;
    } else {
-      Pointer<Session> s = sessions;
+      Pointer<Session> s(sessions);
       while (s && s->next != this) s = s->next;
       if (s && s->next == this) {
 	 s->next = next;
@@ -98,7 +98,7 @@ void Session::Close(boolean drain = true) // Close session.
    SignedOn = false;
 
    if (telnet) {
-      Pointer<Telnet> t = telnet;
+      Pointer<Telnet> t(telnet);
       telnet = NULL;
       t->Close(drain);		// Close connection.
    }
@@ -138,9 +138,7 @@ void Session::Detach(boolean intentional) // Detach session from connection.
 
 void Session::SaveInputLine(char *line)
 {
-   Pointer<Line> p;
-
-   p = new Line(line);
+   Pointer<Line> p(new Line(line));
    if (lines) {
       lines = p;
    } else {
