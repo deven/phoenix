@@ -95,12 +95,17 @@ void Discussion::Destroy(Session *session) {
 }
 
 void Discussion::Join(Session *session) {
-   if (Permitted(session)) {
-      EnqueueOthers(new JoinNotify(this, session), session);
-      members.Add(session);
-      session->print("You are now a member of discussion %s.\n", ~name);
+   if (members.In(session)) {
+      session->print("You are already a member of discussion %s.\n", ~name);
    } else {
-      session->print("You are not permitted to join discussion %s.\n", ~name);
+      if (Permitted(session)) {
+	 EnqueueOthers(new JoinNotify(this, session), session);
+	 members.Add(session);
+	 session->print("You are now a member of discussion %s.\n", ~name);
+      } else {
+	 session->print("You are not permitted to join discussion %s.\n",
+			~name);
+      }
    }
 }
 
