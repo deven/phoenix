@@ -23,3 +23,37 @@ public:
    void NewReference() { RefCnt++; }
    void DeleteReference() { if (--RefCnt == 0) delete this; }
 };
+
+template <class Type>
+class Pointer {
+private:
+   Type *ptr;
+public:
+   Pointer(): ptr(0) { }
+   Pointer(Pointer &p): ptr(p.ptr) { if (ptr) ptr->NewReference(); }
+   Pointer(Type *p): ptr(p) { if (ptr) ptr->NewReference(); }
+   Pointer(Type &p): ptr(&p) { if (ptr) ptr->NewReference(); }
+   ~Pointer() { if (ptr) ptr->DeleteReference(); }
+   Pointer &operator =(Pointer &p) {
+      if (ptr) ptr->DeleteReference();
+      if (ptr = p.ptr) ptr->NewReference();
+      return *this;
+   }
+   Pointer &operator =(Type *p) {
+      if (ptr) ptr->DeleteReference();
+      if (ptr = p) ptr->NewReference();
+      return *this;
+   }
+   Pointer &operator =(int n) {
+      if (n) abort();
+      if (ptr) ptr->DeleteReference();
+      ptr = 0;
+      return *this;
+   }
+   Type *operator ->() { return ptr; }
+   operator Type *() { return ptr; }
+   int operator ==(Pointer &p) { return ptr == p.ptr; }
+   int operator !=(Pointer &p) { return ptr != p.ptr; }
+   int operator ==(Type *p) { return ptr == p; }
+   int operator !=(Type *p) { return ptr != p; }
+};
