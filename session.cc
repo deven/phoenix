@@ -86,3 +86,13 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    message_time = now;
    return idle;
 }
+
+void Session::CheckShutdown()   // Exit if shutting down and no users are left.
+{
+   if (Shutdown && !sessions) {
+      log("All connections closed, shutting down.");
+      log("Server down.");
+      if (logfile) fclose(logfile);
+      exit(0);
+   }
+}

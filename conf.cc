@@ -783,13 +783,7 @@ int main(int argc,char **argv)	// main program
    }
 
    while(1) {
-      // Exit if shutting down and no users are left.
-      if (Shutdown && !sessions) {
-	 log("All connections closed, shutting down.");
-	 log("Server down.");
-	 if (logfile) fclose(logfile);
-	 exit(0);
-      }
+      Session::CheckShutdown();
       FD::Select();
    }
 }
