@@ -11,7 +11,7 @@
 // Initial revision
 //
 
-class String: public Object {
+class String {
 private:
    char *str;
    int len;
