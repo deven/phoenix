@@ -1,12 +1,31 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.4 1993/12/21 15:14:28 deven Exp $
+// $Id: telnet.cc,v 1.5 1993/12/31 08:15:49 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.5  1993/12/31 08:15:49  deven
+// Added support for telnet TIMING-MARK option.  Option is sent once in
+// command queue before other initial option requests, and is enabled if
+// and only if a response on that option returns before the ECHO option
+// returns.  When enabled, the option is used to generate an end-to-end
+// acknowledgement from the remote telnet client, used to verify which
+// output has likely been "seen".  Even if the option is not understood
+// by the remote end, the client *should* reject the option according to
+// standard procedure defined by the telnet protocol specifications.  If
+// the option is rejected, it is nearly as useful, since it still does
+// guarantee that the telnet client at least received the data instead
+// of losing it over the network.  In the event that the telnet client
+// is broken and responds not at all to the option, then it will never
+// get enabled, in which case fake "acknowledgements" are generated when
+// a write() accepts all output data into the kernel buffers, and the
+// window size of the output stream gets effectively limited to one.  The
+// network could lose data if the client does not respond to the option.
+// Also made some other minor modifications.
+//
 // Revision 1.4  1993/12/21 15:14:28  deven
 // Did major restructuring to route most I/O through Session class.  All
 // Session-level output is now stored in a symbolic queue, as a block of

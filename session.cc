@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.3 1993/12/21 15:14:28 deven Exp $
+// $Id: session.cc,v 1.4 1993/12/31 08:08:52 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.4  1993/12/31 08:08:52  deven
+// Added /detach command and supporting modifications.  As yet, there is no
+// provision for re-attaching or even nuking a detached session!  Temporarily
+// removed /who and /idle support from login: prompt.  Made some other minor
+// modifications.
+//
 // Revision 1.3  1993/12/21 15:14:28  deven
 // Did major restructuring to route most I/O through Session class.  All
 // Session-level output is now stored in a symbolic queue, as a block of

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.5 1993/12/21 15:14:28 deven Exp $
+// $Id: conf.cc,v 1.6 1993/12/31 07:45:55 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.6  1993/12/31 07:45:55  deven
+// Removed support for reversed smileys (e.g. "(-:") in case of match against
+// a name, and because they're not as likely to be typed reflexively.
+//
 // Revision 1.5  1993/12/21 15:14:28  deven
 // Did major restructuring to route most I/O through Session class.  All
 // Session-level output is now stored in a symbolic queue, as a block of
