@@ -1,0 +1,7 @@
+This is a simple front-end to the Phoenix conferencing system.  It isn't
+the cleanest code in the world, but it does an acceptable job.  It provides
+logging, local emacs-style editing, input redrawing, and simple review by
+running less(1) on a logfile when you press Escape.  This code could be
+improved in many ways, certainly.  It is a slightly modified version of
+a CONNECT front-end from back in 1990, so don't be too critical of the
+code; it's not very clean.  Feel free to work on it!
