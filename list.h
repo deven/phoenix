@@ -181,8 +181,16 @@ public:
    ListIter() { }
    ListIter(List<Type> &l): list(&l) { }
    ListIter(List<Type> *l): list(l) { }
-   ListIter &operator =(List<Type> &l) { list = &l; ptr = last = 0; }
-   ListIter &operator =(List<Type> *l) { list = l; ptr = last = 0; }
+   ListIter &operator =(List<Type> &l) {
+      list = &l;
+      ptr = last = 0;
+      return *this;
+   }
+   ListIter &operator =(List<Type> *l) {
+      list = l;
+      ptr = last = 0;
+      return *this;
+   }
    Type *operator ->() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    Type *operator --();
