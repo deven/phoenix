@@ -1441,32 +1441,47 @@ void Telnet::InputReady()	// telnet stream can input data
 	    state = 0;
 	    switch (n) {
 	    // Extended compose sequences.
-	    case Quote:
-	       state = Umlaut;
+	    case ControlI:	// Compose Icelandic character.
+	       state = ControlI;
 	       break;
-	    case Backquote:
-	       state = Backquote;
+	    case ControlL:	// Compose ligature.
+	       state = ControlL;
 	       break;
-	    case SingleQuote:
-	       state = AcuteAccent;
-	       break;
-	    case Carat:
-	       state = Carat;
-	       break;
-	    case Tilde:
-	       state = Tilde;
-	       break;
-	    case 'o':
+	    case ControlO:	// Compose ring-accented character.
 	       state = DegreeSign;
 	       break;
-	    case Slash:
+	    case Quote:		// Compose umlaut-accented character.
+	       state = Umlaut;
+	       break;
+	    case Backquote:	// Compose grave-accented character.
+	       state = Backquote;
+	       break;
+	    case SingleQuote:	// Compose acute-accented character.
+	       state = AcuteAccent;
+	       break;
+	    case Carat:		// Compose circumflex-accented character.
+	       state = Carat;
+	       break;
+	    case Tilde:		// Compose tilde-accented character.
+	       state = Tilde;
+	       break;
+	    case Slash:		// Compose slash-accented character.
 	       state = Slash;
 	       break;
-	    case Comma:
+	    case Comma:		// Compose cedilla-accented character.
 	       state = Cedilla;
 	       break;
 
 	    // Simple compose sequences.
+	    case ControlN:
+	       insert_char(NotSign);
+	       break;
+	    case ControlU:
+	       insert_char(MicroSign);
+	       break;
+	    case ControlY:
+	       insert_char(YenSign);
+	       break;
 	    case Space:
 	       insert_char(NBSpace);
 	       break;
@@ -1507,22 +1522,28 @@ void Telnet::InputReady()	// telnet stream can input data
 	       insert_char(InvertedQuestion);
 	       break;
 	    case 'A':
-	       insert_char(AE_ligature);
+	       insert_char(A_acute);
 	       break;
 	    case 'C':
 	       insert_char(Copyright);
 	       break;
 	    case 'E':
-	       insert_char(ETH_Icelandic);
+	       insert_char(E_acute);
 	       break;
 	    case 'F':
 	       insert_char(FeminineOrdinal);
+	       break;
+	    case 'I':
+	       insert_char(I_acute);
 	       break;
 	    case 'M':
 	       insert_char(MasculineOrdinal);
 	       break;
 	    case 'N':
-	       insert_char(NotSign);
+	       insert_char(N_tilde);
+	       break;
+	    case 'O':
+	       insert_char(O_acute);
 	       break;
 	    case 'P':
 	       insert_char(ParagraphSign);
@@ -1533,33 +1554,41 @@ void Telnet::InputReady()	// telnet stream can input data
 	    case 'S':
 	       insert_char(SectionSign);
 	       break;
-	    case 'T':
-	       insert_char(THORN_Icelandic);
+	    case 'U':
+	       insert_char(U_acute);
 	       break;
 	    case 'Y':
-	       insert_char(YenSign);
+	       insert_char(Y_acute);
 	       break;
 	    case 'a':
-	       insert_char(ae_ligature);
+	       insert_char(a_acute);
 	       break;
 	    case 'c':
 	       insert_char(CentSign);
 	       break;
+	    case 'd':
+	       insert_char(DegreeSign);
+	       break;
 	    case 'e':
-	       insert_char(eth_Icelandic);
+	       insert_char(e_acute);
 	       break;
-	    // case 'o': (above)
-	    case 's':
-	       insert_char(sz_ligature);
+	    case 'i':
+	       insert_char(i_acute);
 	       break;
-	    case 't':
-	       insert_char(thorn_Icelandic);
+	    case 'n':
+	       insert_char(n_tilde);
+	       break;
+	    case 'o':
+	       insert_char(o_acute);
 	       break;
 	    case 'u':
-	       insert_char(MicroSign);
+	       insert_char(u_acute);
 	       break;
 	    case 'x':
 	       insert_char(MultiplySign);
+	       break;
+	    case 'y':
+	       insert_char(y_acute);
 	       break;
 	    case VerticalBar:
 	       insert_char(BrokenVerticalBar);
@@ -1776,6 +1805,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	    break;
 	 case DegreeSign:	// Compose ring-accented character.
 	    switch (n) {
+	    case ControlO:
 	    case 'o':
 	       insert_char(DegreeSign);
 	       break;
@@ -1827,6 +1857,43 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    case 'c':
 	       insert_char(c_cedilla);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case ControlI:		// Compose Icelandic character.
+	    switch (n) {
+	    case 'E':
+	       insert_char(ETH_Icelandic);
+	       break;
+	    case 'T':
+	       insert_char(THORN_Icelandic);
+	       break;
+	    case 'e':
+	       insert_char(eth_Icelandic);
+	       break;
+	    case 't':
+	       insert_char(thorn_Icelandic);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case ControlL:		// Compose ligature.
+	    switch (n) {
+	    case 'A':
+	       insert_char(AE_ligature);
+	       break;
+	    case 'a':
+	       insert_char(ae_ligature);
+	       break;
+	    case 's':
+	       insert_char(sz_ligature);
 	       break;
 	    default:
 	       output(Bell);
