@@ -13,6 +13,12 @@
 
 #include "conf.h"
 
+void OutputStream::OutputObject::output(Telnet *telnet) // Output object.
+{
+   Output->output(telnet);
+   telnet->TimingMark();
+}
+
 void OutputStream::Enqueue(Telnet *telnet,Output *out) // Enqueue output.
 {
    if (!out) return;
@@ -21,24 +27,39 @@ void OutputStream::Enqueue(Telnet *telnet,Output *out) // Enqueue output.
       tail = tail->next;
    } else {
       head = tail = new OutputObject(out);
-      if (!telnet) return;
-      telnet->UndrawInput();
-      head->output->output(telnet);
+   }
+   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
+}
+
+void OutputStream::Dequeue()	// Dequeue all acknowledged output.
+{
+   OutputObject *out;
+
+   if (Acknowledged) {
+      while (Acknowledged && Sent && (out = head)) {
+	 Acknowledged--;
+	 Sent--;
+	 head = out->next;
+	 delete out;
+      }
+      if (!head) {
+	 sent = tail = NULL;
+	 Acknowledged = Sent = 0;
+      }
    }
 }
 
-void OutputStream::Dequeue(Telnet *telnet) // Dequeue completed output object,
-{					   // then output next or redraw input.
-   if (head) {
-      OutputObject *out = head;
-      head = out->next;
-      delete out;
-      if (!head) tail = NULL;
-   }
-   if (!telnet) return;
-   if (head) {
-      head->output->output(telnet);
-   } else {
+boolean OutputStream::SendNext(Telnet *telnet) // Send next output object.
+{
+   if (!telnet || !sent && !head) return false;
+   if (sent && !sent->next) {
       telnet->RedrawInput();
+      return false;
+   } else {
+      sent = sent ? sent->next : head;
+      telnet->UndrawInput();
+      sent->output(telnet);
+      Sent++;
    }
+   return true;
 }
