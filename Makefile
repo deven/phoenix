@@ -1,12 +1,18 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.15 1996/05/13 18:17:56 deven Exp $
+# $Id: Makefile,v 1.16 1996/05/20 05:18:41 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.16  1996/05/20 05:18:41  deven
+# Modified to build with "most.cc" module, which simply includes all modules
+# that include "phoenix.h" -- compiler spends most time on header files, not
+# module code, so this is faster and help eliminate highly-redundant debug
+# information in the final executable.  So much for separate compilation...
+#
 # Revision 1.15  1996/05/13 18:17:56  deven
 # Added new files split out from general.h: constants.h, functions.h and
 # globals.h.  Added event.h, eventqueue.h, event.cc and eventqueue.cc files.

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: most.cc,v 1.1 1996/05/20 05:14:40 deven Exp $
 //
 // Module which includes most server modules, for compiler efficiency.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: most.cc,v $
+// Revision 1.1  1996/05/20 05:14:40  deven
+// Initial revision
+//
 
 #include "discussion.cc"
 #include "event.cc"
