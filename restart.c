@@ -3,7 +3,7 @@
  *
  * Utility program to restart Phoenix conferencing server from cron.
  *
- * Copyright 1992-2000 by Deven T. Corzine.  All rights reserved.
+ * Copyright 1992-2001 by Deven T. Corzine.  All rights reserved.
  *
  * $Log$
  */
