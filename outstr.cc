@@ -25,7 +25,7 @@ void OutputStream::Attach(Pointer<Telnet> &telnet) // Review detached output.
 }
 
 // Enqueue output.
-void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out)
+void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<OutputObj> &out)
 {
    if (!out) return;
    if (tail) {
@@ -42,7 +42,7 @@ void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out)
    }
 }
 
-void OutputStream::Unenqueue(Pointer<Output> &out)
+void OutputStream::Unenqueue(Pointer<OutputObj> &out)
 {
    if (!out) return;
    for (OutputObject *node = head; node; node = node->next) {
