@@ -87,7 +87,7 @@ EventQueue events;		// Server event queue.
 Pointer<Event> Shutdown;	// Pointer to Shutdown event, if any.
 
 // have to use non-blocking code instead? ***
-FILE *logfile;			// log file ***
+FILE *logfile = 0;		// log file ***
 
 Timestamp ServerStartTime;	// time server started
 int ServerStartUptime;		// system uptime when server started
@@ -155,9 +155,9 @@ void warn(char *format, ...)	// print error message ***
    va_start(ap, format);
    msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(stderr, "\n%s: %s\n", ~msg, strerror(errno));
-   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), ~msg,
-		  strerror(errno));
+   if (errno) msg.sprintf("%s: %s", ~msg, strerror(errno));
+   (void) fprintf(stderr, "\n%s\n", ~msg);
+   if (logfile) (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
 void error(char *format, ...)	// print error message and exit ***
@@ -169,10 +169,12 @@ void error(char *format, ...)	// print error message and exit ***
    va_start(ap, format);
    msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(stderr, "\n%s: %s\n", ~msg, strerror(errno));
-   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), ~msg,
-		  strerror(errno));
-   if (logfile) fclose(logfile);
+   if (errno) msg.sprintf("%s: %s", ~msg, strerror(errno));
+   (void) fprintf(stderr, "\n%s\n", ~msg);
+   if (logfile) {
+      (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
+      fclose(logfile);
+   }
    exit(1);
 }
 
@@ -186,8 +188,10 @@ void crash(char *format, ...)	// print error message and crash ***
    msg.vsprintf(format, ap);
    va_end(ap);
    (void) fprintf(stderr, "\n%s\n", ~msg);
-   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
-   if (logfile) fclose(logfile);
+   if (logfile) {
+      (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
+      fclose(logfile);
+   }
    abort();
    exit(-1);
 }
