@@ -33,7 +33,7 @@ void OutputStream::Attach(Pointer<Telnet> &telnet) // Review detached output.
 {
    sent = NULL;
    Acknowledged = Sent = 0;
-   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
+   if (telnet && telnet->acknowledge) while (SendNext(telnet)) ;
 }
 
 // Enqueue output.
