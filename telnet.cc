@@ -192,6 +192,11 @@ void Telnet::command(char *buf,int len) // queue command data (with length)
    while (len--) Command.out(*((unsigned char *) buf++));
 }
 
+void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
+{
+   if (acknowledge) Output.out(TelnetIAC,TelnetDo,TelnetTimingMark);
+}
+
 void Telnet::PrintMessage(OutputType type,time_t time,Name *from,char *start)
 {
    char *wrap,*p;
@@ -320,6 +325,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    state = 0;			// telnet input state = 0 (data)
    blocked = 0;			// output not blocked
    closing = 0;			// conection not closing
+   acknowledge = false;		// Assume no TIMING-MARK option until tested.
    DoEcho = true;		// Do echoing, if ECHO option enabled.
    Echo = 0;			// ECHO option off (local)
    LSGA = 0;			// SUPPRESS-GO-AHEAD option off (local)
@@ -337,6 +343,9 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    session = new Session(this);	// Create a new Session for this connection.
 
    ReadSelect();		// Select new connection for reading.
+
+   // Test TIMING-MARK option before sending initial option negotions.
+   command(TelnetIAC,TelnetDo,TelnetTimingMark);
 
    set_LSGA(Welcome,true);	// Start initial options negotiations.
    set_RSGA(Welcome,true);
@@ -497,6 +506,12 @@ inline void Telnet::accept_input() // Accept input line.
    if (LSGA || RSGA) {		// Unblock output.
       if (Output.head) WriteSelect();
       blocked = 0;
+   }
+
+   // Flush any pending output to connection.
+
+   if (!acknowledge) {
+      while (session->OutputNext(this)) session->AcknowledgeOutput();
    }
 
    // Jump to end of line and echo newline if necessary.
@@ -742,11 +757,16 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 		  RSGA_callback = NULL;
 	       }
 	       break;
+	    case TelnetTimingMark:
+	       if (acknowledge) {
+		  session->AcknowledgeOutput();
+	       } else if (Echo == TelnetWillWont) {
+		  acknowledge = true;
+	       }
+	       break;
 	    default:
 	       // Don't know this option, refuse it.
-	       if (state == TelnetWill) {
-		  command(TelnetIAC,TelnetDont,n);
-	       }
+	       if (state == TelnetWill) command(TelnetIAC,TelnetDont,n);
 	       break;
 	    }
 	    state = 0;
@@ -999,7 +1019,24 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
 	    break;
 	 }
       }
-      session->Pending.Dequeue(this);
+
+      // If the telnet TIMING-MARK option doesn't get a response from the
+      // remote end, then generate a fake acknowledge locally when the
+      // output is fully buffered by the kernel.  Some output might well
+      // get lost, but at least the data has passed from the output
+      // buffers into the kernel.  That will have to do when end-to-end
+      // synchronization can't be done.  Any telnet implementation which
+      // follows the telnet specifications is supposed to reject any and
+      // all unknown option requests that come in, so the only reason for
+      // the TIMING-MARK option to be disabled is if the remote end is
+      // really straight TCP or a very broken telnet implementation.
+      // If acknowledgements are enabled, all output is dumped to the
+      // Telnet buffers as it is queued.
+
+      if (!acknowledge) {
+	 session->AcknowledgeOutput();
+	 session->OutputNext(this);
+      }
    }
 
    // Done sending all queued output.

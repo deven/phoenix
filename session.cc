@@ -108,6 +108,7 @@ void Session::InitInputFunction() // Initialize input function to Login.
 
 void Session::Input(char *line)	// Process an input line.
 {
+   Pending.Dequeue();		// Dequeue all acknowledged output.
    if (InputFunc) {		// If available, call immediately.
       (this->*InputFunc)(line);
       EnqueueOutput();		// Enqueue output buffer (if any).
