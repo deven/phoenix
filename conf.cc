@@ -480,6 +480,8 @@ void process_input(Telnet *telnet,char *line)
 	    telnet->print("Your default sendlist is now set to \"%s\".\n",
 		  telnet->session->default_sendlist);
 	 }
+      } else if (!strncmp(line,"/why",4)) {
+	 telnet->output("Why not?\n");
       } else if (!strncmp(line,"/help",5)) {
 	 // help?  ha!
 	 telnet->output("Help?  Help?!?  This program isn't done, you know.\n");
