@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.35 1995/10/26 15:48:26 deven Exp $
+// $Id: session.cc,v 1.36 1995/10/27 03:57:36 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.36  1995/10/27 03:57:36  deven
+// Added defaults Assoc array, added time_format system variable and the default
+// (verbose), added user variables, added /display command, added new uptime
+// readonly system variable.
+//
 // Revision 1.35  1995/10/26 15:48:26  deven
 // Removed /setidle command, added /set command and "/set idle" option.
 //

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.21 1995/10/26 15:46:20 deven Exp $
+// $Id: session.h,v 1.22 1995/10/27 03:55:22 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.22  1995/10/27 03:55:22  deven
+// Added user_vars and sys_vars Assoc arrays per session and static defaults
+// Assoc array for all sessions.  Added init_defaults() and DoDisplay().
+//
 // Revision 1.21  1995/10/26 15:46:20  deven
 // Added DoSet() function.
 //

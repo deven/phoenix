@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.16 1995/10/26 15:47:26 deven Exp $
+// $Id: phoenix.cc,v 1.17 1995/10/27 03:23:08 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.17  1995/10/27 03:23:08  deven
+// Added ServerStartTime and code to set the start time.
+//
 // Revision 1.16  1995/10/26 15:47:26  deven
 // Changed getword() parameters to accept arbitrary separator instead of just
 // assuming Comma.  Defaults to no additional separator besides whitespace.
