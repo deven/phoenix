@@ -20,7 +20,11 @@
 #
 # $Log$
 
-CFLAGS = -g -Wall
+# C++ Compiler: GCC
+CC = gcc
+CFLAGS = -g -Wall -fno-rtti -fno-exceptions
+
+# Linker options:
 #LDFLAGS = -g -static
 LDFLAGS = -g
 
@@ -33,11 +37,6 @@ LIBS = -lcrypt
 # Solaris:
 #LIBS = -lsocket -lnsl
 
-# GCC 2.95:
-CC = gcc
-
-# GCC 3.0:
-#CC = g++
 
 UTIL = makepw restart
 EXEC = gangplank
