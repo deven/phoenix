@@ -200,6 +200,28 @@ void Session::announce(char *format,...) // formatted output to all sessions
    }
 }
 
+Pointer<Session> Session::FindSession(char *sendlist, Set<Session> &matches)
+{
+   Pointer<Session> lead,match,session;
+   int pos,count = 0;
+
+   if (!strcasecmp(sendlist,"me")) return this;
+   for (session = sessions; session; session = session->next) {
+      if (!strcasecmp(session->name_only,sendlist)) return session;
+      if (pos = match_name(session->name_only,sendlist)) {
+	 if (pos == 1) {
+	    count++;
+	    lead = session;
+	 }
+	 matches.Add(session);
+	 match = session;
+      }
+   }
+   if (count == 1) return lead;
+   if (matches.Count() == 1) return match;
+   return NULL;
+}
+
 void Session::Login(char *line)
 {
    if (!strcasecmp(line,"/bye")) {
@@ -516,70 +538,53 @@ void Session::DoDown(char *args) // Do !down command.
 void Session::DoNuke(char *args) // Do !nuke command.
 {
    boolean drain;
-   Pointer<Session> session,target,extra;
-   Pointer<Telnet> telnet;
-   int matches = 0;
+   Pointer<Session> session;
+   Set<Session> matches;
 
    if (!(drain = boolean(*args != '!'))) args++;
 
-   if (!strcasecmp(args,"me")) {
-      target = this;
-   } else {
-      for (session = sessions; session; session = session->next) {
-	 if (strcasecmp(session->name_only,args)) {
-	    if (match_name(session->name_only,args)) {
-	       if (matches++) {
-		  extra = session;
-	       } else {
-		  target = session;
-	       }
-	    }
-	 } else {		// Found exact match; use it.
-	    target = session;
-	    matches = 1;
-	    break;
-	 }
+   if (session = FindSession(args,matches)) {
+      // Nuke target session.  // Should require confirmation! ***
+      if (drain) {
+	 print("\"%s\" has been nuked.\n",session->name_only);
+      } else {
+	 print("\"%s\" has been nuked immediately.\n",session->name_only);
       }
 
+      if (session->telnet) {
+	 Pointer<Telnet> telnet(session->telnet);
+	 session->telnet = NULL;
+	 log("%s (%s) on fd %d has been nuked by %s (%s).",session->name_only,
+	     session->user->user,telnet->fd,name_only,user->user);
+	 telnet->UndrawInput();
+	 telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
+	 telnet->RedrawInput();
+	 telnet->Close(drain);
+      } else {
+	 log("%s (%s), detached, has been nuked by %s (%s).",
+	     session->name_only,session->user->user,name_only,user->user);
+	 session->Close();
+      }
+   } else {
       // kludge ***
       for (unsigned char *p = (unsigned char *) args; *p; p++) {
 	 if (*p == UnquotedUnderscore) *p = Underscore;
       }
 
-      switch (matches) {
-      case 0:			// No matches.
+      if (matches.Count()) {
+	 SetIter<Session> iter(matches);
+	 boolean first = true;
+
+	 print("\a\a\"%s\" matches %d names: ",args,matches.Count());
+	 while (iter++) {
+	    if (!first) output(", ");
+	    first = false;
+	    output(iter->name_only);
+	 }
+	 output(". (nobody nuked)\n");
+      } else {
 	 print("\a\aNo names matched \"%s\". (nobody nuked)\n",args);
-	 return;
-      case 1:			// Found single match, nuke session.
-	 break;
-      default:			// Multiple matches.
-	 print("\a\a\"%s\" matches %d names, including \"%s\" and \"%s\". "
-	       "(nobody nuked)\n",args,matches,target->name_only,
-	       extra->name_only);
-	 return;
       }
-   }
-
-   // Nuke target session.  // Should require confirmation! ***
-   if (drain) {
-      print("\"%s\" has been nuked.\n",target->name_only);
-   } else {
-      print("\"%s\" has been nuked without delay.\n",target->name_only);
-   }
-
-   if (target->telnet) {
-      telnet = target->telnet;
-      target->telnet = NULL;
-      log("%s (%s) on fd %d has been nuked by %s (%s).",target->name_only,
-	  target->user->user,telnet->fd,name_only,user->user);
-      telnet->UndrawInput();
-      telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
-      telnet->RedrawInput();
-      telnet->Close(drain);
-   } else {
-      log("%s (%s), detached, has been nuked by %s (%s).",target->name_only,
-	  target->user->user,name_only,user->user);
-      target->Close();
    }
 }
 
@@ -905,9 +910,10 @@ void Session::SendEveryone(char *msg)
 {
    int sent = 0;
    Pointer<Session> session;
+   last_message = new Message(PublicMessage,name_obj,NULL,msg);
    for (session = sessions; session; session = session->next) {
       if (session == this) continue;
-      session->Enqueue(new Message(PublicMessage,name_obj,msg));
+      session->Enqueue((Message *) last_message);
       sent++;
    }
 
@@ -929,50 +935,35 @@ void Session::SendEveryone(char *msg)
 // Send private message by partial name match.
 void Session::SendPrivate(char *sendlist,char *msg)
 {
-   if (!strcasecmp(sendlist,"me")) {
-      ResetIdle(10);
-      print("(message sent to %s.)\n",name);
-      Enqueue(new Message(PrivateMessage,name_obj,msg));
-      return;
-   }
+   Pointer<Session> session;
+   Set<Session> matches;
 
-   int matches = 0;
-   Pointer<Session> session,dest,extra;
-   for (session = sessions; session; session = session->next) {
-      if (strcasecmp(session->name_only,sendlist)) {
-	 if (match_name(session->name_only,sendlist)) {
-	    if (matches++) {
-	       extra = session;
-	    } else {
-	       dest = session;
-	    }
-	 }
-      } else {			// Found exact match; use it.
-	 dest = session;
-	 matches = 1;
-	 break;
+   if (session = FindSession(sendlist,matches)) {
+      ResetIdle(10);
+      print("(message sent to %s.)\n",session->name);
+      last_message = new Message(PrivateMessage,name_obj,session,msg);
+      session->Enqueue((Message *) last_message);
+   } else {
+      // kludge ***
+      for (unsigned char *p = (unsigned char *) sendlist; *p; p++) {
+	 if (*p == UnquotedUnderscore) *p = Underscore;
       }
-   }
 
-   // kludge ***
-   for (unsigned char *p = (unsigned char *) sendlist; *p; p++) {
-      if (*p == UnquotedUnderscore) *p = Underscore;
-   }
+      last_message = new Message(PrivateMessage,name_obj,session,msg);
 
-   switch (matches) {
-   case 0:			// No matches.
-      print("\a\aNo names matched \"%s\". (message not sent)\n",sendlist);
-      break;
-   case 1:			// Found single match, send message.
-      ResetIdle(10);
-      print("(message sent to %s.)\n",dest->name);
-      dest->Enqueue(new Message(PrivateMessage,name_obj,msg));
-      break;
-   default:			// Multiple matches.
-      print("\a\a\"%s\" matches %d names, including \"%s\" and \"%s\". "
-	    "(message not sent)\n",sendlist,matches,dest->name_only,
-	    extra->name_only);
-      break;
+      if (matches.Count()) {
+	 SetIter<Session> iter(matches);
+
+	 print("\a\a\"%s\" matches %d names: ",sendlist,matches.Count());
+	 output(iter++->name_only);
+	 while (iter++) {
+	    output(", ");
+	    output(iter->name_only);
+	 }
+	 output(". (message not sent)\n");
+      } else {
+	 print("\a\aNo names matched \"%s\". (message not sent)\n",sendlist);
+      }
    }
 }
 

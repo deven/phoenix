@@ -54,11 +54,13 @@ public:
 class Message: public Output {
 private:
    Pointer<Name> from;
-   // Pointer<Sendlist> to;
+   Pointer<Session> to;
+// Pointer<Sendlist> to;
    char *text;
 public:
-   Message(OutputType type,Pointer<Name> &sender,char *msg):
-   Output(type,MessageClass),from(sender) {
+   Message(OutputType type,Pointer<Name> &sender,Pointer<Session> &destination,
+	   char *msg):
+   Output(type,MessageClass),from(sender),to(destination) {
       text = new char[strlen(msg) + 1];
       strcpy(text,msg);
    }
