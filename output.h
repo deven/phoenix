@@ -64,13 +64,12 @@ public:
 class Message: public Output {
 private:
    Pointer<Name> from;
-   Pointer<Session> to;
-// Pointer<Sendlist> to;
+   Pointer<Sendlist> to;
    String text;
 public:
-   Message(OutputType type,Pointer<Name> &sender,Pointer<Session> &destination,
+   Message(OutputType type,Pointer<Name> &sender,Pointer<Sendlist> &dest,
 	   char *msg):
-   Output(type,MessageClass),from(sender),to(destination),text(msg) { }
+   Output(type,MessageClass),from(sender),to(dest),text(msg) { }
    void output(Pointer<Telnet> &telnet);
 };
 

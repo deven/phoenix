@@ -33,8 +33,7 @@ void Text::output(Pointer<Telnet> &telnet)
 
 void Message::output(Pointer<Telnet> &telnet)
 {
-   // telnet->PrintMessage(Type,time,from,to,text); ***
-   telnet->PrintMessage(Type,time,from,text);
+   telnet->PrintMessage(Type,time,from,to,text);
 }
 
 void EntryNotify::output(Pointer<Telnet> &telnet)

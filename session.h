@@ -63,6 +63,7 @@ enum AwayState {Here,Away,Busy,Gone}; // Degrees of "away" status.
 class Session: public Object {
    static List<Session> inits;	// List of sessions initializing.
    static List<Session> sessions; // List of signed-on sessions.
+   static List<Discussion> discussions; // List of active discussions.
 public:
    Pointer<User> user;		// user this session belongs to
    Pointer<Telnet> telnet;	// telnet connection for this session
@@ -126,6 +127,8 @@ public:
    }
 
    Pointer<Session> FindSession(char *sendlist,Set<Session> &matches);
+   Pointer<Discussion> FindDiscussion(char *sendlist,Set<Discussion> &matches,
+				      boolean member);
    void Login(char *line);
    void Password(char *line);
    void Name(char *line);

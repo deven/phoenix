@@ -86,6 +86,7 @@
 
 List<Session> Session::inits;
 List<Session> Session::sessions;
+List<Discussion> Session::discussions;
 
 Session::Session(Pointer<Telnet> &t)
 {
@@ -281,6 +282,30 @@ Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
 	    lead = session;
 	 }
 	 match = session;
+	 matches.Add(match);
+      }
+   }
+   if (count == 1) return lead;
+   if (matches.Count() == 1) return match;
+   return NULL;
+}
+
+Pointer<Discussion> Session::FindDiscussion(char *sendlist,
+					    Set<Discussion> &matches,
+					    boolean member)
+{
+   int pos,count = 0;
+   Pointer<Discussion> lead,match;
+   ListIter<Discussion> discussion(discussions);
+   while (discussion++) {
+      if (member && !discussion->members.In(this)) continue;
+      if (!strcasecmp(discussion->name,sendlist)) return discussion;
+      if (pos = match_name(discussion->name,sendlist)) {
+	 if (pos == 1) {
+	    count++;
+	    lead = discussion;
+	 }
+	 match = discussion;
 	 matches.Add(match);
       }
    }
@@ -1334,8 +1359,8 @@ void Session::DoUnidle()	// Do /unidle idle time reset.
 
 void Session::DoMessage(char *line) // Do message send.
 {
-   boolean explicit;
    String sendlist;
+   boolean explicit = false;	// Assume implicit sendlist.
 
    line = message_start(line,sendlist,explicit);
 
@@ -1382,75 +1407,125 @@ void Session::SendEveryone(char *msg)
       }
    }
 
-   switch (sent) {
-   case 0:
+   if (!sent) {
       print("\a\aThere is no one else here! (message not sent)\n");
-      break;
-   case 1:
-      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
-      ResetIdle(10);
-      print("(message sent to everyone.) [1 person]\n");
-      break;
-   default:
-      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
-      ResetIdle(10);
+      return;
+   }
+
+   if (away == Gone) {
+      output("[Warning: you are listed as \"gone\".]\n");
+   } else if (away == Busy && (time(NULL) - message_time) >= 600) {
+      output(Bell);
+      output("[Warning: you are still listed as \"busy\".]\n");
+   }
+
+   ResetIdle(10);
+
+   if (sent > 1) {
       print("(message sent to everyone.) [%d people]\n",sent);
-      break;
+   } else {
+      print("(message sent to everyone.) [1 person]\n");
    }
 }
 
 // Send private message by partial name match.
-void Session::SendPrivate(char *sendlist,char *msg)
+void Session::SendPrivate(char *send,char *msg)
 {
-   Pointer<Session> session;
-   Set<Session> matches;
+   Pointer<Sendlist> sendlist = new Sendlist(*this,send);
+   boolean first,flag;
 
-   if (session = FindSession(sendlist,matches)) {
-      if (away == Gone) output("[Warning: you are listed as \"gone\".]\n");
-      ResetIdle(10);
-      output("(message sent to ");
+   if (sendlist->errors) {
+      output("\a\a");
+      output((char *) sendlist->errors);
+   }
+
+   if (!sendlist->sessions.Count() && !sendlist->discussions.Count()) {
+      output("(message not sent)\n");
+      return;
+   }
+
+   if (away == Gone) {
+      output("[Warning: you are listed as \"gone\".]\n");
+   } else if (away == Busy && (time(NULL) - message_time) >= 600) {
+      output(Bell);
+      output("[Warning: you are still listed as \"busy\".]\n");
+   }
+
+   ResetIdle(10);
+
+   output("(message sent to ");
+   SetIter<Session> session(sendlist->sessions);
+   first = true;
+   while (session++) {
+      if (first) {
+	 first = false;
+      } else {
+	 output(", ");
+      }
+      flag = false;
       output((char *) session->name);
       output((char *) session->blurb);
-      if (!session->telnet) output(", detached");
-      switch (session->away) {
-      case Here:
-	 break;
-      case Away:
-	 output(", \"away\"");
-	 break;
-      case Busy:
-	 output(", \"busy\"");
-	 break;
-      case Gone:
-	 output(", \"gone\"");
-	 break;
+      if (!session->telnet) {
+	 output(flag ? ", " : " [");
+	 flag = true;
+	 output("detached");
       }
-      // print idle time ***
-      output(".)\n");
-      last_message = new Message(PrivateMessage,name_obj,session,msg);
-      session->Enqueue((Message *) last_message);
-   } else {
-      // kludge ***
-      for (unsigned char *p = (unsigned char *) sendlist; *p; p++) {
-	 if (*p == UnquotedUnderscore) *p = Underscore;
-      }
-
-      last_message = new Message(PrivateMessage,name_obj,session,msg);
-
-      if (matches.Count()) {
-	 SetIter<Session> session(matches);
-
-	 print("\a\a\"%s\" matches %d names: ",sendlist,matches.Count());
-	 output((char *) session++->name);
-	 while (session++) {
-	    output(", ");
-	    output((char *) session->name);
+      if (session->away != Here) {
+	 output(flag ? ", " : " [");
+	 flag = true;
+	 switch (session->away) {
+	 case Away:
+	    output("\"away\"");
+	    break;
+	 case Busy:
+	    output("\"busy\"");
+	    break;
+	 case Gone:
+	    output("\"gone\"");
+	    break;
 	 }
-	 output(". (message not sent)\n");
-      } else {
-	 print("\a\aNo names matched \"%s\". (message not sent)\n",sendlist);
       }
+      int idle = (time(NULL) - session->message_time) / 60;
+      if (idle) {
+	 output(flag ? ", " : " [");
+	 flag = true;
+	 output("idle: ");
+	 int hours = idle / 60;
+	 int minutes = idle - hours * 60;
+	 int days = hours / 24;
+	 hours -= days * 24;
+	 if (days) {
+	    print("%dd%02d:%02d",days,hours,minutes);
+	 } else if (hours) {
+	    print("%d:%02d",hours,minutes);
+	 } else {
+	    print("%d minute%s",minutes,(minutes == 1) ? "" : "s");
+	 }
+      }
+      if (flag) output("]");
    }
+
+   SetIter<Discussion> discussion(sendlist->discussions);
+   while (discussion++) {
+      if (first) {
+	 first = false;
+      } else {
+	 output(", ");
+      }
+      output((char *) discussion->name);
+      print(" [%d members]",discussion->members.Count());
+   }
+
+   last_message = new Message(PrivateMessage,name_obj,sendlist,msg);
+
+   boolean self;
+   int count = sendlist->Enqueue((Message *) last_message,this,self);
+   if (count > 1) {
+      print(".) [%d people]\n",count);
+   } else {
+      output(".)\n");
+   }
+   if (self) Enqueue((Message *) last_message);
 }
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
