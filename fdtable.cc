@@ -92,7 +92,7 @@ void FDTable::Select(struct timeval *timeout)
 {
    fd_set rfds = readfds;
    fd_set wfds = writefds;
-   int found = select(size, &rfds, &wfds, 0, timeout);
+   int found = select(used, &rfds, &wfds, 0, timeout);
 
    if (found < 0) {
       if (errno == EINTR) return;
