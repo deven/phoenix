@@ -16,12 +16,15 @@
 
 #include "phoenix.h"
 
-Sendlist::Sendlist(Session &session,String &sendlist)
+Sendlist::Sendlist(Session &session,String &sendlist,boolean multi = false,
+		   boolean do_sessions = true,boolean do_discussions = true)
 {
-   set(session,sendlist);
+   set(session,sendlist,multi,do_sessions,do_discussions);
 }
 
-Sendlist &Sendlist::set(Session &sender,String &sendlist)
+Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
+			boolean do_sessions = true,
+			boolean do_discussions = true)
 {
    Pointer<Session> session;
    Set<Session> sessionmatches;
@@ -48,47 +51,10 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist)
       discussionmatches.Reset();
       separator = strchr(start,Separator);
       if (separator) *separator = 0;
-      session = sender.FindSession(start,sessionmatches);
-      if (session && strlen(start) != session->name.length()) {
-	 boolean flag = false;
-
-	 if (discussion = sender.FindDiscussion(start,discussionmatches,
-						true)) {
-	    discussions.Add(discussion);
-	    flag = true;
-	 } else if (discussionmatches.Count() && !session) {
-	    String tmp(start);
-	    for (char *p = tmp; *p; p++) {
-	       if (*((unsigned char *) p) == UnquotedUnderscore) {
-		  *p = Underscore;
-	       }
-	    }
-
-	    SetIter<Discussion> discussion(discussionmatches);
-
-	    errors.append('"');
-	    errors.append(tmp);
-	    sprintf(buf,"\" matches %d discussions: ",
-		    discussionmatches.Count());
-	    errors.append(buf);
-	    errors.append(discussion++->name);
-	    while (discussion++) {
-	       errors.append(", ");
-	       errors.append(discussion->name);
-	    }
-	    errors.append(".\n");
-	    flag = true;
-	 }
-	 if (flag) {
-	    if (separator) {
-	       *separator = Separator;
-	       start = separator + 1;
-	    }
-	    continue;
-	 }
-      }
-      if (session) {
-	 sessions.Add(session);
+      if (sender.FindSendable(start,session,sessionmatches,discussion,
+		       discussionmatches,true,do_sessions,do_discussions)) {
+	 if (session) sessions.Add(session);
+	 if (discussion) discussions.Add(discussion);
       } else {
 	 String tmp(start);
 	 for (char *p = tmp; *p; p++) {
@@ -100,17 +66,47 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist)
 	 if (sessionmatches.Count()) {
 	    SetIter<Session> session(sessionmatches);
 
-	    errors.append('"');
-	    errors.append(tmp);
-	    sprintf(buf,"\" matches %d names: ",sessionmatches.Count());
-	    errors.append(buf);
-	    errors.append(session++->name);
-	    while (session++) {
-	       errors.append(", ");
-	       errors.append(session->name);
+	    if (multi) {
+	       while (session++) sessions.Add((Session *) session);
+	    } else {
+	       errors.append('"');
+	       errors.append(tmp);
+	       sprintf(buf,"\" matches %d names: ",sessionmatches.Count());
+	       errors.append(buf);
+	       errors.append(session++->name);
+	       while (session++) {
+		  errors.append(", ");
+		  errors.append(session->name);
+	       }
+	       if (discussionmatches.Count()) {
+		  errors.append("; ");
+	       } else {
+		  errors.append(".\n");
+	       }
 	    }
-	    errors.append(".\n");
-	 } else {
+	 }
+	 if (discussionmatches.Count()) {
+	    SetIter<Discussion> discussion(discussionmatches);
+
+	    if (multi) {
+	       while (discussion++) discussions.Add((Discussion *) discussion);
+	    } else {
+	       if (!sessionmatches.Count()) {
+		  errors.append('"');
+		  errors.append(tmp);
+		  errors.append("\" matches ");
+	       }
+	       sprintf(buf,"%d discussions: ",discussionmatches.Count());
+	       errors.append(buf);
+	       errors.append(discussion++->name);
+	       while (discussion++) {
+		  errors.append(", ");
+		  errors.append(discussion->name);
+	       }
+	       errors.append(".\n");
+	    }
+	 }
+	 if (!sessionmatches.Count() && !discussionmatches.Count()) {
 	    if (nomatch) {
 	       if (lastnomatch) {
 		  nomatch.append("\", \"");
@@ -142,7 +138,7 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist)
 }
 
 // Enqueues message to sendlist, returns count of recipients.
-int Sendlist::Expand(Set<Session> &who)
+int Sendlist::Expand(Set<Session> &who,Session *sender)
 {
    who.Reset();
 
@@ -152,7 +148,7 @@ int Sendlist::Expand(Set<Session> &who)
    SetIter<Discussion> discussion(discussions);
    while (discussion++) {
       session = discussion->members;
-      while (session++) who.Add((Session *) session);
+      while (session++) if (session != sender) who.Add((Session *) session);
    }
 
    return who.Count();

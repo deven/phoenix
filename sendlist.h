@@ -21,7 +21,9 @@ public:
    Set<Session> sessions;
    Set<Discussion> discussions;
 
-   Sendlist(Session &sender,String &sendlist);
-   Sendlist &set(Session &sender,String &sendlist);
-   int Expand(Set<Session> &who);
+   Sendlist(Session &session,String &sendlist,boolean multi = false,
+	    boolean do_sessions = true,boolean do_discussions = true);
+   Sendlist &set(Session &sender,String &sendlist,boolean multi = false,
+		 boolean do_sessions = true,boolean do_discussions = true);
+   int Expand(Set<Session> &who,Session *sender);
 };

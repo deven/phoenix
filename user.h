@@ -33,14 +33,10 @@ public:
 
    User(char *login,char *pass,char *name,char *bl,int p): user(login),
    password(pass),reserved(name),blurb(bl),priv(p) { users.AddTail(this); }
-   ~User() { ListIter<User> u(users); while (u++) if (u == this) u.Remove(); }
+   ~User() { users.Remove(this); }
    static User *GetUser(char *login);
    static void Update(char *login,char *pass,char *name,char *defblurb,int p);
    static void UpdateAll();
    boolean CheckReserved(char *name);
    AddSession(Session *s) { sessions.AddTail(s); }
-   RemoveSession(Session *s) {
-      ListIter<Session> session(sessions);
-      while (session++) if (session == s) session.Remove();
-   }
 };
