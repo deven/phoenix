@@ -576,6 +576,11 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
    if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
 		    " and" : "");
    if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+   if (days) {
+      print(" [%dd%02d:%02d]",days,hours,minutes);
+   } else if (hours) {
+      print(" [%d:%02d]",hours,minutes);
+   }
 }
 
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
@@ -858,7 +863,7 @@ void Session::DoWho(char *args)	// Do /who command.
       if (!days) continue;
       sprintf(buf,"%d",days);
       i = strlen(buf);
-      if (!session->telnet) i++;
+      if (!session->telnet || (now - session->login_time) >= 31536000) i++;
       if (i > extend) extend = i;
    }
    sprintf(buf,"%%%ddd",extend);
@@ -882,10 +887,13 @@ void Session::DoWho(char *args)	// Do /who command.
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
-	 } else {
+	 } else if ((now - session->login_time) < 31536000) {
 	    output(Space);
 	    output(date(session->login_time,4,6));
 	    output(Space);
+	 } else {
+	    output(date(session->login_time,4,4));
+	    output(date(session->login_time,20,4));
 	 }
       } else {
 	 output("detached");
@@ -952,12 +960,12 @@ void Session::DoWhy(char *args)	// Do /why command.
       if (!days) continue;
       sprintf(buf,"%d",days);
       i = strlen(buf);
-      if (!session->telnet) i++;
+      if ((now - session->login_time) >= 31536000) i++;
       if (i > extend) extend = i;
    }
    sprintf(buf,"%%%ddd",extend);
 
-   // Output /who header.
+   // Output /why header.
    output("\n Name                              On Since");
    for (i = 0; i < extend; i++) output(Space);
    output("  Idle  Away  User      FD\n ----                              "
@@ -976,10 +984,13 @@ void Session::DoWhy(char *args)	// Do /why command.
       print("%-32.32s%c ",(char *) tmp,tmp.length() > 32 ? '+' : ' ');
       if ((now - session->login_time) < 86400) {
 	 output(date(session->login_time,11,8));
-      } else {
+      } else if ((now - session->login_time) < 31536000) {
 	 output(Space);
 	 output(date(session->login_time,4,6));
 	 output(Space);
+      } else {
+	 output(date(session->login_time,4,4));
+	 output(date(session->login_time,20,4));
       }
       idle = (now - session->message_time) / 60;
       if (idle) {
