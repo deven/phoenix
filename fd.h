@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.2 1993/12/11 07:33:55 deven Exp $
+// $Id: fd.h,v 1.3 1993/12/11 23:42:42 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.3  1993/12/11 23:42:42  deven
+// Made fdtable a protected member, added Select() stub function.
+//
 // Revision 1.2  1993/12/11 07:33:55  deven
 // Added static member of type FDTable to class FD.  Changed ReadSelect(),
 // NoReadSelect(), WriteSelect(), NoWriteSelect() to call counterparts in
