@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.2 1993/12/11 23:57:41 deven Exp $
+// $Id: session.h,v 1.3 1993/12/21 15:14:28 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.3  1993/12/21 15:14:28  deven
+// Did major restructuring to route most I/O through Session class.  All
+// Session-level output is now stored in a symbolic queue, as a block of
+// text, a message, a notification, etc.  Support is ready for /detach.
+//
 // Revision 1.2  1993/12/11 23:57:41  deven
 // Added static member sessions.  Added member functions SendEveryone(),
 // SendByFD(), SendPrivate() and Link().  Added static member functions

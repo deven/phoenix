@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.3 1993/12/11 23:52:27 deven Exp $
+// $Id: general.h,v 1.4 1993/12/21 15:25:30 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.4  1993/12/21 15:25:30  deven
+// Removed enum MessageType.  Made InputFuncPtr a pointer to a member function
+// of class Session.  Made CallbackFuncPtr a pointer to a member function of
+// class Telnet.  Modified declaration for message_start() to use a boolean
+// reference instead of an integer pointer for explicit.
+//
 // Revision 1.3  1993/12/11 23:52:27  deven
 // Removed declaration for global sessions.  Added declarations for library
 // functions strcasecmp() and strncasecmp().  Removed declarations for global
