@@ -34,7 +34,7 @@ private:
       OutputObject *next;
       Pointer<OutputObj> Output;
 
-      OutputObject(OutputObj *out): Output(out) { next = NULL; }
+      OutputObject(OutputObj *out): Output(out) { next = 0; }
       void output(Telnet *telnet);
    };
 public:
@@ -44,7 +44,7 @@ public:
    int Acknowledged;		// count of acknowledged objects in queue
    int Sent;			// count of sent objects in queue
    OutputStream() {		// constructor
-      head = sent = tail = NULL;
+      head = sent = tail = 0;
       Acknowledged = Sent = 0;
    }
    ~OutputStream() {		// destructor
@@ -53,7 +53,7 @@ public:
 	 head = out->next;
 	 delete out;
       }
-      sent = tail = NULL;
+      sent = tail = 0;
       Acknowledged = Sent = 0;
    }
    void Acknowledge() {		// Acknowledge a block of output.

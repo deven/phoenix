@@ -35,8 +35,8 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 			boolean do_sessions = true,
 			boolean do_discussions = true)
 {
-   Session *session = NULL;
-   Discussion *discussion = NULL;
+   Session *session = 0;
+   Discussion *discussion = 0;
    Set<Session> sessionmatches;
    Set<Discussion> discussionmatches;
    String nomatch;
