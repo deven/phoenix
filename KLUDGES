@@ -30,11 +30,6 @@ The state machines in the Telnet class are based on switch/case statements,
 which is effective but verbose.  Table-driven state machines would probably
 be preferable and more flexible.
 
-Only the Amiga ANSI terminal type is fully supported for user connections.
-The "screen" program is a basic workaround for completely non-ANSI terminals,
-but there are some known bugs in the terminal handling (related to wrapping)
-for non-Amiga ANSI terminal types, including "screen".
-
 Currently, the guest account ("guest") is hardcoded in the "user.cc" file.
 This entry overrides any "guest" entry in the password file.  To disable
 guest access, comment out the relevant line in "user.cc".
