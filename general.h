@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.12 1994/04/21 05:56:47 deven Exp $
+// $Id: general.h,v 1.13 1994/05/13 04:26:53 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.13  1994/05/13 04:26:53  deven
+// Removed definition of HOME.
+//
 // Revision 1.12  1994/04/21 05:56:47  deven
 // Renamed "conf" to "Phoenix", added declarations for trim(), getword() and
 // match() functions.
