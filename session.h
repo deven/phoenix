@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.15 1994/04/16 05:49:49 deven Exp $
+// $Id: session.h,v 1.16 1994/04/16 10:40:21 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.16  1994/04/16 10:40:21  deven
+// Added ListItem() and GetWhoSet().
+//
 // Revision 1.15  1994/04/16 05:49:49  deven
 // Added static member discussions, modified Session class to use String class,
 // added FindDiscussion declaration, changed DoBlurb to void, fixed Do*() to
