@@ -2622,6 +2622,8 @@ void Session::SendMessage(Sendlist *sendlist,char *msg)
 	 output(flag ? ", " : " (");
 	 flag = true;
 	 switch (session->away) {
+	 case Here:
+	    break;
 	 case Away:
 	    output("\"away\"");
 	    break;
