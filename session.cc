@@ -141,6 +141,7 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet = t;
    telnet->session = this;
+   telnet->LoginSequenceFinished();
    log("Transfer: %s (%s) from fd %d to fd %d.", ~name, ~user->user, old->fd,
        t->fd);
    old->output("*** This session has been transferred to a new connection. ***"
@@ -156,6 +157,7 @@ void Session::Attach(Telnet *t) // Attach session to connection.
 {
    telnet = t;
    telnet->session = this;
+   telnet->LoginSequenceFinished();
    log("Attach: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
@@ -620,6 +622,8 @@ void Session::Blurb(char *line)
    if (!line || !*line) line = user->blurb;
    if (!line) line = "";
    DoBlurb(line, true);
+
+   telnet->LoginSequenceFinished();
 
    SignedOn = true;		// Session is signed on.
    priv = user->priv;		// Initialize privilege level from User.

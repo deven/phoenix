@@ -89,6 +89,7 @@ private:
    static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
 public:
+   static const int LoginTimeoutTime = 60; // login timeout (seconds)
    static const int BufSize = 32768;	// size of input buffer
    static const int InputSize = 1024;	// default size of input line buffer
    static const int default_width = 80; // Hardcoded default screen width ***
@@ -101,6 +102,7 @@ public:
    int NAWS_width;		// NAWS negotiated screen width
    int NAWS_height;		// NAWS negotiated screen height
    Pointer<Session> session;	// back-pointer to session structure
+   Pointer<Event> LoginTimeout; // login timeout event
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
    char *end;			// end of allocated block (+1)
@@ -139,6 +141,8 @@ public:
    ~Telnet();			// destructor
    static int Count() { return count; }
    void Closed();
+   void ResetLoginTimeout();
+   void LoginSequenceFinished();
    void Prompt(char *p);
    boolean GetEcho() { return Echo == TelnetEnabled; }
    void SetEcho(boolean flag) { Echo = flag ? TelnetEnabled : 0; }
