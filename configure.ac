@@ -27,6 +27,7 @@ AC_PROG_INSTALL
 
 # Checks for libraries.
 AC_CHECK_LIB([crypt], [crypt])
+AC_CHECK_SOCKET_LIBS
 
 # Checks for header files.
 AC_HEADER_STDC
