@@ -29,7 +29,3 @@ separate editor and terminal classes should be created.
 The state machines in the Telnet class are based on switch/case statements,
 which is effective but verbose.  Table-driven state machines would probably
 be preferable and more flexible.
-
-Currently, the guest account ("guest") is hardcoded in the "user.cc" file.
-This entry overrides any "guest" entry in the password file.  To disable
-guest access, comment out the relevant line in "user.cc".
