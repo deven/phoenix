@@ -70,7 +70,9 @@ const int NameLen = 33;		// maximum length of name (including null)
 const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int Port = 6789;		// TCP port to run on
 
-extern int errno;		// error number
+extern int errno;		// System error number
+extern char *sys_errlist[];	// System error list
+extern int sys_nerr;		// Size of system error list
 
 extern FILE *logfile;		// log file ***
 
