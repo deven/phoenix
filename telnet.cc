@@ -391,8 +391,8 @@ void Telnet::Welcome()
    if (RSGA == TelnetDoDont) return;
    if (Echo == TelnetWillWont) return;
 
-   // Send welcome banner, announce guest account.
-   output("\nWelcome to Phoenix!\n\nA \"guest\" account is available.\n\n");
+   // Announce guest account.
+   output("A \"guest\" account is available.\n\n");
 
    // Let's hope the SUPPRESS-GO-AHEAD option worked.
    if (!LSGA && !RSGA) {
@@ -501,6 +501,9 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    set_LSGA(Welcome,true);	// Start initial options negotiations.
    set_RSGA(Welcome,true);
    set_Echo(Welcome,true);
+
+   // Send welcome banner.
+   output("\nWelcome to Phoenix!\n\n");
 }
 
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
@@ -779,6 +782,45 @@ inline void Telnet::accept_input() // Accept input line.
    if (!session) return;
 
    *free = 0;			// Make input line null-terminated.
+
+   // Check if initial option negotiations are pending.
+   if (Echo_callback == Welcome && LSGA_callback == Welcome &&
+      RSGA_callback == Welcome) {
+      // Assume this is a raw TCP connection.
+      LSGA = RSGA = (TelnetWillWont | TelnetDoDont);
+      Echo = 0;
+      Echo_callback = LSGA_callback = RSGA_callback = NULL;
+      output("You don't appear to be running a telnet client.  Assuming raw "\
+             "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
+             "if you need it.)\n\n");
+      Welcome();
+      if (!*data) return;	// Don't queue line if blank.
+   }
+
+   // Check for "/set echo" command.  (kludge!) ***
+   char *tmp = data;
+   if (match(tmp,"/set",4) && match(tmp,"echo",4)) {
+      // Echo newline.
+      if (!AtEnd()) end_of_line();
+      echo(Newline);
+
+      // Check for "on" or "off" value for echo.
+      char *value = getword(tmp);
+      if (match(value,"on")) {
+         Echo = (TelnetWillWont | TelnetDoDont);
+         output("Remote echoing is now enabled.\n");
+      } else if (match(value,"off")) {
+         Echo = 0;
+         output("Remote echoing is now disabled.\n");
+      } else {
+         output("Usage: /set echo [on|off]\n");
+      }
+
+      // Done with this input line, but leave prompt if any.
+      point = free = data;	// Wipe input line. (data intact)
+      mark = NULL;		// Wipe mark.
+      return;
+   }
 
    history = History;		// Reset history iterator.
 
