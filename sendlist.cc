@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.3 1994/04/21 06:14:23 deven Exp $
+// $Id: sendlist.cc,v 1.4 1994/04/21 08:25:24 deven Exp $
 //
 // Sendlist class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.4  1994/04/21 08:25:24  deven
+// Added exact flag to FindSendable() call.
+//
 // Revision 1.3  1994/04/21 06:14:23  deven
 // Renamed "conf" to "Phoenix", cleaned up Sendlist code.
 //
