@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.2 1994/01/19 21:53:49 deven Exp $
+// $Id: list.h,v 1.3 1994/01/20 00:21:28 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.3  1994/01/20 00:21:28  deven
+// Modified to keep track of last node in ListIter for Remove().
+//
 // Revision 1.2  1994/01/19 21:53:49  deven
 // Updated list class, merged node class, added iterator class.
 //

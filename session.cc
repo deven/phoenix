@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.10 1994/01/19 22:25:37 deven Exp $
+// $Id: session.cc,v 1.11 1994/01/20 00:23:49 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.11  1994/01/20 00:23:49  deven
+// Changed Session::sessions into a List<Session>, modified accesses.
+//
 // Revision 1.10  1994/01/19 22:25:37  deven
 // Changed Pointer parameters to reference parameters, put more Pointer
 // initializations into constructors instead of later assignments, added
