@@ -335,8 +335,9 @@ void password(Telnet *telnet,char *line)
    // Send newline.
    telnet->output("\n");
 
-   // Check against hardcoded password.
-   if (strcmp(line,telnet->session->user->password)) {
+   // Check against encrypted password.
+   char *password = telnet->session->user->password;
+   if (strcmp(crypt(line,password),password)) {
       // Login incorrect.
       telnet->output("Login incorrect.\n");
       telnet->Prompt("login: ");
