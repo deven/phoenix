@@ -17,6 +17,6 @@ public:
    char password[32];		// password for this account (during login)
    // change! ***
    char reserved_name[NameLen];	// reserved user name (pseudo)
-   // default blurb? ***
+   char default_blurb[NameLen];	// default blurb
    User(Session *s);
 };

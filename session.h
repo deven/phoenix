@@ -14,12 +14,13 @@ public:
    Session *user_next;		// next session (user)
    User *user;			// user this session belongs to
    Telnet *telnet;		// telnet connection for this session
-   char name_only[NameLen];	// current user name (pseudo) without blurb
+   time_t login_time;		// time logged in
+   time_t message_time;		// time last message sent (for idle time)
+   char name_only[NameLen];	// current user name (pseudo) alone
    char name[NameLen];		// current user name (pseudo) with blurb
+   char blurb[NameLen];		// current user blurb
    char default_sendlist[SendlistLen]; // current default sendlist
    char last_sendlist[SendlistLen];    // last explicit sendlist
-   time_t login_time;		// time logged in
-   time_t message_time;		// time signed on
    char reply_sendlist[SendlistLen];   // reply sendlist for last sender
 
    Session(Telnet *t);		// constructor
