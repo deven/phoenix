@@ -633,6 +633,7 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 
 void Telnet::InsertString(String &s) // Insert string at point.
 {
+   char *p;
    int n,slen = s.length();
 
    if (!s) return;
@@ -656,7 +657,7 @@ void Telnet::InsertString(String &s) // Insert string at point.
       data = tmp;
    } else {
       if (mark >= point) mark += slen;
-      for (char *p = free + slen; p > point; p--) *p = *(p - slen);
+      for (p = free + slen; p > point; p--) *p = *(p - slen);
       for (p = s; *p; p++) *point++ = *p;
       free += slen;
    }
