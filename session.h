@@ -149,6 +149,7 @@ public:
    void DoGone(char *args);	// Do /gone command.
    void DoHelp();		// Do /help command.
    void DoReset();		// Do <space><return> idle time reset.
+   void DoUnidle();		// Do /unidle idle time reset.
    void DoMessage(char *line);	// Do message send.
    void SendEveryone(char *msg);
    void SendPrivate(char *sendlist,char *msg);
