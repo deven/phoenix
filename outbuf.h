@@ -38,13 +38,16 @@ public:
       tail = NULL;
    }
    char *GetData() {		// Save buffer in string and erase.
+      Block *block;
+      char *p;
+
       int len = 0;
-      for (Block *block = head; block; block = block->next) {
+      for (block = head; block; block = block->next) {
 	 len += block->free - block->data;
       }
       if (!len) return NULL;
       char *buf = new char[++len];
-      for (char *p = buf; head; p += len) {
+      for (p = buf; head; p += len) {
 	 block = head;
 	 head = block->next;
 	 len = block->free - block->data;
