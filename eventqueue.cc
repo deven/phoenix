@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 static int EventCmp(Event *event1, Event *event2)
 {
