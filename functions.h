@@ -23,6 +23,10 @@
 // Initial revision
 //
 
+#ifndef HAVE_STRERROR
+extern char *strerror(int errno);
+#endif
+
 // Input function pointer type.
 typedef void (Session::*InputFuncPtr)(char *line);
 

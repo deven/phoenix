@@ -50,7 +50,20 @@
 #endif
 
 #ifndef HAVE_STRERROR
-#error strerror() required!
+extern int sys_nerr;
+extern char *str_errlist[];
+
+char *strerror(int errno)
+{
+   static char message[16];
+
+   if (errno >= 0 && errno < sys_nerr) {
+      return sys_errlist[errno];
+   } else {
+      sprintf(message, "Error %d", errno);
+      return message;
+   }
+}
 #endif
 
 EventQueue events;		// Server event queue.
