@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.22 1994/04/21 18:15:14 deven Exp $
+// $Id: session.cc,v 1.23 1994/05/13 03:48:09 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.23  1994/05/13 03:48:09  deven
+// Various minor bugfixes and enhancements; major rewrite of /help.
+//
 // Revision 1.22  1994/04/21 18:15:14  deven
 // Added Usage messages for discussion commands and /rename.
 //
