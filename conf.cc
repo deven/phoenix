@@ -122,13 +122,13 @@ void error(char *format,...)	// print error message and exit ***
    exit(1);
 }
 
-char *message_start(char *line,char *sendlist,int len,int *explicit)
+char *message_start(char *line,char *sendlist,int len,boolean &explicit)
 {
    char *p;
    char state;
    int i;
 
-   *explicit = 0;		// Assume implicit sendlist.
+   explicit = false;		// Assume implicit sendlist.
 
    // Attempt to detect smileys that shouldn't be sendlists...
    if (!isalpha(*line) && !isspace(*line)) {
@@ -168,7 +168,7 @@ char *message_start(char *line,char *sendlist,int len,int *explicit)
 	 case Semicolon:
 	    sendlist[i] = 0;
 	    if (*++p == Space) p++;
-	    *explicit = 1;
+	    explicit = true;
 	    return p;
 	 case Backslash:
 	    state = Backslash;
@@ -650,13 +650,13 @@ void process_input(Telnet *telnet,char *line)
 	 telnet->print("Your idle time has been reset.\n");
       }
    } else if (*line) {
-      int explicit;
+      boolean explicit;
       int i;
       char c;
       char *p;
       char sendlist[SendlistLen];
 
-      p = message_start(line,sendlist,SendlistLen,&explicit);
+      p = message_start(line,sendlist,SendlistLen,explicit);
 
       // Use last sendlist if none specified.
       if (!*sendlist) strcpy(sendlist,telnet->session->last_sendlist);
