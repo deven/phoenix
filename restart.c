@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: restart.c,v 1.2 2001/12/12 05:09:56 deven Exp $
+ * $Id: restart.c,v 1.3 2002/09/18 02:16:22 deven Exp $
  *
  * Utility program to restart Gangplank conferencing server from cron.
  *
@@ -19,6 +19,12 @@
  * for more information or if any conditions of this licensing are unclear.
  *
  * $Log: restart.c,v $
+ * Revision 1.3  2002/09/18 02:16:22  deven
+ * Added include file config.h, modified to use paramters from configure's
+ * tests to determine which include files to use.  Generate a compile-time
+ * error if memset() or socket() not available.  Remove definition of PORT
+ * and use defined value in config.h instead.
+ *
  * Revision 1.2  2001/12/12 05:09:56  deven
  * Updated include files for portability, changed return value of main to int.
  *

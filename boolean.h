@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: boolean.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: boolean.h,v 1.2 2002/09/17 04:50:55 deven Exp $
 //
 // Boolean type header file.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: boolean.h,v $
+// Revision 1.2  2002/09/17 04:50:55  deven
+// Modified to rely on autoconf to determine if builtin "bool" type is
+// available.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

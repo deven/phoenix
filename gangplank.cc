@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.5 2002/09/10 04:22:21 deven Exp $
+// $Id: gangplank.cc,v 1.6 2002/09/20 04:29:22 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,11 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.6  2002/09/20 04:29:22  deven
+// Generate a compile-time error if mkdir() or strerror() not available.
+// Reverse parameters to setvbuf() if configure says so.  Don't compile code
+// to fork a subprocess to background unless configure found a working fork.
+//
 // Revision 1.5  2002/09/10 04:22:21  deven
 // Provided basic new/delete operators using malloc/free.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.4 2002/09/10 05:59:18 deven Exp $
+// $Id: session.cc,v 1.5 2002/10/02 03:11:23 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.5  2002/10/02 03:11:23  deven
+// Generate a compile-time error if strcasecmp(), strncasecmp() or strchr()
+// not available.  Added "/display version" command to show Gangplank version.
+//
 // Revision 1.4  2002/09/10 05:59:18  deven
 // Changed /who continuations from "]+...+[" to "+...>" in case names are long.
 //

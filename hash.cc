@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: hash.cc,v 1.2 2001/12/02 07:50:37 deven Exp $
+// $Id: hash.cc,v 1.3 2002/09/17 02:40:33 deven Exp $
 //
 // Hash class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: hash.cc,v $
+// Revision 1.3  2002/09/17 02:40:33  deven
+// Added include file config.h.
+//
 // Revision 1.2  2001/12/02 07:50:37  deven
 // Renamed internal hash function which conflicted with the class name.
 //

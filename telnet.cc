@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.4 2002/07/28 05:50:34 deven Exp $
+// $Id: telnet.cc,v 1.5 2002/09/20 05:34:42 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,14 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.5  2002/09/20 05:34:42  deven
+// Generate a compile-time error if inet_ntoa() not available.  Modified to
+// only output banner message about guest access if enabled by configure.
+// Added gangplank version number to banner message.  Removed EWOULDBLOCK and
+// EAGAIN from switch statements because it causes a duplicate-case error on
+// some platforms.  Made ECONNRESET, ECONNTIMEDOUT and ETIMEDOUT cases
+// conditional.
+//
 // Revision 1.4  2002/07/28 05:50:34  deven
 // Changed third argument of getpeername() to socklen_t for more compatibility.
 //

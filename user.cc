@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: user.cc,v 1.2 2002/09/18 02:21:52 deven Exp $
 //
 // User class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: user.cc,v $
+// Revision 1.2  2002/09/18 02:21:52  deven
+// Generate a compile-time error if strcasecmp() not available.  Modified to
+// only create guest account if enabled by configure.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
