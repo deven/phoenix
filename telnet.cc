@@ -449,8 +449,6 @@ void Telnet::Welcome()
    // Intentionally use == with bitfield mask to test both bits at once.
    if (LBin == TelnetWillWont) return;
    if (RBin == TelnetDoDont) return;
-   if (LSGA == TelnetWillWont) return;
-   if (RSGA == TelnetDoDont) return;
    if (Echo == TelnetWillWont) return;
 
    // Announce guest account.
