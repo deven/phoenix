@@ -741,7 +741,7 @@ int main(int argc,char **argv)	// main program
    sessions = NULL;
    if (chdir(HOME)) error("main(): chdir(%s)",HOME);
    OpenLog();
-   FD::fdtable.OpenListen(Port);
+   Listen::Open(Port);
 
    // fork subprocess and exit parent
    if (argc == 1 || strcmp(argv[1],"-debug")) {
