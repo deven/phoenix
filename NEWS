@@ -1,5 +1,24 @@
 $Id: NEWS,v 1.8 2002/12/01 04:43:35 deven Exp $
 
+February 21, 2003: Version 1.0.0.beta.9
+
+ * [SECURITY] This release fixes a buffer overflow vulnerability present in
+   all development releases up through 1.0.0.beta.8 involving vsprintf/sprintf
+   calls with 32K buffers.  This release replaces calls to the system functions
+   with a safe (albeit incomplete) reimplementation.
+
+ * The entire codebase has been audited for other potential buffer overflow
+   situations.  A few minor cleanups have been done, but the code appears to
+   be clean now.
+
+ * This release also improves the login processing.  There is now a 60-second
+   login timeout at all prompts until the user logs in, and a Ctrl-D at any
+   of those prompts will drop the connection.  (Both of these are disabled
+   after completely logging in.)  Also, invalid login names are no longer
+   revealed -- invalid login names now prompt for a password, like valid ones.
+   After 3 failed login attempts, the server will drop the connection.  Also,
+   a bug allowing duplicate sessions (with the same name) has been fixed.
+
 November 30, 2002: Version 1.0.0.beta.8
 
  * This release fixes several portability issues including several introduced
