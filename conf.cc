@@ -395,7 +395,7 @@ void blurb(Telnet *telnet,char *line)
 
    // Announce entry.
    notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
-	    date(time(&telnet->session->login_time),11,5));
+	  date(time(&telnet->session->login_time),11,5));
    telnet->session->message_time = telnet->session->login_time;
    log("Enter: %s (%s) on fd %d.",telnet->session->name_only,
        telnet->session->user->user,telnet->fd);
@@ -428,9 +428,10 @@ void process_input(Telnet *telnet,char *line)
 	    log("Immediate shutdown requested by %s (%s).",
 		telnet->session->name_only,telnet->session->user->user);
 	    log("Final shutdown warning.");
-	    fdtable.announce("*** %s has shut down conf! ***\n",telnet->session->name);
-	    fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
-		     Bell,Bell,Bell,Bell);
+	    fdtable.announce("*** %s has shut down conf! ***\n",
+			     telnet->session->name);
+	    fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
+			     "\n%c%c",Bell,Bell,Bell,Bell);
 	    alarm(5);
 	    Shutdown = 2;
 	 } else if (!strcmp(line,"!down cancel")) {
@@ -439,8 +440,8 @@ void process_input(Telnet *telnet,char *line)
 	       alarm(0);
 	       log("Shutdown cancelled by %s (%s).",telnet->session->name_only,
 		   telnet->session->user->user);
-	       fdtable.announce("*** %s has cancelled the server shutdown. ***\n",
-			telnet->session->name);
+	       fdtable.announce("*** %s has cancelled the server shutdown. ***"
+				"\n",telnet->session->name);
 	    } else {
 	       telnet->output("The server was not about to shut down.\n");
 	    }
@@ -450,9 +451,10 @@ void process_input(Telnet *telnet,char *line)
 	    if (sscanf(line+5,"%d",&i) != 1) i = 30;
 	    log("Shutdown requested by %s (%s) in %d seconds.",
 		telnet->session->name_only,telnet->session->user->user,i);
-	    fdtable.announce("*** %s has shut down conf! ***\n",telnet->session->name);
-	    fdtable.announce("%c%c>>> This server will shutdown in %d seconds... "
-		     "<<<\n%c%c",Bell,Bell,i,Bell,Bell);
+	    fdtable.announce("*** %s has shut down conf! ***\n",
+			     telnet->session->name);
+	    fdtable.announce("%c%c>>> This server will shutdown in %d seconds"
+			     "... <<<\n%c%c",Bell,Bell,i,Bell,Bell);
 	    alarm(i);
 	    Shutdown = 1;
 	 }
@@ -530,9 +532,7 @@ void process_input(Telnet *telnet,char *line)
 	    telnet->output("/signal syntax error!\n");
 	 }
       } else if (!strncmp(line,"/send",5)) {
-	 char *p;
-
-	 p = line + 5;
+	 char *p = line + 5;
 	 while (*p && isspace(*p)) p++;
 	 if (!*p) {
 	    // Display current sendlist.
@@ -708,8 +708,8 @@ void who_cmd(Telnet *telnet)
 void quit(int sig)		// received SIGQUIT or SIGTERM
 {
    log("Shutdown requested by signal in 30 seconds.");
-   fdtable.announce("%c%c>>> This server will shutdown in 30 seconds... <<<\n%c%c",
-	    Bell,Bell,Bell,Bell);
+   fdtable.announce("%c%c>>> This server will shutdown in 30 seconds... <<<"
+		    "\n%c%c",Bell,Bell,Bell,Bell);
    alarm(30);
    Shutdown = 1;
 }
@@ -722,8 +722,8 @@ void alrm(int sig)		// received SIGALRM
    if (Shutdown) {
       if (Shutdown == 1) {
 	 log("Final shutdown warning.");
-	 fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
-		  Bell,Bell,Bell,Bell);
+	 fdtable.announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<"
+			  "\n%c%c",Bell,Bell,Bell,Bell);
 	 alarm(5);
 	 Shutdown++;;
       } else {
