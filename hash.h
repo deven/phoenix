@@ -60,7 +60,7 @@ private:
    int count;
    Pointer<HashEntry> bucket[Size];
 
-   int Hash(char *key);
+   int HashFunction(char *key);
 public:
    Hash(): count(0) { }
    int Count() { return count; }
