@@ -1,0 +1,55 @@
+From coderpunks-errors@toad.com  Thu Apr 18 19:45:25 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id TAA05791 for <deven@escher.ties.org>; Thu, 18 Apr 1996 19:45:21 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id TAA20710 for <deven@asylum.sf.ca.us>; Thu, 18 Apr 1996 19:45:19 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id TAA29054; Thu, 18 Apr 1996 19:45:16 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id QAA06435 for coderpunks-outgoing; Thu, 18 Apr 1996 16:35:24 -0700 (PDT)
+Received: from nova.unix.portal.com (root@nova.unix.portal.com [156.151.1.101]) by toad.com (8.7.5/8.7.3) with SMTP id QAA06415 for <coderpunks@toad.com>; Thu, 18 Apr 1996 16:35:13 -0700 (PDT)
+Received: from jobe.shell.portal.com (jobe.shell.portal.com [156.151.3.4]) by nova.unix.portal.com (8.6.11/8.6.5) with ESMTP id QAA10054 for <coderpunks@toad.com>; Thu, 18 Apr 1996 16:33:47 -0700
+Received: (hfinney@localhost) by jobe.shell.portal.com (8.6.11/8.6.5) id QAA16185 for coderpunks@toad.com; Thu, 18 Apr 1996 16:33:46 -0700
+Date: Thu, 18 Apr 1996 16:33:46 -0700
+From: Hal <hfinney@shell.portal.com>
+Message-Id: <199604182333.QAA16185@jobe.shell.portal.com>
+To: coderpunks@toad.com
+Subject: Re:  Stream transformation
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+From: Raph Levien <raph@c2.org>
+> int main (int argc, char **argv) {
+>   AST_fifo *fifo, *fifo2, *fifo3;
+>   int status;
+>   int i;
+>
+>   AST_init ();
+>
+>   fifo = AST_file_read (0);
+>   fifo2 = AST_lowercase (fifo);
+>   fifo3 = AST_b64e (fifo2);
+>   AST_file_write (fifo3, 1);
+>
+>   do {
+>     status = AST_progress_file ();
+>   } while (status == AST_AGAIN);
+>
+>   return 0;
+> }
+
+This looks very nice.  Does it work for multiple threads?  Could I do:
+
+	fifo1 = AST_file_read(fdsock1a);
+	AST_file_write (fifo1, fdsock1b);
+	fifo2 = AST_file_read(fdsock2a);
+	AST_file_write (fifo2, fdsock2b);
+
+with the intention that this would copy data from fdsock1a to fdsock1b,
+while simultaneously copying from fdsock2a to fdsock2b?
+
+Being able to do this nicely (with filters etc.) was what stalled me on
+my efforts to make an SSL encrypting web proxy program which would run on
+the same PC as your browser and transparently do encryption for you.
+Because browsers use multiple simultaneous connections it is necessary to
+have multiple transformations going on at once, in an environment of
+asynchronous, non-blocking I/O (winsock).
+
+Hal
