@@ -20,8 +20,9 @@
 enum FDType {UnknownFD,ListenFD,TelnetFD};
 
 class FD {			// File descriptor.
-public:
+protected:
    static FDTable fdtable;	// File descriptor table.
+public:
    FDType type;
    int fd;
    static void Select() {
