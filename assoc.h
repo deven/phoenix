@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: assoc.h,v 1.1 1994/10/09 22:51:25 deven Exp $
+// $Id: assoc.h,v 1.2 1995/10/27 02:51:58 deven Exp $
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.h,v $
+// Revision 1.2  1995/10/27 02:51:58  deven
+// Added Known() boolean test, fixed tilde operator to call tilde on String.
+//
 // Revision 1.1  1994/10/09 22:51:25  deven
 // Initial revision
 //
