@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.6 1993/12/31 07:45:55 deven Exp $
+// $Id: conf.cc,v 1.7 1994/01/02 11:30:23 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.7  1994/01/02 11:30:23  deven
+// Updated copyright notice, added crash() function, changed Telnet::announce()
+// to Session::announce(), removed several dead variables.
+//
 // Revision 1.6  1993/12/31 07:45:55  deven
 // Removed support for reversed smileys (e.g. "(-:") in case of match against
 // a name, and because they're not as likely to be typed reflexively.

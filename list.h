@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: list.h,v 1.1 1994/01/02 11:40:20 deven Exp $
 //
 // List class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: list.h,v $
+// Revision 1.1  1994/01/02 11:40:20  deven
+// Initial revision
+//
 
 template <class Type>
 class List: public Object {

@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.4 1993/12/31 07:59:22 deven Exp $
+// $Id: session.h,v 1.5 1994/01/02 12:06:43 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.5  1994/01/02 12:06:43  deven
+// Updated copyright notice, made class Session derived from Object, modified
+// to use smart pointers, added Close(), Attach() and Detach() functions, made
+// some other minor modifications.
+//
 // Revision 1.4  1993/12/31 07:59:22  deven
 // Updated for variable output stream windows and TIMING-MARK acknowledgements,
 // added DoDetach() function for /detach command.

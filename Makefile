@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.3 1993/12/21 15:10:07 deven Exp $
+# $Id: Makefile,v 1.4 1994/01/02 11:26:40 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.4  1994/01/02 11:26:40  deven
+# Updated copyright, removed -I. flag from Sun CFLAGS, added source files.
+#
 # Revision 1.3  1993/12/21 15:10:07  deven
 # Added new source files.
 #

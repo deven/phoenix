@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: name.h,v 1.1 1993/12/21 15:28:36 deven Exp $
+// $Id: name.h,v 1.2 1994/01/02 11:54:23 deven Exp $
 //
 // Name class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: name.h,v $
+// Revision 1.2  1994/01/02 11:54:23  deven
+// Updated copyright notice, made class Name derived from Object, modified
+// to use smart pointers.
+//
 // Revision 1.1  1993/12/21 15:28:36  deven
 // Initial revision
 //

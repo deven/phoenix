@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.2 1993/12/12 00:43:09 deven Exp $
+// $Id: listen.cc,v 1.3 1994/01/02 11:51:30 deven Exp $
 //
 // Listen class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
+// Revision 1.3  1994/01/02 11:51:30  deven
+// Updated copyright notice, added destructor and Closed() functions.
+//
 // Revision 1.2  1993/12/12 00:43:09  deven
 // Added Open() member function.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outbuf.h,v 1.3 1993/12/31 07:50:16 deven Exp $
+// $Id: outbuf.h,v 1.4 1994/01/02 11:59:56 deven Exp $
 //
 // OutputBuffer class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outbuf.h,v $
+// Revision 1.4  1994/01/02 11:59:56  deven
+// Updated copyright notice.
+//
 // Revision 1.3  1993/12/31 07:50:16  deven
 // Added cast to boolean to satisfy gcc 2.5.7 warnings.
 //

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.1 1993/12/21 15:33:31 deven Exp $
+// $Id: output.cc,v 1.2 1994/01/02 12:02:15 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.2  1994/01/02 12:02:15  deven
+// Updated copyright notice, modified to use smart pointers, added attach
+// and detach notifications.
+//
 // Revision 1.1  1993/12/21 15:33:31  deven
 // Initial revision
 //

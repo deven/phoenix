@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.1 1993/12/21 15:33:22 deven Exp $
+// $Id: output.h,v 1.2 1994/01/02 12:00:55 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.2  1994/01/02 12:00:55  deven
+// Updated copyright notice, added notifications for attach and detach,
+// made class Output derived from Object, modified to use smart pointers,
+// reogranized constructors and code in general.
+//
 // Revision 1.1  1993/12/21 15:33:22  deven
 // Initial revision
 //

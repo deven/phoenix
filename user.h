@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: user.h,v 1.2 1994/01/02 12:15:11 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.2  1994/01/02 12:15:11  deven
+// Updated copyright notice, made class User derived from Object, modified
+// to use smart pointers.
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //

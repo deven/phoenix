@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.h,v 1.3 1993/12/21 15:19:25 deven Exp $
+// $Id: conf.h,v 1.4 1994/01/02 11:29:13 deven Exp $
 //
 // Conferencing system server -- Primary header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.h,v $
+// Revision 1.4  1994/01/02 11:29:13  deven
+// Updated copyright notice, added new header files.
+//
 // Revision 1.3  1993/12/21 15:19:25  deven
 // Modified to include name.h, output.h and outstr.h.
 //

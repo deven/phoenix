@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.2 1993/12/31 07:53:43 deven Exp $
+// $Id: outstr.cc,v 1.3 1994/01/02 12:03:49 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.3  1994/01/02 12:03:49  deven
+// Updated copyright notice, modified to use smart pointers, added Attach().
+//
 // Revision 1.2  1993/12/31 07:53:43  deven
 // Updated output stream buffering code to allow for variable-sized output
 // window using the standard telnet TIMING-MARK option as an acknowledgement.
