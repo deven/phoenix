@@ -77,7 +77,6 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    EnqueueOthers(new TransferNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
-   ResetIdle(10);
    EnqueueOutput();
 }
 
