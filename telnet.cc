@@ -35,7 +35,7 @@ int Telnet::count = 0;
 
 void Telnet::LogCaller() {	// Log calling host and port.
    struct sockaddr_in saddr;
-   unsigned int saddrlen = sizeof(saddr);
+   socklen_t saddrlen = sizeof(saddr);
 
    if (!getpeername(fd, (struct sockaddr *) &saddr, &saddrlen)) {
       log("Accepted connection on fd %d from %s port %d.", fd,
