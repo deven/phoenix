@@ -9,11 +9,12 @@
 // $Log$
 
 #include "other.h"
+#include "boolean.h"
 #include "object.h"
+#include "general.h"
 #include "string.h"
 #include "list.h"
 #include "set.h"
-#include "general.h"
 #include "assoc.h"
 #include "line.h"
 #include "block.h"
@@ -29,3 +30,4 @@
 #include "fd.h"
 #include "listen.h"
 #include "telnet.h"
+#include "pointer.h"
