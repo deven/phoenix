@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
+// $Id: gangplank.cc,v 1.4 2002/07/28 05:49:03 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.4  2002/07/28 05:49:03  deven
+// Changed setlinebuf() call to setvbuf() equivalent.
+//
 // Revision 1.3  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //

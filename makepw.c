@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: makepw.c,v 1.2 2001/12/12 05:48:08 deven Exp $
+ * $Id: makepw.c,v 1.3 2002/08/14 00:27:00 deven Exp $
  *
  * Utility program to encrypt a single password in standard Unix "crypt" form.
  *
@@ -19,6 +19,10 @@
  * for more information or if any conditions of this licensing are unclear.
  *
  * $Log: makepw.c,v $
+ * Revision 1.3  2002/08/14 00:27:00  deven
+ * Added Macintosh OS X (__APPLE__ && __MACH__) test to list of BSD-derived
+ * systems.
+ *
  * Revision 1.2  2001/12/12 05:48:08  deven
  * Updated include files for portability, changed main() return value to int,
  * avoided declaring getpass() routine.
