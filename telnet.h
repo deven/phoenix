@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.13 1996/02/21 20:42:27 deven Exp $
+// $Id: telnet.h,v 1.14 1996/04/05 06:04:46 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.14  1996/04/05 06:04:46  deven
+// Added support for telnet TRANSMIT-BINARY option.
+//
 // Revision 1.13  1996/02/21 20:42:27  deven
 // Updated copyright notice.  Removed unused Closed() declaration.  Changed
 // temporary smart pointers back to real pointers.
