@@ -15,7 +15,7 @@
 //
 
 template <class Type>
-class Set: public Object {
+class Set {
 friend class SetIter<Type>;
 private:
    List<Type> l;
@@ -47,14 +47,13 @@ void Set<Type>::Remove(Pointer<Type> &ptr) {
 template <class Type>
 class SetIter {
 private:
-   typedef Set<Type> SetType;
    ListIter<Type> iter;
 public:
    SetIter() { }
-   SetIter(SetType &s): iter(s.l) { }
-   SetIter(Pointer<SetType> &s): iter(s->l) { }
-   SetIter &operator =(SetType &s) { iter = s.l; }
-   SetIter &operator =(Pointer<SetType> &s) { iter = s->l; }
+   SetIter(Set<Type> &s): iter(s.l) { }
+   SetIter(Set<Type> *s): iter(s->l) { }
+   SetIter &operator =(Set<Type> &s) { iter = s.l; }
+   SetIter &operator =(Set<Type> *s) { iter = s->l; }
    Type *operator ->() { return iter; }
    operator Type *() { return iter; }
    Type *operator --() { return iter--; }
