@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Check copyright notices, offer to update if necessary.
+files=$(grep -v `date +%Y` `find * -type f -print` | grep 'Copyright.*Corzine' | grep -v 'Copyright\.\*' | sed 's/:.*//')
+if [ "$files" != "" ]; then
+   ls -l $files
+   echo ""
+   echo -n "Update copyright notices on the files above? [n] "
+   read answer
+   case "$answer" in
+      [Yy]*) perl -i -pe 'BEGIN { $year = shift; $last = $year - 1; } warn "Updating copyright notice: $ARGV\n" if s/(Copyright.*?)$last(.*?Corzine)/$1$year$2/' `date +%Y` $files;;
+   esac
+fi
