@@ -9,6 +9,7 @@
 // $Log$
 
 class Session {
+   static Session *sessions;	// List of all sessions. (global)
 public:
    Session *next;		// next session (global)
    Session *user_next;		// next session (user)
