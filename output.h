@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.6 1994/04/15 22:20:47 deven Exp $
+// $Id: output.h,v 1.7 1994/04/21 05:57:34 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.7  1994/04/21 05:57:34  deven
+// Added discussion-related notifications and /rename notification.
+//
 // Revision 1.6  1994/04/15 22:20:47  deven
 // Modified Message class to use String class and Sendlist class.
 //

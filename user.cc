@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.4 1994/02/05 18:37:51 deven Exp $
+// $Id: user.cc,v 1.5 1994/04/21 06:19:03 deven Exp $
 //
 // User class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.cc,v $
+// Revision 1.5  1994/04/21 06:19:03  deven
+// Renamed "conf" to "Phoenix".
+//
 // Revision 1.4  1994/02/05 18:37:51  deven
 // Completely reorganized User class.
 //

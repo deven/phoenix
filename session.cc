@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.19 1994/04/16 11:08:55 deven Exp $
+// $Id: session.cc,v 1.20 1994/04/21 06:13:49 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.20  1994/04/21 06:13:49  deven
+// Renamed "conf" to "Phoenix", various Sendlist and Discussion changes.
+//
 // Revision 1.19  1994/04/16 11:08:55  deven
 // Added /setidle to take the place of /idle=, simplified match(), modified
 // /who, /why and /idle to use Sendlist and keywords.

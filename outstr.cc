@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.6 1994/04/17 11:27:43 deven Exp $
+// $Id: outstr.cc,v 1.7 1994/04/21 06:10:20 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.7  1994/04/21 06:10:20  deven
+// Renamed "conf" to "Phoenix", added Unenqueue() function.
+//
 // Revision 1.6  1994/04/17 11:27:43  deven
 // Fixed bug -- when acknowledgements are disabled, the first output block
 // wasn't being sent.  Now it will send it if the output buffers are empty,

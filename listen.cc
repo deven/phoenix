@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.5 1994/01/19 22:28:20 deven Exp $
+// $Id: listen.cc,v 1.6 1994/04/21 06:09:30 deven Exp $
 //
 // Listen class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
+// Revision 1.6  1994/04/21 06:09:30  deven
+// Renamed "conf" to "Phoenix".
+//
 // Revision 1.5  1994/01/19 22:28:20  deven
 // Fixed to clear close-on-exec flag for listen socket, check fd first in
 // InputReady(), removed RequestShutdown() function.

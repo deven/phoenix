@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.4 1994/04/15 22:16:32 deven Exp $
+// $Id: set.h,v 1.5 1994/04/21 05:56:10 deven Exp $
 //
 // Set class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: set.h,v $
+// Revision 1.5  1994/04/21 05:56:10  deven
+// Added First() function, rewrote implementation of Remove() function.
+//
 // Revision 1.4  1994/04/15 22:16:32  deven
 // Added Reset() method.
 //

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.11 1994/04/16 05:46:26 deven Exp $
+// $Id: general.h,v 1.12 1994/04/21 05:56:47 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.12  1994/04/21 05:56:47  deven
+// Renamed "conf" to "Phoenix", added declarations for trim(), getword() and
+// match() functions.
+//
 // Revision 1.11  1994/04/16 05:46:26  deven
 // Added class declarations, removed name and sendlist length limits, added
 // Comma and Separator codes, removed match_name() and message_start()

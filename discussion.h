@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.h,v 1.1 1994/04/15 22:21:04 deven Exp $
+// $Id: discussion.h,v 1.2 1994/04/21 05:59:50 deven Exp $
 //
 // Discussion class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.h,v $
+// Revision 1.2  1994/04/21 05:59:50  deven
+// Added timestamps, all function declarations.
+//
 // Revision 1.1  1994/04/15 22:21:04  deven
 // Initial revision
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: other.h,v 1.8 1994/02/05 18:17:58 deven Exp $
+// $Id: other.h,v 1.9 1994/04/21 05:54:06 deven Exp $
 //
 // Phoenix conferencing system server -- Other (system) include files.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
+// Revision 1.9  1994/04/21 05:54:06  deven
+// Renamed "conf" to "Phoenix".
+//
 // Revision 1.8  1994/02/05 18:17:58  deven
 // Changed prototypes for setlinebuf(), crypt(), setsockopt() and bzero() to
 // match Linux prototypes.
