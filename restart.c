@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define PORT 6789
+#define PORT 9999
 
 int check_for_server(int port)	/* check for running server */
 {
