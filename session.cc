@@ -831,9 +831,9 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
 
    // Determine time format to use.
    if (sys_vars.Known("time_format")) {
-      time_format = String(sys_vars["time_format"]);
+      time_format = sys_vars["time_format"].Value();
    } else {
-      time_format = String(defaults["time_format"]);
+      time_format = defaults["time_format"].Value();
    }
    if (time_format == "verbose") format = 0;
    if (time_format == "both") format = 1;
@@ -1146,9 +1146,9 @@ void Session::DoDisplay(char *args) // Do /display command.
 
          output("Your time format is ");
          if (sys_vars.Known("time_format")) {
-            time_format = String(sys_vars["time_format"]);
+            time_format = sys_vars["time_format"].Value();
          } else {
-            time_format = String(defaults["time_format"]);
+            time_format = defaults["time_format"].Value();
             output("the default: ");
          }
          if (time_format == "verbose") {
