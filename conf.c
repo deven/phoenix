@@ -352,15 +352,17 @@ char *message_start(char *line,char *sendlist,int len)
 
 int match_name(char *name,char *sendlist)
 {
+   char *p, *q;
+
    if (!*name || !*sendlist) return 0;
-   while (*name && *sendlist) {
-      if ((isupper(*name) ? tolower(*name++) : *name++) !=
-	  (isupper(*sendlist) ? tolower(*sendlist++) : *sendlist++)) {
-	 /* Mis-match, ignoring case. */
-	 return 0;
+   for (p = name, q = sendlist; *p && *q; p++, q++) {
+      if ((isupper(*p) ? tolower(*p) : *p) !=
+	  (isupper(*q) ? tolower(*q) : *q)) {
+	 /* Mis-match, ignoring case. Recurse for middle matches. */
+	 return match_name(name+1,sendlist);
       }
    }
-   return 1;
+   return !*q;
 }
 
 /* Set telnet ECHO option. (local) */
