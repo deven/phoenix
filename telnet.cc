@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.37 2000/03/22 23:37:29 deven Exp $
+// $Id: telnet.cc,v 1.38 2000/08/15 02:03:29 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.38  2000/08/15 02:03:29  deven
+// Added "/set width" command to change current terminal width.  Still a very
+// nasty kludge that doesn't belong here.
+//
 // Revision 1.37  2000/03/22 23:37:29  deven
 // Don't block on SUPPRESS-GO-AHEAD options; some broken clients don't respond.
 //

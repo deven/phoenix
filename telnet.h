@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.18 2000/03/22 07:13:56 deven Exp $
+// $Id: telnet.h,v 1.19 2000/08/15 02:03:10 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.19  2000/08/15 02:03:10  deven
+// Modified to make screen width variable.
+//
 // Revision 1.18  2000/03/22 07:13:56  deven
 // Marked constants width, height, HistoryMax and KillRingMax as static and
 // as integers.
