@@ -91,11 +91,13 @@ public:
    char closing;		// Session closing? (boolean)
    String name;			// current user name (pseudo)
    String blurb;		// current user blurb
-   Pointer<Name> name_obj;	// current name object.
+   Pointer<Name> name_obj;	// current name object
    Pointer<Message> last_message; // last message sent
    Pointer<Sendlist> default_sendlist; // current default sendlist
    Pointer<Sendlist> last_sendlist;    // last explicit sendlist
-   Pointer<Sendlist> reply_sendlist;   // reply sendlist for last sender
+// Pointer<Sendlist> reply_sendlist;   // reply sendlist for last sender
+   String last_explicit;	// last explicit sendlist typed
+   String reply_sendlist;	// last explicit sendlist typed
 
    Session(Pointer<Telnet> &t);
    ~Session();
