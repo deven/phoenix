@@ -847,11 +847,20 @@ void Telnet::accept_input()	// Accept input line.
       echo(Newline);
    }
 
+   // *** QUICK & DIRTY SECURITY FIX: (for vsprintf() overflows)
+   boolean too_long = false;
+   if (free - data > 5000) too_long = true;
+
    point = free = data;		// Wipe input line. (data intact)
    mark = 0;			// Wipe mark.
    prompt = "";			// Wipe prompt.
 
-   session->Input(data);	// Call state-specific input line processor.
+   // *** QUICK & DIRTY SECURITY FIX: (for vsprintf() overflows)
+   if (too_long) {
+      output("Input line IGNORED because it exceeds 5000 characters!\n");
+   } else {
+      session->Input(data);	// Call state-specific input line processor.
+   }
 
    if ((end - data) > InputSize) { // Drop buffer back to normal size.
       delete [] data;
