@@ -58,6 +58,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <ctype.h>
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -519,6 +520,15 @@ String &String::prepend(char c)
    *str = c;
    str[++len] = 0;
    return *this;
+}
+
+void String::trim() {
+   int leading = 0;
+   for (char *p = str; *p && isspace(*p); p++) leading++;
+   len -= leading;
+   memmove(str, str + leading, len);
+   for (char *p = str + len - 1; p >= str && isspace(*p); p--) len--;
+   str[len] = 0;
 }
 
 // Handle vsprintf-style formatting.  (This is a simplified implementation.)
