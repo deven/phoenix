@@ -22,9 +22,10 @@
 
 stty erase '^h'
 for x in $*; do
+   if [ ! -f $x ]; then co $x; fi
    if [ -f $x ]; then
       rcs -u $x >/dev/null 2>&1
-      chmod 644 $x
+      chmod u+w $x
       if rcsdiff $x >/dev/null 2>&1; then
          echo "$x is current."
       else
@@ -36,7 +37,7 @@ for x in $*; do
          rcs -l $x
          ci $x
          co $x
-         chmod 644 $x
+         chmod u+w $x
          (echo "$y"; ls -l $x; cat $x) 2>&1 | less
       fi
    else
