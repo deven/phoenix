@@ -249,6 +249,7 @@ int main(int argc, char **argv)	// main program
    if (!port) port = DefaultPort;
    Listen::Open(port);
 
+#if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
    // fork subprocess and exit parent
    if (strcmp(argv[argc - 1], "-debug")) {
       switch (pid = fork()) {
@@ -268,6 +269,9 @@ int main(int argc, char **argv)	// main program
    } else {
       log("Server started, running on port %d. (pid %d)", port, getpid());
    }
+#else
+   log("Server started, running on port %d. (pid %d)", port, getpid());
+#endif
 
 #ifdef USE_SIGIGNORE
    sigignore(SIGHUP);
