@@ -26,7 +26,7 @@ public:
    OutputClass Class;		// Output class.
    time_t time;			// Timestamp.
 
-   Output(time_t when = 0) {	// constructor
+   Output(OutputType t,OutputClass c,time_t when = 0): Type(t),Class(c) {
       if (when) {
 	 time = when;
       } else {
@@ -40,14 +40,8 @@ public:
 class Text: public Output {
    char *text;
 public:
-   Text(char *buf): Output() {
-      Type = TextOutput;
-      Class = TextClass;
-      text = buf;
-   }
-   ~Text() {
-      delete text;
-   }
+   Text(char *buf): Output(TextOutput,TextClass),text(buf) { }
+   ~Text() { delete text; }
    void output(Pointer<Telnet> telnet);
 };
 
@@ -56,10 +50,9 @@ public:
    Pointer<Name> from;
    // Pointer<Sendlist> to;
    char *text;
-   Message(OutputType type,Pointer<Name> sender,char *msg): Output() {
-      Type = type;
-      Class = MessageClass;
-      from = sender;
+public:
+   Message(OutputType type,Pointer<Name> sender,char *msg):
+   Output(type,MessageClass),from(sender) {
       text = new char[strlen(msg) + 1];
       strcpy(text,msg);
    }
@@ -70,21 +63,15 @@ public:
 class EntryNotify: public Output {
    Pointer<Name> name;
 public:
-   EntryNotify(Pointer<Name> name_obj,time_t when = 0): Output(when) {
-      Type = EntryOutput;
-      Class = NotificationClass;
-      name = name_obj;
-   }
+   EntryNotify(Pointer<Name> who,time_t when = 0):
+   Output(EntryOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> telnet);
 };
 
 class ExitNotify: public Output {
    Pointer<Name> name;
 public:
-   ExitNotify(Pointer<Name> name_obj,time_t when = 0): Output(when) { // constructor
-      Type = ExitOutput;
-      Class = NotificationClass;
-      name = name_obj;
-   }
+   ExitNotify(Pointer<Name> who,time_t when = 0):
+   Output(ExitOutput,NotificationClass,when),name(who) { }
    void output(Pointer<Telnet> telnet);
 };
