@@ -24,6 +24,7 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "boolean.h"
 #include "object.h"
