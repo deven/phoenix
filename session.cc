@@ -10,9 +10,9 @@
 
 #include "conf.h"
 
-Session *Session::sessions = NULL;
+Pointer<Session> Session::sessions = NULL;
 
-Session::Session(Telnet *t)
+Session::Session(Pointer<Telnet> t)
 {
    telnet = t;			// Save Telnet pointer.
    next = NULL;			// No next session.
@@ -35,60 +35,53 @@ Session::Session(Telnet *t)
 
 Session::~Session()
 {
-   Session *s;
-   Telnet *t;
-   Block *block;
-   int found;
-
    // Unlink session from list, remember if found.
-   found = 0;
+   boolean found = false;
    if (sessions == this) {
       sessions = next;
-      found++;
+      found = true;
    } else {
-      s = sessions;
-      while (s && s->next != this) s = s->next;
-      if (s && s->next == this) {
+      Pointer<Session> s = sessions;
+      while (!s.Null() && s->next != this) s = s->next;
+      if (!s.Null() && s->next == this) {
 	 s->next = next;
-	 found++;
+	 found = true;
       }
    }
 
-   if (found) NotifyExit();	// Notify and log exit if session found.
+   if (SignedOn) NotifyExit();	// Notify and log exit if session found.
 
-   if (telnet) {
-      t = telnet;
+   SignedOn = false;
+
+   if (!telnet.Null()) {
+      Pointer<Telnet> t = telnet;
       telnet = NULL;
-      t->Close();		// Drain connection, then close.
+      t->Close(drain);		// Close connection.
    }
 
-   delete user;			// make user stay around ***
+   user = NULL;
 }
 
 void Session::SaveInputLine(char *line)
 {
-   Line *p;
+   Pointer<Line> p;
 
    p = new Line(line);
-   if (lines) {
-      lines->Append(p);
-   } else {
+   if (lines.Null()) {
       lines = p;
+   } else {
+      lines->Append(p);
    }
 }
 
 void Session::SetInputFunction(InputFuncPtr input)
 {
-   Line *p;
-
    InputFunc = input;
 
    // Process lines as long as we still have a defined input function.
-   while (InputFunc != NULL && lines) {
-      p = lines;
-      lines = p->next;
-      (this->*InputFunc)(p->line);
-      delete p;
+   while (InputFunc != NULL && !lines.Null()) {
+      (this->*InputFunc)(lines->line);
+      lines = lines->next;
       EnqueueOutput();		// Enqueue output buffer (if any).
    }
 }
@@ -300,10 +293,10 @@ void Session::NotifyEntry() {	// Notify other users of entry and log.
 }
 
 void Session::NotifyExit() {	// Notify other users of exit and log.
-   if (telnet) {
-      log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
-   } else {
+   if (telnet.Null()) {
       log("Exit: %s (%s), detached.",name_only,user->user);
+   } else {
+      log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    }
    EnqueueOthers(new ExitNotify(name_obj));
 }
@@ -382,7 +375,7 @@ void Session::DoBye()		// Do /bye command.
 
 void Session::DoDetach()	// Do /detach command.
 {
-   if (telnet) telnet->Close(); // Drain connection, then close.
+   if (!telnet.Null()) telnet->Close(); // Drain connection, then close.
 }
 
 void Session::DoWho()		// Do /who command.
@@ -391,7 +384,7 @@ void Session::DoWho()		// Do /who command.
    int now = time(NULL);
 
    // Check if anyone is signed on at all.
-   if (!sessions) {
+   if (sessions.Null()) {
       output("Nobody is signed on.\n");
       return;
    }
@@ -402,14 +395,17 @@ void Session::DoWho()		// Do /who command.
 	  "\n");
 
    // Output data about each user.
-   for (Session *session = sessions; session; session = session->next) {
-      if (session->telnet) {
-	 output(Space);
-      } else {
+   Pointer<Session> session;
+   for (session = sessions; !session.Null(); session = session->next) {
+      if (session->telnet.Null()) {
 	 output(Tilde);
+      } else {
+	 output(Space);
       }
       print("%-32s  ",session->name);
-      if (session->telnet) {
+      if (session->telnet.Null()) {
+	 output("detached");
+      } else {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
 	 } else {
@@ -417,8 +413,6 @@ void Session::DoWho()		// Do /who command.
 	    output(date(session->login_time,4,6));
 	    output(Space);
 	 }
-      } else {
-	 output("detached");
       }
       idle = (now - session->message_time) / 60;
       if (idle) {
@@ -426,7 +420,7 @@ void Session::DoWho()		// Do /who command.
 	 minutes = idle - hours * 60;
 	 days = hours / 24;
 	 hours -= days * 24;
-	 if (days > 9 || days && !session->telnet) {
+	 if (days > 9 || days && session->telnet.Null()) {
 	    print("%2dd%02d:%02d ",days,hours,minutes);
 	 } else if (days) {
 	    print("%dd%02d:%02d  ",days,hours,minutes);
@@ -439,10 +433,10 @@ void Session::DoWho()		// Do /who command.
 	 output("         ");
       }
       print("%-8s  ",session->user->user);
-      if (session->telnet) {
-	 print("%2d\n",session->telnet->fd);
-      } else {
+      if (session->telnet.Null()) {
 	 output("--\n");
+      } else {
+	 print("%2d\n",session->telnet->fd);
       }
    }
 }
@@ -454,13 +448,14 @@ void Session::DoIdle()		// Do /idle command.
    int col = 0;
 
    // Check if anyone is signed on at all.
-   if (!sessions) {
+   if (sessions.Null()) {
       output("Nobody is signed on.\n");
       return;
    }
 
    // Output /idle header.
-   if (sessions && !sessions->next) { // get LISTED user count better. ***
+   if (!sessions.Null() && sessions->next.Null()) {
+      // get LISTED user count better. ***
       output("\n Name                              Idle\n ----              "
 	     "                ----\n");
    } else {
@@ -470,11 +465,12 @@ void Session::DoIdle()		// Do /idle command.
    }
 
    // Output data about each user.
-   for (Session *session = sessions; session; session = session->next) {
-      if (session->telnet) {
-	 output(Space);
-      } else {
+   Pointer<Session> session;
+   for (session = sessions; !session.Null(); session = session->next) {
+      if (session->telnet.Null()) {
 	 output(Tilde);
+      } else {
+	 output(Space);
       }
       print("%-32s ",session->name);
       idle = (now - session->message_time) / 60;
@@ -695,8 +691,9 @@ void Session::DoMessage(char *line) // Do message send.
 // Send private message by fd #.
 void Session::SendByFD(int fd,char *msg)
 {
-   for (Session *session = sessions; session; session = session->next) {
-      if (session->telnet && session->telnet->fd == fd) {
+   Pointer<Session> session;
+   for (session = sessions; !session.Null(); session = session->next) {
+      if (!session->telnet.Null() && session->telnet->fd == fd) {
 	 ResetIdle(10);
 	 print("(message sent to %s.)\n",session->name);
 	 session->Enqueue(new Message(PrivateMessage,name_obj,msg));
@@ -710,7 +707,8 @@ void Session::SendByFD(int fd,char *msg)
 void Session::SendEveryone(char *msg)
 {
    int sent = 0;
-   for (Session *session = sessions; session; session = session->next) {
+   Pointer<Session> session;
+   for (session = sessions; !session.Null(); session = session->next) {
       if (session == this) continue;
       session->Enqueue(new Message(PublicMessage,name_obj,msg));
       sent++;
@@ -741,9 +739,9 @@ void Session::SendPrivate(char *sendlist,char *msg)
       return;
    }
 
-   Session *dest = NULL;
    int matches = 0;
-   for (Session *session = sessions; session; session = session->next) {
+   Pointer<Session> session,dest;
+   for (session = sessions; !session.Null(); session = session->next) {
       if (match_name(session->name_only,sendlist)) {
 	 if (matches++) break;
 	 dest = session;
@@ -774,7 +772,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
-   if (Shutdown && !sessions) {
+   if (Shutdown && sessions.Null()) {
       log("All connections closed, shutting down.");
       log("Server down.");
       if (logfile) fclose(logfile);

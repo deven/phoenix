@@ -11,7 +11,7 @@
 // Types of FD subclasses.
 enum FDType {UnknownFD,ListenFD,TelnetFD};
 
-class FD {			// File descriptor.
+class FD: public Object {	// File descriptor.
 protected:
    static FDTable fdtable;	// File descriptor table.
 public:
