@@ -2,7 +2,7 @@
 #
 # $Id: Makefile,v 1.8 1994/04/16 05:43:16 deven Exp $
 #
-# Conferencing system server -- Makefile.
+# Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
@@ -46,14 +46,14 @@ LDFLAGS =
 # LDFLAGS =
 
 CC = gcc
-EXEC = conf
-HDRS = conf.h other.h object.h string.h list.h set.h general.h line.h block.h \
-	outbuf.h name.h output.h outstr.h discussion.h sendlist.h session.h \
-	user.h fdtable.h fd.h listen.h telnet.h
-SRCS = conf.cc fdtable.cc listen.cc output.cc outstr.cc session.cc \
-	sendlist.cc string.cc telnet.cc user.cc
-OBJS = conf.o fdtable.o listen.o output.o outstr.o session.o sendlist.o \
-	string.o telnet.o user.o
+EXEC = phoenixd
+HDRS = phoenix.h other.h object.h string.h list.h set.h general.h line.h \
+	block.h outbuf.h name.h output.h outstr.h discussion.h sendlist.h \
+	session.h user.h fdtable.h fd.h listen.h telnet.h
+SRCS = discussion.cc fdtable.cc listen.cc output.cc outstr.cc phoenix.cc \
+	session.cc sendlist.cc string.cc telnet.cc user.cc
+OBJS = discussion.o fdtable.o listen.o output.o outstr.o phoenix.o \
+	session.o sendlist.o string.o telnet.o user.o
 
 all: $(EXEC) restart
 

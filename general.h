@@ -2,7 +2,7 @@
 //
 // $Id: general.h,v 1.11 1994/04/16 05:46:26 deven Exp $
 //
-// Conferencing system server -- General header file.
+// Phoenix conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
@@ -54,7 +54,7 @@
 
 // Home directory for server to run in.
 #ifndef HOME
-#define HOME "/home/deven/src/conf"
+#define HOME "/home/deven/src/phoenix"
 #endif
 
 // For compatibility.
