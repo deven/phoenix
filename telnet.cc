@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.31 1996/04/05 06:06:58 deven Exp $
+// $Id: telnet.cc,v 1.32 1996/04/06 07:43:18 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.32  1996/04/06 07:43:18  deven
+// Rearranged some compose sequences and added simpler aliases for the common
+// characters, for Spanish in particular.
+//
 // Revision 1.31  1996/04/05 06:06:58  deven
 // Added support for telnet TRANSMIT-BINARY option.
 //
