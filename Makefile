@@ -4,7 +4,7 @@
 #
 # Conferencing system server -- Makefile.
 #
-# Copyright 1993 by Deven T. Corzine.  All rights reserved.
+# Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
 # Revision 1.3  1993/12/21 15:10:07  deven

@@ -4,7 +4,7 @@
 //
 // Conferencing system server -- Other (system) include files.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
 // Revision 1.2  1993/12/11 07:43:34  deven

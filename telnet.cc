@@ -4,7 +4,7 @@
 //
 // Telnet class implementation.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
 // Revision 1.5  1993/12/31 08:15:49  deven
