@@ -193,6 +193,7 @@ public:
    void DoDepermit(char *args);	// Do /depermit command.
    void DoAppoint(char *args);	// Do /appoint command.
    void DoUnappoint(char *args); // Do /unappoint command.
+   void DoRename(char *args);	 // Do /rename command.
    void DoReset();		 // Do <space><return> idle time reset.
    void DoMessage(char *line);	 // Do message send.
    void SendMessage(Pointer<Sendlist> &sendlist,char *msg);

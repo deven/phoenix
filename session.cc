@@ -680,6 +680,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/depermit",4)) DoDepermit(line);
       else if (match(line,"/appoint",4)) DoAppoint(line);
       else if (match(line,"/unappoint",9)) DoUnappoint(line);
+      else if (match(line,"/rename",7)) DoRename(line);
       else if (match(line,"/clear",3)) DoClear(line);
       else if (match(line,"/unidle",7)) DoUnidle(line);
       else if (match(line,"/detach",4)) DoDetach(line);
@@ -1794,6 +1795,40 @@ void Session::DoUnappoint(char *args) // Do /unappoint command.
 	 DiscussionMatches(name,matches);
       }
    }
+}
+
+void Session::DoRename(char *args) // Do /rename command.
+{
+   Pointer<Session> session;
+   Set<Session> sessionmatches;
+   Pointer<Discussion> discussion;
+   Set<Discussion> discussionmatches;
+
+   if (match(args,"me")) {
+      output("The keyword \"me\" is reserved.  (name unchanged)\n");
+      return;
+   }
+   User::UpdateAll();		// Update user accounts.
+   if (user->CheckReserved(args)) {
+      output("That name is reserved.  (name unchanged)\n");
+      return;
+   }
+   if (FindSendable(args,session,sessionmatches,discussion,discussionmatches,
+		    false,true)) {
+      if (session) {
+	 if (session != this) {
+	    output("That name is already in use.  (name unchanged)\n");
+	    return;
+	 }
+      } else {
+	 print("There is already a discussion named \"%s\". (name unchanged)"
+	       "\n",(char *) discussion->name);
+	 return;
+      }
+   }
+   EnqueueOthers(new RenameNotify(name,args));
+   print("You have changed your name to \"%s\".\n",args);
+   name = args;
 }
 
 void Session::DoHelp(char *args) // Do /help command.
