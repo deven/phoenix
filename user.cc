@@ -43,6 +43,30 @@
 
 List<User> User::users;
 
+User::User(char *login, char *pass, char *names, char *bl, int p): user(login),
+password(pass), blurb(bl), priv(p)
+{
+   SetReserved(names);
+   users.AddTail(this);
+}
+
+void User::SetReserved(char *names)
+{
+   reserved.Reset();
+   if (names) {
+      char *name = names;
+      for (char *p = name; *p; p++) {
+	 if (*p == ',') {
+	    reserved.AddTail(new StringObj(name, p - name));
+	    reserved.Last()->trim();
+	    name = p + 1;
+	 }
+      }
+      reserved.AddTail(new StringObj(name));
+      reserved.Last()->trim();
+   }
+}
+
 User *User::GetUser(char *login)
 {
    ListIter<User> u(users);
@@ -50,12 +74,12 @@ User *User::GetUser(char *login)
    return 0;
 }
 
-void User::Update(char *login, char *pass, char *name, char *defblurb, int p)
+void User::Update(char *login, char *pass, char *names, char *defblurb, int p)
 {
    User *u = GetUser(login);
-   if (!u) u = new User(login, pass, name, defblurb, p);
+   if (!u) u = new User(login, pass, names, defblurb, p);
    u->password = pass;
-   u->reserved = name;
+   u->SetReserved(names);
    u->blurb = defblurb;
    u->priv = p;
 }
@@ -64,7 +88,7 @@ void User::UpdateAll()		// Update all user entries from password file.
 {
    static time_t last = 0;
    struct stat st;
-   char buf[BufSize], *username, *password, *name, *priv, *p;
+   char buf[BufSize], *username, *password, *names, *priv, *p;
 
    if (!stat("passwd", &st)) {
       if (st.st_mtime == last) return;
@@ -76,12 +100,12 @@ void User::UpdateAll()		// Update all user entries from password file.
       while (fgets(buf, BufSize, pw)) {
 	 if (buf[0] == '#') continue;
 	 p = username = buf;
-	 password = name = priv = 0;
-	 while (*p) if (*p==':') { *p++=0; password = p; break; } else p++;
-	 while (*p) if (*p==':') { *p++=0; name = p; break; } else p++;
-	 while (*p) if (*p==':') { *p++=0; priv = p; break; } else p++;
+	 password = names = priv = 0;
+	 while (*p) if (*p == ':') { *p++ = 0; password = p; break; } else p++;
+	 while (*p) if (*p == ':') { *p++ = 0; names = p; break; } else p++;
+	 while (*p) if (*p == ':') { *p++ = 0; priv = p; break; } else p++;
 	 if (!priv) continue;
-	 Update(username, password, name, 0, priv ? atoi(priv) : 0);
+	 Update(username, password, names, 0, priv ? atoi(priv) : 0);
       }
       fclose(pw);
    }
@@ -92,17 +116,20 @@ void User::UpdateAll()		// Update all user entries from password file.
 #endif
 }
 
-boolean User::FindReserved(char *name, User *&user)
+char *User::FindReserved(char *name, User *&user)
 {
    UpdateAll();			// Update user accounts.
 
    ListIter<User> u(users);
    while (u++) {
-      if (u->reserved && !strcasecmp(~u->reserved, name)) {
-         user = u;
-	 return boolean(u != this);
+      ListIter<StringObj> reserved(u->reserved);
+      while (reserved++) {
+	 if (!strcasecmp(~*reserved, name)) {
+            user = u;
+	    return ~*reserved;
+         }
       }
    }
    user = 0;
-   return false;
+   return NULL;
 }
