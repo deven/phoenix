@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: string.h,v 1.2 2001/12/12 05:12:44 deven Exp $
 //
 // String class interface.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.h,v $
+// Revision 1.2  2001/12/12 05:12:44  deven
+// Added additional operations for completeness, including const/non-const
+// variants.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

@@ -1,4 +1,4 @@
-$Id: KLUDGES,v 1.1 2001/11/30 23:53:32 deven Exp $
+$Id: KLUDGES,v 1.2 2001/12/12 05:49:33 deven Exp $
 
 The Object class arbitrarily sets the reference count to -1000 when deleting
 itself, to avoid recursive destruction of objects due to temporary references.
