@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.20 1995/05/05 04:24:00 deven Exp $
+// $Id: session.h,v 1.21 1995/10/26 15:46:20 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.21  1995/10/26 15:46:20  deven
+// Added DoSet() function.
+//
 // Revision 1.20  1995/05/05 04:24:00  deven
 // Added /howmany command.
 //
