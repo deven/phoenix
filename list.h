@@ -20,8 +20,8 @@ private:
 public:
    List(): count(0) { }
    ~List() { while (Dequeue()) ; }
-   int AddHead(Pointer<Type> ptr);
-   int AddTail(Pointer<Type> ptr);
+   int AddHead(Pointer<Type> &ptr);
+   int AddTail(Pointer<Type> &ptr);
    Pointer<Type> RemHead();
    Pointer<Type> RemTail();
    Pointer<Type> Delete(Pointer<Node<Type>> node) {
@@ -34,10 +34,10 @@ public:
       node->next = node->prev = NULL;
       return obj;
    }
-   int Enqueue(Pointer<Type> ptr) { return AddTail(ptr); }
+   int Enqueue(Pointer<Type> &ptr) { return AddTail(ptr); }
    Pointer<Type> Dequeue() { return RemHead(); }
-   int Push(Pointer<Type> ptr) { return AddTail(ptr); }
+   int Push(Pointer<Type> &ptr) { return AddTail(ptr); }
    Pointer<Type> Pop() { return RemTail(); }
-   int Shift(Pointer<Type> ptr) { return AddHead(ptr); }
+   int Shift(Pointer<Type> &ptr) { return AddHead(ptr); }
    Pointer<Type> Unshift() { return RemHead(); }
 };
