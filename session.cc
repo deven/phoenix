@@ -35,6 +35,11 @@ Session::Session(Pointer<Telnet> t)
 
 Session::~Session()
 {
+   Close();
+}
+
+void Session::Close(boolean drain = true) // Close session.
+{
    // Unlink session from list, remember if found.
    boolean found = false;
    if (sessions == this) {
@@ -370,7 +375,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
 void Session::DoBye()		// Do /bye command.
 {
-   delete this;			// Destroy session. (closes connection)
+   Close();			// Close session.
 }
 
 void Session::DoDetach()	// Do /detach command.
