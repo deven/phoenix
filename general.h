@@ -37,6 +37,18 @@ const int NameLen = 33;		// maximum length of name (including null)
 const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int Port = 6789;		// TCP port to run on
 
+extern int errno;		// error number
+
+extern Session *sessions;	// active sessions ***
+
+extern FDTable fdtable;		// File descriptor table. ***
+extern fd_set readfds;		// read fdset for select() ***
+extern fd_set writefds;		// write fdset for select() ***
+
+extern FILE *logfile;		// log file ***
+
+extern int Shutdown;		// shutdown flag
+
 // enumerations
 #ifdef NO_BOOLEAN
 #define boolean int
@@ -88,10 +100,3 @@ void erase_line(Telnet *telnet);
 void quit(int);
 void alrm(int);
 int main(int argc,char **argv);
-
-extern int errno;		// error number
-
-extern int Shutdown;		// shutdown flag
-
-extern fd_set readfds;		// read fdset for select()
-extern fd_set writefds;		// write fdset for select()
