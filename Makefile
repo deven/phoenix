@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.11 1996/02/21 11:55:22 deven Exp $
+# $Id: Makefile,v 1.12 1996/04/05 00:04:51 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.12  1996/04/05 00:04:51  deven
+# Updated flags for Linux compile, included -static temporarily...
+#
 # Revision 1.11  1996/02/21 11:55:22  deven
 # Added -Wall flag to CFLAGS.  Added boolean.h and pointer.h header files.
 #
