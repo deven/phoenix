@@ -319,6 +319,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 	 if (to->discussions.Count()) {
 	    if (!first) output("; ");
 	    print("discussion%s ",to->discussions.Count() == 1 ? "" : "s");
+	    first = true;
 
 	    SetIter<Discussion> discussion(to->discussions);
 	    while (discussion++) {
@@ -1306,6 +1307,8 @@ void Telnet::OutputReady()	// telnet stream can output data
       return;
    }
 
+   boolean flag = boolean(Output.head != 0);
+
    // Send user data, if any.
    while (Output.head) {
       while (Output.head) {
@@ -1371,7 +1374,7 @@ void Telnet::OutputReady()	// telnet stream can output data
    }
 
    // Do the Go Ahead thing, if we must.
-   if (!LSGA) {
+   if (flag && !LSGA) {
       command(TelnetIAC,TelnetGoAhead);
 
       // Only block if both sides are doing Go Aheads.
