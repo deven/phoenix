@@ -27,8 +27,8 @@ private:
    String value;		// Value for associative array entry.
    AssocEntry(char *k,char *v): key(k),value(v) { }
 public:
-   String &Key() { return key; }
-   String &Value() { return value; }
+   String Key() { return key; }
+   String Value() { return value; }
    AssocEntry &operator =(AssocEntry &entry) {
       value = entry.value;
       return *this;
