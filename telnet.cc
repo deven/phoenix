@@ -46,17 +46,6 @@
 
 #include "conf.h"
 
-void Telnet::announce(char *format,...) // formatted write to all connections
-{
-   char buf[BufSize];
-   va_list ap;
-
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
-   va_end(ap);
-   fdtable.announce(buf);
-}
-
 void Telnet::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
 {
    fdtable.nuke(telnet,fd,drain);
@@ -704,7 +693,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 
 	       // Initiate shutdown.
 	       log("Shutdown requested by new server in 30 seconds.");
-	       fdtable.announce("\a\a>>> A new server is starting.  This "
+	       Session::announce("\a\a>>> A new server is starting.  This "
 				"server will shutdown in 30 seconds... <<<"
 				"\n\a\a");
 	       alarm(30);

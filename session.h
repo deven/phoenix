@@ -65,6 +65,7 @@ public:
       while (*buf) Output.out(*((unsigned char *) buf++));
    }
    void print(char *format,...); // formatted output
+   static void announce(char *format,...); // formatted output to all sessions
 
    void EnqueueOutput(void) {	// Enqueue output buffer.
       char *buf = Output.GetData();

@@ -89,7 +89,6 @@ public:
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
-   static void announce(char *format,...);
    static void nuke(Pointer<Telnet> telnet,int fd,boolean drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
