@@ -85,8 +85,7 @@ public:
    char *end;			// end of allocated block (+1)
    char *point;			// current point location
    char *mark;			// current mark location
-   char *prompt;		// current prompt
-   int prompt_len;		// length of current prompt
+   String prompt;		// current prompt
    Pointer<Name> reply_to;	// sender of last private message
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
@@ -110,7 +109,7 @@ public:
    void Closed();
    void Prompt(char *p);
    boolean AtEnd() { return boolean(point == free); }
-   int Start() { return prompt_len; }
+   int Start() { return prompt.length(); }
    int StartLine() { return Start() / width; }
    int StartColumn() { return Start() % width; }
    int Point() { return point - data; }
