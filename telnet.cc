@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.16 1994/04/21 08:54:00 deven Exp $
+// $Id: telnet.cc,v 1.17 1994/04/21 17:54:47 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.17  1994/04/21 17:54:47  deven
+// Fixed InsertString() function.
+//
 // Revision 1.16  1994/04/21 08:54:00  deven
 // Added upcase_word(), downcase_word(), capitalize_word() functions.
 //
