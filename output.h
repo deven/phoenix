@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.10 1996/02/19 23:49:05 deven Exp $
+// $Id: output.h,v 1.11 1996/02/21 20:35:50 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.h,v $
+// Revision 1.11  1996/02/21 20:35:50  deven
+// Updated copyright notice.  Changed temporary smart pointers back to real
+// pointers.
+//
 // Revision 1.10  1996/02/19 23:49:05  deven
 // Changed "Output" class to "OutputObj" to avoid conflicts.
 //

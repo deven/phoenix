@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.h,v 1.3 1994/04/21 06:02:53 deven Exp $
+// $Id: sendlist.h,v 1.4 1996/02/21 20:39:23 deven Exp $
 //
 // Sendlist class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.h,v $
+// Revision 1.4  1996/02/21 20:39:23  deven
+// Updated copyright notice.  Changed "String &" parameters to "char *".
+//
 // Revision 1.3  1994/04/21 06:02:53  deven
 // Changed Sendlist constructor and set() arguments.
 //

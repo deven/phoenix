@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.7 1996/02/19 23:51:17 deven Exp $
+// $Id: discussion.cc,v 1.8 1996/02/21 20:52:19 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.8  1996/02/21 20:52:19  deven
+// Updated copyright notice.  Changed temporary smart pointers back to real
+// pointers.  Added extra parens around assignment in conditional context to
+// make GCC 2.7.2 happy.
+//
 // Revision 1.7  1996/02/19 23:51:17  deven
 // Changed "Output" class to "OutputObj" to avoid conflicts.
 //

@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: assoc.h,v 1.3 1996/02/19 22:21:43 deven Exp $
+// $Id: assoc.h,v 1.4 1996/02/21 20:49:46 deven Exp $
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.h,v $
+// Revision 1.4  1996/02/21 20:49:46  deven
+// Updated copyright notice.  Changed "String &" references to "char *" where
+// applicable.  Changed some "String &" return values to "String" to make new
+// copies.  Changed temporary smart pointers back to real pointers.  Added a
+// definition for postfix ++ to keep GCC 2.7.2 happy.
+//
 // Revision 1.3  1996/02/19 22:21:43  deven
 // Fixed bug illuminated by GCC 2.7.2 -- the operator =() methods didn't return
 // any value; now they return *this as intended.

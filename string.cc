@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.3 1996/02/17 00:14:30 deven Exp $
+// $Id: string.cc,v 1.4 1996/02/21 21:02:23 deven Exp $
 //
 // String class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.cc,v $
+// Revision 1.4  1996/02/21 21:02:23  deven
+// Updated copyright notice.  Included boolean.h header.
+//
 // Revision 1.3  1996/02/17 00:14:30  deven
 // Fixed single-character prepend() bug.
 //

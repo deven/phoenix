@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.41 1996/02/20 00:48:55 deven Exp $
+// $Id: session.cc,v 1.42 1996/02/21 20:59:47 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.42  1996/02/21 20:59:47  deven
+// Updated copyright notice.  Changed temporary smart pointers back to real
+// pointers.  Changed NULL to 0.  Removed ResetIdle() from Transfer().  Added
+// "Here" case to switch statement to make GCC 2.7.2 happy.
+//
 // Revision 1.41  1996/02/20 00:48:55  deven
 // Fixed /rename command to create new name_obj directly instead of using the
 // SetBlurb() function incorrectly.

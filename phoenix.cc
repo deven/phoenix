@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.18 1995/12/05 20:14:42 deven Exp $
+// $Id: phoenix.cc,v 1.19 1996/02/21 20:56:12 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.19  1996/02/21 20:56:12  deven
+// Updated copyright notice.  Printed shutdown signal in logfile, ignored other
+// signal numbers in handlers.  Moved declaration for new ANSI "for" scoping,
+// and added extra parens around assignment in conditional context to make
+// GCC 2.7.2 happy.
+//
 // Revision 1.18  1995/12/05 20:14:42  deven
 // Added SystemUptime() function (reads /proc/uptime if available), added
 // ServerStartUptime to hold the system uptime at the time of server start,

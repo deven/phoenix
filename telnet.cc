@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.27 1996/02/17 00:13:17 deven Exp $
+// $Id: telnet.cc,v 1.28 1996/02/21 21:04:08 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.28  1996/02/21 21:04:08  deven
+// Updated copyright notice.  Changed temporary smart pointers back to real
+// pointers.  Changed NULL to 0.  Added "default" case to make GCC 2.7.2 happy.
+// Moved variable declaration due to new ANSI "for" scoping.  Removed inline
+// qualifiers.  Removed an unused variable.
+//
 // Revision 1.27  1996/02/17 00:13:17  deven
 // Modified to enclose the reply sendlist in quotes if necessary.
 //

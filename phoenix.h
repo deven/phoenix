@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.h,v 1.9 1995/10/27 03:06:45 deven Exp $
+// $Id: phoenix.h,v 1.10 1996/02/21 11:58:01 deven Exp $
 //
 // Phoenix conferencing system server -- Primary header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.h,v $
+// Revision 1.10  1996/02/21 11:58:01  deven
+// Updated copyright notice.  Moved general.h, added boolean.h and pointer.h.
+//
 // Revision 1.9  1995/10/27 03:06:45  deven
 // Added assoc.h include file.
 //

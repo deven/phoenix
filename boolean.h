@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: boolean.h,v 1.1 1996/02/21 11:59:13 deven Exp $
 //
 // Phoenix conferencing system server -- Boolean type header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: boolean.h,v $
+// Revision 1.1  1996/02/21 11:59:13  deven
+// Initial revision
+//
 
 // GCC versions beyond 2.5.8 have builtin "bool" boolean data type.
 #if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ > 5)

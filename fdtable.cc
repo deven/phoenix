@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.10 1994/04/21 06:09:17 deven Exp $
+// $Id: fdtable.cc,v 1.11 1996/02/21 20:53:06 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.11  1996/02/21 20:53:06  deven
+// Updated copyright notice.  Changed NULL to 0.
+//
 // Revision 1.10  1994/04/21 06:09:17  deven
 // Renamed "conf" to "Phoenix".
 //

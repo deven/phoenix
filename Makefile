@@ -1,14 +1,14 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.11 1995/12/05 18:09:18 deven Exp $
+# $Id: Makefile,v 1.11 1996/02/21 11:55:22 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
-# Revision 1.11  1995/12/05 18:09:18  deven
-# Forced gcc to use old a.out 2.5.8 compiler until source is fixed for 2.7.2.
+# Revision 1.11  1996/02/21 11:55:22  deven
+# Added -Wall flag to CFLAGS.  Added boolean.h and pointer.h header files.
 #
 # Revision 1.10  1994/10/09 09:17:12  deven
 # Added Assoc (associative array) source files.

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.6 1994/06/27 13:21:09 deven Exp $
+// $Id: user.h,v 1.7 1996/02/21 20:41:17 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.7  1996/02/21 20:41:17  deven
+// Updated copyright notice.  Changed return type of AddSession() to void.
+// Changed temporary smart pointer back to real pointer.
+//
 // Revision 1.6  1994/06/27 13:21:09  deven
 // Replaced CheckReserved() with FindReserved().
 //

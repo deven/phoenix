@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.5 1994/06/27 05:26:37 deven Exp $
+// $Id: string.h,v 1.6 1996/02/21 19:33:02 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.6  1996/02/21 19:33:02  deven
+// Updated copyright notice.  Added String->bool conversion, for when "bool" is
+// a valid builtin data type.
+//
 // Revision 1.5  1994/06/27 05:26:37  deven
 // Changed unary minus to unary tilde on strings.
 //

@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.8 1996/02/19 23:51:51 deven Exp $
+// $Id: outstr.cc,v 1.9 1996/02/21 20:54:20 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.9  1996/02/21 20:54:20  deven
+// Updated copyright notice.  Moved nested class OutputStream::OutputObject to
+// top-level class OutputStreamObject.  Changed NULL to 0.  Changed temporary
+// smart pointers back to real pointers.
+//
 // Revision 1.8  1996/02/19 23:51:51  deven
 // Changed "Output" class to "OutputObj" to avoid conflicts.
 //

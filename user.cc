@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.6 1994/06/27 13:29:20 deven Exp $
+// $Id: user.cc,v 1.7 1996/02/21 21:05:47 deven Exp $
 //
 // User class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.cc,v $
+// Revision 1.7  1996/02/21 21:05:47  deven
+// Updated copyright notice.  Changed temporary smart pointer back to real
+// pointer.  Changed NULL to 0.
+//
 // Revision 1.6  1994/06/27 13:29:20  deven
 // Replaced CheckReserved() with FindReserved(), stat() on passwd file, read
 // only if changed, don't call atoi("0").

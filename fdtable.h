@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.h,v 1.6 1994/01/19 22:13:19 deven Exp $
+// $Id: fdtable.h,v 1.7 1996/02/21 20:41:54 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
+// Revision 1.7  1996/02/21 20:41:54  deven
+// Updated copyright notice.
+//
 // Revision 1.6  1994/01/19 22:13:19  deven
 // Added CloseAll().
 //

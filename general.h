@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.16 1995/12/05 20:14:12 deven Exp $
+// $Id: general.h,v 1.17 1996/02/21 20:32:36 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.17  1996/02/21 20:32:36  deven
+// Updated copyright notice.  Moved boolean stuff out to boolean.h.  Changed
+// character constants from enum to const char.
+//
 // Revision 1.16  1995/12/05 20:14:12  deven
 // Added ServerStartUptime variable and SystemUptime() function.
 //
