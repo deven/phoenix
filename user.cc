@@ -46,7 +46,13 @@ void User::Update(char *login,char *pass,char *name,char *defblurb,int p)
 
 void User::UpdateAll()		// Update all user entries from password file.
 {
+   static time_t last = 0;
+   struct stat st;
    char buf[256],*username,*password,*name,*priv,*p;
+   if (!stat("passwd",&st)) {
+      if (st.st_mtime == last) return;
+      last = st.st_mtime;
+   }
    FILE *pw = fopen("passwd","r");
    if (pw) {
       while (fgets(buf,256,pw)) {
