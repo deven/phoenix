@@ -38,6 +38,15 @@ String::String(const String &s)
    extra = 0;
 }
 
+String::String(String &s)
+{
+   len = s.len;
+   str = new char[len + 1];
+   strncpy(str, s.str, len);
+   str[len] = 0;
+   extra = 0;
+}
+
 String::String(const char *s)
 {
    if (!s) s = "";
@@ -48,7 +57,30 @@ String::String(const char *s)
    extra = 0;
 }
 
+String::String(char *s)
+{
+   if (!s) s = "";
+   len = strlen(s);
+   str = new char[len + 1];
+   strncpy(str, s, len);
+   str[len] = 0;
+   extra = 0;
+}
+
 String::String(const char *s, int n)
+{
+   len = n;
+   str = new char[len + 1];
+   if (s) {
+      strncpy(str, s, len);
+      str[len] = 0;
+   } else {
+      for (int i=0; i<=len; i++) str[i] = 0;
+   }
+   extra = 0;
+}
+
+String::String(char *s, int n)
 {
    len = n;
    str = new char[len + 1];
@@ -108,6 +140,21 @@ String &String::operator =(const String &s)
    return *this;
 }
 
+String &String::operator =(String &s)
+{
+   if (s.len <= len + extra) {
+      extra += len - s.len;
+   } else {
+      delete [] str;
+      extra = extra ? Extra : 0;
+      str = new char[s.len + extra + 1];
+   }
+   len = s.len;
+   strncpy(str, s.str, len);
+   str[len] = 0;
+   return *this;
+}
+
 String &String::operator =(const char *s)
 {
    if (!s) s = "";
@@ -126,6 +173,25 @@ String &String::operator =(const char *s)
 }
 
 String &String::append(const String &s)
+{
+   if (s.len) {
+      if (s.len <= extra) {
+	 extra -= s.len;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + s.len + extra + 1];
+	 strncpy(str, tmp, len);
+	 delete [] tmp;
+      }
+      strncpy(str + len, s.str, s.len);
+      len += s.len;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::append(String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
@@ -181,6 +247,28 @@ String &String::append(char c)
 }
 
 String &String::prepend(const String &s)
+{
+   if (s.len) {
+      if (s.len <= extra) {
+	 extra -= s.len;
+	 char *p = str + len - 1;
+	 char *q = p + s.len;
+	 while (p >= str) *q-- = *p--;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + s.len + extra + 1];
+	 strncpy(str + s.len, tmp, len);
+	 delete [] tmp;
+      }
+      strncpy(str, s.str, s.len);
+      len += s.len;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::prepend(String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
