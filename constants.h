@@ -28,7 +28,6 @@
 
 // General parameters.
 const int BlockSize = 1024;	// data size for block
-const int BufSize = 32768;	// general temporary buffer size
 const int InputSize = 256;	// default size of input line buffer
 const int DefaultPort = PORT;	// TCP port to run on
 
