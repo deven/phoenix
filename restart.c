@@ -3,9 +3,7 @@
  *
  * Utility program to restart conferencing server from cron.
  *
- * restart.c -- restart code.
- *
- * Copyright 1992-1993 by Deven T. Corzine.  All rights reserved.
+ * Copyright 1992-1994 by Deven T. Corzine.  All rights reserved.
  *
  * $Log$
  */
