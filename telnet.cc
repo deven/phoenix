@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.29 1996/04/05 02:46:24 deven Exp $
+// $Id: telnet.cc,v 1.30 1996/04/05 04:10:07 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.30  1996/04/05 04:10:07  deven
+// Added a necessary null pointer check so "/set echo" alone doesn't crash.
+//
 // Revision 1.29  1996/04/05 02:46:24  deven
 // Added support for Latin-1 characters and compose sequences (starting with
 // Control-C) to create them on an ASCII keyboard...
