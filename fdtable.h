@@ -36,7 +36,6 @@ public:
    void OutputReady(int fd);	// Output is ready on file descriptor fd.
    void announce(char *format,...);
    void nuke(Telnet *telnet,int fd,int drain);
-   void SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg);
    void ReadSelect(int fd) {	// Select fd for reading.
       FD_SET(fd,&readfds);
    }

@@ -32,5 +32,6 @@ public:
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
+   void SendPrivate(char *sendlist,int explicit,char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };
