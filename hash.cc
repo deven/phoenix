@@ -26,6 +26,7 @@
 // Initial revision
 //
 
+#include "config.h"
 #include "system.h"
 #include "boolean.h"
 #include "object.h"
