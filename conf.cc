@@ -401,7 +401,7 @@ void blurb(Telnet *telnet,char *line)
    // Print welcome banner and do a /who list.
    telnet->output("\n\nWelcome to conf.  Type \"/help\" for a list of "
 		  "commands.\n\n");
-   who_cmd(telnet);
+   Session::who_cmd(telnet);
 
    // Set normal input routine.
    telnet->SetInputFunction(process_input);
@@ -482,7 +482,7 @@ void process_input(Telnet *telnet,char *line)
 	 }
       } else if (!strncmp(line,"/who",4)) {
 	 // /who list.
-	 who_cmd(telnet);
+	 Session::who_cmd(telnet);
       } else if (!strcmp(line,"/date")) {
 	 // Print current date and time.
          telnet->print("%s\n",date(0,0,0));
@@ -653,47 +653,6 @@ void process_input(Telnet *telnet,char *line)
 	 telnet->session->SendEveryone(p);
       } else {
 	 telnet->session->SendPrivate(sendlist,explicit,p);
-      }
-   }
-}
-
-void who_cmd(Telnet *telnet)
-{
-   Session *s;
-   Telnet *t;
-   int idle,days,hours,minutes;
-
-   // Output /who header.
-   telnet->output("\n"
-        " Name                              On Since   Idle   User      fd\n"
-        " ----                              --------   ----   ----      --\n");
-
-   // Output data about each user.
-   for (s = sessions; s; s = s->next) {
-      t = s->telnet;
-      idle = (time(NULL) - t->session->message_time) / 60;
-      if (idle) {
-	 hours = idle / 60;
-	 minutes = idle - hours * 60;
-	 days = hours / 24;
-	 hours -= days * 24;
-	 if (days) {
-	    telnet->print(" %-32s  %8s %2dd%2d:%02d %-8s  %2d\n",
-			  t->session->name,date(t->session->login_time,11,8),
-			  days,hours,minutes,t->session->user->user,t->fd);
-	 } else if (hours) {
-	    telnet->print(" %-32s  %8s  %2d:%02d   %-8s  %2d\n",
-			  t->session->name,date(t->session->login_time,11,8),
-			  hours,minutes,t->session->user->user,t->fd);
-	 } else {
-	    telnet->print(" %-32s  %8s   %4d   %-8s  %2d\n",t->session->name,
-			  date(t->session->login_time,11,8),minutes,
-			  t->session->user->user,t->fd);
-	 }
-      } else {
-	 telnet->print(" %-32s  %8s          %-8s  %2d\n",t->session->name,
-		       date(t->session->login_time,11,8),
-		       t->session->user->user,t->fd);
       }
    }
 }
