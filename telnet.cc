@@ -294,8 +294,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    outstanding = 0;		// No outstanding acknowledgements.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
-   blocked = 0;			// output not blocked
-   closing = 0;			// conection not closing
+   blocked = false;		// output not blocked
+   closing = false;		// conection not closing
    acknowledge = false;		// Assume no TIMING-MARK option until tested.
    DoEcho = true;		// Do echoing, if ECHO option enabled.
    Echo = 0;			// ECHO option off (local)
@@ -497,7 +497,7 @@ inline void Telnet::accept_input() // Accept input line.
 
    if (LSGA || RSGA) {		// Unblock output.
       if (Output.head) WriteSelect();
-      blocked = 0;
+      blocked = false;
    }
 
    // Flush any pending output to connection.
@@ -700,7 +700,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	    case TelnetGoAhead:
 	       // Unblock output.
 	       if (Output.head) WriteSelect();
-	       blocked = 0;
+	       blocked = false;
 	       state = 0;
 	       break;
 	    case TelnetWill:
@@ -738,7 +738,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 
 		     // Unblock output.
 		     if (Output.head) WriteSelect();
-		     blocked = 0;
+		     blocked = false;
 		  }
 	       } else {
 		  RSGA &= ~TelnetWillWont;
@@ -806,7 +806,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 
 		     // Unblock output.
 		     if (Output.head) WriteSelect();
-		     blocked = 0;
+		     blocked = false;
 		  }
 	       } else {
 		  LSGA &= ~TelnetDoDont;
@@ -1051,6 +1051,6 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
       command(TelnetIAC,TelnetGoAhead);
 
       // Only block if both sides are doing Go Aheads.
-      if (!RSGA) blocked = 1;
+      if (!RSGA) blocked = true;
    }
 }
