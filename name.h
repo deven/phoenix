@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: name.h,v 1.4 1994/01/19 22:01:27 deven Exp $
+// $Id: name.h,v 1.5 1994/04/15 22:20:00 deven Exp $
 //
 // Name class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: name.h,v $
+// Revision 1.5  1994/04/15 22:20:00  deven
+// Use String class, save name and blurb separately, include pointer to User.
+//
 // Revision 1.4  1994/01/19 22:01:27  deven
 // Changed Pointer parameter to a reference parameter.
 //
