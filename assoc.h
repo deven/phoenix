@@ -92,6 +92,7 @@ public:
       return *this;
    }
    AssocEntry *operator ++();
+   AssocEntry *operator ++(int) { return ++(*this); }
    operator AssocEntry *() { return entry; }
    operator AssocEntry &() { return *entry; }
    char *operator ~() { return ~(entry->value); }

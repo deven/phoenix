@@ -194,7 +194,9 @@ public:
    Type *operator ->() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    Type *operator --();
+   Type *operator --(int) { return --(*this); }
    Type *operator ++();
+   Type *operator ++(int) { return ++(*this); }
    void Remove();
    int InsertBefore(Type *obj);
    int InsertAfter(Type *obj);
