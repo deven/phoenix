@@ -66,7 +66,7 @@ public:
 };
 
 template <class Type>
-int List<Type>::In(Type *ptr) {
+boolean List<Type>::In(Type *ptr) {
    ListIter<Type> i(this);
    while (i++) if (i == ptr) return true;
    return false;
