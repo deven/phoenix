@@ -380,29 +380,16 @@ void Telnet::Prompt(char *p) {	// Print and set new prompt.
    if (!undrawn) output(prompt);
 }
 
-Telnet::~Telnet()
+Telnet::~Telnet()		// Destructor, might be re-executed.
 {
-   if (!session->telnet.Null()) {
-      session->telnet = NULL;	// Detach associated session.
-      log("Detach: %s (%s) on fd %d.",session->name_only,session->user->user,
-	  fd);
-   }
-
-   delete data;			// Free input line buffer.
-
-   if (fd != -1) {		// Skip all this if there's no connection.
-      fdtable.Closed(fd);	// Remove from FDTable.
-      close(fd);		// Close connection.
-      NoReadSelect();		// Don't select closed connection at all!
-      NoWriteSelect();
-   }
+   Closed();
 }
 
 void Telnet::Close(boolean drain = true) // Close telnet connection.
 {
+   closing = true;		// Closing intentionally.
    if (Output.head && drain) {	// Drain connection, then close.
       blocked = false;
-      closing = true;
       NoReadSelect();
       WriteSelect();
    } else {			// No output pending, close immediately.
@@ -415,6 +402,25 @@ void Telnet::nuke(Telnet *telnet,boolean drain)
    telnet->print("User \"%s\" (%s) on fd %d has been nuked.\n",
 		 session->name_only,session->user->user,fd);
    Close(drain);
+}
+
+void Telnet::Closed()		// Connection is closed.
+{
+   // Detach associated session.
+   if (!session.Null()) session->Detach(boolean(closing));
+   session = NULL;
+
+   // Free input line buffer.
+   if (data) delete data;
+   data = NULL;
+
+   if (fd == -1) return;	// Skip the rest if there's no connection.
+
+   fdtable.Closed(fd);		// Remove from FDTable.
+   close(fd);			// Close connection.
+   NoReadSelect();		// Don't select closed connection at all!
+   NoWriteSelect();
+   fd = -1;			// Connection is closed.
 }
 
 void Telnet::UndrawInput()	// Erase input line from screen.
@@ -659,16 +665,16 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	 break;
       case ECONNRESET:
       case ECONNTIMEDOUT:
-	 delete this;
+	 Closed();
 	 break;
       default:
 	 warn("Telnet::InputReady(): read(fd = %d)",fd);
-	 delete this;
+	 Closed();
 	 break;
       }
       break;
    case 0:
-      delete this;
+      Closed();
       break;
    default:
       from = buf;
@@ -991,11 +997,11 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
 	    return;
 	 case ECONNRESET:
 	 case ECONNTIMEDOUT:
-	    delete this;
+	    Closed();
 	    break;
 	 default:
 	    warn("Telnet::OutputReady(): write(fd = %d)",fd);
-	    delete this;
+	    Closed();
 	    break;
 	 }
 	 break;
@@ -1032,7 +1038,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
 	       return;
 	    default:
 	       warn("Telnet::OutputReady(): write(fd = %d)",fd);
-	       delete this;
+	       Closed();
 	       break;
 	    }
 	    break;
@@ -1074,7 +1080,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
 
    // Close connection if ready to.
    if (closing) {
-      delete this;
+      Closed();
       return;
    }
 

@@ -40,6 +40,7 @@ public:
    time_t message_time;		// time last message sent (for idle time)
    char SignalPublic;		// Signal for public messages? (boolean)
    char SignalPrivate;		// Signal for private messages? (boolean)
+   char closing;		// Session closing? (boolean)
    char name_only[NameLen];	// current user name (pseudo) alone
    char name[NameLen];		// current user name (pseudo) with blurb
    char blurb[NameLen];		// current user blurb
@@ -50,6 +51,7 @@ public:
 
    Session(Pointer<Telnet> t);	// constructor
    ~Session();			// destructor
+   void Close(boolean drain = true); // Close session.
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
    void InitInputFunction();
