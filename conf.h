@@ -99,12 +99,14 @@ struct block {
 
 /* Data about a particular telnet connection. */
 struct telnet {
+   struct telnet *next;		/* next telnet connection (global) */
    int fd;			/* file descriptor for TCP connection */
-   struct user *user;		/* back-pointer to user structure */
+   struct session *session;	/* back-pointer to session structure */
    struct InputBuffer input;	/* pending input */
    struct Line *lines;		/* unprocessed input lines */
    struct OutputBuffer output;	/* pending data output */
    struct OutputBuffer command;	/* pending command output */
+   func_ptr input_function;	/* function pointer for input processor */
    unsigned char state;		/* input state (0/\r/IAC/WILL/WONT/DO/DONT) */
    char undrawn;		/* input line undrawn for output? */
    char blocked;		/* output blocked? (boolean) */
@@ -116,22 +118,29 @@ struct telnet {
    func_ptr echo_callback;	/* ECHO callback (local) */
    func_ptr LSGA_callback;	/* SUPPRESS-GO-AHEAD callback (local) */
    func_ptr RSGA_callback;	/* SUPPRESS-GO-AHEAD callback (remote) */
-   struct telnet *next;		/* next telnet connection */
 };
 
-/* /// need session structure? */
+/* Data about a particular session. */
+struct session {
+   struct session *next;	/* next session (global) */
+   struct session *user_next;	/* next session (user) */
+   struct user *user;		/* user this session belongs to */
+   struct telnet *telnet;	/* telnet connection for this session */
+   char name[NAMELEN];		/* current user name (pseudo) */
+   char last_sendlist[32];	/* last explicit sendlist */
+   time_t login_time;		/* time logged in */
+   time_t message_time;		/* time signed on */
+};
+
 /* Data about a particular user. */
 struct user {
-   struct telnet *telnet;	/* telnet connection for this user */
-   func_ptr input;		/* function pointer for input processor */
+   struct session *session;	/* session(s) for this user */
+   int priv;			/* privilege level */
    /* /// change! vvv  */
    char user[32];		/* account name */
    char passwd[32];		/* password for this account (during login) */
    /* /// change! ^^^ */
-   char name[NAMELEN];		/* user name */
-   char last_sendlist[32];	/* last explicit sendlist */
-   time_t login_time;		/* time logged in */
-   time_t message_time;		/* time signed on */
+   char reserved_name[NAMELEN];	/* reserved user name (pseudo) */
 };
 
 void warn();
