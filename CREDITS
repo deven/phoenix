@@ -1,0 +1,6 @@
+$Id$
+
+Special thanks are due to Ron Frederick <frederick@timeheart.net> for his
+invaluable assistance during original development, for catching the FD_SETSIZE
+bug that broke the Cygwin build, and for helping to break the dependency on
+-lstdc++ for GCC 3.x versions.  Thanks, Ron!
