@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 FDTable FD::fdtable;		// File descriptor table.
 fd_set FDTable::readfds;	// read fdset for select()

@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 List<Session> Session::inits;
 List<Session> Session::sessions;
@@ -423,7 +423,8 @@ void Session::Blurb(char *line)
    NotifyEntry();		// Notify other users of entry.
 
    // Print welcome banner and do a /who list.
-   output("\n\nWelcome to conf.  Type \"/help\" for a list of commands.\n\n");
+   output("\n\nWelcome to Phoenix.  "
+	  "Type \"/help\" for a list of commands.\n\n");
    DoWho("");			// Enqueues output.
 
    SetInputFunction(ProcessInput); // Set normal input routine.
@@ -616,7 +617,7 @@ void Session::DoRestart(char *args) // Do !restart command.
       log("Immediate restart requested by %s (%s).",(char *) name,
 	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s%s has restarted conf! ***\n",(char *) name,
+      announce("*** %s%s has restarted Phoenix! ***\n",(char *) name,
 	       (char *) blurb);
       announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
@@ -644,7 +645,7 @@ void Session::DoRestart(char *args) // Do !restart command.
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
       log("Restart requested by %s (%s) in %d seconds.",(char *) name,
 	  (char *) user->user,seconds);
-      announce("*** %s%s has restarted conf! ***\n",(char *) name,
+      announce("*** %s%s has restarted Phoenix! ***\n",(char *) name,
 	       (char *) blurb);
       announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
 	       seconds);
@@ -659,7 +660,7 @@ void Session::DoDown(char *args) // Do !down command.
       log("Immediate shutdown requested by %s (%s).",(char *) name,
 	  (char *) user->user);
       log("Final shutdown warning.");
-      announce("*** %s%s has shut down conf! ***\n",(char *) name,
+      announce("*** %s%s has shut down Phoenix! ***\n",(char *) name,
 	       (char *) blurb);
       announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
@@ -687,7 +688,7 @@ void Session::DoDown(char *args) // Do !down command.
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
       log("Shutdown requested by %s (%s) in %d seconds.",(char *) name,
 	  (char *) user->user,seconds);
-      announce("*** %s%s has shut down conf! ***\n",(char *) name,
+      announce("*** %s%s has shut down Phoenix! ***\n",(char *) name,
 	       (char *) blurb);
       announce("\a\a>>> This server will shutdown in %d seconds... <<<\n\a\a",
 	       seconds);
@@ -1304,7 +1305,7 @@ void Session::DoReset()		// Do <space><return> idle time reset.
 
 void Session::DoHelp(char *args) // Do /help command.
 {
-   output("Known commands: /blurb (set a descriptive blurb), /bye (leave conf)"
+   output("Known commands: /blurb (set a descriptive blurb), /bye (leave Phoenix)"
 	  ", /date\n(display current date and time), /detach (disconnect witho"
 	  "ut leaving), /help,\n/send (specify default sendlist), /signal (tur"
 	  "ns public/private signals on or\noff), /who (gives a list of who is"

@@ -8,7 +8,7 @@
 //
 // $Log$
 
-#include "conf.h"
+#include "phoenix.h"
 
 void Text::output(Pointer<Telnet> &telnet)
 {
@@ -22,13 +22,13 @@ void Message::output(Pointer<Telnet> &telnet)
 
 void EntryNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s%s has entered conf! [%s] ***\n",(char *) name->name,
-		 (char *) name->blurb,date(time,11,5));
+   telnet->print("*** %s%s has entered Phoenix! [%s] ***\n",
+		 (char *) name->name,(char *) name->blurb,date(time,11,5));
 }
 
 void ExitNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s%s has left conf! [%s] ***\n",(char *) name->name,
+   telnet->print("*** %s%s has left Phoenix! [%s] ***\n",(char *) name->name,
 		 (char *) name->blurb,date(time,11,5));
 }
 
