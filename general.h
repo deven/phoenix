@@ -36,6 +36,7 @@ const int BlockSize = 1024;	// data size for block
 const int BufSize = 32768;	// general temporary buffer size
 const int InputSize = 256;	// default size of input line buffer
 const int NameLen = 33;		// maximum length of name (including null)
+const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int Port = 6789;		// TCP port to run on
 
 // Character codes.

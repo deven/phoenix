@@ -16,8 +16,8 @@ public:
    Telnet *telnet;		// telnet connection for this session
    char name_only[NameLen];	// current user name (pseudo) without blurb
    char name[NameLen];		// current user name (pseudo) with blurb
-   char default_sendlist[32];	// current default sendlist
-   char last_sendlist[32];	// last explicit sendlist
+   char default_sendlist[SendlistLen]; // current default sendlist
+   char last_sendlist[SendlistLen];    // last explicit sendlist
    time_t login_time;		// time logged in
    time_t message_time;		// time signed on
    Session(Telnet *t);		// constructor
