@@ -70,8 +70,6 @@ extern int Shutdown;		// shutdown flag
 enum boolean {false,true};	// boolean data type
 #endif
 
-enum MessageType {Public,Private}; // types of messages
-
 enum Char {			// Character codes.
    Null, ControlA, ControlB, ControlC, ControlD, ControlE, ControlF, ControlG,
    ControlH, ControlI, ControlJ, ControlK, ControlL, ControlM, ControlN,
@@ -89,11 +87,11 @@ extern "C" char *inet_ntoa(struct in_addr in);
 extern "C" int strcasecmp(const char *s1,const char *s2);
 extern "C" int strncasecmp(const char *s1,const char *s2,size_t len);
 
-// Input function pointer type. ***
-typedef void (*InputFuncPtr)(Telnet *telnet,char *line);
+// Input function pointer type.
+typedef void (Session::*InputFuncPtr)(char *line);
 
-// Callback function pointer type. ***
-typedef void (*CallbackFuncPtr)(Telnet *telnet);
+// Callback function pointer type.
+typedef void (Telnet::*CallbackFuncPtr)();
 
 void OpenLog();
 char *date(time_t clock,int start,int len);

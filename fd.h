@@ -33,7 +33,6 @@ public:
    }
    virtual void InputReady(int fd) = 0;
    virtual void OutputReady(int fd) = 0;
-   virtual void output(char *buf) {}
    virtual ~FD() {}
    void NonBlocking() {		// Place fd in non-blocking mode.
       int flags;
