@@ -59,7 +59,7 @@ void FDTable::OpenListen(int port) { // Open a listening port.
 	    port,l->fd,size-1);
    }
    if (l->fd >= used) used = l->fd + 1;
-   array[l->fd] = l.GetPointer();
+   array[l->fd] = ((FD *) l);
    l->ReadSelect();
 }
 
@@ -71,7 +71,7 @@ void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
       return;
    }
    if (t->fd >= used) used = t->fd + 1;
-   array[t->fd] = t.GetPointer();
+   array[t->fd] = ((FD *) t);
 }
 
 Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
@@ -80,7 +80,7 @@ Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
    array[fd] = NULL;
    if (fd == used - 1) {	// Fix highest used index if necessary.
       while (used > 0) {
-	 if (!array[--used].Null()) {
+	 if (array[--used]) {
 	    used++;
 	    break;
 	 }
@@ -91,7 +91,7 @@ Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
 
 void FDTable::Close(int fd) {	// Close fd, deleting FD object.
    Pointer<FD> FD(Closed(fd));
-   if (!FD.Null()) FD->Closed();
+   if (FD) FD->Closed();
 }
 
 void FDTable::Select()		// Select across all ready connections.
