@@ -65,7 +65,7 @@ public:
       boolean select;
       if (select = boolean(!tail)) {
 	 head = tail = new Block;
-      } else if (tail->free >= tail->block + BlockSize) {
+      } else if (tail->free >= tail->block + Block::BlockSize) {
 	 tail->next = new Block;
 	 tail = tail->next;
       }
@@ -76,7 +76,7 @@ public:
       boolean select;
       if (select = boolean(!tail)) {
 	 head = tail = new Block;
-      } else if (tail->free >= tail->block + BlockSize - 1) {
+      } else if (tail->free >= tail->block + Block::BlockSize - 1) {
 	 tail->next = new Block;
 	 tail = tail->next;
       }
@@ -88,7 +88,7 @@ public:
       boolean select;				  // if new.
       if (select = boolean(!tail)) {
 	 head = tail = new Block;
-      } else if (tail->free >= tail->block + BlockSize - 2) {
+      } else if (tail->free >= tail->block + Block::BlockSize - 2) {
 	 tail->next = new Block;
 	 tail = tail->next;
       }
