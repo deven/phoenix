@@ -52,3 +52,10 @@ public:
    operator int() { return len; }
    int length() { return len; }
 };
+
+class StringObj: public Object, public String {
+public:
+   StringObj(const String &s): Object(), String(s) { }
+   StringObj(const char *s): Object(), String(s) { }
+   StringObj(const char *s,int n): Object(), String(s,n) { }
+};
