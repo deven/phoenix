@@ -80,6 +80,20 @@ char *date(time_t clock,int start,int len) /* get part of date string */
    return buf + start;		/* return (sub)string */
 }
 
+void open_log()
+{
+   time_t t;
+   struct tm *tm;
+
+   time(&t);
+   if (!(tm = localtime(&t))) error("localtime");
+   sprintf(buf,"log/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
+	   tm->tm_mday,tm->tm_hour,tm->tm_min);
+   if (!(logfile = fopen(buf,"a"))) error(buf);
+   setlinebuf(logfile);
+   fprintf(stderr,"Logging on \"%s\".\n",buf);
+}
+
 /* VARARGS1 */
 void log(format,va_alist)	/* log message */
 char *format;
@@ -1618,8 +1632,7 @@ void main(int argc,char **argv) /* main program */
    shutdown = 0;
    connections = NULL;
    free_blocks = NULL;
-   if (!(logfile = fopen("log","a"))) error("log");
-   setlinebuf(logfile);
+   open_log();
    nfds = getdtablesize();
    lfd = listen_on(PORT,BACKLOG);
    FD_ZERO(&readfds);
