@@ -30,6 +30,7 @@
 #ifndef _GANGPLANK_H
 #define _GANGPLANK_H
 
+#include "config.h"
 #include "system.h"
 #include "boolean.h"
 #include "general.h"
