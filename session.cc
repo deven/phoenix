@@ -575,7 +575,7 @@ void Session::TransferSession(char *line)
    SetInputFunction(&Session::Blurb); // Set blurb input routine.
 }
 
-void Session::Blurb(char *line)
+void Session::EnteredBlurb(char *line)
 {
    if (!line || !*line) line = user->blurb;
    if (!line) line = "";
