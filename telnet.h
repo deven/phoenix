@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.15 1996/05/12 07:26:06 deven Exp $
+// $Id: telnet.h,v 1.16 1996/05/20 05:17:13 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.16  1996/05/20 05:17:13  deven
+// Changed boolean flags from type "char" to type "boolean" instead.  Removed
+// "blocked" variable -- no longer honoring Telnet Go Ahead commands...
+//
 // Revision 1.15  1996/05/12 07:26:06  deven
 // Changed PrintMessage() to use Timestamp for time argument.
 //
