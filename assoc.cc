@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: assoc.cc,v 1.1 1994/10/09 10:09:34 deven Exp $
 //
 // Assoc (associative array) class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: assoc.cc,v $
+// Revision 1.1  1994/10/09 10:09:34  deven
+// Initial revision
+//
 
 #include <string.h>
 #include "object.h"
