@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.15 1995/10/27 02:52:35 deven Exp $
+// $Id: general.h,v 1.16 1995/12/05 20:14:12 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.16  1995/12/05 20:14:12  deven
+// Added ServerStartUptime variable and SystemUptime() function.
+//
 // Revision 1.15  1995/10/27 02:52:35  deven
 // Added new ServerStartTime global variable.
 //
