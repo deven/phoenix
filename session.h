@@ -131,6 +131,7 @@ public:
    void NotifyExit();		// Notify other users of exit and log.
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
    void SetIdle(char *args);	// Set idle time.
+   void SetBlurb(char *newblurb); // Set a new blurb.
    void DoRestart(char *args);	// Do !restart command.
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
