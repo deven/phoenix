@@ -351,7 +351,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
       WriteSelect();
 
       // Detach associated session.
-      if (!session.Null()) session->Detach(boolean(closing));
+      if (session) session->Detach(boolean(closing));
       session = NULL;
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
@@ -361,7 +361,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
 void Telnet::Closed()		// Connection is closed.
 {
    // Detach associated session.
-   if (!session.Null()) session->Detach(boolean(closing));
+   if (session) session->Detach(boolean(closing));
    session = NULL;
 
    // Free input line buffer.
@@ -488,7 +488,7 @@ inline void Telnet::yank()	// Yank from kill-ring.
 
 inline void Telnet::accept_input() // Accept input line.
 {
-   if (session.Null()) return;
+   if (!session) return;
 
    *free = 0;			// Make input line null-terminated.
 
@@ -756,7 +756,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 	    case TelnetTimingMark:
 	       if (acknowledge) {
 		  if (outstanding) outstanding--;
-		  if (!session.Null()) session->AcknowledgeOutput();
+		  if (session) session->AcknowledgeOutput();
 	       } else if (Echo == TelnetWillWont) {
 		  acknowledge = true;
 	       }
@@ -1031,7 +1031,7 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
       // If acknowledgements are enabled, all output is dumped to the
       // Telnet buffers as it is queued.
 
-      if (!acknowledge && !session.Null()) {
+      if (!acknowledge && session) {
 	 session->AcknowledgeOutput();
 	 session->OutputNext(this);
       }
