@@ -9,3 +9,73 @@
 // $Log$
 
 #include "phoenix.h"
+
+void ShutdownEvent::ShutdownWarning(char *by, time_t when)
+{
+   final = false;
+   log("Shutdown requested by %s in %d seconds.",by,when);
+   Session::announce("\a>>> This server will shutdown in %d seconds... <<<"
+		     "\n\a",when);
+}
+
+void ShutdownEvent::FinalWarning()
+{
+   final = true;
+   SetRelTime(5);
+   log("Final shutdown warning.");
+   Session::announce("\a>>> Server shutting down NOW!  Goodbye. <<<\n\a");
+}
+
+void ShutdownEvent::ShutdownServer()
+{
+   log("Server down.");
+   if (logfile) fclose(logfile);
+   exit(0);
+}
+
+boolean ShutdownEvent::Execute()
+{
+   if (final) {
+      ShutdownServer();
+      return false;
+   } else {
+      FinalWarning();
+      return true;
+   }
+}
+
+void RestartEvent::RestartWarning(char *by, time_t when)
+{
+   final = false;
+   log("Restart requested by %s in %d seconds.",by,when);
+   Session::announce("\a>>> This server will restart in %d seconds... <<<\n\a",
+		     when);
+}
+
+void RestartEvent::FinalWarning()
+{
+   final = true;
+   SetRelTime(5);
+   log("Final restart warning.");
+   Session::announce("\a>>> Server restarting NOW!  Goodbye. <<<\n\a");
+}
+
+void RestartEvent::RestartServer()
+{
+   log("Restarting server.");
+   if (logfile) fclose(logfile);
+   FD::CloseAll();
+   execl("phoenixd","phoenixd",0);
+   error("phoenixd");
+}
+
+boolean RestartEvent::Execute()
+{
+   if (final) {
+      RestartServer();
+      return false;
+   } else {
+      FinalWarning();
+      return true;
+   }
+}

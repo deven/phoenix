@@ -97,7 +97,7 @@
 
 EventQueue events;		// Server event queue.
 
-int Shutdown;			// shutdown flag ***
+Pointer<Event> Shutdown;	// Pointer to Shutdown event, if any.
 
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
@@ -193,51 +193,14 @@ void crash(char *format,...)	// print error message and crash ***
 
 void quit(int sig)		// received SIGQUIT or SIGTERM
 {
-   log("Shutdown requested by signal %d in 30 seconds.",sig);
-   Session::announce("\a\a>>> This server will shutdown in 30 seconds... "
-		     "<<<\n\a\a");
-   alarm(30);
-   Shutdown = 1;
-}
+   if (Shutdown) {
+      log("Additional shutdown signal %d received.",sig);
+   } else {
+      char buf[16];
 
-void alrm(int)			// received SIGALRM
-{
-   // Ignore unless shutting down.
-   switch (Shutdown) {
-   case 1:
-      log("Final shutdown warning.");
-      Session::announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n"
-			"\a\a");
-      alarm(5);
-      Shutdown++;
-      break;
-   case 2:
-      ShutdownServer();
-   case 3:
-      log("Final restart warning.");
-      Session::announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
-      alarm(5);
-      Shutdown++;
-      break;
-    case 4:
-      RestartServer();
+      sprintf(buf,"signal %d",sig);
+      events.Enqueue(Shutdown = new ShutdownEvent(buf,30));
    }
-}
-
-void RestartServer()		// Restart server.
-{
-   log("Restarting server.");
-   if (logfile) fclose(logfile);
-   FD::CloseAll();
-   execl("phoenixd","phoenixd",0);
-   error("phoenixd");
-}
-
-void ShutdownServer()		// Shutdown server.
-{
-   log("Server down.");
-   if (logfile) fclose(logfile);
-   exit(0);
 }
 
 int SystemUptime()		// Get system uptime, if available.
@@ -298,7 +261,6 @@ int main(int argc,char **argv)	// main program
    ServerStartTime = 0;
    ServerStartUptime = SystemUptime();
 
-   Shutdown = 0;
    if ((pw = getpwuid(geteuid()))) {
       home = pw->pw_dir;
       home.append("/lib");	// Make sure ~/lib exists.
@@ -347,14 +309,15 @@ int main(int argc,char **argv)	// main program
    sigignore(SIGHUP);
    sigignore(SIGINT);
    sigignore(SIGPIPE);
+   sigignore(SIGALRM);
 #else
    signal(SIGHUP,SIG_IGN);
    signal(SIGINT,SIG_IGN);
    signal(SIGPIPE,SIG_IGN);
+   signal(SIGALRM,SIG_IGN);
 #endif
    signal(SIGQUIT,quit);
    signal(SIGTERM,quit);
-   signal(SIGALRM,alrm);
 
    while(1) {
       Session::CheckShutdown();
