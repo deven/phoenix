@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.36 2000/03/22 07:17:01 deven Exp $
+// $Id: telnet.cc,v 1.37 2000/03/22 23:37:29 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.37  2000/03/22 23:37:29  deven
+// Don't block on SUPPRESS-GO-AHEAD options; some broken clients don't respond.
+//
 // Revision 1.36  2000/03/22 07:17:01  deven
 // Added "&Telnet::" when dealing with callback function pointers.  Changed
 // saddrlen to unsigned.
