@@ -280,7 +280,7 @@ int main(int argc,char **argv)	// main program
    if (argc == 1 || strcmp(argv[1],"-debug")) {
       switch (pid = fork()) {
       case 0:
-	 setpgrp();
+	 setsid();
 #ifdef USE_SIGIGNORE
 	 sigignore(SIGHUP);
 	 sigignore(SIGINT);
