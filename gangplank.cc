@@ -272,7 +272,7 @@ int main(int argc, char **argv)	// main program
    }
    OpenLog();
    port = argc > 1 ? atoi(argv[1]) : 0;
-   if (!port) port = DefaultPort;
+   if (!port) port = PORT;
    Listen::Open(port);
 
 #if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
