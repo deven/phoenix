@@ -51,7 +51,7 @@ void OpenLog()			// class Log? ***
    sprintf(buf, "logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
 	   tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
    if (!(logfile = fopen(buf, "a"))) error("OpenLog(): %s", buf);
-   setlinebuf(logfile);
+   setvbuf(logfile, NULL, _IOLBF, 0);
    unlink("log");
    link(buf, "log");
    fprintf(stderr, "Logging on \"%s\".\n", buf);
