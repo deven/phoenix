@@ -254,11 +254,31 @@ char *match(char *&input,char *keyword,int min = 0) {
 
 int main(int argc,char **argv)	// main program
 {
+   struct passwd *pw;		// password file entry
+   String home;			// server home directory
    int pid;			// server process number
    int port;			// TCP port to use
 
    Shutdown = 0;
-   if (chdir(HOME)) error("main(): chdir(%s)",HOME);
+   if (pw = getpwuid(geteuid())) {
+      home = pw->pw_dir;
+      home.append("/lib");	// Make sure ~/lib exists.
+      if (chdir(-home) && errno == ENOENT && mkdir(-home,0755)) {
+	 error("mkdir(\"%s\",0755)",-home);
+      }
+      if (chdir(-home)) error("chdir(\"%s\")",-home);
+      home.append("/phoenix");	// Make sure ~/lib/phoenix exists.
+      if (chdir(-home) && errno == ENOENT && mkdir(-home,0700)) {
+	 error("mkdir(\"%s\",0700)",-home);
+      }
+      if (chdir(-home)) error("chdir(\"%s\")",-home);
+      if (chmod(-home,0700)) error("chmod(\"%s\",0700)",-home);
+      home.append("/logs");	// Make sure "logs" directory exists.
+      mkdir(-home,0700);	// ignore errors
+      chmod(-home,0700);	// ignore errors
+   } else {
+      error("getpwuid(%d)",geteuid());
+   }
    OpenLog();
    port = argc > 1 ? atoi(argv[1]) : 0;
    if (!port) port = DefaultPort;

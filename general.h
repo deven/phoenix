@@ -56,11 +56,6 @@
 // Initial revision
 //
 
-// Home directory for server to run in.
-#ifndef HOME
-#define HOME "/home/deven/src/phoenix"
-#endif
-
 // For compatibility.
 #ifndef ECONNTIMEDOUT
 #define ECONNTIMEDOUT ETIMEDOUT
