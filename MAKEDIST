@@ -14,7 +14,7 @@
 
 * Check the new ChangeLog into RCS/CVS.
 
-* Run "./configure; make distcheck".
+* Run "./configure; make distcheck; make distclean".
 
 * Create patch from previous release with "diff -urN".
 
@@ -23,5 +23,7 @@
 * Sign tarball, patch and RPM packages.
 
 * Place online on FTP server.
+
+* Upgrade gangplank demo server.
 
 * Announce release on Freshmeat and gangplank homepage.
