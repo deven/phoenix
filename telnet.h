@@ -65,7 +65,7 @@ private:
 public:
    const width = 80;		// Hardcoded screen width ***
    const height = 24;		// Hardcoded screen height ***
-   Session *session;		// back-pointer to session structure
+   Pointer<Session> session;	// back-pointer to session structure
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
    char *end;			// end of allocated block (+1)
@@ -73,7 +73,7 @@ public:
    char *mark;			// current mark location
    char *prompt;		// current prompt
    int prompt_len;		// length of current prompt
-   Name *reply_to;		// send of last private message
+   Pointer<Name> reply_to;	// sender of last private message
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
@@ -90,7 +90,7 @@ public:
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
    static void announce(char *format,...);
-   static void nuke(Telnet *telnet,int fd,boolean drain);
+   static void nuke(Pointer<Telnet> telnet,int fd,boolean drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Prompt(char *p);
@@ -108,7 +108,7 @@ public:
    int EndLine() { return (Start() + End()) / width; }
    int EndColumn() { return (Start() + End()) % width; }
    void Close(boolean drain = true); // Close telnet connection.
-   void nuke(Telnet *telnet,boolean drain);
+   void nuke(Pointer<Telnet> telnet,boolean drain);
    void output(int byte);
    void output(char *buf);
    void output(char *buf,int len);
@@ -123,7 +123,8 @@ public:
    void command(int byte1,int byte2); // Queue 2 command bytes.
    void command(int byte1,int byte2,int byte3); // Queue 3 command bytes.
    void TimingMark();
-   void PrintMessage(OutputType type,time_t time,Name *from,char *start);
+   void PrintMessage(OutputType type,time_t time,Pointer<Name> from,
+		     char *start);
    void Welcome();
    void UndrawInput();		// Erase input line from screen.
    void RedrawInput();		// Redraw input line on screen.

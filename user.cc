@@ -13,7 +13,7 @@
 
 #include "conf.h"
 
-User::User(Session *s) {
+User::User(Pointer<Session> s) {
    session = s;			// Save Session pointer.
    priv = 10;			// default user privilege level
    strcpy(user,"[nobody]");	// Who is this?

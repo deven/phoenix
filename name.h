@@ -11,23 +11,18 @@
 // Initial revision
 //
 
-class Name {
+class Name: public Object {
 public:
-   Name *next;			// Next name used by this session.
-   Session *session;		// Session this name refers to.
+   Pointer<Name> next;		// Next name used by this session.
+   Pointer<Session> session;	// Session this name refers to.
    char name[NameLen];		// Name string.
-   int RefCnt;			// Reference count.
 
-   Name(Session *s,Name *prev,char *str) { // constructor
+   Name(Pointer<Session> s,Pointer<Name> &prev,char *str) { // constructor
       session = s;			   // Save session pointer.
-      next = prev;			   // Save previous name used.
-      while (next && next->RefCnt == 1) {  // Delete leading unused names.
-	 prev = next->next;		   // Save next name pointer.
-	 delete next;			   // Delete name object.
-	 next = prev;			   // Save new previous name used.
-      }
-      strncpy(name,str,NameLen);	   // Save name string.
-      name[NameLen - 1] = 0;		   // Make sure name is terminated.
-      RefCnt = 1;			   // Set reference count to one.
+      // Delete leading unused names. (may not work)
+      while (!prev.Null() && prev->References() == 1) prev = prev->next;
+      strncpy(name,str,NameLen); // Save name string.
+      name[NameLen - 1] = 0;	 // Make sure name is terminated.
+      next = prev;		 // Save pointer to previous used name.
    }
 };

@@ -25,15 +25,15 @@
 // Initial revision
 //
 
-class Session {
-   static Session *sessions;	// List of all sessions. (global)
+class Session: public Object {
+   static Pointer<Session> sessions; // List of all sessions. (global)
 public:
-   Session *next;		// next session (global)
-   Session *user_next;		// next session (user)
-   User *user;			// user this session belongs to
-   Telnet *telnet;		// telnet connection for this session
+   Pointer<Session> next;	// next session (global)
+   Pointer<Session> user_next;	// next session (user)
+   Pointer<User> user;		// user this session belongs to
+   Pointer<Telnet> telnet;	// telnet connection for this session
    InputFuncPtr InputFunc;	// function pointer for input processor
-   Line *lines;			// unprocessed input lines
+   Pointer<Line> lines;		// unprocessed input lines
    OutputBuffer Output;		// temporary output buffer
    OutputStream Pending;	// pending output stream
    time_t login_time;		// time logged in
@@ -43,12 +43,12 @@ public:
    char name_only[NameLen];	// current user name (pseudo) alone
    char name[NameLen];		// current user name (pseudo) with blurb
    char blurb[NameLen];		// current user blurb
-   Name *name_obj;		// current name object.
+   Pointer<Name> name_obj;	// current name object.
    char default_sendlist[SendlistLen]; // current default sendlist
    char last_sendlist[SendlistLen];    // last explicit sendlist
    char reply_sendlist[SendlistLen];   // reply sendlist for last sender
 
-   Session(Telnet *t);		// constructor
+   Session(Pointer<Telnet> t);	// constructor
    ~Session();			// destructor
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
@@ -68,12 +68,13 @@ public:
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet,new Text(buf));
    }
-   void Enqueue(Output *out) {	// Enqueue output buffer and object.
+   void Enqueue(Pointer<Output> out) { // Enqueue output buffer and object.
       EnqueueOutput();
       Pending.Enqueue(telnet,out);
    }
-   void EnqueueOthers(Output *out) { // Enqueue output to others.
-      for (Session *session = sessions; session; session = session->next) {
+   void EnqueueOthers(Pointer<Output> out) { // Enqueue output to others.
+      Pointer<Session> session;
+      for (session = sessions; !session.Null(); session = session->next) {
 	 if (session == this) continue;
 	 session->Enqueue(out);
       }
@@ -81,7 +82,7 @@ public:
    void AcknowledgeOutput(void) { // Output acknowledgement.
       Pending.Acknowledge();
    }
-   boolean OutputNext(Telnet *telnet) { // Output next output block to Telnet.
+   boolean OutputNext(Pointer<Telnet> telnet) { // Output next output block to Telnet.
       return Pending.SendNext(telnet);
    }
 
