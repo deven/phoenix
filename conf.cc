@@ -57,20 +57,6 @@ int Shutdown;			// shutdown flag ***
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
 
-#ifdef NEED_STRERROR
-extern "C" char *strerror(int err)
-{
-   static char msg[32];
-
-   if (err >= 0 && err < sys_nerr) {
-      return sys_errlist[err];
-   } else {
-      sprintf(msg,"Error %d",err);
-      return msg;
-   }
-}
-#endif
-
 // class Date? ***
 char *date(time_t clock,int start,int len) // get part of date string ***
 {
@@ -123,8 +109,14 @@ void warn(char *format,...)	// print error message ***
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
-   (void) fprintf(stderr,"\n%s: %s\n",buf,strerror(errno));
-   (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,strerror(errno));
+   if (errno >= 0 && errno < sys_nerr) {
+      (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
+      (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,
+		     sys_errlist[errno]);
+   } else {
+      (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
+      (void) fprintf(logfile,"[%s] %s: Error %d\n",date(0,4,15),buf,errno);
+   }
 }
 
 void error(char *format,...)	// print error message and exit ***
@@ -135,8 +127,14 @@ void error(char *format,...)	// print error message and exit ***
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
-   (void) fprintf(stderr,"\n%s: %s\n",buf,strerror(errno));
-   (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,strerror(errno));
+   if (errno >= 0 && errno < sys_nerr) {
+      (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
+      (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,
+		     sys_errlist[errno]);
+   } else {
+      (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
+      (void) fprintf(logfile,"[%s] %s: Error %d\n",date(0,4,15),buf,errno);
+   }
    if (logfile) fclose(logfile);
    exit(1);
 }
