@@ -932,7 +932,11 @@ void new_connection(int lfd)	/* accept a new connection */
 
    /* Accept TCP connection. */
    telnet->fd = accept(lfd,NULL,NULL);
-   if (telnet->fd == -1) error("accept");
+   if (telnet->fd == -1) {
+      /* Accept failed, just return to select() loop. */
+      warn("accept");
+      return;
+   }
 
    /* Place in non-blocking mode. */
    flags = fcntl(telnet->fd,F_GETFL); /* get flags */
