@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.1 1994/01/02 11:40:20 deven Exp $
+// $Id: list.h,v 1.2 1994/01/19 21:53:49 deven Exp $
 //
-// List class interface.
+// List class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.2  1994/01/19 21:53:49  deven
+// Updated list class, merged node class, added iterator class.
+//
 // Revision 1.1  1994/01/02 11:40:20  deven
 // Initial revision
 //

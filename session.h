@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.7 1994/01/09 05:16:26 deven Exp $
+// $Id: session.h,v 1.8 1994/01/19 22:08:48 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.8  1994/01/19 22:08:48  deven
+// Added last_message field, added FindSession() function, changed Pointer
+// parameters to reference parameters, added DoRestart() function.
+//
 // Revision 1.7  1994/01/09 05:16:26  deven
 // Removed Null() construct for Pointers.
 //

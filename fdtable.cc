@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.7 1994/01/09 05:18:07 deven Exp $
+// $Id: fdtable.cc,v 1.8 1994/01/19 22:40:48 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.8  1994/01/19 22:40:48  deven
+// Used Pointer constructors, removed range errors, added CloseAll(), added
+// check for validity of array entry before using.
+//
 // Revision 1.7  1994/01/09 05:18:07  deven
 // Removed Null() construct for Pointers, modified Pointer conversions.
 //

@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.5 1994/01/09 05:32:46 deven Exp $
+# $Id: Makefile,v 1.6 1994/01/19 21:50:32 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.6  1994/01/19 21:50:32  deven
+# Removed several source files, removed default checkin of checkin script.
+#
 # Revision 1.5  1994/01/09 05:32:46  deven
 # Changed default environment to Sun, added checkin and done targets.
 #

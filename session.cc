@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.9 1994/01/09 05:22:22 deven Exp $
+// $Id: session.cc,v 1.10 1994/01/19 22:25:37 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.10  1994/01/19 22:25:37  deven
+// Changed Pointer parameters to reference parameters, put more Pointer
+// initializations into constructors instead of later assignments, added
+// FindSession() function, modified !nuke and message send to use it, added
+// !restart command and support.
+//
 // Revision 1.9  1994/01/09 05:22:22  deven
 // Removed Null() construct for Pointers.
 //
