@@ -373,6 +373,31 @@ void Session::DiscussionMatches(char *name, Set<Discussion> &matches)
    }
 }
 
+void Session::PrintReservedNames()
+{
+   ListIter<StringObj> reserved(user->reserved);
+   if (reserved++) {
+      telnet->print("\nYour default (reserved) name is \"%s\".\n", ~*reserved);
+      int left = user->reserved.Count();
+      if (--left > 0) {
+	 String other;
+	 other.append("\nYou also have \"");
+         other.append(*++reserved);
+	 while (--left > 1 && reserved++) {
+	    other.append("\", \"");
+	    other.append(*reserved);
+	 }
+	 if (left) {
+	    other.append("\" and \"");
+	    other.append(*++reserved);
+	 }
+	 other.append("\" reserved.\n");
+         telnet->output(~other);
+      }
+   }
+   telnet->output(Newline);
+}
+
 void Session::Login(char *line)
 {
    if (match(line, "/bye", 4)) {
@@ -405,12 +430,7 @@ void Session::Login(char *line)
       SetInputFunction(&Session::Password, "Password: "); // Password prompt.
    } else {
       // No password required. (guest account)
-      if (user->reserved) {
-	 telnet->print("\nYour default name is \"%s\".\n\n", (char *)
-		       user->reserved);
-      } else {
-	 telnet->output(Newline);
-      }
+      PrintReservedNames();
       SetInputFunction(&Session::EnteredName, "Enter name: "); // Name prompt.
    }
 }
@@ -434,12 +454,7 @@ void Session::Password(char *line)
       return;
    }
 
-   if (user->reserved) {
-      telnet->print("\nYour default name is \"%s\".\n\n", (char *)
-		    user->reserved);
-   } else {
-      telnet->output(Newline);
-   }
+   PrintReservedNames();
    SetInputFunction(&Session::EnteredName, "Enter name: "); // Name prompt.
 }
 
@@ -451,15 +466,16 @@ boolean Session::CheckNameAvailability(char *name, boolean double_check,
    User *u;
    Set<Session> sessionmatches;
    Set<Discussion> discussionmatches;
+   char *reserved;
 
    if (!strcasecmp(name, "me")) {
       output("The keyword \"me\" is reserved.  Choose another name.\n");
       SetInputFunction(&Session::EnteredName, "Enter name: "); // Name prompt.
       return false;
    }
-   if (user->FindReserved(name, u) && user != u) {
+   if ((reserved = user->FindReserved(name, u)) && user != u) {
       telnet->print("\"%s\" is%s a reserved name.  Choose another.\n",
-         ~u->reserved, double_check ? " now" : "");
+         reserved, double_check ? " now" : "");
       SetInputFunction(&Session::EnteredName, "Enter name: "); // Name prompt.
       return false;
    }
@@ -507,8 +523,8 @@ void Session::EnteredName(char *line)
 {
    trim(line);
    if (!*line) {		// blank line
-      if (user->reserved) {
-	 name = user->reserved;
+      if (user->reserved.Count() > 0) {
+	 name = *user->reserved.First();
       } else {
 	 telnet->Prompt("Enter name: ");
 	 return;
@@ -1794,6 +1810,7 @@ void Session::DoCreate(char *args) // Do /create command.
    Set<Discussion> discussionmatches;
    char *name;
    boolean Public = true;
+   char *reserved;
 
    if (match(args, "-public", 3)) {
       Public = true;
@@ -1813,11 +1830,9 @@ void Session::DoCreate(char *args) // Do /create command.
       output("The keyword \"me\" is reserved.  (not created)\n");
       return;
    }
-   if (user->FindReserved(name, u)) {
-      print("\"%s\" is a reserved name. (not created)\n", ~u->reserved);
-      return;
-   } else if (u == user) {
-      print("\"%s\" is your reserved name. (not created)\n", ~u->reserved);
+   if ((reserved = user->FindReserved(name, u))) {
+      print("\"%s\" is %s reserved name. (not created)\n", reserved,
+	    user == u ? "your" : "a");
       return;
    }
    if (FindSendable(name, session, sessionmatches, discussion,
@@ -1989,6 +2004,7 @@ void Session::DoRename(char *args) // Do /rename command.
    User *u;
    Set<Session> sessionmatches;
    Set<Discussion> discussionmatches;
+   char *reserved;
 
    if (!*args) {
       output("Usage: /rename <name>\n");
@@ -1998,8 +2014,8 @@ void Session::DoRename(char *args) // Do /rename command.
       output("The keyword \"me\" is reserved.  (name unchanged)\n");
       return;
    }
-   if (user->FindReserved(args, u)) {
-      print("\"%s\" is a reserved name.  (name unchanged)\n", ~u->reserved);
+   if ((reserved = user->FindReserved(args, u)) && user != u) {
+      print("\"%s\" is a reserved name.  (name unchanged)\n", reserved);
       return;
    }
    if (FindSendable(args, session, sessionmatches, discussion,
