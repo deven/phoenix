@@ -28,10 +28,10 @@ public:
       delete line;
    }
    void Append(Pointer<Line> p) { // Add new line at end of list.
-      if (next.Null()) {
-	 next = p;
-      } else {
+      if (next) {
 	 next->Append(p);
+      } else {
+	 next = p;
       }
    }
 };

@@ -30,20 +30,20 @@ void OutputStream::Attach(Pointer<Telnet> telnet) // Review detached output.
 {
    sent = NULL;
    Acknowledged = Sent = 0;
-   while (!telnet.Null() && telnet->acknowledge && SendNext(telnet)) ;
+   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
 }
 
 // Enqueue output.
 void OutputStream::Enqueue(Pointer<Telnet> telnet,Pointer<Output> out)
 {
-   if (out.Null()) return;
+   if (!out) return;
    if (tail) {
       tail->next = new OutputObject(out);
       tail = tail->next;
    } else {
       head = tail = new OutputObject(out);
    }
-   while (!telnet.Null() && telnet->acknowledge && SendNext(telnet)) ;
+   while (telnet && telnet->acknowledge && SendNext(telnet)) ;
 }
 
 void OutputStream::Dequeue()	// Dequeue all acknowledged output.
@@ -66,7 +66,7 @@ void OutputStream::Dequeue()	// Dequeue all acknowledged output.
 
 boolean OutputStream::SendNext(Pointer<Telnet> telnet) // Send next output.
 {
-   if (telnet.Null() || !sent && !head) return false;
+   if (!telnet || !sent && !head) return false;
    if (sent && !sent->next) {
       telnet->RedrawInput();
       return false;
