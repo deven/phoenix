@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: user.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
 //
 // User class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: user.cc,v $
+// Revision 1.1  1993/12/08 02:36:57  deven
+// Initial revision
+//
 
 #include "conf.h"
 

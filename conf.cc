@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: conf.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: conf.cc,v $
+// Revision 1.1  1993/12/08 02:36:57  deven
+// Initial revision
+//
 
 #include "conf.h"
 

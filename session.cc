@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: session.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: session.cc,v $
+// Revision 1.1  1993/12/08 02:36:57  deven
+// Initial revision
+//
 
 #include "conf.h"
 
