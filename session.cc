@@ -257,6 +257,11 @@ void Session::DoSend(char *p)	// Do /send command.
    }
 }
 
+void Session::DoWhy()		// Do /why command.
+{
+   telnet->output("Why not?\n");
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
