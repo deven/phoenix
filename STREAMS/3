@@ -1,0 +1,73 @@
+From coderpunks-errors@toad.com  Thu Apr 18 17:10:42 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id RAA05112 for <deven@escher.ties.org>; Thu, 18 Apr 1996 17:10:37 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id RAA12840 for <deven@asylum.sf.ca.us>; Thu, 18 Apr 1996 17:10:33 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id RAA28193; Thu, 18 Apr 1996 17:10:30 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id NAA03600 for coderpunks-outgoing; Thu, 18 Apr 1996 13:55:36 -0700 (PDT)
+Received: from infinity.c2.org (infinity.c2.org [140.174.185.11]) by toad.com (8.7.5/8.7.3) with ESMTP id NAA03592 for <coderpunks@toad.com>; Thu, 18 Apr 1996 13:55:17 -0700 (PDT)
+Received: (from raph@localhost) by infinity.c2.org (8.7.4/8.6.9)
+	id NAA27718; Thu, 18 Apr 1996 13:49:01 -0700 (PDT)
+	Community ConneXion: Privacy & Community: <URL:http://www.c2.net>
+Date: Thu, 18 Apr 1996 13:49:00 -0700 (PDT)
+From: Raph Levien <raph@c2.org>
+To: Bill Frantz <frantz@netcom.com>
+cc: coderpunks@toad.com
+Subject: Re: Stream transformation
+In-Reply-To: <199604180641.XAA23989@netcom9.netcom.com>
+Message-ID: <Pine.SUN.3.91.960418132103.25408A-100000@infinity.c2.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+
+
+On Wed, 17 Apr 1996, Bill Frantz wrote:
+
+> At  5:26 PM 4/17/96 -0700, Raph Levien wrote:
+> >   I've gotten a very positive response through private email, so it is
+> >likely that I will pursue it. One caveat: I haven't worked out the error
+> >handling yet, and that will make things a bit more complex.
+>
+> I also like your approach.  I have been thinking that in Java, with its
+> garbage collection, the buffering problem would go away, except perhaps for
+> performance.  Your comments about the cost of malloc indicate that
+> performance of allocation in Java may also not be a problem.
+
+  While I've been thinking in C, adapting it to Java could make sense. I
+agree that the engineering I've done to keep the number of malloc()s down
+would also help in Java - GC could be a big performance bottleneck.
+   The fifo and xformer abstractions are already pretty similar to
+Java-style objects. A fifo is a pure abstract data type, meaning I guess
+that it would be declared a final class. The xformers, on the other hand,
+are purely virtual. I guess you'd have an xformer class, which each
+individual xformer would override with new and progress methods.
+   I guess, in sum, I'd be willing to have more Java-aware people take a
+look and see if it makes sense to do a Java version of the API.
+
+> Java exceptions offer an useful approach to error handling.  I think the
+> way to map it to C, for this application, is to have the caller set a
+> pointer to a longjump buffer to catch errors, and set that pointer to NULL
+> otherwise.  If an error occurs, and the pointer is non-null, then do a
+> longjump to the buffer.  If the pointer is NULL, then crash in some way
+> that will leave a trail for debugging.
+
+   I don't really know how Java exceptions work, but I don't think what
+you're describing would be very workable. I see two issues. First, an
+exception or error in one pipeline must not affect what goes on in
+others. setjmp()/longjmp() don't seem to offer a nice way to cleanly
+resume part of the exception-raising computation. Second, you want to be
+able to reclaim the storage used by the exception-raising pipeline.
+   The solution I'm looking at involves propagating exceptions throughout
+the entire pipeline. I'm still unsure exactly what data structure to use
+for exeptions, but strings will probably do.
+   The cost of propagating exceptions will probably be on the order of a
+few lines of code per transformer.
+
+   I'll post more details when I get the code together.
+
+Raph
+
+P.S. You can grab a snapshot of my code at http://www.c2.org/~raph/astapi
+, if you're interested. I've got a toy socket server running, and the code
+(in main.c) is _very_ sweet.
