@@ -52,8 +52,6 @@ const int Port = 6789;		// TCP port to run on
 
 extern int errno;		// error number
 
-extern Session *sessions;	// active sessions ***
-
 extern FILE *logfile;		// log file ***
 
 extern int Shutdown;		// shutdown flag
