@@ -1846,9 +1846,9 @@ void Session::DoSend(char *args) // Do /send command.
 // Do /blurb command (or blurb set on entry).
 void Session::DoBlurb(char *start,boolean entry = false)
 {
-   char *end;
    while (*start && isspace(*start)) start++;
    if (*start) {
+      char *end = start;
       for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
       if (end == start + 2 && !strncasecmp(start,"off",3)) {
 	 if (entry || blurb) {
