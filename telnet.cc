@@ -891,8 +891,8 @@ void Telnet::erase_line()	// Erase input line.
 void Telnet::previous_line()	// Go to previous input line.
 {
    // Go to previous history input line.
+   erase_line();
    if (history--) {
-      erase_line();
       InsertString(*((StringObj *) history));
    } else {
       output(Bell);
@@ -901,8 +901,9 @@ void Telnet::previous_line()	// Go to previous input line.
 
 void Telnet::next_line()	// Go to next input line.
 {
+   // Go to next history input line.
+   erase_line();
    if (history++) {
-      erase_line();
       InsertString(*((StringObj *) history));
    } else {
       output(Bell);
