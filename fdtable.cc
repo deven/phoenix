@@ -202,7 +202,7 @@ void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
       matches = 0;
       for (i = 0; i < used; i++) {
 	 if ((t = (Telnet *) array[i]) && t->type == TelnetFD &&
-	     match_name(t->session->name,sendlist)) {
+	     match_name(t->session->name_only,sendlist)) {
 	    dest = t;
 	    matches++;
 	 }
@@ -226,7 +226,7 @@ void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
    default:			// Multiple matches.
       telnet->print("\"%s\" matches %d names, including \"%s\". "
 		    "(message not sent)\n",sendlist,matches,
-		    dest->session->name);
+		    dest->session->name_only);
       break;
    }
 }
