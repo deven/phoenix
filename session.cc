@@ -583,6 +583,7 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 void Session::SetIdle(char *args) // Set idle time.
 {
    int num,now,idle,days,hours,minutes;
+   boolean flag;
 
    days = hours = minutes = 0;
    now = time(NULL);
@@ -624,42 +625,29 @@ void Session::SetIdle(char *args) // Set idle time.
       message_time = now - ((days * 24 + hours) * 60 + minutes) * 60;
    }
 
-   if (idle) {
-      hours = idle / 60;
-      minutes = idle - hours * 60;
-      days = hours / 24;
-      hours -= days * 24;
+   flag = boolean(message_time < login_time || message_time > now);
+   if (flag) message_time = login_time;
+
+   if (idle && idle != (now - message_time) / 60) {
       output("[You were idle for");
-      if (!minutes) output(" exactly");
-      if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
-		      minutes ? "," : hours || minutes ? " and" : "");
-      if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
-		       " and" : "");
-      if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+      PrintTimeLong(idle);
       output(".]\n");
    }
 
-   if (message_time < login_time || message_time > now) {
+   if (flag) {
       output("Sorry, you can't be idle longer than you've been signed on.\n");
-      message_time = login_time;
    }
 
-   idle = (now - message_time) / 60;
-   if (idle) {
-      hours = idle / 60;
-      minutes = idle - hours * 60;
-      days = hours / 24;
-      hours -= days * 24;
-      output("You are now idle for");
-      if (!minutes) output(" exactly");
-      if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
-		      minutes ? "," : hours || minutes ? " and" : "");
-      if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
-		       " and" : "");
-      if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+   if (idle == (now - message_time) / 60) {
+      output("You are still idle for");
+      PrintTimeLong(idle);
+      output(".\n");
+   } else if (idle = (now - message_time) / 60) {
+      output("Your idle time has been set to");
+      PrintTimeLong(idle);
       output(".\n");
    } else {
-      output("Your idle time has been reset.\n");
+      output("You are still unidle.\n");
    }
 }
 
