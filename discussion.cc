@@ -73,7 +73,7 @@ boolean Discussion::Permitted(Session *session) {
    return true;
 }
 
-void Discussion::EnqueueOthers(Pointer<OutputObj> &out,Session *sender) {
+void Discussion::EnqueueOthers(OutputObj *out,Session *sender) {
    SetIter<Session> session(members);
    while (session++) if (session != sender) session->Enqueue(out);
 }
@@ -113,7 +113,7 @@ void Discussion::Quit(Session *session) {
 
 void Discussion::Permit(Session *session,char *args) {
    Set<Session> matches;
-   Pointer<Session> s;
+   Session *s;
    char *user;
    Name *n;
 
@@ -173,7 +173,7 @@ void Discussion::Permit(Session *session,char *args) {
 
 void Discussion::Depermit(Session *session,char *args) {
    Set<Session> matches;
-   Pointer<Session> s;
+   Session *s;
    char *user;
    Name *n;
 
@@ -250,7 +250,7 @@ void Discussion::Depermit(Session *session,char *args) {
 
 void Discussion::Appoint(Session *session,char *args) {
    Set<Session> matches;
-   Pointer<Session> s;
+   Session *s;
    char *user;
 
    if (IsCreator(session) || IsModerator(session)) {
@@ -276,7 +276,7 @@ void Discussion::Appoint(Session *session,char *args) {
 
 void Discussion::Unappoint(Session *session,char *args) {
    Set<Session> matches;
-   Pointer<Session> s;
+   Session *s;
    char *user;
    Name *n;
 

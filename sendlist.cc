@@ -25,19 +25,19 @@
 
 #include "phoenix.h"
 
-Sendlist::Sendlist(Session &session,String &sendlist,boolean multi = false,
+Sendlist::Sendlist(Session &session,char *sendlist,boolean multi = false,
 		   boolean do_sessions = true,boolean do_discussions = true)
 {
    set(session,sendlist,multi,do_sessions,do_discussions);
 }
 
-Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
+Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 			boolean do_sessions = true,
 			boolean do_discussions = true)
 {
-   Pointer<Session> session;
+   Session *session = NULL;
+   Discussion *discussion = NULL;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
    String nomatch;
    String lastnomatch;
@@ -45,7 +45,7 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
    char *separator;
    char buf[64];
 
-   if (sendlist == typed) return *this;	// Return if sendlist unchanged.
+   if (typed == sendlist) return *this;	// Return if sendlist unchanged.
 
    errors = "";			// Otherwise, reinitialize.
    typed = sendlist;

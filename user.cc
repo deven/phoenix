@@ -74,7 +74,7 @@ void User::UpdateAll()		// Update all user entries from password file.
    Update("guest",NULL,NULL,NULL,0);
 }
 
-boolean User::FindReserved(char *name,Pointer<User> &user)
+boolean User::FindReserved(char *name,User *&user)
 {
    UpdateAll();			// Update user accounts.
 

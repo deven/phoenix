@@ -43,6 +43,6 @@ public:
    static User *GetUser(char *login);
    static void Update(char *login,char *pass,char *name,char *defblurb,int p);
    static void UpdateAll();
-   boolean FindReserved(char *name,Pointer<User> &user);
+   boolean FindReserved(char *name,User *&user);
    AddSession(Session *s) { sessions.AddTail(s); }
 };

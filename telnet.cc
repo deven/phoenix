@@ -293,8 +293,8 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
    }
 }
 
-void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
-			  Pointer<Sendlist> &to,char *start)
+void Telnet::PrintMessage(OutputType type,time_t time,Name *from,Sendlist *to,
+			  char *start)
 {
    char *wrap,*p;
    int col;
@@ -1011,7 +1011,7 @@ inline void Telnet::downcase_word() // Downcase word at point.
    }
 }
 
-inline void Telnet::capitalize_word() // Capitalize word at point.
+void Telnet::capitalize_word()	// Capitalize word at point.
 {
    while (point < free && !isalpha(*point)) forward_char();
    if (point < free && isalpha(*point)) {

@@ -49,41 +49,41 @@
 
 #include "phoenix.h"
 
-void Text::output(Pointer<Telnet> &telnet)
+void Text::output(Telnet *telnet)
 {
    telnet->output(text);
 }
 
-void Message::output(Pointer<Telnet> &telnet)
+void Message::output(Telnet *telnet)
 {
    telnet->PrintMessage(Type,time,from,to,text);
 }
 
-void EntryNotify::output(Pointer<Telnet> &telnet)
+void EntryNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has entered Phoenix! [%s] ***\n",~name->name,
 		 ~name->blurb,date(time,11,5));
 }
 
-void ExitNotify::output(Pointer<Telnet> &telnet)
+void ExitNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has left Phoenix! [%s] ***\n",~name->name,
 		 ~name->blurb,date(time,11,5));
 }
 
-void TransferNotify::output(Pointer<Telnet> &telnet)
+void TransferNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has transferred to new connection. [%s] ***\n",
 		 ~name->name,~name->blurb,date(time,11,5));
 }
 
-void AttachNotify::output(Pointer<Telnet> &telnet)
+void AttachNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s is now attached. [%s] ***\n",~name->name,
 		 ~name->blurb,date(time,11,5));
 }
 
-void DetachNotify::output(Pointer<Telnet> &telnet)
+void DetachNotify::output(Telnet *telnet)
 {
    if (intentional) {
       telnet->print("*** %s%s has intentionally detached. [%s] ***\n",
@@ -94,31 +94,31 @@ void DetachNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-void HereNotify::output(Pointer<Telnet> &telnet)
+void HereNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s is now here. [%s] ***\n",~name->name,~name->blurb,
 		 date(time,11,5));
 }
 
-void AwayNotify::output(Pointer<Telnet> &telnet)
+void AwayNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s is now away. [%s] ***\n",~name->name,~name->blurb,
 		 date(time,11,5));
 }
 
-void BusyNotify::output(Pointer<Telnet> &telnet)
+void BusyNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s is now busy. [%s] ***\n",~name->name,~name->blurb,
 		 date(time,11,5));
 }
 
-void GoneNotify::output(Pointer<Telnet> &telnet)
+void GoneNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s is now gone. [%s] ***\n",~name->name,~name->blurb,
 		 date(time,11,5));
 }
 
-void CreateNotify::output(Pointer<Telnet> &telnet)
+void CreateNotify::output(Telnet *telnet)
 {
    if (discussion->Public) {
       telnet->print("*** %s%s has created discussion %s, \"%s\". [%s] ***\n",
@@ -131,78 +131,73 @@ void CreateNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-DestroyNotify::DestroyNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			     time_t when = 0):
+DestroyNotify::DestroyNotify(Discussion *d,Session *s, time_t when = 0):
 			     OutputObj(DestroyOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
 }
 
-void DestroyNotify::output(Pointer<Telnet> &telnet)
+void DestroyNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has destroyed discussion %s. [%s] ***\n",
 		 ~name->name,~name->blurb,~discussion->name,date(time,11,5));
 }
 
-JoinNotify::JoinNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-		       time_t when = 0):
+JoinNotify::JoinNotify(Discussion *d,Session *s, time_t when = 0):
 		       OutputObj(JoinOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
 }
 
-void JoinNotify::output(Pointer<Telnet> &telnet)
+void JoinNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has joined discussion %s. [%s] ***\n",
 		 ~name->name,~name->blurb,~discussion->name,date(time,11,5));
 }
 
-QuitNotify::QuitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-		       time_t when = 0):
+QuitNotify::QuitNotify(Discussion *d,Session *s, time_t when = 0):
 		       OutputObj(QuitOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
 }
 
-void QuitNotify::output(Pointer<Telnet> &telnet)
+void QuitNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has quit discussion %s. [%s] ***\n",
 		 ~name->name,~name->blurb,~discussion->name,date(time,11,5));
 }
 
-PublicNotify::PublicNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			   time_t when = 0):
+PublicNotify::PublicNotify(Discussion *d,Session *s, time_t when = 0):
 			   OutputObj(PublicOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
 }
 
-void PublicNotify::output(Pointer<Telnet> &telnet)
+void PublicNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has made discussion %s public. [%s] ***\n",
 		 ~name->name,~name->blurb,~discussion->name,date(time,11,5));
 }
 
-PrivateNotify::PrivateNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			     time_t when = 0):
+PrivateNotify::PrivateNotify(Discussion *d,Session *s, time_t when = 0):
 			     OutputObj(PrivateOutput,NotificationClass,when)
 {
    discussion = d;
    name = s->name_obj;
 }
 
-void PrivateNotify::output(Pointer<Telnet> &telnet)
+void PrivateNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s%s has made discussion %s private. [%s] ***\n",
 		 ~name->name,~name->blurb,~discussion->name,date(time,11,5));
 }
 
-PermitNotify::PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			   boolean flag,time_t when = 0):
+PermitNotify::PermitNotify(Discussion *d,Session *s, boolean flag,
+			   time_t when = 0):
 			   OutputObj(PermitOutput,NotificationClass,when)
 {
    discussion = d;
@@ -210,7 +205,7 @@ PermitNotify::PermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
    is_explicit = flag;
 }
 
-void PermitNotify::output(Pointer<Telnet> &telnet)
+void PermitNotify::output(Telnet *telnet)
 {
    if (discussion->Public) {
       if (is_explicit) {
@@ -235,9 +230,8 @@ void PermitNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-DepermitNotify::DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			       boolean flag,Pointer<Session> &who,
-			       time_t when = 0):
+DepermitNotify::DepermitNotify(Discussion *d,Session *s, boolean flag,
+			       Session *who, time_t when = 0):
 			       OutputObj(DepermitOutput,NotificationClass,when)
 {
    discussion = d;
@@ -246,7 +240,7 @@ DepermitNotify::DepermitNotify(Pointer<Discussion> &d,Pointer<Session> &s,
    if (who) removed = who->name_obj;
 }
 
-void DepermitNotify::output(Pointer<Telnet> &telnet)
+void DepermitNotify::output(Telnet *telnet)
 {
    if (discussion->Public) {
       if (removed) {
@@ -289,8 +283,8 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-AppointNotify::AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
-			     Pointer<Session> &s2, time_t when = 0):
+AppointNotify::AppointNotify(Discussion *d, Session *s1, Session *s2,
+			     time_t when = 0):
 			     OutputObj(AppointOutput,NotificationClass,when)
 {
    discussion = d;
@@ -298,7 +292,7 @@ AppointNotify::AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
    appointee = s2->name_obj;
 }
 
-void AppointNotify::output(Pointer<Telnet> &telnet)
+void AppointNotify::output(Telnet *telnet)
 {
    if (appointee->name == telnet->session->name) {
       telnet->print("*** %s%s has appointed you as a moderator of discussion "
@@ -312,8 +306,8 @@ void AppointNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-UnappointNotify::UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
-				 Pointer<Session> &s2, time_t when = 0):
+UnappointNotify::UnappointNotify(Discussion *d, Session *s1, Session *s2,
+				 time_t when = 0):
 				 OutputObj(UnappointOutput,NotificationClass,
 				 when)
 {
@@ -322,7 +316,7 @@ UnappointNotify::UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
    unappointee = s2->name_obj;
 }
 
-void UnappointNotify::output(Pointer<Telnet> &telnet)
+void UnappointNotify::output(Telnet *telnet)
 {
    if (unappointee->name == telnet->session->name) {
       telnet->print("*** %s%s has unappointed you as a moderator of "
@@ -336,7 +330,7 @@ void UnappointNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-void RenameNotify::output(Pointer<Telnet> &telnet)
+void RenameNotify::output(Telnet *telnet)
 {
    telnet->print("*** %s has renamed to %s. [%s] ***\n",~oldname,~newname,
 		 date(time,11,5));

@@ -185,7 +185,7 @@ void Session::init_defaults()
    defaults["time_format"] = "verbose";
 }
 
-Session::Session(Pointer<Telnet> &t)
+Session::Session(Telnet *t)
 {
    if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
    telnet = t;			// Save Telnet pointer.
@@ -229,7 +229,7 @@ void Session::Close(boolean drain = true) // Close session.
    user = NULL;
 }
 
-void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
+void Session::Transfer(Telnet *t) // Transfer session to connection.
 {
    Pointer<Telnet> old(telnet);
    telnet = t;
@@ -246,7 +246,7 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
    EnqueueOutput();
 }
 
-void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
+void Session::Attach(Telnet *t) // Attach session to connection.
 {
    telnet = t;
    telnet->session = this;
@@ -278,7 +278,7 @@ void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
 
 void Session::SaveInputLine(char *line)
 {
-   Pointer<Line> p(new Line(line));
+   Line *p = new Line(line);
    if (lines) {
       lines->Append(p);
    } else {
@@ -367,17 +367,18 @@ int match_name(char *name,char *sendlist) // returns position of match or 0.
    return 0;
 }
 
-boolean Session::FindSendable(char *sendlist,Pointer<Session> &session,
-		     Set<Session> &sessionmatches,
-		     Pointer<Discussion> &discussion,
-		     Set<Discussion> &discussionmatches,
-		     boolean member = false,boolean exact = false,
-		     boolean do_sessions = true,boolean do_discussions = true)
+boolean Session::FindSendable(char *sendlist,Session *&session,
+			      Set<Session> &sessionmatches,
+			      Discussion *&discussion,
+			      Set<Discussion> &discussionmatches,
+			      boolean member = false,boolean exact = false,
+			      boolean do_sessions = true,
+			      boolean do_discussions = true)
 {
    int pos,count = 0;
-   Pointer<Session> sessionlead;
+   Session *sessionlead = NULL;
+   Discussion *discussionlead = NULL;
    ListIter<Session> s(sessions);
-   Pointer<Discussion> discussionlead;
    ListIter<Discussion> d(discussions);
 
    session = NULL;
@@ -433,10 +434,10 @@ boolean Session::FindSendable(char *sendlist,Pointer<Session> &session,
    return false;
 }
 
-Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
+Session *Session::FindSession(char *sendlist,Set<Session> &matches)
 {
-   Pointer<Session> session;
-   Pointer<Discussion> discussion;
+   Session *session;
+   Discussion *discussion;
    Set<Discussion> discussionmatches;
 
    if (FindSendable(sendlist,session,matches,discussion,discussionmatches,
@@ -446,13 +447,12 @@ Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
    return NULL;
 }
 
-Pointer<Discussion> Session::FindDiscussion(char *sendlist,
-					    Set<Discussion> &matches,
-					    boolean member = false)
+Discussion *Session::FindDiscussion(char *sendlist,Set<Discussion> &matches,
+				    boolean member = false)
 {
-   Pointer<Session> session;
+   Session *session;
+   Discussion *discussion;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
 
    if (FindSendable(sendlist,session,sessionmatches,discussion,matches,
 		    member,false,false,true)) {
@@ -598,11 +598,11 @@ void Session::Password(char *line)
 
 void Session::EnteredName(char *line)
 {
-   Pointer<Session> session;
+   Session *session;
+   Discussion *discussion;
+   User *u;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
-   Pointer<User> u;
 
    if (!*line) {		// blank line
       if (user->reserved) {
@@ -659,11 +659,11 @@ void Session::EnteredName(char *line)
 
 void Session::TransferSession(char *line)
 {
-   Pointer<Session> session;
+   Session *session;
+   Discussion *discussion;
+   User *u;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
-   Pointer<User> u;
 
    if (!match(line,"yes",1)) {
       telnet->output("Session not transferred.\n");
@@ -1029,7 +1029,7 @@ void Session::DoDown(char *args) // Do !down command.
 void Session::DoNuke(char *args) // Do !nuke command.
 {
    boolean drain;
-   Pointer<Session> session;
+   Session *session;
    Set<Session> matches;
 
    if (!(drain = boolean(*args != '!'))) args++;
@@ -1910,18 +1910,18 @@ void Session::DoGone(char *args) // Do /gone command.
    EnqueueOthers(new GoneNotify(name_obj));
 }
 
-void Session::DoUnidle(char *args) // Do /unidle idle time reset.
+void Session::DoUnidle(char *)	// Do /unidle idle time reset.
 {
    if (!ResetIdle(1)) output("Your idle time has been reset.\n");
 }
 
 void Session::DoCreate(char *args) // Do /create command.
 {
-   Pointer<Session> session;
+   Session *session;
+   Discussion *discussion;
+   User *u;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
-   Pointer<User> u;
    char *name;
    boolean Public = true;
 
@@ -1977,7 +1977,7 @@ void Session::DoDestroy(char *args) // Do /destroy command.
    }
    char *name = getword(args,Comma);
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Destroy(this);
@@ -1998,7 +1998,7 @@ void Session::DoJoin(char *args) // Do /join command.
    }
    char *name = getword(args,Comma);
    Set<Discussion> matches;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Join(this);
@@ -2015,7 +2015,7 @@ void Session::DoQuit(char *args) // Do /quit command.
    }
    char *name = getword(args,Comma);
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Quit(this);
@@ -2036,7 +2036,7 @@ void Session::DoPermit(char *args) // Do /permit command.
       return;
    }
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Permit(this,args);
@@ -2057,7 +2057,7 @@ void Session::DoDepermit(char *args) // Do /depermit command.
       return;
    }
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Depermit(this,args);
@@ -2078,7 +2078,7 @@ void Session::DoAppoint(char *args) // Do /appoint command.
       return;
    }
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Appoint(this,args);
@@ -2099,7 +2099,7 @@ void Session::DoUnappoint(char *args) // Do /unappoint command.
       return;
    }
    Set<Discussion> matches,matches2;
-   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+   Discussion *discussion = FindDiscussion(name,matches);
 
    if (discussion) {
       discussion->Unappoint(this,args);
@@ -2114,11 +2114,11 @@ void Session::DoUnappoint(char *args) // Do /unappoint command.
 
 void Session::DoRename(char *args) // Do /rename command.
 {
-   Pointer<Session> session;
+   Session *session;
+   Discussion *discussion;
+   User *u;
    Set<Session> sessionmatches;
-   Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
-   Pointer<User> u;
 
    if (!*args) {
       output("Usage: /rename <name>\n");
@@ -2578,7 +2578,7 @@ void Session::DoMessage(char *line) // Do message send.
 }
 
 // Send message to sendlist.
-void Session::SendMessage(Pointer<Sendlist> &sendlist,char *msg)
+void Session::SendMessage(Sendlist *sendlist,char *msg)
 {
    Set<Session> recipients;
    int count = sendlist->Expand(recipients,this);

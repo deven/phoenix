@@ -37,7 +37,7 @@ public:
    boolean IsCreator(Session *session);
    Name *IsModerator(Session *session);
    boolean Permitted(Session *session);
-   void EnqueueOthers(Pointer<OutputObj> &out,Session *sender);
+   void EnqueueOthers(OutputObj *out,Session *sender);
    void Destroy(Session *session);
    void Join(Session *session);
    void Quit(Session *session);
