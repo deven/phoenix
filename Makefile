@@ -20,22 +20,10 @@
 #
 # $Log$
 
-# ESIX:
-# CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
-# LDFLAGS = -bsd
-
-# Sun:
-# CFLAGS = -g -Wall
-# LDFLAGS = -static
-
 # Linux:
 CFLAGS = -Wall
 LDFLAGS = -static
 LIBS = -lcrypt
-
-# Mach:
-# CFLAGS = -g -DHOME='"/u/deven/src/conf"'
-# LDFLAGS =
 
 CC = gcc
 EXEC = gangplank
