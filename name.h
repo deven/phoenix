@@ -24,6 +24,7 @@
 class Name: public Object {
 public:
    Pointer<Session> session;	// Session this name refers to.
+   Pointer<User> user;		// User owning this session.
    String name;			// Current name (pseudo) for this session.
    String blurb;		// Current blurb for this session.
 
