@@ -23,6 +23,13 @@ void OutputStream::OutputObject::output(Pointer<Telnet> telnet) // Output object
    telnet->TimingMark();
 }
 
+void OutputStream::Attach(Pointer<Telnet> telnet) // Review detached output.
+{
+   sent = NULL;
+   Acknowledged = Sent = 0;
+   while (!telnet.Null() && telnet->acknowledge && SendNext(telnet)) ;
+}
+
 // Enqueue output.
 void OutputStream::Enqueue(Pointer<Telnet> telnet,Pointer<Output> out)
 {

@@ -47,6 +47,7 @@ public:
    void Acknowledge(void) {	// Acknowledge a block of output.
       if (Acknowledged < Sent) Acknowledged++;
    }
+   void Attach(Pointer<Telnet> telnet);
    void Enqueue(Pointer<Telnet> telnet,Pointer<Output> out);
    void Dequeue(void);
    boolean SendNext(Pointer<Telnet> telnet);

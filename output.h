@@ -14,7 +14,7 @@
 // Types of Output subclasses.
 enum OutputType {
    UnknownOutput,TextOutput,PublicMessage,PrivateMessage,EntryOutput,
-   ExitOutput
+   ExitOutput,AttachOutput,DetachOutput
 };
 
 // Classifications of Output subclasses.
@@ -73,5 +73,24 @@ class ExitNotify: public Output {
 public:
    ExitNotify(Pointer<Name> who,time_t when = 0):
    Output(ExitOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> telnet);
+};
+
+class AttachNotify: public Output {
+private:
+   Pointer<Name> name;
+public:
+   AttachNotify(Pointer<Name> who,time_t when = 0):
+   Output(AttachOutput,NotificationClass,when),name(who) { }
+   void output(Pointer<Telnet> telnet);
+};
+
+class DetachNotify: public Output {
+private:
+   Pointer<Name> name;
+   boolean intentional;
+public:
+   DetachNotify(Pointer<Name> who,boolean i,time_t when = 0):
+   Output(DetachOutput,NotificationClass,when),name(who),intentional(i) { }
    void output(Pointer<Telnet> telnet);
 };
