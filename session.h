@@ -130,6 +130,8 @@ public:
    void DiscussionMatches(char *name, Set<Discussion> &matches);
    void Login(char *line);
    void Password(char *line);
+   boolean CheckNameAvailability(char *name, boolean double_check,
+				 boolean transferring);
    void EnteredName(char *line);
    void TransferSession(char *line);
    void EnteredBlurb(char *line);
