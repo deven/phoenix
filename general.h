@@ -94,6 +94,8 @@ extern FILE *logfile;		// log file ***
 
 extern int Shutdown;		// shutdown flag
 
+extern time_t ServerStartTime;	// time server started
+
 // enumerations
 #ifdef NO_BOOLEAN
 #define boolean int

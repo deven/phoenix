@@ -83,6 +83,8 @@ int Shutdown;			// shutdown flag ***
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
 
+time_t ServerStartTime;		// time server started
+
 // class Date? ***
 char *date(time_t clock,int start,int len) // get part of date string ***
 {
@@ -269,6 +271,7 @@ int main(int argc,char **argv)	// main program
    int pid;			// server process number
    int port;			// TCP port to use
 
+   time(&ServerStartTime);	// Mark time server started.
    Shutdown = 0;
    if (pw = getpwuid(geteuid())) {
       home = pw->pw_dir;
