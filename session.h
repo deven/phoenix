@@ -38,6 +38,7 @@ public:
    int ResetIdle(int min);	// Reset and return idle time, maybe report.
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
+   void DoBye();		// Do /bye command.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);
