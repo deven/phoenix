@@ -1821,11 +1821,8 @@ void main(int argc,char **argv) /* main program */
    }
 
    while(1) {
-      /* Exit if shutting down any no users are left. */
+      /* Exit if shutting down and no users are left. */
       if (shutdown && !connections) {
-	 for (telnet = connections; telnet; telnet = telnet->next) {
-	    close(telnet->fd);
-	 }
 	 log("All connections closed, shutting down.");
 	 log("Server down.");
 	 if (logfile) fclose(logfile);
