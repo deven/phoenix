@@ -31,6 +31,8 @@ public:
    List(): count(0) { }
    ~List() { while (Dequeue()) ; }
    int Count() { return count; }
+   void Reset() { while (Dequeue()) ; }
+   int In(Pointer<Type> &ptr);
    int AddHead(Pointer<Type> &ptr);
    int AddTail(Pointer<Type> &ptr);
    Pointer<Type> RemHead();
@@ -42,6 +44,13 @@ public:
    int Shift(Pointer<Type> &ptr) { return AddHead(ptr); }
    Pointer<Type> Unshift() { return RemHead(); }
 };
+
+template <class Type>
+int List<Type>::In(Pointer<Type> &ptr) {
+   ListIter<Type> i(this);
+   while (i++) if (ptr == i) return true;
+   return false;
+}
 
 template <class Type>
 int List<Type>::AddHead(Pointer<Type> &ptr) {
