@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.11 1994/01/20 00:23:49 deven Exp $
+// $Id: session.cc,v 1.12 1994/01/20 02:37:28 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.12  1994/01/20 02:37:28  deven
+// Added Session::inits list for sessions being initialized.
+//
 // Revision 1.11  1994/01/20 00:23:49  deven
 // Changed Session::sessions into a List<Session>, modified accesses.
 //
