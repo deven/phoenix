@@ -37,6 +37,7 @@ FDTable::FDTable() {		// constructor
    FD_ZERO(&writefds);
    used = 0;
    size = getdtablesize();
+   if (size > FD_SETSIZE) size = FD_SETSIZE;
    array = new Pointer<FD> [size];
    for (int i = 0; i < size; i++) array[i] = 0;
 }
