@@ -510,6 +510,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
    if (target->telnet.Null()) {
       log("%s (%s), detached, has been nuked by %s (%s).",target->name_only,
 	  target->user->user,name_only,user->user);
+      target->Close();
    } else {
       telnet = target->telnet;
       target->telnet = NULL;
