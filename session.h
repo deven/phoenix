@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.3 2003/02/18 05:08:57 deven Exp $
+// $Id: session.h,v 1.4 2003/02/21 03:17:39 deven Exp $
 //
 // Session class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.h,v $
+// Revision 1.4  2003/02/21 03:17:39  deven
+// Renamed Blurb() to EnteredBlurb(), added CheckNameAvailability().
+//
 // Revision 1.3  2003/02/18 05:08:57  deven
 // Updated copyright dates.
 //
