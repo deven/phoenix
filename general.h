@@ -91,6 +91,7 @@ class OutputBuffer;
 class Sendlist;
 class Session;
 class Telnet;
+class Timestamp;
 class User;
 
 // General parameters.
@@ -107,7 +108,7 @@ extern FILE *logfile;		// log file ***
 
 extern int Shutdown;		// shutdown flag
 
-extern time_t ServerStartTime;	// time server started
+extern Timestamp ServerStartTime; // time server started
 extern int ServerStartUptime;	// system uptime when server started
 
 // Internal character constants.
@@ -167,7 +168,6 @@ typedef void (Session::*InputFuncPtr)(char *line);
 typedef void (Telnet::*CallbackFuncPtr)();
 
 void OpenLog();
-char *date(time_t clock,int start,int len);
 void log(char *format,...);
 void warn(char *format,...);
 void error(char *format,...);

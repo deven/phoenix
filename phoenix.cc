@@ -97,31 +97,16 @@ int Shutdown;			// shutdown flag ***
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
 
-time_t ServerStartTime;		// time server started
+Timestamp ServerStartTime;	// time server started
 int ServerStartUptime;		// system uptime when server started
-
-// class Date? ***
-char *date(time_t clock,int start,int len) // get part of date string ***
-{
-   static char buf[32];
-
-   if (!clock) time(&clock);	// get time if not passed
-   strcpy(buf,ctime(&clock));	// make a copy of date string
-   buf[24] = 0;			// ditch the newline
-   if (len > 0 && len < 24) {
-      buf[start + len] = 0;	// truncate further if requested
-   }
-   return buf + start;		// return (sub)string
-}
 
 void OpenLog()			// class Log? ***
 {
    char buf[32];
-   time_t t;
+   Timestamp t;
    struct tm *tm;
 
-   time(&t);
-   if (!(tm = localtime(&t))) error("OpenLog(): localtime");
+   if (!(tm = t.localtime())) error("OpenLog(): localtime");
    sprintf(buf,"logs/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
 	   tm->tm_mday,tm->tm_hour,tm->tm_min);
    if (!(logfile = fopen(buf,"a"))) error("OpenLog(): %s",buf);
@@ -136,29 +121,31 @@ void log(char *format,...)	// log message ***
 {
    char buf[BufSize];
    va_list ap;
+   Timestamp t;
 
    if (!logfile) return;
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
-   (void) fprintf(logfile,"[%s] %s\n",date(0,4,15),buf);
+   (void) fprintf(logfile,"[%s] %s\n",t.date(4,15),buf);
 }
 
 void warn(char *format,...)	// print error message ***
 {
    char buf[BufSize];
    va_list ap;
+   Timestamp t;
 
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    if (errno >= 0 && errno < sys_nerr) {
       (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
-      (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,
+      (void) fprintf(logfile,"[%s] %s: %s\n",t.date(4,15),buf,
 		     sys_errlist[errno]);
    } else {
       (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
-      (void) fprintf(logfile,"[%s] %s: Error %d\n",date(0,4,15),buf,errno);
+      (void) fprintf(logfile,"[%s] %s: Error %d\n",t.date(4,15),buf,errno);
    }
 }
 
@@ -166,17 +153,18 @@ void error(char *format,...)	// print error message and exit ***
 {
    char buf[BufSize];
    va_list ap;
+   Timestamp t;
 
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    if (errno >= 0 && errno < sys_nerr) {
       (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
-      (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,
+      (void) fprintf(logfile,"[%s] %s: %s\n",t.date(4,15),buf,
 		     sys_errlist[errno]);
    } else {
       (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
-      (void) fprintf(logfile,"[%s] %s: Error %d\n",date(0,4,15),buf,errno);
+      (void) fprintf(logfile,"[%s] %s: Error %d\n",t.date(4,15),buf,errno);
    }
    if (logfile) fclose(logfile);
    exit(1);
@@ -186,12 +174,13 @@ void crash(char *format,...)	// print error message and crash ***
 {
    char buf[BufSize];
    va_list ap;
+   Timestamp t;
 
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    (void) fprintf(stderr,"\n%s\n",buf);
-   (void) fprintf(logfile,"[%s] %s\n",date(0,4,15),buf);
+   (void) fprintf(logfile,"[%s] %s\n",t.date(4,15),buf);
    if (logfile) fclose(logfile);
    abort();
    exit(-1);
@@ -301,7 +290,7 @@ int main(int argc,char **argv)	// main program
    int port;			// TCP port to use
 
    // Mark server start with current time and system uptime if available.
-   time(&ServerStartTime);
+   ServerStartTime = 0;
    ServerStartUptime = SystemUptime();
 
    Shutdown = 0;

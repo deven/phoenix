@@ -43,7 +43,6 @@ Discussion::Discussion(Session *s,char *Name,char *Title,boolean ispublic) {
    creator = s->name_obj;
    members.Add(s);
    moderators.Add(s->name_obj);
-   message_time = time(&creation_time);
 }
 
 Name *Discussion::Allowed(Session *session) {
