@@ -255,6 +255,7 @@ void output(struct telnet *telnet,char *buf) /* queue output data */
       if (first || *buf) {
 	 block = alloc_block();
 	 telnet->output.tail->next = block;
+	 telnet->output.tail = block;
       }
    }
 }
@@ -300,6 +301,7 @@ void put_command(struct telnet *telnet, int cmd)
       telnet->command.head = telnet->command.tail = block = alloc_block();
    } else if (block->free >= block->end) { /* or if last block full */
       telnet->command.tail->next = block = alloc_block();
+      telnet->command.tail = block;
    }
    *((unsigned char *) block->free++) = cmd;
 }
