@@ -207,11 +207,12 @@ void Session::Password(char *line)
       telnet->output("Login incorrect.\n");
       telnet->Prompt("login: "); // Prompt for login.
       SetInputFunction(Login);	 // Set login input routine.
-   } else {
-      telnet->print("\nYour default name is \"%s\".\n\n",name_only);
-      telnet->Prompt("Enter name: "); // Prompt for name.
-      SetInputFunction(Name);	      // Set name input routine.
+      return;
    }
+
+   telnet->print("\nYour default name is \"%s\".\n\n",name_only);
+   telnet->Prompt("Enter name: "); // Prompt for name.
+   SetInputFunction(Name);	   // Set name input routine.
 }
 
 void Session::Name(char *line)
