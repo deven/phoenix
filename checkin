@@ -13,6 +13,8 @@
 
 for x in $*; do
    if [ -f $x ]; then
+      rcs -u $x >/dev/null 2>&1
+      chmod 644 $x
       if rcsdiff $x >/dev/null 2>&1; then
          echo "$x is current."
       else
