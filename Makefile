@@ -68,6 +68,4 @@ FORCE:
 done: checkin all
 
 install: done
-	chmod 700 $(EXEC)
-	scp -v $(EXEC) asylum.sf.ca.us:bin/$(EXEC).new
-	ssh -v asylum.sf.ca.us "mv bin/$(EXEC) bin/$(EXEC).old; mv bin/$(EXEC).new bin/$(EXEC); ls -ltr bin/$(EXEC).old bin/$(EXEC)"
+	install -c $(EXEC) /usr/local/bin/$(EXEC)
