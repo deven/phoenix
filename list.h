@@ -36,6 +36,9 @@
 // Initial revision
 //
 
+template <class Type> class List;
+template <class Type> class ListIter;
+
 template <class Type>
 class ListNode: public Object {
 friend class List<Type>;
