@@ -586,8 +586,6 @@ void request_shutdown(int port) /* connect to port, request server shutdown */
 int listen_on(int port, int backlog) /* listen on a port, return socket fd */
 {
    struct sockaddr_in saddr;	/* socket address */
-   struct hostent *hp;		/* host entry */
-   char hostname[32];		/* hostname */
    int fd;			/* listening socket fd */
    int tries = 0;		/* number of tries so far */
    int option = 1;		/* option to set for setsockopt() */
@@ -595,10 +593,7 @@ int listen_on(int port, int backlog) /* listen on a port, return socket fd */
    /* Initialize listening socket. */
    memset(&saddr,0,sizeof(saddr));
    saddr.sin_family = AF_INET;
-   gethostname(hostname,sizeof(hostname));
-   hp = gethostbyname(hostname);
-   if (!hp) error("gethostbyname");
-   memcpy(&saddr.sin_addr,hp->h_addr,hp->h_length);
+   saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port = htons((u_short) port);
    if ((fd = socket(AF_INET,SOCK_STREAM,0)) == -1) error("socket");
    if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option))) {
