@@ -303,6 +303,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 
       // Print message header.
       if (flag) {
+	 session->reply_sendlist = from->name;
 	 if (session->SignalPrivate) output(Bell);
 	 if (to->sessions.In(session)) {
 	    output("\n >> Private message from ");
@@ -723,6 +724,18 @@ inline void Telnet::yank()	// Yank from kill-ring.
    } else {
       output(Bell);
    }
+}
+
+inline void Telnet::do_semicolon() // Do semicolon processing.
+{
+   if (AtStart() && session) InsertString(session->last_explicit);
+   insert_char(Semicolon);
+}
+
+inline void Telnet::do_colon()	// Do colon processing.
+{
+   if (AtStart() && session) InsertString(session->reply_sendlist);
+   insert_char(Colon);
 }
 
 inline void Telnet::accept_input() // Accept input line.
@@ -1243,6 +1256,12 @@ void Telnet::InputReady()	// telnet stream can input data
 	       case Delete:
 		  erase_char();
 		  break;
+	       case Semicolon:
+		  do_semicolon();
+		  break;
+	       case Colon:
+		  do_colon();
+		  break;
 	       case Return:
 		  state = Return;
 		  // fall through...
@@ -1255,7 +1274,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       case CSI:
 		  state = CSI;
 		  break;
-	       default:		// Add : and ; rules! ***
+	       default:
 		  insert_char(n);
 		  break;
 	       }

@@ -123,6 +123,7 @@ public:
    static int Count() { return count; }
    void Closed();
    void Prompt(char *p);
+   boolean AtStart() { return boolean(point == data); }
    boolean AtEnd() { return boolean(point == free); }
    int Start() { return prompt.length(); }
    int StartLine() { return Start() / width; }
@@ -168,6 +169,8 @@ public:
    void previous_line();	// Jump to previous line.
    void next_line();		// Jump to next line.
    void yank();			// Yank from kill-ring.
+   void do_semicolon();		// Do semicolon processing.
+   void do_colon();		// Do colon processing.
    void accept_input();		// Accept input line.
    void insert_char(int ch);	// Insert character at point.
    void forward_char();		// Move point forward one character.
