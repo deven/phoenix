@@ -33,7 +33,6 @@
 //
 
 // General parameters.
-const int InputSize = 256;	// default size of input line buffer
 const int DefaultPort = PORT;	// TCP port to run on
 
 // Internal character constants.
