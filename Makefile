@@ -15,6 +15,10 @@
 # CFLAGS = -DUSE_SIGIGNORE
 # LDFLAGS = -bsd
 
+# Sun:
+CFLAGS = -g -I. -DNEED_STRERROR -DHOME='"/gradhome/ugrad/deven/src/conf"'
+LDFLAGS =
+
 CC = gcc
 EXEC = conf
 HDRS = conf.h

@@ -27,6 +27,20 @@ fd_set writefds;		// write fdset for select() ***
 // have to use non-blocking code instead? ***
 FILE *logfile;			// log file ***
 
+#ifdef NEED_STRERROR
+extern "C" char *strerror(int err)
+{
+   static char msg[32];
+
+   if (err >= 0 && err < sys_nerr) {
+      return sys_errlist[err];
+   } else {
+      sprintf(msg,"Error %d",err);
+      return msg;
+   }
+}
+#endif
+
 // class Date? ***
 char *date(time_t clock,int start,int len) // get part of date string ***
 {
