@@ -390,7 +390,7 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 void Telnet::Prompt(char *p) {	// Print and set new prompt.
    session->EnqueueOutput();
    prompt_len = strlen(p);
-   if (prompt) delete prompt;
+   if (prompt) delete [] prompt;
    prompt = new char[prompt_len + 1];
    strcpy(prompt,p);
    if (!undrawn) output(prompt);
@@ -429,7 +429,7 @@ void Telnet::Closed()		// Connection is closed.
    session = NULL;
 
    // Free input line buffer.
-   if (data) delete data;
+   if (data) delete [] data;
    data = NULL;
 
    if (fd == -1) return;	// Skip the rest if there's no connection.
@@ -584,7 +584,7 @@ inline void Telnet::accept_input() // Accept input line.
    point = free = data;		// Wipe input line. (data intact)
    mark = NULL;			// Wipe mark.
    if (prompt) {		// Wipe prompt, if any.
-      delete prompt;
+      delete [] prompt;
       prompt = NULL;
    }
    prompt_len = 0;		// Wipe prompt length.
@@ -592,7 +592,7 @@ inline void Telnet::accept_input() // Accept input line.
    session->Input(data);	// Call state-specific input line processor.
 
    if ((end - data) > InputSize) { // Drop buffer back to normal size.
-      delete data;
+      delete [] data;
       point = free = data = new char[InputSize];
       end = data + InputSize;
       mark = NULL;
@@ -718,7 +718,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	    if (mark) mark = tmp + (mark - data);
 	    free = tmp + n;
 	    end = free + InputSize;
-	    delete data;
+	    delete [] data;
 	    data = tmp;
 	 }
 	 n = *((unsigned char *) from++);
