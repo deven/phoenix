@@ -1,5 +1,46 @@
 $Id: ChangeLog,v 1.7 2003/02/24 06:58:12 deven Exp $
 
+2003-09-18  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.11 released.
+
+ * ChangeLog, NEWS, RELEASES: Updated release information.
+ * configure.ac: Updated version number.
+
+2003-09-16  Deven T. Corzine  <deven@ties.org>
+
+ * gangplank.cc: Modified to double-fork and close I/O during server startup.
+ * system.h: Include <sys/wait.h> or define macros instead.
+ * configure.ac: Added <sys/wait.h> check.
+
+ * session.h, session.cc, user.h, user.cc: Added support for multiple reserved
+   names per account.
+ * session.h, session.cc: Added PrintReservedNames().
+ * string.cc, string2.h: Added trim().
+ * list.h: Added Last().
+
+2003-08-01  Deven T. Corzine  <deven@ties.org>
+
+ * discussion.cc: Fixed Join() to check if the user is already a member, added
+   privileged session check to Appoint().
+
+2003-04-05  Deven T. Corzine  <deven@ties.org>
+
+ * telnet.cc: Added session checks, avoided saving empty input lines in input
+   history and added application-mode cursor support.
+
+ * session.cc: Fixed backslash-related bugs for backslashes at the end of an
+   input line.
+
+2003-03-05  Deven T. Corzine  <deven@ties.org>
+
+ * telnet.cc: Fixed crashing bug involving login timeout.
+
+2003-02-24  Deven T. Corzine  <deven@ties.org>
+
+ * gangplank.cc: Modified warn(), error() and crash() to check if logfile is
+   open to fix a crashing bug.
+
 2003-02-24  Deven T. Corzine  <deven@ties.org>
 
  * Version 1.0.0.beta.10 released.

@@ -12,6 +12,12 @@ Stable Releases
 Development/Test Releases
 -------------------------
 
+ * Version 1.0.0.beta.11 (September 18, 2003)
+
+   This release adds support for multiple reserved names, application-mode
+   cursor sequences and a privileged /appoint override.  It also fixes several
+   bugs, including some crashing bugs, and detaches more cleanly at startup.
+
  * Version 1.0.0.beta.10 (February 24, 2003)
 
    This release now uses configured directories, and most required functions
