@@ -485,6 +485,8 @@ void Session::ProcessInput(char *line)
 	 DoDetach();
       } else if (!strncasecmp(line,"/who",4)) {
 	 DoWho();
+      } else if (!strncasecmp(line,"/why",4)) {
+	 DoWhy();
       } else if (!strncasecmp(line,"/idle",3)) {
 	 line++;
 	 while (*line && isalpha(*line)) line++;
@@ -495,8 +497,6 @@ void Session::ProcessInput(char *line)
 	 DoSignal(line + 7);
       } else if (!strncasecmp(line,"/send",5)) {
 	 DoSend(line + 5);
-      } else if (!strncasecmp(line,"/why",4)) {
-	 DoWhy();
       } else if (!strncasecmp(line,"/blurb",3)) { // /blurb command.
 	 while (*line && !isspace(*line)) line++;
 	 DoBlurb(line);
@@ -897,6 +897,100 @@ void Session::DoWho()		// Do /who command.
    }
 }
 
+void Session::DoWhy()		// Do /why command.
+{
+   int idle,days,hours,minutes,now = time(NULL);
+   int i,extend = 0;
+   char buf[32];
+
+   if (user->priv < 50) {
+      output("Why not?\n");
+      return;
+   }
+
+   // Check if anyone is signed on at all.
+   if (!sessions.Count()) {
+      output("Nobody is signed on.\n");
+      return;
+   }
+
+   // Scan users for long idle times.
+   ListIter<Session> session(sessions);
+   while (session++) {
+      days = (now - session->message_time) / 86400;
+      if (!days) continue;
+      sprintf(buf,"%d",days);
+      i = strlen(buf);
+      if (!session->telnet) i++;
+      if (i > extend) extend = i;
+   }
+   sprintf(buf,"%%%ddd",extend);
+
+   // Output /who header.
+   output("\n Name                              On Since");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  Idle  Away  User      FD\n ----                              "
+	  "--------");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  ----  ----  ----      --\n");
+
+   while (session++) {
+      if (session->telnet) {
+	 output(Space);
+      } else {
+	 output(Tilde);
+      }
+      print("%-32s  ",session->name);
+      if ((now - session->login_time) < 86400) {
+	 output(date(session->login_time,11,8));
+      } else {
+	 output(Space);
+	 output(date(session->login_time,4,6));
+	 output(Space);
+      }
+      idle = (now - session->message_time) / 60;
+      if (idle) {
+	 hours = idle / 60;
+	 minutes = idle - hours * 60;
+	 days = hours / 24;
+	 hours -= days * 24;
+	 if (days) {
+	    print(buf,days);
+	    print("%02d:%02d  ",hours,minutes);
+	 } else if (hours) {
+	    for (i = 0; i < extend; i++) output(Space);
+	    print(" %2d:%02d  ",hours,minutes);
+	 } else {
+	    for (i = 0; i < extend; i++) output(Space);
+	    print("    %2d  ",minutes);
+	 }
+      } else {
+	 for (i = 0; i < extend; i++) output(Space);
+	 output("        ");
+      }
+      switch(session->away) {
+      case Here:
+	 output("Here  ");
+	 break;
+      case Away:
+	 output("Away  ");
+	 break;
+      case Busy:
+	 output("Busy  ");
+	 break;
+      case Gone:
+	 output("Gone  ");
+	 break;
+      }
+      print("%-8s  ",(char *) session->user->user);
+      if (session->telnet) {
+	 print("%2d\n",session->telnet->fd);
+      } else {
+	 output("--\n");
+      }
+   }
+}
+
 void Session::DoIdle(char *args) // Do /idle command.
 {
    int idle,days,hours,minutes;
@@ -1025,11 +1119,6 @@ void Session::DoSend(char *p)	// Do /send command.
       default_sendlist[SendlistLen - 1] = 0;
       print("Your default sendlist is now set to \"%s\".\n",default_sendlist);
    }
-}
-
-void Session::DoWhy()		// Do /why command.
-{
-   output("Why not?\n");
 }
 
 // Do /blurb command (or blurb set on entry), return number of bytes truncated.
