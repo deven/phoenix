@@ -332,6 +332,11 @@ void Session::DoHelp()		// Do /help command.
 	  "\n\n");
 }
 
+void Session::DoReset()		// Do <space><return> idle time reset.
+{
+   if (ResetIdle(1)) telnet->output("Your idle time has been reset.\n");
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
