@@ -553,7 +553,7 @@ void Telnet::ResetLoginTimeout() // Reset login timeout.
 void Telnet::LoginSequenceFinished() // Login sequence is finished.
 {
    CloseOnEOF = false;
-   events.Dequeue(LoginTimeout);
+   if (LoginTimeout) events.Dequeue(LoginTimeout);
    LoginTimeout = 0;
 }
 
