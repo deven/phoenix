@@ -35,6 +35,7 @@ public:
 };
 
 class Text: public Output {
+private:
    char *text;
 public:
    Text(char *buf): Output(TextOutput,TextClass),text(buf) { }
@@ -43,7 +44,7 @@ public:
 };
 
 class Message: public Output {
-public:
+private:
    Pointer<Name> from;
    // Pointer<Sendlist> to;
    char *text;
@@ -58,6 +59,7 @@ public:
 };
 
 class EntryNotify: public Output {
+private:
    Pointer<Name> name;
 public:
    EntryNotify(Pointer<Name> who,time_t when = 0):
@@ -66,6 +68,7 @@ public:
 };
 
 class ExitNotify: public Output {
+private:
    Pointer<Name> name;
 public:
    ExitNotify(Pointer<Name> who,time_t when = 0):
