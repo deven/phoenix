@@ -1114,9 +1114,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    default:
 	       // Don't know this option, refuse it.
-	       if (state == TelnetDo) {
-		  command(TelnetIAC,TelnetWont,n);
-	       }
+	       if (state == TelnetDo) command(TelnetIAC,TelnetWont,n);
 	       break;
 	    }
 	    state = 0;
@@ -1124,6 +1122,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	 case Return:
 	    // Throw away next character.
 	    state = 0;
+	    if (n && n != '\n') from--;
 	    break;
 	 case Escape:
 	    switch (n) {
