@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: session.h,v 1.2 2003/02/17 08:06:13 deven Exp $
 //
 // Session class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.h,v $
+// Revision 1.2  2003/02/17 08:06:13  deven
+// Added MaxLoginAttempts and removed "Login incorrect" for invalid logins.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

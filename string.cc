@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.7 2003/02/17 06:35:51 deven Exp $
+// $Id: string.cc,v 1.8 2003/02/18 03:28:54 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.8  2003/02/18 03:28:54  deven
+// Moved variable declarations outside of switch statement for portability.
+//
 // Revision 1.7  2003/02/17 06:35:51  deven
 // Added String::vsprintf() and String::sprintf() functions.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: timestamp.cc,v 1.2 2002/07/28 05:46:09 deven Exp $
+// $Id: timestamp.cc,v 1.3 2003/02/17 07:24:01 deven Exp $
 //
 // Timestamp class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: timestamp.cc,v $
+// Revision 1.3  2003/02/17 07:24:01  deven
+// Added MaxFormattedLength constant, modified to use strncpy() for safety.
+//
 // Revision 1.2  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: timestamp.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: timestamp.h,v 1.2 2003/02/17 07:24:01 deven Exp $
 //
 // Timestamp class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: timestamp.h,v $
+// Revision 1.2  2003/02/17 07:24:01  deven
+// Added MaxFormattedLength constant, modified to use strncpy() for safety.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
