@@ -131,6 +131,21 @@ void error(char *format,...)	// print error message and exit ***
    exit(1);
 }
 
+void crash(char *format,...)	// print error message and crash ***
+{
+   char buf[BufSize];
+   va_list ap;
+
+   va_start(ap,format);
+   (void) vsprintf(buf,format,ap);
+   va_end(ap);
+   (void) fprintf(stderr,"\n%s\n",buf);
+   (void) fprintf(logfile,"[%s] %s\n",date(0,4,15),buf);
+   if (logfile) fclose(logfile);
+   abort();
+   exit(-1);
+}
+
 char *message_start(char *line,char *sendlist,int len,boolean &explicit)
 {
    char *p;
