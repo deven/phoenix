@@ -37,15 +37,13 @@
 bin_PROGRAMS = makepw restart gangplank
 makepw_SOURCES = makepw.c
 restart_SOURCES = restart.c
-gangplank_SOURCES = hash.cc string.cc most.cc gangplank.h system.h boolean.h \
-	object.h general.h constants.h functions.h string2.h list.h set.h \
-	hash.h timestamp.h line.h block.h outbuf.h name.h output.h outstr.h \
-	event.h eventqueue.h sendlist.h session.h discussion.h user.h \
-	fdtable.h fd.h listen.h telnet.h pointer.h globals.h
-EXTRA_DIST = discussion.cc event.cc eventqueue.cc fdtable.cc gangplank.cc \
-	listen.cc most.cc output.cc outstr.cc sendlist.cc session.cc \
-	telnet.cc timestamp.cc user.cc CREDITS HISTORY KLUDGES LICENSE.QPL \
-	OVERVIEW PORTING RELEASES TOUR bootstrap passwd
-
-dist-hook:
-	chmod -R u+w $(distdir)
+gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
+	gangplank.cc hash.cc listen.cc output.cc outstr.cc sendlist.cc \
+	session.cc string.cc telnet.cc timestamp.cc user.cc gangplank.h \
+	system.h boolean.h object.h general.h constants.h functions.h \
+	string2.h list.h set.h hash.h timestamp.h line.h block.h outbuf.h \
+	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
+	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
+	globals.h
+EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING RELEASES \
+	TOUR bootstrap passwd
