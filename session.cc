@@ -25,7 +25,7 @@
 List<Session> Session::inits;
 List<Session> Session::sessions;
 List<Discussion> Session::discussions;
-Assoc Session::defaults;
+Hash Session::defaults;
 
 void Session::init_defaults()
 {
