@@ -29,6 +29,12 @@ public:
    ~String() { delete [] str; }
    String &operator =(const String &s);
    String &operator =(const char *s);
+   String &append(const String &s);
+   String &append(const char *s);
+   String &append(char c);
+   String &prepend(const String &s);
+   String &prepend(const char *s);
+   String &prepend(char c);
    int operator ==(const String &s) {
       return len == s.len && !strncmp(str,s.str,len);
    }

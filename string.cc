@@ -78,3 +78,122 @@ String &String::operator =(const char *s)
    str[len] = 0;
    return *this;
 }
+
+String &String::append(const String &s)
+{
+   if (s.len) {
+      if (s.len <= extra) {
+	 extra -= s.len;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + s.len + extra + 1];
+	 strncpy(str,tmp,len);
+	 delete [] tmp;
+      }
+      strncpy(str + len,s.str,s.len);
+      len += s.len;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::append(const char *s)
+{
+   if (s && *s) {
+      int n = strlen(s);
+      if (n <= extra) {
+	 extra -= n;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + n + extra + 1];
+	 strncpy(str,tmp,len);
+	 delete [] tmp;
+      }
+      strncpy(str + len,s,n);
+      len += n;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::append(char c)
+{
+   if (extra) {
+      extra--;
+   } else {
+      char *tmp = str;
+      extra = Extra;
+      str = new char[len + extra + 2];
+      strncpy(str,tmp,len);
+      delete [] tmp;
+   }
+   str[len++] = c;
+   str[len] = 0;
+   return *this;
+}
+
+String &String::prepend(const String &s)
+{
+   if (s.len) {
+      if (s.len <= extra) {
+	 extra -= s.len;
+	 char *p = str + len - 1;
+	 char *q = p + s.len;
+	 while (p >= str) *q-- = *p--;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + s.len + extra + 1];
+	 strncpy(str + s.len,tmp,len);
+	 delete [] tmp;
+      }
+      strncpy(str,s.str,s.len);
+      len += s.len;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::prepend(const char *s)
+{
+   if (s && *s) {
+      int n = strlen(s);
+      if (n <= extra) {
+	 extra -= n;
+	 char *p = str + len - 1;
+	 char *q = p + n;
+	 while (p >= str) *q-- = *p--;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + n + extra + 1];
+	 strncpy(str + n,tmp,len);
+	 delete [] tmp;
+      }
+      strncpy(str,s,n);
+      len += n;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::prepend(char c)
+{
+   if (extra) {
+      extra--;
+      char *p = str + len - 1;
+      char *q = p + 1;
+      while (p >= str) *q-- = *p--;
+   } else {
+      char *tmp = str;
+      extra = Extra;
+      str = new char[len + extra + 2];
+      strncpy(str,tmp,len);
+      delete [] tmp;
+   }
+   *str = c;
+   str[++len] = 0;
+   return *this;
+}
