@@ -864,7 +864,8 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
 		  kill_line();
 		  break;
 	       case ControlL:
-		  OutputWithRedraw("");
+		  UndrawInput();
+		  RedrawInput();
 		  break;
 	       case ControlN:
 		  next_line();
