@@ -3,10 +3,24 @@ $Id: RELEASES,v 1.1 2001/11/30 23:53:32 deven Exp $
 Stable Releases
 ---------------
 
- * No Gangplank release has been designated "stable" yet.
+ * No Gangplank release has been designated "stable" yet.  This is to
+   ensure no dumb mistakes (as with version 1.0.0.beta.1) ever occur in
+   a release declared "stable" -- every "stable" release will be identical
+   to a development release, with only the version number changed.
 
 
 Development/Test Releases
 -------------------------
 
- * November 30, 2001: Version 1.0.0.beta.1
+ * December 2, 2001: Version 1.0.0.beta.2
+
+   This release simply renames Hash::Hash() to Hash::HashFunction() to
+   fix the compilation error in the version 1.0.0.beta.1 release.
+
+ * November 30, 2001: Version 1.0.0.beta.1 [BROKEN]
+
+   This was a "brown paper bag" release.  Forgot to test the release, and
+   as it happens, this release doesn't compile.  A class was renamed from
+   "Assoc" to "Hash" before the initial release (to avoid confusion), and
+   the old Assoc::Hash() method (the hash function) became Hash::Hash(),
+   which should be the name of a constructor, of course...
