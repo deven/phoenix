@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 char *Timestamp::date(int start = 0, int len = 0) // Get part of date string.
 {

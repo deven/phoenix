@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
    name = Name;
