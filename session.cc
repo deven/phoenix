@@ -17,6 +17,7 @@ Session::Session(Telnet *t)
    user_next = 0;		// No next session for user yet.
    name_only[0] = 0;		// No name yet.
    name[0] = 0;			// No name yet.
+   blurb[0] = 0;		// No blurb yet.
 
    strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
    last_sendlist[0] = 0;		// No previous sendlist yet.
@@ -49,7 +50,7 @@ Session::~Session()
    // Notify and log exit if session found.
    if (found) {
       notify("*** %s has left conf! [%s] ***\n",name,date(0,11,5));
-      log("Exit: %s (%s) on fd %d.",name,user->user,telnet->fd);
+      log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    }
 
    delete user;

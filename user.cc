@@ -16,4 +16,5 @@ User::User(Session *s) {
    strcpy(user,"[nobody]");	// Who is this?
    password[0] = 0;		// No password.
    reserved_name[0] = 0;	// No name.
+   default_blurb[0] = 0;	// No default blurb.
 }
