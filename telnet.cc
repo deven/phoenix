@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.9 1994/01/19 22:30:01 deven Exp $
+// $Id: telnet.cc,v 1.10 1994/01/20 05:35:20 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.10  1994/01/20 05:35:20  deven
+// Added count and support code, modified Session::Detach() calls.
+//
 // Revision 1.9  1994/01/19 22:30:01  deven
 // Changed Pointer parameter to a reference parameter, cleared close-on-exec
 // flag, called OutputBuffer destructors on connection Closed(), removed fd

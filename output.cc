@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.3 1994/01/19 22:17:45 deven Exp $
+// $Id: output.cc,v 1.4 1994/01/20 05:33:20 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.4  1994/01/20 05:33:20  deven
+// Added transfer notification.
+//
 // Revision 1.3  1994/01/19 22:17:45  deven
 // Changed Pointer parameters to reference parameters.
 //
