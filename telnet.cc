@@ -844,10 +844,10 @@ void Telnet::accept_input()	// Accept input line.
 
       // Check for "on" or "off" value for echo.
       char *value = getword(tmp);
-      if (match(value,"on")) {
+      if (value && match(value,"on")) {
 	 Echo = (TelnetWillWont | TelnetDoDont);
 	 output("Remote echoing is now enabled.\n");
-      } else if (match(value,"off")) {
+      } else if (value && match(value,"off")) {
 	 Echo = 0;
 	 output("Remote echoing is now disabled.\n");
       } else {
