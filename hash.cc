@@ -31,7 +31,7 @@
 #include "hash.h"
 #include "pointer.h"
 
-int Hash::Hash(char *key)
+int Hash::HashFunction(char *key)
 {
    unsigned long hash = 0;
    unsigned char *ptr = (unsigned char *) key;
@@ -49,7 +49,7 @@ int Hash::Hash(char *key)
 void Hash::Store(char *key, char *value)
 {
    HashEntry *entry = new HashEntry(key, value);
-   int hash = Hash(key);
+   int hash = HashFunction(key);
    entry->next = bucket[hash];
    bucket[hash] = entry;
    count++;
@@ -65,7 +65,7 @@ void Hash::Store(char *key, char *value)
 
 void Hash::Delete(char *key)
 {
-   int hash = Hash(key);
+   int hash = HashFunction(key);
    Pointer<HashEntry> entry(bucket[hash]);
    if (entry->key == key) {
       bucket[hash] = entry->next;
@@ -84,7 +84,7 @@ void Hash::Delete(char *key)
 
 boolean Hash::Known(char *key)
 {
-   int hash = Hash(key);
+   int hash = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
@@ -96,7 +96,7 @@ boolean Hash::Known(char *key)
 
 String Hash::Fetch(char *key)
 {
-   int hash = Hash(key);
+   int hash = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
@@ -108,7 +108,7 @@ String Hash::Fetch(char *key)
 
 HashEntry &Hash::operator [](char *key)
 {
-   int hash = Hash(key);
+   int hash = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
