@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.33 1995/04/05 22:20:07 deven Exp $
+// $Id: session.cc,v 1.34 1995/05/05 04:45:28 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.34  1995/05/05 04:45:28  deven
+// Added /howmany command.
+//
 // Revision 1.33  1995/04/05 22:20:07  deven
 // Modified to quit all discussions when a user signs off.
 //
