@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.17 1994/04/21 17:54:47 deven Exp $
+// $Id: telnet.cc,v 1.18 1994/05/10 06:39:07 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.18  1994/05/10 06:39:07  deven
+// Fixed to not send Go-Aheads endlessly.
+//
 // Revision 1.17  1994/04/21 17:54:47  deven
 // Fixed InsertString() function.
 //
