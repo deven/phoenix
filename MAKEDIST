@@ -1,20 +1,16 @@
 * CHECK TIMESTAMPS!
 
-* Check copyright dates, update if necessary.
+* Change version in configure.ac.
 
-* Update NEWS and RELEASES files.
+* Make sure all files are checked into CVS.  (Use "cvs update" to verify.)
 
-* Change version in configure.ac, run "./bootstrap".
+* Run "rcs2log -h ties.org -i 1" to auto-generate draft ChangeLog entries.
 
-* Build and test the programs!
+* Run "./update_copyrights", checkin to CVS if necessary.
 
-* Make sure all files are checked into RCS/CVS.
+* Edit the ChangeLog, NEWS and RELEASES files and checkin to CVS.
 
-* Run "rcs2log -h ties.org -i 1" and edit the ChangeLog.
-
-* Check the new ChangeLog into RCS/CVS.
-
-* Run "./configure; make distcheck; make distclean".
+* Run "./bootstrap; ./configure; make distcheck; make distclean".
 
 * Create patch from previous release with "diff -urN".
 
@@ -25,5 +21,7 @@
 * Place online on FTP server.
 
 * Upgrade gangplank demo server.
+
+* Add new version number to Bugzilla.
 
 * Announce release on Freshmeat and gangplank homepage.
