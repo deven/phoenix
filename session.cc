@@ -83,7 +83,6 @@ Session::Session(Pointer<Telnet> &t)
    reply_sendlist[0] = 0;	// No reply sendlist yet.
    strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
    message_time = time(&login_time);	// Reset timestamps.
-   user = new User(this);	// Create a new User for this Session. ***
    inits.AddTail(this);		// Add session to initializing list.
 }
 
@@ -108,7 +107,8 @@ void Session::Close(boolean drain = true) // Close session.
       t->Close(drain);
    }
 
-   user = NULL;			// Disassociate from user.
+   if (user) user->RemoveSession(this);	// Disassociate from user.
+   user = NULL;
 }
 
 void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
@@ -116,8 +116,8 @@ void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet = t;
    telnet->session = this;
-   log("Transfer: %s (%s) from fd %d to fd %d.",name_only,user->user,old->fd,
-       t->fd);
+   log("Transfer: %s (%s) from fd %d to fd %d.",name_only,(char *) user->user,
+       old->fd,t->fd);
    old->output("*** This session has been transferred to a new connection. ***"
 	       "\n");
    old->Close();
@@ -131,7 +131,7 @@ void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
    telnet = t;
    telnet->session = this;
-   log("Attach: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+   log("Attach: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
@@ -143,11 +143,11 @@ void Session::Detach(Telnet *t,boolean intentional) // Detach session from t.
    if (SignedOn && telnet) {
       if (telnet == t) {
 	 if (intentional) {
-	    log("Detach: %s (%s) on fd %d. (intentional)",name_only,user->user,
-		t->fd);
+	    log("Detach: %s (%s) on fd %d. (intentional)",name_only,(char *)
+		user->user,t->fd);
 	 } else {
-	    log("Detach: %s (%s) on fd %d. (accidental)",name_only,user->user,
-		t->fd);
+	    log("Detach: %s (%s) on fd %d. (accidental)",name_only,(char *)
+		user->user,t->fd);
 	 }
 	 EnqueueOthers(new DetachNotify(name_obj,intentional));
 	 telnet = NULL;
@@ -258,62 +258,46 @@ void Session::Login(char *line)
    if (!strcasecmp(line,"/bye")) {
       DoBye();
       return;
-//   } else if (!strcasecmp(line,"/who")) {
-//      DoWho();
-//      telnet->Prompt("login: ");
-//      return;
-//   } else if (!strcasecmp(line,"/idle")) {
-//      DoIdle();
-//      telnet->Prompt("login: ");
-//      return;
-   } else if (!strcasecmp(line,"guest")) {
-      strcpy(user->user,line);
-      name[0] = 0;
-      user->priv = 0;
-      telnet->output(Newline);
-      telnet->Prompt("Enter name: "); // Prompt for name.
-      SetInputFunction(Name);	      // Set name input routine.
-      return;
-   } else {
-      int found = 0;
-      char buf[256],*username,*password,*name,*priv,*p;
-      FILE *pw = fopen("passwd","r");
-      if (pw) {
-	 while (fgets(buf,256,pw)) {
-	    if (buf[0] == '#') continue;
-	    p = username = buf;
-	    password = name = priv = 0;
-	    while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
-	    while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
-	    while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
-	    if (!priv) continue;
-	    if (!strcasecmp(line,username)) {
-	       found = 1;
-	       strcpy(user->user,username);
-	       strcpy(user->password,password);
-	       strcpy(name_only,name);
-	       user->priv = atoi(priv ? priv : "0");
-	       break;
-	    }
-	 }
-      }
-      fclose(pw);
-      if (!found) {
-	 if (*line) telnet->output("Login incorrect.\n");
+// } else if (!strcasecmp(line,"/who")) {
+//    DoWho();
+//    telnet->Prompt("login: ");
+//    return;
+// } else if (!strcasecmp(line,"/idle")) {
+//    DoIdle();
+//    telnet->Prompt("login: ");
+//    return;
+   }
+   if (*line) {
+      User::UpdateAll();	// Update user accounts.
+      user = User::GetUser(line);
+      if (!user) {
+	 telnet->output("Login incorrect.\n");
 	 telnet->Prompt("login: ");
 	 return;
       }
+   } else {
+      telnet->Prompt("login: ");
+      return;
    }
-
-   // Warn if echo can't be turned off.
-   if (!telnet->Echo) {
-      telnet->output("\n\aSorry, password WILL echo.\n\n");
-   } else if (telnet->Echo != TelnetEnabled) {
-      telnet->output("\nWarning: password may echo.\n\n");
+   if (user->password) {
+      // Warn if echo can't be turned off.
+      if (!telnet->Echo) {
+	 telnet->output("\n\aSorry, password WILL echo.\n\n");
+      } else if (telnet->Echo != TelnetEnabled) {
+	 telnet->output("\nWarning: password may echo.\n\n");
+      }
+      telnet->Prompt("Password: "); // Prompt for password.
+      telnet->DoEcho = false;	    // Disable echoing.
+      SetInputFunction(Password);   // Set password input routine.
+   } else {
+      // No password required. (guest account)
+      if (user->reserved) {
+	 telnet->print("\nYour default name is \"%s\".\n\n",(char *)
+		       user->reserved);
+      }
+      telnet->Prompt("Enter name: "); // Prompt for name.
+      SetInputFunction(Name);	   // Set name input routine.
    }
-   telnet->Prompt("Password: "); // Prompt for password.
-   telnet->DoEcho = false;	 // Disable echoing.
-   SetInputFunction(Password);	 // Set password input routine.
 }
 
 void Session::Password(char *line)
@@ -321,15 +305,21 @@ void Session::Password(char *line)
    telnet->output(Newline);	// Send newline.
    telnet->DoEcho = true;	// Enable echoing.
 
+   User::UpdateAll();		// Update user accounts.
+
    // Check against encrypted password.
    if (strcmp(crypt(line,user->password),user->password)) {
       telnet->output("Login incorrect.\n");
       telnet->Prompt("login: "); // Prompt for login.
       SetInputFunction(Login);	 // Set login input routine.
+      user = NULL;
       return;
    }
 
-   telnet->print("\nYour default name is \"%s\".\n\n",name_only);
+   if (user->reserved) {
+      telnet->print("\nYour default name is \"%s\".\n\n",(char *)
+		    user->reserved);
+   }
    telnet->Prompt("Enter name: "); // Prompt for name.
    SetInputFunction(Name);	   // Set name input routine.
 }
@@ -337,8 +327,10 @@ void Session::Password(char *line)
 void Session::Name(char *line)
 {
    if (!*line) {		// blank line
-      if (!strcasecmp(user->user,"guest")) {
-	 telnet->output(Newline);
+      if (user->reserved) {
+	 strncpy(name_only,(char *) user->reserved,NameLen);
+	 name_only[NameLen - 1] = 0;
+      } else {
 	 telnet->Prompt("Enter name: ");
 	 return;
       }
@@ -346,10 +338,16 @@ void Session::Name(char *line)
       strncpy(name_only,line,NameLen); // Save user's name.
       name_only[NameLen - 1] = 0;
    }
+   User::UpdateAll();		// Update user accounts.
+   if (user->CheckReserved(name_only)) {
+      telnet->output("That name is reserved.  Choose another.\n");
+      telnet->Prompt("Enter name: ");
+      return;
+   }
    ListIter<Session> session(sessions);
    while (session++) {
       if (!strcasecmp(session->name_only,name_only)) {
-	 if (!strcmp(session->user->user,user->user)) {
+	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("You are attached elsewhere under that name.\n");
 	       telnet->Prompt("Transfer active session? [no] ");
@@ -381,10 +379,16 @@ void Session::TransferSession(char *line)
       SetInputFunction(Name);
       return;
    }
+   User::UpdateAll();		// Update user accounts.
+   if (user->CheckReserved(name_only)) {
+      telnet->output("That name is now reserved.  Choose another.\n");
+      telnet->Prompt("Enter name: ");
+      return;
+   }
    ListIter<Session> session(sessions);
    while (session++) {
       if (!strcasecmp(session->name_only,name_only)) {
-	 if (!strcmp(session->user->user,user->user)) {
+	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("Transferring active session...\n");
 	       session->Transfer(telnet);
@@ -409,7 +413,8 @@ void Session::TransferSession(char *line)
 
 void Session::Blurb(char *line)
 {
-   if (!line || !*line) line = user->default_blurb;
+   if (!line || !*line) line = user->blurb;
+   if (!line) line = "";
    int over = DoBlurb(line,true);
    if (over) {
       telnet->print("The combination of your name and blurb is %d "
@@ -419,8 +424,8 @@ void Session::Blurb(char *line)
    }
 
    SignedOn = true;		// Session is signed on.
-   sessions.AddTail(this);	// Add session to signed-on list.
-   // Link new session into user list. ***
+   sessions.AddHead(this);	// Add session to signed-on list.
+   user->AddSession(this);	// Add session to user list.
    ListIter<Session> session(inits);
    while (session++) if (session == this) session.Remove();
 
@@ -510,9 +515,9 @@ void Session::ProcessInput(char *line)
 void Session::NotifyEntry()	// Notify other users of entry and log.
 {
    if (telnet) {
-      log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+      log("Enter: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
    } else {
-      log("Enter: %s (%s), detached.",name_only,user->user);
+      log("Enter: %s (%s), detached.",name_only,(char *) user->user);
    }
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
 }
@@ -520,9 +525,9 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
 void Session::NotifyExit()	// Notify other users of exit and log.
 {
    if (telnet) {
-      log("Exit: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
+      log("Exit: %s (%s) on fd %d.",name_only,(char *) user->user,telnet->fd);
    } else {
-      log("Exit: %s (%s), detached.",name_only,user->user);
+      log("Exit: %s (%s), detached.",name_only,(char *) user->user);
    }
    EnqueueOthers(new ExitNotify(name_obj));
 }
@@ -555,7 +560,8 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 void Session::DoRestart(char *args) // Do !restart command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate restart requested by %s (%s).",name_only,user->user);
+      log("Immediate restart requested by %s (%s).",name_only,(char *)
+	  user->user);
       log("Final shutdown warning.");
       announce("*** %s has restarted conf! ***\n",name);
       announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
@@ -565,12 +571,12 @@ void Session::DoRestart(char *args) // Do !restart command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",name_only,user->user);
+	 log("Restart cancelled by %s (%s).",name_only,(char *) user->user);
 	 announce("*** %s has cancelled the server restart. ***\n",name);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",name_only,user->user);
+	 log("Shutdown cancelled by %s (%s).",name_only,(char *) user->user);
 	 announce("*** %s has cancelled the server shutdown. ***\n",name);
       } else {
 	 output("The server was not about to restart.\n");
@@ -578,8 +584,8 @@ void Session::DoRestart(char *args) // Do !restart command.
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Restart requested by %s (%s) in %d seconds.",name_only,user->user,
-	  seconds);
+      log("Restart requested by %s (%s) in %d seconds.",name_only,(char *)
+	  user->user,seconds);
       announce("*** %s has restarted conf! ***\n",name);
       announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
 	       seconds);
@@ -591,7 +597,8 @@ void Session::DoRestart(char *args) // Do !restart command.
 void Session::DoDown(char *args) // Do !down command.
 {
    if (!strcmp(args,"!")) {
-      log("Immediate shutdown requested by %s (%s).",name_only,user->user);
+      log("Immediate shutdown requested by %s (%s).",name_only,(char *)
+	  user->user);
       log("Final shutdown warning.");
       announce("*** %s has shut down conf! ***\n",name);
       announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
@@ -601,12 +608,12 @@ void Session::DoDown(char *args) // Do !down command.
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Restart cancelled by %s (%s).",name_only,user->user);
+	 log("Restart cancelled by %s (%s).",name_only,(char *) user->user);
 	 announce("*** %s has cancelled the server restart. ***\n",name);
       } else if (Shutdown) {
 	 Shutdown = 0;
 	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",name_only,user->user);
+	 log("Shutdown cancelled by %s (%s).",name_only,(char *) user->user);
 	 announce("*** %s has cancelled the server shutdown. ***\n",name);
       } else {
 	 output("The server was not about to shut down.\n");
@@ -614,8 +621,8 @@ void Session::DoDown(char *args) // Do !down command.
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Shutdown requested by %s (%s) in %d seconds.",name_only,user->user,
-	  seconds);
+      log("Shutdown requested by %s (%s) in %d seconds.",name_only,(char *)
+	  user->user,seconds);
       announce("*** %s has shut down conf! ***\n",name);
       announce("\a\a>>> This server will shutdown in %d seconds... <<<\n\a\a",
 	       seconds);
@@ -644,14 +651,16 @@ void Session::DoNuke(char *args) // Do !nuke command.
 	 Pointer<Telnet> telnet(session->telnet);
 	 session->telnet = NULL;
 	 log("%s (%s) on fd %d has been nuked by %s (%s).",session->name_only,
-	     session->user->user,telnet->fd,name_only,user->user);
+	     (char *) session->user->user,telnet->fd,name_only,(char *)
+	     user->user);
 	 telnet->UndrawInput();
 	 telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
 	 telnet->RedrawInput();
 	 telnet->Close(drain);
       } else {
 	 log("%s (%s), detached, has been nuked by %s (%s).",
-	     session->name_only,session->user->user,name_only,user->user);
+	     session->name_only,(char *) session->user->user,name_only,
+	     (char *) user->user);
 	 session->Close();
       }
    } else {
