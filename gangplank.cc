@@ -260,22 +260,29 @@ int main(int argc, char **argv)	// main program
       switch (pid = fork()) {
       case 0:
 	 setsid();
-	 log("Server started, running on port %d. (pid %d)", port, getpid());
+         log("Started Gangplank server, version %s.", VERSION);
+         log("Listening for connections on TCP port %d. (pid %d)", port,
+	     getpid());
 	 break;
       case -1:
 	 error("main(): fork()");
 	 break;
       default:
-	 fprintf(stderr, "Server started, running on port %d. (pid %d)\n",
-		 port, pid);
+	 fprintf(stderr, "Started Gangplank server, version %s.\n", VERSION);
+	 fprintf(stderr, "Listening for connections on TCP port %d. (pid %d)\n",
+		 port, getpid());
 	 exit(0);
 	 break;
       }
    } else {
-      log("Server started, running on port %d. (pid %d)", port, getpid());
+      log("Started Gangplank server, version %s.", VERSION);
+      log("Listening for connections on TCP port %d. (pid %d)", port,
+	  getpid());
    }
 #else
-   log("Server started, running on port %d. (pid %d)", port, getpid());
+   log("Started Gangplank server, version %s. (pid %d)"), VERSION,
+       getpid());
+   log("Listening for connections on TCP port %d.", port);
 #endif
 
 #ifdef USE_SIGIGNORE
