@@ -266,19 +266,19 @@ int main(int argc,char **argv)	// main program
    if (pw = getpwuid(geteuid())) {
       home = pw->pw_dir;
       home.append("/lib");	// Make sure ~/lib exists.
-      if (chdir(-home) && errno == ENOENT && mkdir(-home,0755)) {
-	 error("mkdir(\"%s\",0755)",-home);
+      if (chdir(~home) && errno == ENOENT && mkdir(~home,0755)) {
+	 error("mkdir(\"%s\",0755)",~home);
       }
-      if (chdir(-home)) error("chdir(\"%s\")",-home);
+      if (chdir(~home)) error("chdir(\"%s\")",~home);
       home.append("/phoenix");	// Make sure ~/lib/phoenix exists.
-      if (chdir(-home) && errno == ENOENT && mkdir(-home,0700)) {
-	 error("mkdir(\"%s\",0700)",-home);
+      if (chdir(~home) && errno == ENOENT && mkdir(~home,0700)) {
+	 error("mkdir(\"%s\",0700)",~home);
       }
-      if (chdir(-home)) error("chdir(\"%s\")",-home);
-      if (chmod(-home,0700)) error("chmod(\"%s\",0700)",-home);
+      if (chdir(~home)) error("chdir(\"%s\")",~home);
+      if (chmod(~home,0700)) error("chmod(\"%s\",0700)",~home);
       home.append("/logs");	// Make sure "logs" directory exists.
-      mkdir(-home,0700);	// ignore errors
-      chmod(-home,0700);	// ignore errors
+      mkdir(~home,0700);	// ignore errors
+      chmod(~home,0700);	// ignore errors
    } else {
       error("getpwuid(%d)",geteuid());
    }
