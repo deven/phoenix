@@ -30,6 +30,11 @@ void Telnet::announce(char *format,...) // formatted write to all connections
    fdtable.announce(buf);
 }
 
+void Telnet::nuke(Telnet *telnet,int fd,int drain)
+{
+   fdtable.nuke(telnet,fd,drain);
+}
+
 void Telnet::Drain() {		// Drain connection, then close.
    blocked = 0;
    closing = 1;

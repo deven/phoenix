@@ -471,7 +471,7 @@ void process_input(Telnet *telnet,char *line)
 	 int i;
 
 	 if (sscanf(line+6,"%d",&i) == 1) {
-	    FD::fdtable.nuke(telnet,i < 0 ? -i : i,i >= 0);
+	    Telnet::nuke(telnet,i < 0 ? -i : i,i >= 0);
 	 } else {
 	    telnet->print("Bad fd #: \"%s\"\n",line+6);
 	 }
