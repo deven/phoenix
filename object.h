@@ -40,6 +40,7 @@ public:
    inline Pointer(Pointer &p);
    inline Pointer(Type *p);
    inline Pointer(Type &p);
+   inline Pointer(int n);
    ~Pointer();
    inline Pointer &operator =(Pointer &p);
    inline Pointer &operator =(Type *p);
