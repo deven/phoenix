@@ -90,10 +90,12 @@ void open_log()
 
    time(&t);
    if (!(tm = localtime(&t))) error("localtime");
-   sprintf(buf,"log/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
+   sprintf(buf,"logs/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
 	   tm->tm_mday,tm->tm_hour,tm->tm_min);
    if (!(logfile = fopen(buf,"a"))) error(buf);
    setlinebuf(logfile);
+   unlink("log");
+   link(buf,"log");
    fprintf(stderr,"Logging on \"%s\".\n",buf);
 }
 
