@@ -14,6 +14,10 @@
 # Initial revision
 #
 
+# ESIX:
+# CFLAGS = -DUSE_SIGIGNORE
+# LDFLAGS = -bsd
+
 CC = gcc
 EXEC = conf
 HDRS = conf.h
