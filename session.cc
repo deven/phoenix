@@ -547,6 +547,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/why",4)) DoWhy(line);
       else if (match(line,"/date",3)) DoDate(line);
       else if (match(line,"/signal",3)) DoSignal(line);
+      else if (match(line,"/setidle",8)) SetIdle(line);
       else output("Unknown /command.  Type /help for help.\n");
    } else if (!strcmp(line," ")) {
       DoReset();
@@ -1055,14 +1056,6 @@ void Session::DoIdle(char *args) // Do /idle command.
    int idle,days,hours,minutes;
    int now = time(NULL);
    int col = 0;
-
-   while (*args && isspace(*args)) args++;
-
-   // Allow user to set an arbitrary idle time (up to signed-on time).
-   if (*args == '=') {
-      SetIdle(++args);
-      return;
-   }
 
    // Check if anyone is signed on at all.
    if (!sessions.Count()) {
