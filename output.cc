@@ -317,3 +317,9 @@ void UnappointNotify::output(Pointer<Telnet> &telnet)
 		 "%s. [%s] ***\n",(char *) name->name,(char *) name->blurb,
 		 (char *) discussion->name,date(time,11,5));
 }
+
+void RenameNotify::output(Pointer<Telnet> &telnet)
+{
+   telnet->print("*** %s has renamed to %s. [%s] ***\n",(char *) oldname,
+		 (char *) newname,date(time,11,5));
+}
