@@ -20,9 +20,6 @@ void warn(char *format,...);
 void error(char *format,...);
 void crash(char *format,...);
 void quit(int);
-void alrm(int);
-void RestartServer();
-void ShutdownServer();
 int SystemUptime();		// Get system uptime, if available.
 void trim(char *&input);
 char *getword(char *&input,char separator = 0);

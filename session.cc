@@ -961,77 +961,81 @@ void Session::SetBlurb(char *newblurb) // Set a new blurb.
 
 void Session::DoRestart(char *args) // Do !restart command.
 {
-   if (!strcmp(args,"!")) {
-      log("Immediate restart requested by %s (%s).",~name,~user->user);
-      log("Final shutdown warning.");
-      announce("*** %s%s has restarted Phoenix! ***\n",~name,~blurb);
-      announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
-      alarm(5);
-      Shutdown = 4;
-   } else if (match(args,"cancel")) {
-      if (Shutdown > 2) {
-	 Shutdown = 0;
-	 alarm(0);
-	 log("Restart cancelled by %s (%s).",~name,~user->user);
-	 announce("*** %s%s has cancelled the server restart. ***\n",~name,
-		  ~blurb);
-      } else if (Shutdown) {
-	 Shutdown = 0;
-	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",~name,~user->user);
-	 announce("*** %s%s has cancelled the server shutdown. ***\n",~name,
-		  ~blurb);
-      } else {
-	 output("The server was not about to restart.\n");
-      }
-   } else {
-      int seconds;
-      if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Restart requested by %s (%s) in %d seconds.",~name,~user->user,
-	  seconds);
-      announce("*** %s%s has restarted Phoenix! ***\n",~name,~blurb);
-      announce("\a\a>>> This server will restart in %d seconds... <<<\n\a\a",
-	       seconds);
-      alarm(seconds);
-      Shutdown = 3;
-   }
-}
+   String who(name);
+   who.append(" (");
+   who.append(user->user);
+   who.append(")");
 
-void Session::DoDown(char *args) // Do !down command.
-{
    if (!strcmp(args,"!")) {
-      log("Immediate shutdown requested by %s (%s).",~name,~user->user);
-      log("Final shutdown warning.");
-      announce("*** %s%s has shut down Phoenix! ***\n",~name,~blurb);
-      announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
-      alarm(5);
-      Shutdown = 2;
+      if (Shutdown) events.Dequeue(Shutdown);
+      announce("*** %s%s has restarted Phoenix! ***\n",~name,~blurb);
+      events.Enqueue(Shutdown = new RestartEvent(who));
    } else if (match(args,"cancel")) {
-      if (Shutdown > 2) {
+      if (Shutdown) {
+	 switch (Shutdown->Type()) {
+	 case Shutdown_Event:
+	    log("Shutdown cancelled by %s (%s).",~name,~user->user);
+	    announce("*** %s%s has cancelled the server shutdown. ***\n",~name,
+		     ~blurb);
+	    break;
+	 case Restart_Event:
+	    log("Restart cancelled by %s (%s).",~name,~user->user);
+	    announce("*** %s%s has cancelled the server restart. ***\n",~name,
+		     ~blurb);
+	    break;
+	 default:
+	    break;		// Should never get here!
+	 }
+	 events.Dequeue(Shutdown);
 	 Shutdown = 0;
-	 alarm(0);
-	 log("Restart cancelled by %s (%s).",~name,~user->user);
-	 announce("*** %s%s has cancelled the server restart. ***\n",~name,
-		  ~blurb);
-      } else if (Shutdown) {
-	 Shutdown = 0;
-	 alarm(0);
-	 log("Shutdown cancelled by %s (%s).",~name,~user->user);
-	 announce("*** %s%s has cancelled the server shutdown. ***\n",~name,
-		  ~blurb);
       } else {
 	 output("The server was not about to shut down.\n");
       }
    } else {
       int seconds;
       if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
-      log("Shutdown requested by %s (%s) in %d seconds.",~name,~user->user,
-	  seconds);
+      if (Shutdown) events.Dequeue(Shutdown);
+      announce("*** %s%s has restarted Phoenix! ***\n",~name,~blurb);
+      events.Enqueue(Shutdown = new RestartEvent(who,seconds));
+   }
+}
+
+void Session::DoDown(char *args) // Do !down command.
+{
+   String who(name);
+   who.append(" (");
+   who.append(user->user);
+   who.append(")");
+
+   if (!strcmp(args,"!")) {
+      if (Shutdown) events.Dequeue(Shutdown);
       announce("*** %s%s has shut down Phoenix! ***\n",~name,~blurb);
-      announce("\a\a>>> This server will shutdown in %d seconds... <<<\n\a\a",
-	       seconds);
-      alarm(seconds);
-      Shutdown = 1;
+      events.Enqueue(Shutdown = new ShutdownEvent(who));
+   } else if (match(args,"cancel")) {
+      if (Shutdown) {
+	 switch (Shutdown->Type()) {
+	 case Shutdown_Event:
+	    log("Shutdown cancelled by %s (%s).",~name,~user->user);
+	    announce("*** %s%s has cancelled the server shutdown. ***\n",~name,
+		     ~blurb);
+	 case Restart_Event:
+	    log("Restart cancelled by %s (%s).",~name,~user->user);
+	    announce("*** %s%s has cancelled the server restart. ***\n",~name,
+		     ~blurb);
+	 default:
+	    break;		// Should never get here!
+	 }
+	 events.Dequeue(Shutdown);
+	 Shutdown = 0;
+      } else {
+	 output("The server was not about to shut down.\n");
+      }
+   } else {
+      int seconds;
+      if (sscanf(args,"%d",&seconds) != 1) seconds = 30;
+      if (Shutdown) events.Dequeue(Shutdown);
+      announce("*** %s%s has shut down Phoenix! ***\n",~name,~blurb);
+      events.Enqueue(Shutdown = new ShutdownEvent(who,seconds));
    }
 }
 
@@ -2703,12 +2707,25 @@ void Session::SendMessage(Sendlist *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
+   ShutdownEvent *shutdown;
+   RestartEvent *restart;
+
    if (Telnet::Count() || inits.Count() || sessions.Count()) return;
-   if (Shutdown > 2) {
-      log("All connections closed, restarting.");
-      RestartServer();
-   } else if (Shutdown) {
-      log("All connections closed, shutting down.");
-      ShutdownServer();
+
+   if (Shutdown) {
+      switch (Shutdown->Type()) {
+      case Shutdown_Event:
+	 shutdown = (ShutdownEvent *) (Event *) Shutdown;
+	 log("All connections closed, shutting down.");
+	 shutdown->ShutdownServer();
+	 break;
+      case Restart_Event:
+	 restart = (RestartEvent *) (Event *) Shutdown;
+	 log("All connections closed, restarting.");
+	 restart->RestartServer();
+	 break;
+      default:
+	 break;			// Should never get here!
+      }
    }
 }
