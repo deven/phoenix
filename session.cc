@@ -486,7 +486,9 @@ void Session::ProcessInput(char *line)
       } else if (!strncasecmp(line,"/who",4)) {
 	 DoWho();
       } else if (!strncasecmp(line,"/idle",3)) {
-	 DoIdle();
+	 line++;
+	 while (*line && isalpha(*line)) line++;
+	 DoIdle(line);
       } else if (!strcasecmp(line,"/date")) {
 	 DoDate();
       } else if (!strncasecmp(line,"/signal",7)) {
@@ -565,6 +567,89 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    }
    message_time = now;
    return idle;
+}
+
+void Session::SetIdle(char *args) // Set idle time.
+{
+   int num,now,idle,days,hours,minutes;
+
+   days = hours = minutes = 0;
+   now = time(NULL);
+   idle = (now - message_time) / 60;
+
+   while (*args && isspace(*args)) args++;
+   if (!strncmp(args,"max",3)) {
+      message_time = login_time;
+   } else if (!isdigit(*args)) {
+      DoUnidle();
+      return;
+   } else {
+      for (num = 0; *args && isdigit(*args); args++) {
+	 num *= 10;
+	 num += *args - '0';
+      }
+      while (*args && isspace(*args)) args++;
+      if (*args == 'd' || *args == 'D') {
+	 days = num;
+	 args++;
+	 while (*args && isspace(*args)) args++;
+	 for (num = 0; *args && isdigit(*args); args++) {
+	    num *= 10;
+	    num += *args - '0';
+	 }
+	 while (*args && isspace(*args)) args++;
+      }
+      if (*args == ':') {
+	 hours = num;
+	 args++;
+	 while (*args && isspace(*args)) args++;
+	 for (num = 0; *args && isdigit(*args); args++) {
+	    num *= 10;
+	    num += *args - '0';
+	 }
+	 while (*args && isspace(*args)) args++;
+      }
+      minutes = num;
+      message_time = now - ((days * 24 + hours) * 60 + minutes) * 60;
+   }
+
+   if (idle) {
+      hours = idle / 60;
+      minutes = idle - hours * 60;
+      days = hours / 24;
+      hours -= days * 24;
+      output("[You were idle for");
+      if (!minutes) output(" exactly");
+      if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
+		      minutes ? "," : hours || minutes ? " and" : "");
+      if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
+		       " and" : "");
+      if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+      output(".]\n");
+   }
+
+   if (message_time < login_time || message_time > now) {
+      output("Sorry, you can't be idle longer than you've been signed on.\n");
+      message_time = login_time;
+   }
+
+   idle = (now - message_time) / 60;
+   if (idle) {
+      hours = idle / 60;
+      minutes = idle - hours * 60;
+      days = hours / 24;
+      hours -= days * 24;
+      output("You are now idle for");
+      if (!minutes) output(" exactly");
+      if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
+		      minutes ? "," : hours || minutes ? " and" : "");
+      if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
+		       " and" : "");
+      if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+      output(".\n");
+   } else {
+      output("Your idle time has been reset.\n");
+   }
 }
 
 void Session::DoRestart(char *args) // Do !restart command.
@@ -801,11 +886,19 @@ void Session::DoWho()		// Do /who command.
    }
 }
 
-void Session::DoIdle()		// Do /idle command.
+void Session::DoIdle(char *args) // Do /idle command.
 {
    int idle,days,hours,minutes;
    int now = time(NULL);
    int col = 0;
+
+   while (*args && isspace(*args)) args++;
+
+   // Allow user to set an arbitrary idle time (up to signed-on time).
+   if (*args == '=') {
+      SetIdle(++args);
+      return;
+   }
 
    // Check if anyone is signed on at all.
    if (!sessions.Count()) {
