@@ -480,7 +480,7 @@ void Session::ProcessInput(char *line)
       } else if (!strncasecmp(line,"/clear",6)) {
 	 DoClear();
       } else if (!strncasecmp(line,"/unidle",7)) {
-	 DoReset();
+	 DoUnidle();
       } else if (!strncasecmp(line,"/detach",4)) {
 	 DoDetach();
       } else if (!strncasecmp(line,"/who",4)) {
@@ -1039,6 +1039,11 @@ void Session::DoHelp()		// Do /help command.
 void Session::DoReset()		// Do <space><return> idle time reset.
 {
    ResetIdle(1);
+}
+
+void Session::DoUnidle()	// Do /unidle idle time reset.
+{
+   if (!ResetIdle(1)) output("Your idle time has been reset.\n");
 }
 
 void Session::DoMessage(char *line) // Do message send.
