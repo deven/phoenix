@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for file in $*; do
+   pgp -asb $file -u 0xa610971d
+   chmod 644 $file $file.asc
+   mv $file.asc $file.sig
+done
+
+perl -e 'foreach (@ARGV) { $t = (stat $_)[9] + 1; utime $t, $t, "$_.sig"; }' $*
