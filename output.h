@@ -44,7 +44,7 @@ public:
    OutputObj(OutputType t, OutputClass c, time_t when = 0): Type(t), Class(c),
    time(when) { }
    virtual ~OutputObj() { }	// destructor
-   virtual void output(Telnet *telnet) = 0;
+   virtual void output(Telnet *telnet) { abort(); }
 };
 
 class Text: public OutputObj {

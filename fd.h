@@ -36,9 +36,9 @@ public:
    static void Select(struct timeval *timeout) {
       fdtable.Select(timeout);
    }
-   virtual void InputReady() = 0;
-   virtual void OutputReady() = 0;
-   virtual void Closed() = 0;
+   virtual void InputReady() { abort(); }
+   virtual void OutputReady() { abort(); }
+   virtual void Closed() { abort(); }
    virtual ~FD() { }
    void NonBlocking() {		// Place fd in non-blocking mode.
       int flags;
