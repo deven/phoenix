@@ -38,8 +38,9 @@ private:
    int extra;
 public:
    String() {
-      str = new char[1];
-      len = extra = 0;
+      str = new char[Extra + 1];
+      len = 0;
+      extra = Extra;
       str[len] = 0;
    }
    String(const String &s);
