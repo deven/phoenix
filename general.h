@@ -26,11 +26,6 @@
 // Initial revision
 //
 
-// For compatibility.
-#ifndef ECONNTIMEDOUT
-#define ECONNTIMEDOUT ETIMEDOUT
-#endif
-
 // Class declarations.
 class Block;
 class Discussion;
