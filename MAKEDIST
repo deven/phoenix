@@ -8,7 +8,7 @@
 
 * Run "./update_copyrights", checkin to CVS if necessary.
 
-* Edit the ChangeLog, NEWS and RELEASES files and checkin to CVS.
+* Edit the ChangeLog, NEWS, RELEASES and CREDITS files and checkin to CVS.
 
 * Run "./bootstrap; ./configure; make distcheck".
 
