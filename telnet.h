@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.4 1993/12/31 08:13:31 deven Exp $
+// $Id: telnet.h,v 1.5 1994/01/02 12:12:35 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.5  1994/01/02 12:12:35  deven
+// Updated copyright notice, modified to use smart pointers, removed nuke()
+// and announce(), made other minor modifications.
+//
 // Revision 1.4  1993/12/31 08:13:31  deven
 // Added support for telnet TIMING-MARK option.
 //

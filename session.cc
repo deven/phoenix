@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.4 1993/12/31 08:08:52 deven Exp $
+// $Id: session.cc,v 1.5 1994/01/02 12:09:23 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.5  1994/01/02 12:09:23  deven
+// Updated copyright notice, modified to use smart pointers, added Close(),
+// Attach(), Detach() and announce() functions, updated DoNuke(), gave exact
+// name matches priority over partial matches.
+//
 // Revision 1.4  1993/12/31 08:08:52  deven
 // Added /detach command and supporting modifications.  As yet, there is no
 // provision for re-attaching or even nuking a detached session!  Temporarily
