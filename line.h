@@ -27,7 +27,7 @@ public:
    Line(char *p): line(p) {	// constructor
       next = 0;
    }
-   void Append(Line *p) { // Add new line at end of list.
+   void Append(Line *p) {	// Add new line at end of list.
       if (next) {
 	 next->Append(p);
       } else {
