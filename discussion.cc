@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.4 1994/07/21 05:56:18 deven Exp $
+// $Id: discussion.cc,v 1.5 1995/04/05 22:11:14 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.5  1995/04/05 22:11:14  deven
+// Modified to quit discussions silently when signed off.
+//
 // Revision 1.4  1994/07/21 05:56:18  deven
 // Fixed /appoint and /unappoint notification messages.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.32 1995/02/28 16:31:41 deven Exp $
+// $Id: session.cc,v 1.33 1995/04/05 22:20:07 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.33  1995/04/05 22:20:07  deven
+// Modified to quit all discussions when a user signs off.
+//
 // Revision 1.32  1995/02/28 16:31:41  deven
 // Added privilege level to session, disabled detach for guests.
 //
