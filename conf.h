@@ -24,6 +24,7 @@
 #include "other.h"
 #include "object.h"
 #include "list.h"
+#include "set.h"
 #include "general.h"
 #include "line.h"
 #include "block.h"
