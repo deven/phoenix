@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: output.h,v 1.2 2002/09/10 04:11:57 deven Exp $
 //
 // Output and derived classes, interfaces.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: output.h,v $
+// Revision 1.2  2002/09/10 04:11:57  deven
+// Changed pure virtual function output() to call abort() instead.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

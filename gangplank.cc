@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.4 2002/07/28 05:49:03 deven Exp $
+// $Id: gangplank.cc,v 1.5 2002/09/10 04:22:21 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.5  2002/09/10 04:22:21  deven
+// Provided basic new/delete operators using malloc/free.
+//
 // Revision 1.4  2002/07/28 05:49:03  deven
 // Changed setlinebuf() call to setvbuf() equivalent.
 //

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.3 2002/07/10 03:57:27 deven Exp $
+# $Id: Makefile,v 1.4 2002/09/10 04:06:42 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,11 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile,v $
+# Revision 1.4  2002/09/10 04:06:42  deven
+# Added GCC options to disable RTTI and exceptions, neither of which is used.
+# Coupled with other changes to the code, this obviates the need for using the
+# "g++" driver to link with -lstdc++.  Also added Cygwin/Win32 support.
+#
 # Revision 1.3  2002/07/10 03:57:27  deven
 # Removed targets related to "checkin" script (not included in distribution).
 #

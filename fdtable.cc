@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.2 2001/12/12 05:46:27 deven Exp $
+// $Id: fdtable.cc,v 1.3 2002/09/10 04:18:08 deven Exp $
 //
 // FDTable class implementation.
 //
@@ -19,6 +19,12 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.3  2002/09/10 04:18:08  deven
+// Modified to take FD_SETSIZE into account.  This was the portability flaw
+// which kept Cygwin from working.  Also, changed select() call to pass only
+// the used number of file descriptor slots (which was already being tracked)
+// instead of the full size.  (This change is solely for efficiency purposes.)
+//
 // Revision 1.2  2001/12/12 05:46:27  deven
 // Modified to explicitly construct null-pointer return value.
 //
