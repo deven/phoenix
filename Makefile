@@ -60,3 +60,10 @@ restart: restart.o
 
 clean:
 	rm -f restart restart.o $(EXEC) $(OBJS) core *~
+
+checkin: FORCE
+	checkin checkin Makefile $(HDRS) $(SRCS) passwd
+
+FORCE:
+
+done: checkin all
