@@ -4,7 +4,7 @@
 //
 // Session class interface.
 //
-// Copyright 1992-2001 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-2003 by Deven T. Corzine.  All rights reserved.
 //
 // This file is part of the Gangplank conferencing system.
 //
