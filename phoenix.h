@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.h,v 1.11 1996/05/12 07:22:29 deven Exp $
+// $Id: phoenix.h,v 1.12 1996/05/13 18:20:28 deven Exp $
 //
 // Phoenix conferencing system server -- Primary header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.h,v $
+// Revision 1.12  1996/05/13 18:20:28  deven
+// Added new files split out from general.h: constants.h, functions.h and
+// globals.h.  Added event.h and eventqueue.h files.
+//
 // Revision 1.11  1996/05/12 07:22:29  deven
 // Added timestamp.h include file.
 //

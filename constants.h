@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: constants.h,v 1.1 1996/05/13 18:26:16 deven Exp $
 //
 // Phoenix conferencing system server -- Global constants header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: constants.h,v $
+// Revision 1.1  1996/05/13 18:26:16  deven
+// Initial revision
+//
 
 // General parameters.
 const int BlockSize = 1024;	// data size for block

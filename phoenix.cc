@@ -1,12 +1,20 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.20 1996/05/12 07:30:11 deven Exp $
+// $Id: phoenix.cc,v 1.21 1996/05/13 18:33:49 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.21  1996/05/13 18:33:49  deven
+// Added main server EventQueue object.  Modified type of Shutdown variable to
+// Pointer<Event> instead of int.  Removed alrm(), modified to ignore SIGALRM.
+// Moved shutdown code in alrm(), RestartServer() and ShutdownServer() to new
+// ShutdownEvent and RestartEvent class methods.  Modified quit() to enqueue a
+// ShutdownEvent.  Modified main server loop to execute ready events and pass
+// timeout for next event to Select() routine.
+//
 // Revision 1.20  1996/05/12 07:30:11  deven
 // Modified to use Timestamp class, moved date() to Timestamp::date().
 //

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.44 1996/05/12 07:33:58 deven Exp $
+// $Id: session.cc,v 1.45 1996/05/13 18:44:32 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.45  1996/05/13 18:44:32  deven
+// Modified shutdown/restart code to use new ShutdownEvent and RestartEvent
+// classes in event queue.
+//
 // Revision 1.44  1996/05/12 07:33:58  deven
 // Modified to use Timestamp class.  Modified for default ResetIdle() argument.
 //

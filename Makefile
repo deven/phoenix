@@ -1,12 +1,16 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.14 1996/05/12 07:51:57 deven Exp $
+# $Id: Makefile,v 1.15 1996/05/13 18:17:56 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.15  1996/05/13 18:17:56  deven
+# Added new files split out from general.h: constants.h, functions.h and
+# globals.h.  Added event.h, eventqueue.h, event.cc and eventqueue.cc files.
+#
 # Revision 1.14  1996/05/12 07:51:57  deven
 # Added install target to install target binary on asylum with ssh.
 #
