@@ -145,21 +145,7 @@ void Session::DoBye()		// Do /bye command.
    }
 }
 
-void Session::notify(char *format,...) // formatted write to all sessions
-{
-   char buf[BufSize];
-   Session *session;
-   va_list ap;
-
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
-   va_end(ap);
-   for (session = sessions; session; session = session->next) {
-      session->telnet->OutputWithRedraw(buf);
-   }
-}
-
-void Session::who_cmd(Telnet *telnet)
+void Session::DoWho()		// Do /who command.
 {
    Session *s;
    Telnet *t;
@@ -197,6 +183,20 @@ void Session::who_cmd(Telnet *telnet)
 		       date(t->session->login_time,11,8),
 		       t->session->user->user,t->fd);
       }
+   }
+}
+
+void Session::notify(char *format,...) // formatted write to all sessions
+{
+   char buf[BufSize];
+   Session *session;
+   va_list ap;
+
+   va_start(ap,format);
+   (void) vsprintf(buf,format,ap);
+   va_end(ap);
+   for (session = sessions; session; session = session->next) {
+      session->telnet->OutputWithRedraw(buf);
    }
 }
 
