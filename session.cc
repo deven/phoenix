@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.13 2003/02/21 03:22:26 deven Exp $
+// $Id: session.cc,v 1.14 2003/02/22 04:36:40 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.14  2003/02/22 04:36:40  deven
+// Modified to properly close initializing session after a session transfer.
+//
 // Revision 1.13  2003/02/21 03:22:26  deven
 // Modified to generate a compile-time error if crypt() is not available.
 // Renamed Blurb() to EnteredBlurb().  Fixed bug which caused both connections
