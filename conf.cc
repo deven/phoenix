@@ -255,8 +255,6 @@ void quit(int sig)		// received SIGQUIT or SIGTERM
 
 void alrm(int sig)		// received SIGALRM
 {
-   Telnet *telnet;
-
    // Ignore unless shutting down.
    if (Shutdown) {
       if (Shutdown == 1) {
@@ -275,7 +273,6 @@ void alrm(int sig)		// received SIGALRM
 
 int main(int argc,char **argv)	// main program
 {
-   Telnet *telnet;		// telnet struct pointer
    int pid;			// server process number
 
    Shutdown = 0;
