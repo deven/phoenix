@@ -40,7 +40,7 @@
 #include "object.h"
 #include "constants.h"
 #include "functions.h"
-#include "string.h"
+#include "string2.h"
 #include "list.h"
 #include "set.h"
 #include "hash.h"

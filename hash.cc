@@ -33,7 +33,7 @@
 #include "system.h"
 #include "boolean.h"
 #include "object.h"
-#include "string.h"
+#include "string2.h"
 #include "general.h"
 #include "hash.h"
 #include "pointer.h"
