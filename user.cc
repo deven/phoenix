@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.2 1994/01/02 12:15:53 deven Exp $
+// $Id: user.cc,v 1.3 1994/01/19 22:27:07 deven Exp $
 //
 // User class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.cc,v $
+// Revision 1.3  1994/01/19 22:27:07  deven
+// Changed Pointer parameter to a reference parameter.
+//
 // Revision 1.2  1994/01/02 12:15:53  deven
 // Updated copyright notice, modified to use smart pointers.
 //

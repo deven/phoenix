@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.1 1994/01/02 11:57:09 deven Exp $
+// $Id: object.h,v 1.2 1994/01/19 21:53:10 deven Exp $
 //
 // Object class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: object.h,v $
+// Revision 1.2  1994/01/19 21:53:10  deven
+// Updated and merged Object and Pointer classes.
+//
 // Revision 1.1  1994/01/02 11:57:09  deven
 // Initial revision
 //

@@ -1,12 +1,20 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.8 1994/01/09 05:22:48 deven Exp $
+// $Id: telnet.cc,v 1.9 1994/01/19 22:30:01 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.9  1994/01/19 22:30:01  deven
+// Changed Pointer parameter to a reference parameter, cleared close-on-exec
+// flag, called OutputBuffer destructors on connection Closed(), removed fd
+// parameter to InputReady() and OutputReady(), handle EAGAIN separately from
+// EWOULDBLOCK, do return instead of break after calling Closed(), removed
+// support for ShutdownCommand, check fd for validity before using, called
+// insert_char() for TelnetIAC instead of inserting into input buffer.
+//
 // Revision 1.8  1994/01/09 05:22:48  deven
 // Removed Null() construct for Pointers.
 //

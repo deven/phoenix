@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.5 1994/01/02 11:31:35 deven Exp $
+// $Id: fd.h,v 1.6 1994/01/19 22:10:51 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.6  1994/01/19 22:10:51  deven
+// Added CloseAll(), removed fd parameter to InputReady() and OutputReady(),
+// check fd before doing ReadSelect(), et al.
+//
 // Revision 1.5  1994/01/02 11:31:35  deven
 // Updated copyright notice, changed class FD to be derived from Object,
 // added virtual function Closed().

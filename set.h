@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: set.h,v 1.1 1994/01/19 21:54:14 deven Exp $
 //
 // Set class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: set.h,v $
+// Revision 1.1  1994/01/19 21:54:14  deven
+// Initial revision
+//
 
 template <class Type>
 class Set: public Object {

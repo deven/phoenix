@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.4 1994/01/09 05:20:14 deven Exp $
+// $Id: outstr.cc,v 1.5 1994/01/19 22:19:43 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.5  1994/01/19 22:19:43  deven
+// Changed Pointer parameters to reference parameters.
+//
 // Revision 1.4  1994/01/09 05:20:14  deven
 // Removed Null() construct for Pointers.
 //

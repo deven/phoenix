@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: other.h,v 1.6 1994/01/09 07:02:24 deven Exp $
+// $Id: other.h,v 1.7 1994/01/19 21:52:11 deven Exp $
 //
 // Conferencing system server -- Other (system) include files.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
+// Revision 1.7  1994/01/19 21:52:11  deven
+// Removed declaration for strerror().
+//
 // Revision 1.6  1994/01/09 07:02:24  deven
 // Changed setpgrp() to setsid().
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.h,v 1.4 1994/01/02 11:29:13 deven Exp $
+// $Id: conf.h,v 1.5 1994/01/19 21:51:19 deven Exp $
 //
 // Conferencing system server -- Primary header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.h,v $
+// Revision 1.5  1994/01/19 21:51:19  deven
+// Removed pointer.h and node.h, added set.h and sendlist.h.
+//
 // Revision 1.4  1994/01/02 11:29:13  deven
 // Updated copyright notice, added new header files.
 //

@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.9 1994/01/09 07:02:47 deven Exp $
+// $Id: conf.cc,v 1.10 1994/01/19 22:14:48 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.10  1994/01/19 22:14:48  deven
+// Removed strerror() definition, reworked into warn() and error() directly,
+// modified match_name() to be iterative instead of recursive, returning a
+// position instead of boolean, added support for server restart and for
+// running on a non-default port.
+//
 // Revision 1.9  1994/01/09 07:02:47  deven
 // Changed setpgrp() to setsid().
 //
