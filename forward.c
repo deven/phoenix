@@ -20,7 +20,6 @@
 #include <signal.h>
 
 #define HOST "phoenix.ties.org"
-#define PORT 6789
 #define BUFSIZE 1024
 
 int listen_on(int port)		/* listen on socket */

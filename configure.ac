@@ -6,6 +6,13 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gangplank.cc])
 AM_CONFIG_HEADER([config.h])
 
+# Argument handling.
+AC_ARG_ENABLE(port,
+   [  --enable-port=9999      TCP port number to listen on (TELNET default is 23)],
+   AC_DEFINE_UNQUOTED(PORT, $enableval, [Define TCP port number to listen on.  (TELNET protocol default is 23.)]),
+   AC_DEFINE(PORT, 9999, [Define TCP port number to listen on.  (TELNET protocol default is 23.)])
+)
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC

@@ -66,8 +66,6 @@
 #endif
 #endif
 
-#define PORT 9999
-
 int check_for_server(int port)	/* check for running server */
 {
    struct sockaddr_in saddr;	/* socket address */

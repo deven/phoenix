@@ -19,8 +19,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#define PORT 6789
-
 int listen_on(int port)		/* listen on socket */
 {
    struct sockaddr_in saddr;	/* socket address */
