@@ -59,6 +59,12 @@ Session::~Session()
    delete user;
 }
 
+void Session::Link()		// Link session into global list.
+{
+   next = sessions;
+   sessions = this;
+}
+
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 {
    int now,idle,days,hours,minutes;
