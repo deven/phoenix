@@ -1282,9 +1282,9 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
       return true;
    }
 
-   if (active = boolean(!*args)) lastcount = 1;
-   here = away = busy = gone = attached = detached = inactive = doidle =
-      unidle = privileged = guests = everyone = false;
+   if (everyone = boolean(!*args)) lastcount = 1;
+   here = away = busy = gone = attached = detached = active = inactive =
+      doidle = unidle = privileged = guests = false;
    while (*args) {
       mark = strchr(args, Comma);
       if (mark) *mark = 0;
@@ -2206,11 +2206,13 @@ state is special, and defined as follows:\n\
    \"here\", attached, idle < 1 hour; or\n\
    \"here\", detached, idle < 10 minutes; or\n\
    \"away\", attached, idle < 10 minutes.\n\
-The default if no arguments are given is to match \"active\" users.  \"all\"\n\
-is treated as \"active,attached\", while \"everyone\" matches all users.\n\
-\"unidle\" matches users with idle < 10 minutes.  Match strings and multiple\n\
-categorical keywords can be piled together as desired.  When only a single\n\
-person is printed by /who, long blurbs are printed in full.\n");
+The keyword \"all\" is treated as \"active,attached\", while \"everyone\"\n\
+matches all users.  \"unidle\" matches users with idle < 10 minutes.  The\n\
+default if no arguments are given is to match \"everyone\" for now.  (When\n\
+more people are using the system, the default will change back to \"active\".)\n\
+Match strings and multiple categorical keywords can be piled together as\n\
+desired.  When only a single person is printed by /who, long blurbs are\n\
+printed in full.\n");
    } else if (match(args, "/blurb", 3) || match(args, "blurb", 5)) {
       output("\
 The /blurb command allows you to set a descriptive \"blurb\".  It is usually\n\
