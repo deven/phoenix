@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: fdtable.h,v 1.1 1993/12/08 02:36:57 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: fdtable.h,v $
+// Revision 1.1  1993/12/08 02:36:57  deven
+// Initial revision
+//
 
 class FDTable {			// File Descriptor Table
 private:

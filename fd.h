@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: fd.h,v 1.1 1993/12/08 02:36:57 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: fd.h,v $
+// Revision 1.1  1993/12/08 02:36:57  deven
+// Initial revision
+//
 
 // Types of FD subclasses.
 enum FDType {UnknownFD,ListenFD,TelnetFD};
