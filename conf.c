@@ -1,5 +1,5 @@
 /*
- * $Id: conf.c,v 1.3 1993/03/18 19:06:42 deven Exp $
+ * $Id: conf.c,v 1.4 1993/03/23 08:32:37 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,10 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.c,v $
+ * Revision 1.4  1993/03/23 08:32:37  deven
+ * Fixed a nasty little bug in output buffering -- if a second block was
+ * added to the output chain, the tail pointer wasn't updated.  Oops.
+ *
  * Revision 1.3  1993/03/18 19:06:42  deven
  * Added call to getpeername() and logged calling host and port.
  *
