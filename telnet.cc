@@ -424,6 +424,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    end = data + InputSize;	// Save end of allocated block.
    point = free = data;		// Mark input line as empty.
    mark = NULL;			// No mark set initially.
+   history = History;		// Initialize history iterator.
+   Yank = KillRing;		// Initialize kill-ring iterator.
    reply_to = NULL;		// No last sender.
    undrawn = false;		// Input line not undrawn.
    state = 0;			// telnet input state = 0 (data)
@@ -560,6 +562,50 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
    }
 }
 
+void Telnet::InsertString(String &s) // Insert string at point.
+{
+   char *p = point;
+   int n,slen = s.length();
+
+   if (!s) return;
+   if (free + slen >= end) {
+      n = end - data;
+      char *tmp = new char[n + slen];
+      strncpy(tmp,data,point - data);
+      strncpy(tmp + (point - data),s,slen);
+      strncpy(tmp + (point - data) + slen,point,free - point);
+      if (mark) {
+	 if (mark < point) {
+	    mark = tmp + (mark - data);
+	 } else {
+	    mark = tmp + (mark - data) + slen;
+	 }
+      }
+      point = tmp + (point - data) + slen;
+      free = tmp + n + slen;
+      end = free + slen;
+      delete [] data;
+      data = tmp;
+   } else {
+      if (mark >= point) mark += slen;
+      for (char *p = free + slen; p > point; p--) *p = *(p - slen);
+      for (p = s; *p; p++) *point++ = *p;
+      free += slen;
+   }
+   echo(p,free - p);
+   if (!AtEnd()) {		// Move cursor back to point.
+      int lines = EndLine() - PointLine();
+      int columns = EndColumn() - PointColumn();
+      // ANSI! ***
+      if (lines) echo_print("\033[%dA",lines);
+      if (columns > 0) {
+	 echo_print("\033[%dD",columns);
+      } else if (columns < 0) {
+	 echo_print("\033[%dC",-columns);
+      }
+   }
+}
+
 inline void Telnet::beginning_of_line() // Jump to beginning of line.
 {
    int lines,columns;
@@ -598,7 +644,13 @@ inline void Telnet::kill_line()	// Kill from point to end of line.
 {
    if (!AtEnd()) {
       echo("\033[J"); // ANSI! ***
-      // kill ring! ****
+
+      // Remove a previous kill if at maximum.
+      if (KillRing.Count() >= KillRingMax) KillRing.RemHead();
+
+      // Add new kill.
+      KillRing.AddTail(new StringObj(data));
+
       free = point;		// Truncate input buffer.
       if (mark > point) mark = point;
    }
@@ -607,22 +659,42 @@ inline void Telnet::kill_line()	// Kill from point to end of line.
 inline void Telnet::erase_line() // Erase input line.
 {
    beginning_of_line();
-   kill_line();
+   if (End()) {
+      echo("\033[J");		// ANSI! ***
+      free = data;		// Truncate input buffer.
+   }
+   mark = NULL;
 }
 
 inline void Telnet::previous_line() // Go to previous input line.
 {
-   output(Bell);		// not implemented yet.
+   erase_line();
+   if (history--) {
+      InsertString(*((StringObj *) history));
+   } else {
+      output(Bell);
+   }
 }
 
 inline void Telnet::next_line()	// Go to next input line.
 {
-   output(Bell);		// not implemented yet.
+   erase_line();
+   if (history++) {
+      InsertString(*((StringObj *) history));
+   } else {
+      output(Bell);
+   }
 }
 
 inline void Telnet::yank()	// Yank from kill-ring.
 {
-   output(Bell);		// not implemented yet.
+   // Handle previous yanks.
+   Yank = KillRing;
+   if (Yank--) {
+      InsertString(*((StringObj *) Yank));
+   } else {
+      output(Bell);
+   }
 }
 
 inline void Telnet::accept_input() // Accept input line.
@@ -630,6 +702,16 @@ inline void Telnet::accept_input() // Accept input line.
    if (!session) return;
 
    *free = 0;			// Make input line null-terminated.
+
+   history = History;		// Reset history iterator.
+
+   if (DoEcho) {		// Don't add lines not echoed!
+      // Remove a history line if at maximum.
+      if (History.Count() >= HistoryMax) History.RemHead();
+
+      // Add new history line.
+      History.AddTail(new StringObj(data));
+   }
 
    // If either side has Go Aheads suppressed, then the hell with it.
    // Unblock the damn output.
@@ -704,7 +786,7 @@ inline void Telnet::backward_char() // Move point backward one character.
    }
 }
 
-inline void Telnet::erase_char() // Erase input character before point.
+inline void Telnet::erase_char() // Erase character before point.
 {
    if (point > data) {
       point--;
@@ -741,6 +823,35 @@ inline void Telnet::transpose_chars() // Exchange two characters at point.
       echo(point[0]);
       point++;
    }
+}
+
+inline void Telnet::forward_word() // Move point forward one word.
+{
+   while (*point && !isalpha(*point)) forward_char();
+   while (*point && isalpha(*point)) forward_char();
+}
+
+inline void Telnet::backward_word() // Move point backward one word.
+{
+   while (point > data && !isalpha(point[-1])) backward_char();
+   while (point > data && isalpha(point[-1])) backward_char();
+}
+
+inline void Telnet::erase_word() // Erase word before point.
+{
+   while (point > data && !isalpha(point[-1])) erase_char();
+   while (point > data && isalpha(point[-1])) erase_char();
+}
+
+inline void Telnet::delete_word() // Delete word at point.
+{
+   while (*point && !isalpha(*point)) delete_char();
+   while (*point && isalpha(*point)) delete_char();
+}
+
+inline void Telnet::transpose_words() // Exchange two words at point.
+{
+   output(Bell);
 }
 
 void Telnet::InputReady()	// telnet stream can input data
@@ -968,6 +1079,22 @@ void Telnet::InputReady()	// telnet stream can input data
 	       output("\033[H\033[J");	// ANSI! ***
 	       RedrawInput();
 	       state = 0;
+	       break;
+	    case 'b':
+	       backward_word();
+	       break;
+	    case 'd':
+	       delete_word();
+	       break;
+	    case 'f':
+	       forward_word();
+	       break;
+	    case 't':
+	       transpose_words();
+	       break;
+	    case Backspace:
+	    case Delete:
+	       erase_word();
 	       break;
 	    default:
 	       output(Bell);

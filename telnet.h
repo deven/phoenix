@@ -82,6 +82,8 @@ private:
 public:
    const width = 80;		// Hardcoded screen width ***
    const height = 24;		// Hardcoded screen height ***
+   const HistoryMax = 200;	// Save last 200 input lines. ***
+   const KillRingMax = 1;	// Save last kill. ***
    Pointer<Session> session;	// back-pointer to session structure
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
@@ -89,6 +91,10 @@ public:
    char *point;			// current point location
    char *mark;			// current mark location
    String prompt;		// current prompt
+   List<StringObj> History;	// history lines
+   ListIter<StringObj> history; // history iterator
+   List<StringObj> KillRing;	// kill-ring
+   ListIter<StringObj> Yank;	// kill-ring iterator
    Pointer<Name> reply_to;	// sender of last private message
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
@@ -148,6 +154,7 @@ public:
    void set_Echo(CallbackFuncPtr callback,int state);
    void set_LSGA(CallbackFuncPtr callback,int state);
    void set_RSGA(CallbackFuncPtr callback,int state);
+   void InsertString(String &s); // Insert string at point.
    void beginning_of_line();	// Jump to beginning of line.
    void end_of_line();		// Jump to end of line.
    void kill_line();		// Kill from point to end of line.
@@ -162,6 +169,11 @@ public:
    void erase_char();		// Erase input character before point.
    void delete_char();		// Delete character at point.
    void transpose_chars();	// Transpose characters at point.
+   void forward_word();		// Move point forward one word.
+   void backward_word();	// Move point backward one word.
+   void erase_word();		// Erase word before point.
+   void delete_word();		// Delete word at point.
+   void transpose_words();	// Transpose words at point.
    void InputReady();
    void OutputReady();
 };
