@@ -551,7 +551,7 @@ inline void Telnet::accept_input() // Accept input line.
       session->output(Newline);
    } else {			// Jump to end of line and echo newline.
       if (!AtEnd()) end_of_line();
-      echo("\n");
+      echo(Newline);
    }
 
    point = free = data;		// Wipe input line. (data intact)

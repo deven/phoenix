@@ -260,7 +260,7 @@ void Session::Login(char *line)
 
 void Session::Password(char *line)
 {
-   telnet->output("\n");	// Send newline.
+   telnet->output(Newline);	// Send newline.
    telnet->DoEcho = true;	// Enable echoing.
 
    // Check against encrypted password.
