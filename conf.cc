@@ -406,6 +406,11 @@ void blurb(Telnet *telnet,char *line)
 
    // Link new session into user list. ***
 
+   // Print welcome banner and do a /who list.
+   telnet->output("\n\nWelcome to conf.  Type \"/help\" for a list of "
+		  "commands.\n\n");
+   who_cmd(telnet);
+
    // Set normal input routine.
    telnet->SetInputFunction(process_input);
 }
