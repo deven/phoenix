@@ -130,7 +130,7 @@ public:
    void command(int byte1,int byte2); // Queue 2 command bytes.
    void command(int byte1,int byte2,int byte3); // Queue 3 command bytes.
    void TimingMark();
-   void PrintMessage(OutputType type,time_t time,Pointer<Name> from,
+   void PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 		     char *start);
    void Welcome();
    void UndrawInput();		// Erase input line from screen.
