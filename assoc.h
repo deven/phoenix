@@ -37,6 +37,10 @@ public:
       value = v;
       return *this;
    }
+   AssocEntry &operator =(char *v) {
+      value = v;
+      return *this;
+   }
    operator String() { return value; }
    operator const char *() const { return value; }
    operator char *() { return value; }
