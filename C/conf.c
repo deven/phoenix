@@ -1830,8 +1830,8 @@ void main(int argc,char **argv) /* main program */
       switch (pid = fork()) {
       case 0:
 	 setpgrp();
-	 sigignore(SIGHUP);
-	 sigignore(SIGINT);
+	 signal(SIGHUP,SIG_IGN);
+	 signal(SIGINT,SIG_IGN);
 	 signal(SIGQUIT,quit);
 	 signal(SIGTERM,quit);
 	 signal(SIGALRM,alrm);
