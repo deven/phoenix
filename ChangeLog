@@ -1,5 +1,41 @@
 $Id: ChangeLog,v 1.3 2002/11/22 06:51:52 deven Exp $
 
+2002-11-30  Deven T. Corzine  <deven@ties.org>
+
+ * Version 1.0.0.beta.8 released.
+
+ * ChangeLog, NEWS, RELEASES: Updated release information.
+
+2002-11-26  Deven T. Corzine  <deven@ties.org>
+
+ * PORTING: Updated portability information.
+
+ * functions.h: If configure did not find strerror(), declare implementation
+   prototype.
+ * gangplank.cc: Define an implementation of strerror() if not found by
+   configure, for very old BSD systems.
+
+ * gangplank.cc: Fixed getpid() back to pid, from last update to startup
+   messages.  (Parent process was reporting the wrong pid for child process.)
+
+ * discussion.cc, session.cc, user.cc: Added missing ~ operator where String
+   objects were being passed as char *.
+
+ * session.cc: Added [1 person] to message confirmation where a single
+   recipient is being addressed via a discussion.
+
+ * acinclude.m4: Added AC_CHECK_SOCKET_LIBS macro for Solaris support.
+
+ * configure.ac: Updated version number.  Added check for <strings.h> header
+   for very old BSD systems.  Added check for socket libraries for Solaris.
+   Fixed check for socklen_t to include <sys/socket.h> header before checking
+   for the type.
+
+2002-11-25  Deven T. Corzine  <deven@ties.org>
+
+ * makepw.c, restart.c, string.cc, system.h: For very old BSD systems, include
+   both <string.h> and <strings.h> if both are available.
+
 2002-11-22  Deven T. Corzine  <deven@ties.org>
 
  * Version 1.0.0.beta.7 released.
