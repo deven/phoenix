@@ -10,13 +10,13 @@
 
 #include "conf.h"
 
-void OutputStream::OutputObject::output(Pointer<Telnet> telnet) // Output object.
-{
+void OutputStream::OutputObject::output(Pointer<Telnet> &telnet)
+{				// Output object.
    Output->output(telnet);
    telnet->TimingMark();
 }
 
-void OutputStream::Attach(Pointer<Telnet> telnet) // Review detached output.
+void OutputStream::Attach(Pointer<Telnet> &telnet) // Review detached output.
 {
    sent = NULL;
    Acknowledged = Sent = 0;
@@ -24,7 +24,7 @@ void OutputStream::Attach(Pointer<Telnet> telnet) // Review detached output.
 }
 
 // Enqueue output.
-void OutputStream::Enqueue(Pointer<Telnet> telnet,Pointer<Output> out)
+void OutputStream::Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out)
 {
    if (!out) return;
    if (tail) {
@@ -54,7 +54,7 @@ void OutputStream::Dequeue()	// Dequeue all acknowledged output.
    }
 }
 
-boolean OutputStream::SendNext(Pointer<Telnet> telnet) // Send next output.
+boolean OutputStream::SendNext(Pointer<Telnet> &telnet) // Send next output.
 {
    if (!telnet || !sent && !head) return false;
    if (sent && !sent->next) {
