@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 void ShutdownEvent::ShutdownWarning(char *by, time_t when)
 {

@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 Sendlist::Sendlist(Session &session, char *sendlist, boolean multi = false,
 		   boolean do_sessions = true, boolean do_discussions = true)

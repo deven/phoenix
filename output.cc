@@ -20,7 +20,7 @@
 //
 // $Log$
 
-#include "phoenix.h"
+#include "gangplank.h"
 
 void Text::output(Telnet *telnet)
 {
