@@ -126,6 +126,16 @@ void Session::DoDown(char *args) // Do !down command.
    }
 }
 
+void Session::DoNuke(char *args) // Do !nuke command.
+{
+   int fd;
+   if (sscanf(args,"%d",&fd) == 1) {
+      Telnet::nuke(telnet,fd < 0 ? -fd : fd,boolean(fd >= 0));
+   } else {
+      telnet->print("Bad fd #: \"%s\"\n",args);
+   }
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
