@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.3 1993/12/12 00:05:04 deven Exp $
+// $Id: conf.cc,v 1.4 1993/12/13 22:49:43 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.4  1993/12/13 22:49:43  deven
+// Modified to use encrypted passwords in password file, and to recognize '#'
+// as a comment.  (only if in first column at present)
+//
 // Revision 1.3  1993/12/12 00:05:04  deven
 // Removed definition and initialization for global variable sessions.  Removed
 // global functions notify() and who_cmd().  Added code to handle "/bye" typed
