@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.4 2003/02/21 03:17:39 deven Exp $
+// $Id: session.h,v 1.5 2003/02/22 04:39:59 deven Exp $
 //
 // Session class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.h,v $
+// Revision 1.5  2003/02/22 04:39:59  deven
+// Modified Session::SetInputFunction() to set prompt with input function.
+//
 // Revision 1.4  2003/02/21 03:17:39  deven
 // Renamed Blurb() to EnteredBlurb(), added CheckNameAvailability().
 //
