@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.40 2000/11/29 08:35:06 deven Exp $
+// $Id: telnet.cc,v 1.41 2000/11/29 08:44:49 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.41  2000/11/29 08:44:49  deven
+// Tried not erasing the line unless there was an input history line to
+// restore -- left no way to get back to a blank input line.  The problem
+// with losing the current input line will have to be fixed in another way.
+//
 // Revision 1.40  2000/11/29 08:35:06  deven
 // Reversed changes made in revision 1.25 to move within an input line by one
 // screen line at a time with previous_line() and next_line().  It seemed like
