@@ -12,6 +12,7 @@
 
 void OutputStream::OutputObject::output(Pointer<Telnet> &telnet)
 {				// Output object.
+   if (!Output) return;
    Output->output(telnet);
    telnet->TimingMark();
 }
