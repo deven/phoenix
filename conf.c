@@ -916,6 +916,7 @@ void process_input(struct telnet *telnet,char *line)
 	 output(telnet,"Help?  Help?!?  This program isn't done, you know.\n");
 	 output(telnet,"\nOnly known commands:\n\n");
 	 output(telnet,"/bye -- leave conf\n");
+	 output(telnet,"/date -- display current date and time\n");
 	 output(telnet,"/send -- specify default sendlist\n");
 	 output(telnet,"/who -- gives trivial list of who is connected\n");
 	 output(telnet,"/help -- gives this dumb message\n\n");
