@@ -48,7 +48,7 @@
 
 #include "boolean.h"
 #include "object.h"
-#include "string.h"
+#include "string2.h"
 
 String::String(const String &s)
 {
