@@ -89,10 +89,10 @@ public:
    String name;			// current user name (pseudo)
    String blurb;		// current user blurb
    Pointer<Name> name_obj;	// current name object.
-   String default_sendlist;	// current default sendlist
-   String last_sendlist;	// last explicit sendlist
-   String reply_sendlist;	// reply sendlist for last sender
    Pointer<Message> last_message; // last message sent
+   Pointer<Sendlist> default_sendlist; // current default sendlist
+   Pointer<Sendlist> last_sendlist;    // last explicit sendlist
+   Pointer<Sendlist> reply_sendlist;   // reply sendlist for last sender
 
    Session(Pointer<Telnet> &t);
    ~Session();
@@ -105,6 +105,9 @@ public:
    void InitInputFunction();
    void Input(char *line);
 
+   static RemoveDiscussion(Discussion *discussion) {
+      discussions.Remove(discussion);
+   }
    void output(int byte) {	// queue output byte
       Output.out(byte);
    }
@@ -134,9 +137,20 @@ public:
       return Pending.SendNext(telnet);
    }
 
+   boolean FindSendable(char *sendlist,Pointer<Session> &session,
+			Set<Session> &sessionmatches,
+			Pointer<Discussion> &discussion,
+			Set<Discussion> &discussionmatches,
+			boolean member = false,boolean exact = false,
+			boolean do_sessions = true,
+			boolean do_discussions = true);
    Pointer<Session> FindSession(char *sendlist,Set<Session> &matches);
    Pointer<Discussion> FindDiscussion(char *sendlist,Set<Discussion> &matches,
-				      boolean member);
+				      boolean member = false);
+   void PrintSessions(Set<Session> &sessions);
+   void PrintDiscussions(Set<Discussion> &discussions);
+   void SessionMatches(char *name,Set<Session> &matches);
+   void DiscussionMatches(char *name,Set<Discussion> &matches);
    void Login(char *line);
    void Password(char *line);
    void Name(char *line);
@@ -144,7 +158,7 @@ public:
    void Blurb(char *line);
    void ProcessInput(char *line);
    void ListItem(boolean &flag,String &last,char *str);
-   boolean GetWhoSet(char *args,Set<Session> &who,String &errors);
+   boolean GetWhoSet(char *args,Set<Session> &who,String &errors,String &msg);
    void NotifyEntry();		// Notify other users of entry and log.
    void NotifyExit();		// Notify other users of exit and log.
    void PrintTimeLong(int minutes); // Print time value, long format.
@@ -170,9 +184,17 @@ public:
    void DoGone(char *args);	// Do /gone command.
    void DoHelp(char *args);	// Do /help command.
    void DoUnidle(char *args);	// Do /unidle idle time reset.
-   void DoReset();		// Do <space><return> idle time reset.
-   void DoMessage(char *line);	// Do message send.
-   void SendEveryone(char *msg);
-   void SendPrivate(char *sendlist,char *msg);
+   void DoCreate(char *args);	// Do /create command.
+   void DoDestroy(char *args);	// Do /destroy command.
+   void DoJoin(char *args);	// Do /join command.
+   void DoQuit(char *args);	// Do /quit command.
+   void DoWhat(char *args);	// Do /what command.
+   void DoPermit(char *args);	// Do /permit command.
+   void DoDepermit(char *args);	// Do /depermit command.
+   void DoAppoint(char *args);	// Do /appoint command.
+   void DoUnappoint(char *args); // Do /unappoint command.
+   void DoReset();		 // Do <space><return> idle time reset.
+   void DoMessage(char *line);	 // Do message send.
+   void SendMessage(Pointer<Sendlist> &sendlist,char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

@@ -114,7 +114,6 @@ Session::Session(Pointer<Telnet> &t)
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
-   default_sendlist = "everyone"; // Default sendlist is "everyone".
    message_time = time(&login_time);	// Reset timestamps.
    inits.AddTail(this);		// Add session to initializing list.
 }
@@ -126,10 +125,8 @@ Session::~Session()
 
 void Session::Close(boolean drain = true) // Close session.
 {
-   ListIter<Session> session(sessions);
-   while (session++) if (session == this) session.Remove();
-   session = inits;
-   while (session++) if (session == this) session.Remove();
+   inits.Remove(this);
+   sessions.Remove(this);
 
    if (SignedOn) NotifyExit();	// Notify and log exit if signed on.
    SignedOn = false;
@@ -140,7 +137,7 @@ void Session::Close(boolean drain = true) // Close session.
       t->Close(drain);
    }
 
-   if (user) user->RemoveSession(this);	// Disassociate from user.
+   user->sessions.Remove(this);	// Disassociate from user.
    user = NULL;
 }
 
@@ -284,51 +281,158 @@ int match_name(char *name,char *sendlist) // returns position of match or 0.
    return 0;
 }
 
-Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
+boolean Session::FindSendable(char *sendlist,Pointer<Session> &session,
+		     Set<Session> &sessionmatches,
+		     Pointer<Discussion> &discussion,
+		     Set<Discussion> &discussionmatches,
+		     boolean member = false,boolean exact = false,
+		     boolean do_sessions = true,boolean do_discussions = true)
 {
-   if (match(sendlist,"me")) return this;
-
    int pos,count = 0;
-   Pointer<Session> lead,match;
-   ListIter<Session> session(sessions);
-   while (session++) {
-      if (!strcasecmp(session->name,sendlist)) return session;
-      if (pos = match_name(session->name,sendlist)) {
-	 if (pos == 1) {
-	    count++;
-	    lead = session;
+   Pointer<Session> sessionlead;
+   ListIter<Session> s(sessions);
+   Pointer<Discussion> discussionlead;
+   ListIter<Discussion> d(discussions);
+
+   session = NULL;
+   discussion = NULL;
+
+   if (do_sessions) {
+      if (match(sendlist,"me")) {
+	 session = this;
+	 sessionmatches.Add(session);
+	 return true;
+      }
+
+      while (s++) {
+	 if (match(s->name,sendlist)) {
+	    session = s;
+	    sessionmatches.Add(session);
+	 } else if (!exact && (pos = match_name(s->name,sendlist))) {
+	    if (pos == 1) {
+	       count++;
+	       sessionlead = s;
+	    }
+	    sessionmatches.Add((Session *) s);
 	 }
-	 match = session;
-	 matches.Add(match);
       }
    }
-   if (count == 1) return lead;
-   if (matches.Count() == 1) return match;
+
+   if (do_discussions) {
+      while (d++) {
+	 if (member && !d->members.In(this)) continue;
+	 if (match(d->name,sendlist)) {
+	    discussion = d;
+	    discussionmatches.Add(discussion);
+	 } else if (!exact && (pos = match_name(d->name,sendlist))) {
+	    if (pos == 1) {
+	       count++;
+	       discussionlead = d;
+	    }
+	    discussionmatches.Add((Discussion *) d);
+	 }
+      }
+   }
+   if (session || discussion) return true;
+   if (count == 1) {
+      session = sessionlead;
+      discussion = discussionlead;
+      return true;
+   }
+   if (sessionmatches.Count() + discussionmatches.Count() == 1) {
+      if (sessionmatches.Count()) session = sessionmatches.First();
+      if (discussionmatches.Count()) discussion = discussionmatches.First();
+      return true;
+   }
+   return false;
+}
+
+Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
+{
+   Pointer<Session> session;
+   Pointer<Discussion> discussion;
+   Set<Discussion> discussionmatches;
+
+   if (FindSendable(sendlist,session,matches,discussion,discussionmatches,
+		    false,false,true,false)) {
+      return session;
+   }
    return NULL;
 }
 
 Pointer<Discussion> Session::FindDiscussion(char *sendlist,
 					    Set<Discussion> &matches,
-					    boolean member)
+					    boolean member = false)
 {
-   int pos,count = 0;
-   Pointer<Discussion> lead,match;
-   ListIter<Discussion> discussion(discussions);
+   Pointer<Session> session;
+   Set<Session> sessionmatches;
+   Pointer<Discussion> discussion;
+
+   if (FindSendable(sendlist,session,sessionmatches,discussion,matches,
+		    member,false,false,true)) {
+      return discussion;
+   }
+   return NULL;
+}
+
+void Session::PrintSessions(Set<Session> &sessions)
+{
+   SetIter<Session> session(sessions);
+
+   output((char *) session++->name);
+   while (session++) {
+      output(", ");
+      output((char *) session->name);
+   }
+}
+
+void Session::PrintDiscussions(Set<Discussion> &discussions)
+{
+   SetIter<Discussion> discussion(discussions);
+
+   output((char *) discussion++->name);
    while (discussion++) {
-      if (member && !discussion->members.In(this)) continue;
-      if (!strcasecmp(discussion->name,sendlist)) return discussion;
-      if (pos = match_name(discussion->name,sendlist)) {
-	 if (pos == 1) {
-	    count++;
-	    lead = discussion;
-	 }
-	 match = discussion;
-	 matches.Add(match);
+      output(", ");
+      output((char *) discussion->name);
+   }
+}
+
+void Session::SessionMatches(char *name,Set<Session> &matches)
+{
+   String tmp = name;
+
+   for (char *p = tmp; *p; p++) {
+      if (*((unsigned char *) p) == UnquotedUnderscore) {
+	 *p = Underscore;
       }
    }
-   if (count == 1) return lead;
-   if (matches.Count() == 1) return match;
-   return NULL;
+
+   if (matches.Count()) {
+      print("\"%s\" matches %d names: ",(char *) tmp,matches.Count());
+      PrintSessions(matches);
+      output(".\n");
+   } else {
+      print("No names matched \"%s\".\n",(char *) tmp);
+   }
+}
+
+void Session::DiscussionMatches(char *name,Set<Discussion> &matches)
+{
+   String tmp = name;
+
+   for (char *p = tmp; *p; p++) {
+      if (*((unsigned char *) p) == UnquotedUnderscore) {
+	 *p = Underscore;
+      }
+   }
+
+   if (matches.Count()) {
+      print("\"%s\" matches %d discussions: ",(char *) tmp,matches.Count());
+      PrintDiscussions(matches);
+      output(".\n");
+   } else {
+      print("No discussions matched \"%s\".\n",(char *) tmp);
+   }
 }
 
 void Session::Login(char *line)
@@ -372,6 +476,8 @@ void Session::Login(char *line)
       if (user->reserved) {
 	 telnet->print("\nYour default name is \"%s\".\n\n",(char *)
 		       user->reserved);
+      } else {
+	 telnet->output(Newline);
       }
       telnet->Prompt("Enter name: "); // Prompt for name.
       SetInputFunction(Name);	   // Set name input routine.
@@ -397,6 +503,8 @@ void Session::Password(char *line)
    if (user->reserved) {
       telnet->print("\nYour default name is \"%s\".\n\n",(char *)
 		    user->reserved);
+   } else {
+      telnet->output(Newline);
    }
    telnet->Prompt("Enter name: "); // Prompt for name.
    SetInputFunction(Name);	   // Set name input routine.
@@ -404,6 +512,11 @@ void Session::Password(char *line)
 
 void Session::Name(char *line)
 {
+   Pointer<Session> session;
+   Set<Session> sessionmatches;
+   Pointer<Discussion> discussion;
+   Set<Discussion> discussionmatches;
+
    if (!*line) {		// blank line
       if (user->reserved) {
 	 name = user->reserved;
@@ -414,15 +527,20 @@ void Session::Name(char *line)
    } else {
       name = line;		// Save user's name.
    }
+   if (match(name,"me")) {
+      output("The keyword \"me\" is reserved.  Choose another name.\n");
+      telnet->Prompt("Enter name: ");
+      return;
+   }
    User::UpdateAll();		// Update user accounts.
    if (user->CheckReserved(name)) {
       telnet->output("That name is reserved.  Choose another.\n");
       telnet->Prompt("Enter name: ");
       return;
    }
-   ListIter<Session> session(sessions);
-   while (session++) {
-      if (!strcasecmp(session->name,name)) {
+   if (FindSendable(name,session,sessionmatches,discussion,discussionmatches,
+		    false,true)) {
+      if (session) {
 	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("You are attached elsewhere under that name.\n");
@@ -441,6 +559,11 @@ void Session::Name(char *line)
 	    telnet->Prompt("Enter name: ");
 	    return;
 	 }
+      } else {
+	 print("There is already a discussion named \"%s\".  Choose another "
+	       "name.\n",(char *) discussion->name);
+	 telnet->Prompt("Enter name: ");
+	 return;
       }
    }
    telnet->Prompt("Enter blurb: "); // Prompt for blurb.
@@ -449,7 +572,12 @@ void Session::Name(char *line)
 
 void Session::TransferSession(char *line)
 {
-   if (match(line,"yes",1)) {
+   Pointer<Session> session;
+   Set<Session> sessionmatches;
+   Pointer<Discussion> discussion;
+   Set<Discussion> discussionmatches;
+
+   if (!match(line,"yes",1)) {
       telnet->output("Session not transferred.\n");
       telnet->Prompt("Enter name: ");
       SetInputFunction(Name);
@@ -461,9 +589,9 @@ void Session::TransferSession(char *line)
       telnet->Prompt("Enter name: ");
       return;
    }
-   ListIter<Session> session(sessions);
-   while (session++) {
-      if (!strcasecmp(session->name,name)) {
+   if (FindSendable(name,session,sessionmatches,discussion,discussionmatches,
+		    false,true)) {
+      if (session) {
 	 if (session->user == user) {
 	    if (session->telnet) {
 	       telnet->output("Transferring active session...\n");
@@ -481,6 +609,12 @@ void Session::TransferSession(char *line)
 	    SetInputFunction(Name);
 	    return;
 	 }
+      } else {
+	 print("There is now a discussion named \"%s\".  Choose another "
+	       "name.\n",(char *) discussion->name);
+	 telnet->Prompt("Enter name: ");
+	 SetInputFunction(Name);
+	 return;
       }
    }
    telnet->Prompt("Enter blurb: "); // Prompt for blurb.
@@ -496,8 +630,7 @@ void Session::Blurb(char *line)
    SignedOn = true;		// Session is signed on.
    sessions.AddHead(this);	// Add session to signed-on list.
    user->AddSession(this);	// Add session to user list.
-   ListIter<Session> session(inits);
-   while (session++) if (session == this) session.Remove();
+   inits.Remove(this);
 
    NotifyEntry();		// Notify other users of entry.
 
@@ -515,6 +648,7 @@ void Session::ProcessInput(char *line)
 {
    // Make ! normal for average users?  normal if not a valid command? ***
    if (*line == '!') {
+      trim(line);
       // add !priv command? ***
       // do individual privilege levels for each !command? ***
       if (user->priv < 50) {
@@ -526,6 +660,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"!nuke",5)) DoNuke(line);
       else output("Unknown !command.\n");
    } else if (*line == '/') {
+      trim(line);
       if (match(line,"/who",2)) DoWho(line);
       else if (match(line,"/idle",3)) DoIdle(line);
       else if (match(line,"/blurb",3)) DoBlurb(line);
@@ -536,6 +671,15 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/help",2)) DoHelp(line);
       else if (match(line,"/send",2)) DoSend(line);
       else if (match(line,"/bye",4)) DoBye(line);
+      else if (match(line,"/what",3)) DoWhat(line);
+      else if (match(line,"/join",2)) DoJoin(line);
+      else if (match(line,"/quit",2)) DoQuit(line);
+      else if (match(line,"/create",3)) DoCreate(line);
+      else if (match(line,"/destroy",4)) DoDestroy(line);
+      else if (match(line,"/permit",4)) DoPermit(line);
+      else if (match(line,"/depermit",4)) DoDepermit(line);
+      else if (match(line,"/appoint",4)) DoAppoint(line);
+      else if (match(line,"/unappoint",9)) DoUnappoint(line);
       else if (match(line,"/clear",3)) DoClear(line);
       else if (match(line,"/unidle",7)) DoUnidle(line);
       else if (match(line,"/detach",4)) DoDetach(line);
@@ -547,6 +691,7 @@ void Session::ProcessInput(char *line)
    } else if (!strcmp(line," ")) {
       DoReset();
    } else if (*line) {
+      trim(line);
       DoMessage(line);
    }
 }
@@ -812,26 +957,8 @@ void Session::DoNuke(char *args) // Do !nuke command.
 	 session->Close();
       }
    } else {
-      String tmp(args);
-      for (char *p = tmp; *p; p++) {
-	 if (*((unsigned char *) p) == UnquotedUnderscore) {
-	    *p = Underscore;
-	 }
-      }
-
-      if (matches.Count()) {
-	 SetIter<Session> session(matches);
-
-	 print("\a\a\"%s\" matches %d names: ",(char *) tmp,matches.Count());
-	 output((char *) session++->name);
-	 while (session++) {
-	    output(", ");
-	    output((char *) session->name);
-	 }
-	 output(". (nobody nuked)\n");
-      } else {
-	 print("\a\aNo names matched \"%s\". (nobody nuked)\n",(char *) tmp);
-      }
+      output("\a\a");
+      SessionMatches(args,matches);
    }
 }
 
@@ -867,14 +994,18 @@ void Session::ListItem(boolean &flag,String &last,char *str)
    }
 }
 
-boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
+boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
+			   String &msg)
 {
    String send;
    char *mark;
    int idle,now = time(NULL);
    int count,lastcount = 0;
    boolean here,away,busy,gone,attached,detached,active,inactive,doidle,
-      unidle,privileged,all;
+      unidle,privileged,guests,all;
+
+   who.Reset();
+   errors = msg = "";
 
    // Check if anyone is signed on at all.
    if (!sessions.Count()) {
@@ -882,9 +1013,9 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
       return true;
    }
 
-   if (active = boolean(!*args)) lastcount++;
+   if (active = boolean(!*args)) lastcount = 1;
    here = away = busy = gone = attached = detached = inactive = doidle =
-      unidle = privileged = all = false;
+      unidle = privileged = guests = all = false;
    while (*args) {
       mark = strchr(args,Comma);
       if (mark) *mark = 0;
@@ -899,6 +1030,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
       doidle = boolean(doidle || match(args,"idle",4));
       unidle = boolean(unidle || match(args,"unidle",6));
       privileged = boolean(privileged || match(args,"privileged",10));
+      guests = boolean(guests || match(args,"guests",6));
       all = boolean(all || match(args,"all",3));
       count = here + away + busy + gone + attached + detached + active +
 	 inactive + doidle + unidle + privileged + all;
@@ -911,8 +1043,8 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
       if (mark) args = mark + 1;
    }
 
-   Pointer<Sendlist> sendlist = new Sendlist(*this,send);
-   count = sendlist->Expand(who);
+   Pointer<Sendlist> sendlist = new Sendlist(*this,send,true);
+   sendlist->Expand(who,NULL);
 
    ListIter<Session> s(sessions);
    while (s++) {
@@ -920,10 +1052,13 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
       if (here && s->away == Here || away && s->away == Away ||
 	  busy && s->away == Busy || gone && s->away == Gone ||
 	  attached && s->telnet || detached && !s->telnet ||
-	  active && ((s->away == Here) || (idle < 10)) ||
-	  inactive && ((s->away != Here) || (idle >= 10)) ||
+	  active && (s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
+		     s->away == Away && s->telnet && (idle < 10)) ||
+	  inactive && !(s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
+			s->away == Away && s->telnet && (idle < 10)) ||
 	  doidle && (idle >= 10) || unidle && (idle < 10) ||
-	  privileged && (s->user->priv >= 50) || all) {
+	  privileged && (s->user->priv >= 50) ||
+	  guests && (s->user->priv == 0) || all) {
 	 who.Add((Session *) s);
       }
    }
@@ -957,21 +1092,34 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
       }
       return true;
    }
+
    errors = sendlist->errors;
+
+   if (lastcount) {
+      if (sessions.Count() - who.Count() == 1) {
+	 msg = "(There is 1 other person signed on.)\n";
+      } else if (sessions.Count() > who.Count()) {
+	 char buf[64];
+
+	 sprintf(buf,"(There are %d other people signed on.)\n",
+		 sessions.Count() - who.Count());
+	 msg = buf;
+      }
+   }
+
    return false;
 }
 
 void Session::DoWho(char *args)	// Do /who command.
 {
    Set<Session> who;
-   String errors;
-   String tmp;
+   String errors,msg,tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
    char buf[32];
 
    // Handle arguments.
-   if (GetWhoSet(args,who,errors)) return;
+   if (GetWhoSet(args,who,errors,msg)) return;
 
    // Scan users for long idle times.
    SetIter<Session> session(who);
@@ -1050,6 +1198,7 @@ void Session::DoWho(char *args)	// Do /who command.
 	 break;
       }
    }
+   output((char *) msg);
    if (errors) {
       output("\a\a");
       output((char *) errors);
@@ -1059,8 +1208,7 @@ void Session::DoWho(char *args)	// Do /who command.
 void Session::DoWhy(char *args)	// Do /why command.
 {
    Set<Session> who;
-   String errors;
-   String tmp;
+   String errors,msg,tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
    char buf[32];
@@ -1071,7 +1219,7 @@ void Session::DoWhy(char *args)	// Do /why command.
    }
 
    // Handle arguments.
-   if (GetWhoSet(args,who,errors)) return;
+   if (GetWhoSet(args,who,errors,msg)) return;
 
    // Scan users for long idle times.
    SetIter<Session> session(who);
@@ -1154,6 +1302,7 @@ void Session::DoWhy(char *args)	// Do /why command.
       }
       print("%4d\n",session->user->priv);
    }
+   output((char *) msg);
    if (errors) {
       output("\a\a");
       output((char *) errors);
@@ -1163,14 +1312,13 @@ void Session::DoWhy(char *args)	// Do /why command.
 void Session::DoIdle(char *args) // Do /idle command.
 {
    Set<Session> who;
-   String errors;
-   String tmp;
+   String errors,msg,tmp;
    int idle,days,hours,minutes;
    int now = time(NULL);
    int col = 0;
 
    // Handle arguments.
-   if (GetWhoSet(args,who,errors)) return;
+   if (GetWhoSet(args,who,errors,msg)) return;
 
    // Output /idle header.
    if (who.Count() == 1) {
@@ -1218,9 +1366,94 @@ void Session::DoIdle(char *args) // Do /idle command.
       col = !col;
    }
    if (col) output(Newline);
+   output((char *) msg);
    if (errors) {
       output("\a\a");
       output((char *) errors);
+   }
+}
+
+void Session::DoWhat(char *args) // Do /what command.
+{
+   Pointer<Sendlist> sendlist = new Sendlist(*this,args,true,false,true);
+   int idle,days,hours,minutes,now = time(NULL);
+   int i,extend = 0;
+   char buf[32];
+
+   // Check if any discussions exist.
+   if (!discussions.Count()) {
+      output("No discussions currently exist.\n");
+      return;
+   }
+
+   if (*args && !sendlist->discussions.Count()) {
+      output((char *) sendlist->errors);
+      return;
+   }
+
+   // Handle arguments.
+   if (!*args) {
+      ListIter<Discussion> disc(discussions);
+      while (disc++) sendlist->discussions.Add((Discussion *) disc);
+   }
+
+   // Scan users for long idle times.
+   SetIter<Discussion> discussion(sendlist->discussions);
+   while (discussion++) {
+      days = (now - discussion->message_time) / 86400;
+      if (!days) continue;
+      sprintf(buf,"%d",days);
+      i = strlen(buf);
+      if (i > extend) extend = i;
+   }
+   sprintf(buf,"%%%ddd",extend);
+
+   // Output /what header.
+   output("\n Name           Users");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  Idle  Title\n ----           -----");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  ----  -----\n");
+
+   while (discussion++) {
+      output(Space);
+      print("%-15.15s %3d%c",(char *) discussion->name,
+	    discussion->members.Count(),discussion->members.In(this) ? '*' :
+	    Space);
+      idle = (now - discussion->message_time) / 60;
+      if (idle) {
+	 hours = idle / 60;
+	 minutes = idle - hours * 60;
+	 days = hours / 24;
+	 hours -= days * 24;
+	 if (days) {
+	    print(buf,days);
+	    print("%02d:%02d  ",hours,minutes);
+	 } else if (hours) {
+	    for (i = 0; i < extend; i++) output(Space);
+	    print(" %2d:%02d  ",hours,minutes);
+	 } else {
+	    for (i = 0; i < extend; i++) output(Space);
+	    print("    %2d  ",minutes);
+	 }
+      } else {
+	 for (i = 0; i < extend; i++) output(Space);
+	 output("        ");
+      }
+      if (discussion->Permitted(this)) {
+	 if (discussion->title.length() > 50) {
+	    printf("%-49.49s+\n",(char *) discussion->title);
+	 } else {
+	    output((char *) discussion->title);
+	    output(Newline);
+	 }
+      } else {
+	 output("<Private>\n");
+      }
+   }
+   if (sendlist->errors) {
+      output("\a\a");
+      output((char *) sendlist->errors);
    }
 }
 
@@ -1279,27 +1512,44 @@ void Session::DoSignal(char *args) // Do /signal command.
 
 void Session::DoSend(char *args) // Do /send command.
 {
-   while (*args && isspace(*args)) args++;
+   Pointer<Sendlist> sendlist;
+
    if (!*args) {			// Display current sendlist.
-      if (!default_sendlist) {
-	 output("Your default sendlist is turned off.\n");
-      } else if (match(default_sendlist,"everyone")) {
-	 output("You are sending to everyone.\n");
+      if (default_sendlist) {
+	 output("You are sending to ");
       } else {
-	 print("Your default sendlist is set to \"%s\".\n",
-	       (char *) default_sendlist);
+	 output("Your default sendlist is turned off.\n");
+	 return;
       }
    } else if (match(args,"off")) {
-      default_sendlist = (char *) NULL;
+      default_sendlist = NULL;
       output("Your default sendlist has been turned off.\n");
-   } else if (match(args,"everyone")) {
-      default_sendlist = "everyone";
-      output("You are now sending to everyone.\n");
+      return;
    } else {
-      default_sendlist = args;
-      print("Your default sendlist is now set to \"%s\".\n",
-	    (char *) default_sendlist);
+      sendlist = new Sendlist(*this,args,true);
+      if (sendlist->errors) {
+	 output("\a\a");
+	 output((char *) sendlist->errors);
+      }
+      if (!sendlist->sessions.Count() && !sendlist->discussions.Count() ||
+	  sendlist->errors) {
+	 output("Your default sendlist is unchanged.\n");
+	 return;
+      }
+      default_sendlist = sendlist;
+      output("You are now sending to ");
    }
+   if (default_sendlist->sessions.Count()) {
+      PrintSessions(default_sendlist->sessions);
+      if (default_sendlist->discussions.Count()) {
+	 print(" and discussion%s ",
+	       default_sendlist->discussions.Count() == 1 ? "" : "s");
+	 PrintDiscussions(default_sendlist->discussions);
+      }
+   } else {
+      PrintDiscussions(default_sendlist->discussions);
+   }
+   output(".\n");
 }
 
 // Do /blurb command (or blurb set on entry).
@@ -1379,9 +1629,171 @@ void Session::DoUnidle(char *args) // Do /unidle idle time reset.
    if (!ResetIdle(1)) output("Your idle time has been reset.\n");
 }
 
-void Session::DoReset()		// Do <space><return> idle time reset.
+void Session::DoCreate(char *args) // Do /create command.
 {
-   ResetIdle(1);
+   Pointer<Session> session;
+   Set<Session> sessionmatches;
+   Pointer<Discussion> discussion;
+   Set<Discussion> discussionmatches;
+   char *name;
+   boolean Public = true;
+
+   if (match(args,"-public",3)) {
+      Public = true;
+   } else if (match(args,"-private",3)) {
+      Public = false;
+   } else if (match(args,"public",6)) {
+      Public = true;
+   } else if (match(args,"private",7)) {
+      Public = false;
+   }
+   name = getword(args);
+   if (!*args) {
+      output("Usage: /create [public|private] <name> <title>\n");
+      return;
+   }
+   if (match(name,"me")) {
+      output("The keyword \"me\" is reserved.  (not created)\n");
+      return;
+   }
+   User::UpdateAll();		// Update user accounts.
+   if (user->CheckReserved(name)) {
+      print("There is a reserved name conflicting with \"%s\". "
+	     "(not created)\n",(char *) name);
+      return;
+   }
+   if (FindSendable(name,session,sessionmatches,discussion,discussionmatches,
+		    false,true)) {
+      if (session) {
+	 print("There is already someone named \"%s\". (not created)\n",
+	       (char *) session->name);
+	 return;
+      } else {
+	 print("There is already a discussion named \"%s\". (not created)\n",
+	       (char *) discussion->name);
+	 return;
+      }
+   }
+   discussion = new Discussion(this,name,args,Public);
+   discussions.AddTail(discussion);
+   EnqueueOthers(new CreateNotify(discussion));
+   print("You have created discussion %s, \"%s\".\n",(char *) discussion->name,
+	 (char *) discussion->title);
+}
+
+void Session::DoDestroy(char *args) // Do /destroy command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Destroy(this);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Destroy(this);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
+}
+
+void Session::DoJoin(char *args) // Do /join command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Join(this);
+   } else {
+      DiscussionMatches(name,matches);
+   }
+}
+
+void Session::DoQuit(char *args) // Do /quit command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Quit(this);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Quit(this);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
+}
+
+void Session::DoPermit(char *args) // Do /permit command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Permit(this,args);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Permit(this,args);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
+}
+
+void Session::DoDepermit(char *args) // Do /depermit command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Depermit(this,args);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Depermit(this,args);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
+}
+
+void Session::DoAppoint(char *args) // Do /appoint command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Appoint(this,args);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Appoint(this,args);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
+}
+
+void Session::DoUnappoint(char *args) // Do /unappoint command.
+{
+   char *name = getword(args);
+   Set<Discussion> matches,matches2;
+   Pointer<Discussion> discussion = FindDiscussion(name,matches);
+
+   if (discussion) {
+      discussion->Unappoint(this,args);
+   } else {
+      if (discussion = FindDiscussion(name,matches2,true)) {
+	 discussion->Unappoint(this,args);
+      } else {
+	 DiscussionMatches(name,matches);
+      }
+   }
 }
 
 void Session::DoHelp(char *args) // Do /help command.
@@ -1405,6 +1817,11 @@ void Session::DoHelp(char *args) // Do /help command.
 	  "herwise, only sending a message resets the idle time.\n\nThe follow"
 	  "ing are recognized smileys:  :-) :-( :-P ;-) :_) :_( :) :( :P ;)\n"
 	  "\n");
+}
+
+void Session::DoReset()		// Do <space><return> idle time reset.
+{
+   ResetIdle(1);
 }
 
 char *message_start(char *line,String &sendlist,boolean &explicit)
@@ -1478,13 +1895,14 @@ char *message_start(char *line,String &sendlist,boolean &explicit)
 
 void Session::DoMessage(char *line) // Do message send.
 {
-   String sendlist;
+   Pointer<Sendlist> sendlist;
+   String send;
    boolean explicit = false;	// Assume implicit sendlist.
 
-   line = message_start(line,sendlist,explicit);
+   line = message_start(line,send,explicit);
 
    // Use last sendlist if none specified.
-   if (!sendlist) {
+   if (!send) {
       if (last_sendlist) {
 	 sendlist = last_sendlist;
       } else {
@@ -1494,7 +1912,7 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Use default sendlist if indicated.
-   if (match(sendlist,"default")) {
+   if (match(send,"default")) {
       if (default_sendlist) {
 	 sendlist = default_sendlist;
       } else {
@@ -1503,56 +1921,20 @@ void Session::DoMessage(char *line) // Do message send.
       }
    }
 
+   if (!sendlist) sendlist = new Sendlist(*this,send);
+
    // Save last sendlist if explicit.
    if (explicit && sendlist) last_sendlist = sendlist;
 
-   if (match(sendlist,"everyone")) {
-      SendEveryone(line);
-   } else {
-      SendPrivate(sendlist,line);
-   }
+   SendMessage(sendlist,line);
 }
 
-// Send a message to everyone else signed on.
-void Session::SendEveryone(char *msg)
+// Send message to sendlist.
+void Session::SendMessage(Pointer<Sendlist> &sendlist,char *msg)
 {
-   int sent = 0;
-   last_message = new Message(PublicMessage,name_obj,NULL,msg);
-   ListIter<Session> session(sessions);
-   while (session++) {
-      if (session != this) {
-	 session->Enqueue((Message *) last_message);
-	 sent++;
-      }
-   }
-
-   if (!sent) {
-      print("\a\aThere is no one else here! (message not sent)\n");
-      return;
-   }
-
-   if (away == Gone) {
-      output("[Warning: you are listed as \"gone\".]\n");
-   } else if (away == Busy && (time(NULL) - message_time) >= 600) {
-      output(Bell);
-      output("[Warning: you are still listed as \"busy\".]\n");
-   }
-
-   ResetIdle(10);
-
-   if (sent > 1) {
-      print("(message sent to everyone.) [%d people]\n",sent);
-   } else {
-      print("(message sent to everyone.) [1 person]\n");
-   }
-}
-
-// Send private message by partial name match.
-void Session::SendPrivate(char *send,char *msg)
-{
-   Pointer<Sendlist> sendlist = new Sendlist(*this,send);
    Set<Session> recipients;
-   int count = sendlist->Expand(recipients);
+   int count = sendlist->Expand(recipients,this);
+   int now = time(NULL);
    boolean first,flag;
 
    if (!count) {
@@ -1566,7 +1948,7 @@ void Session::SendPrivate(char *send,char *msg)
 
    if (away == Gone) {
       output("[Warning: you are listed as \"gone\".]\n");
-   } else if (away == Busy && (time(NULL) - message_time) >= 600) {
+   } else if (away == Busy && (now - message_time) >= 600) {
       output(Bell);
       output("[Warning: you are still listed as \"busy\".]\n");
    }
@@ -1586,12 +1968,12 @@ void Session::SendPrivate(char *send,char *msg)
       output((char *) session->name);
       output((char *) session->blurb);
       if (!session->telnet) {
-	 output(flag ? ", " : " [");
+	 output(flag ? ", " : " (");
 	 flag = true;
 	 output("detached");
       }
       if (session->away != Here) {
-	 output(flag ? ", " : " [");
+	 output(flag ? ", " : " (");
 	 flag = true;
 	 switch (session->away) {
 	 case Away:
@@ -1605,9 +1987,9 @@ void Session::SendPrivate(char *send,char *msg)
 	    break;
 	 }
       }
-      int idle = (time(NULL) - session->message_time) / 60;
+      int idle = (now - session->message_time) / 60;
       if (idle) {
-	 output(flag ? ", " : " [");
+	 output(flag ? ", " : " (");
 	 flag = true;
 	 output("idle: ");
 	 int hours = idle / 60;
@@ -1622,24 +2004,27 @@ void Session::SendPrivate(char *send,char *msg)
 	    print("%d minute%s",minutes,(minutes == 1) ? "" : "s");
 	 }
       }
-      if (flag) output("]");
+      if (flag) output(")");
    }
 
-   SetIter<Discussion> discussion(sendlist->discussions);
-   while (discussion++) {
-      if (first) {
-	 first = false;
-      } else {
-	 output(", ");
-      }
-      output((char *) discussion->name);
-      print(" [%d members]",discussion->members.Count());
+   if (sendlist->discussions.Count()) {
+      if (!first) output("; ");
+      print("discussion%s ",sendlist->discussions.Count() == 1 ? "" : "s");
+      PrintDiscussions(sendlist->discussions);
+
+      SetIter<Discussion> discussion(sendlist->discussions);
+      while (discussion++) discussion->message_time = now;
    }
 
    if (count > 1) {
       print(".) [%d people]\n",count);
    } else {
       output(".)\n");
+   }
+
+   if (sendlist->errors) {
+      output("\a\a");
+      output((char *) sendlist->errors);
    }
 
    last_message = new Message(PrivateMessage,name_obj,sendlist,msg);

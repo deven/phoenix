@@ -306,15 +306,19 @@ void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> &from,
 	    output((char *) s->name);
 	 }
 
-	 SetIter<Discussion> discussion(to->discussions);
-	 while (discussion++) {
-	    if (first) {
-	       first = false;
-	    } else {
-	       output(", ");
+	 if (to->discussions.Count()) {
+	    if (!first) output("; ");
+	    print("discussion%s ",to->discussions.Count() == 1 ? "" : "s");
+
+	    SetIter<Discussion> discussion(to->discussions);
+	    while (discussion++) {
+	       if (first) {
+		  first = false;
+	       } else {
+		  output(", ");
+	       }
+	       output((char *) discussion->name);
 	    }
-	    output((char *) discussion->name);
-	    print(" [%d members]",discussion->members.Count());
 	 }
       }
       output(Colon);
