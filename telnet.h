@@ -71,6 +71,7 @@ const int TelnetEnabled = (TelnetDoDont|TelnetWillWont);
 
 class Telnet: public FD {	// Data about a particular telnet connection.
 private:
+   static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
 public:
    const width = 80;		// Hardcoded screen width ***
@@ -102,6 +103,7 @@ public:
 
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
+   static int Count() { return count; }
    void Closed();
    void Prompt(char *p);
    boolean AtEnd() { return boolean(point == free); }
