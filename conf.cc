@@ -664,7 +664,7 @@ void process_input(Telnet *telnet,char *line)
       if (sscanf(sendlist,"#%d%c",&i,&c) == 1) {
 	 telnet->session->SendByFD(i,sendlist,explicit,p);
       } else if (!strcmp(sendlist,"everyone")) {
-	 FD::fdtable.SendEveryone(telnet,p);
+	 telnet->session->SendEveryone(p);
       } else {
 	 FD::fdtable.SendPrivate(telnet,sendlist,explicit,p);
       }

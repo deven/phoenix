@@ -157,35 +157,6 @@ void FDTable::nuke(Telnet *telnet,int fd,int drain)
    }
 }
 
-void FDTable::SendEveryone(Telnet *telnet,char *msg)
-{
-   Session *s;
-   int sent,i;
-
-   telnet->session->ResetIdle(10);
-
-   sent = 0;
-   for (s = sessions; s; s = s->next) {
-      if (s->telnet != telnet) {
-	 sent++;
-	 s->telnet->PrintMessage(Public,telnet->session->name,
-				 telnet->session->name_only,0,msg);
-      }
-   }
-
-   switch (sent) {
-   case 0:
-      telnet->print("%c%cThere is no one else here! (message not sent)\n",Bell,Bell);
-      break;
-   case 1:
-      telnet->print("(message sent to everyone.) [1 person]\n");
-      break;
-   default:
-      telnet->print("(message sent to everyone.) [%d people]\n",sent);
-      break;
-   }
-}
-
 // Send private message by partial name match.
 void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
 {
