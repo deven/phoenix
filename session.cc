@@ -2153,6 +2153,8 @@ void Session::DoMessage(char *line) // Do message send.
 
    line = message_start(line,send,explicit);
 
+   if (explicit) last_explicit = send;
+
    // Use last sendlist if none specified.
    if (!send) {
       if (last_sendlist) {
