@@ -158,14 +158,14 @@ void Telnet::command(char *buf)	// queue command data
 {
    if (!buf || !*buf) return;	// return if no data
    WriteSelect();		// Always write for command output.
-   while (*buf) Command.out(*((unsigned char *)buf++));
+   while (*buf) Command.out(*((unsigned char *) buf++));
 }
 
 void Telnet::command(char *buf,int len) // queue command data (with length)
 {
    if (!buf || !*buf) return;	// return if no data
    WriteSelect();		// Always write for command output.
-   while (len--) Command.out(*((unsigned char *)buf++));
+   while (len--) Command.out(*((unsigned char *) buf++));
 }
 
 void Telnet::OutputWithRedraw(char *buf)
