@@ -868,7 +868,7 @@ void Telnet::accept_input()	// Accept input line.
       if (History.Count() >= HistoryMax) History.RemHead();
 
       // Add new history line.
-      History.AddTail(new StringObj(data, free - data));
+      if (free > data) History.AddTail(new StringObj(data, free - data));
    }
 
    // Flush any pending output to connection.
