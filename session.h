@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.27 2000/03/22 04:06:48 deven Exp $
+// $Id: session.h,v 1.28 2000/03/22 07:13:37 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.28  2000/03/22 07:13:37  deven
+// Added output(const char *buf).
+//
 // Revision 1.27  2000/03/22 04:06:48  deven
 // Updated copyright dates and whitespace conventions.
 //

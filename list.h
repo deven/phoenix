@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.9 2000/03/22 04:04:23 deven Exp $
+// $Id: list.h,v 1.10 2000/03/22 07:12:31 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.10  2000/03/22 07:12:31  deven
+// Added forward declarations for List and ListIter.  Rewrote operator ->()
+// and operator Type *().
+//
 // Revision 1.9  2000/03/22 04:04:23  deven
 // Updated copyright dates and whitespace conventions.
 //
