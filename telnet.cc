@@ -703,21 +703,48 @@ inline void Telnet::erase_line() // Erase input line.
 
 inline void Telnet::previous_line() // Go to previous input line.
 {
-   erase_line();
-   if (history--) {
-      InsertString(*((StringObj *) history));
+   // Check if at the start of the current line.
+   if (Point()) {
+      // Either move up a screen line or go to the beginning of the line.
+      int lines = PointLine() - StartLine();
+      if (lines && Point() - Start() > width) {
+	 point -= width;
+	 echo("\033[A");	// ANSI! ***
+      } else {
+	 beginning_of_line();
+      }
    } else {
-      output(Bell);
+      // Go to previous history input line.
+      erase_line();
+      if (history--) {
+	 InsertString(*((StringObj *) history));
+	 beginning_of_line();
+      } else {
+	 output(Bell);
+      }
    }
 }
 
 inline void Telnet::next_line()	// Go to next input line.
 {
-   erase_line();
-   if (history++) {
-      InsertString(*((StringObj *) history));
+   // Check if at the end of the current line.
+   if (AtEnd()) {
+      erase_line();
+      if (history++) {
+	 InsertString(*((StringObj *) history));
+	 beginning_of_line();
+      } else {
+	 output(Bell);
+      }
    } else {
-      output(Bell);
+      // Either move down a screen line or go to the end of the line.
+      int lines = EndLine() - PointLine();
+      if (lines && End() - Point() > width) {
+	 point += width;
+	 echo("\033[B");	// ANSI! ***
+      } else {
+	 end_of_line();
+      }
    }
 }
 
