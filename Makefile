@@ -60,12 +60,13 @@ SRCS = assoc.cc discussion.cc fdtable.cc listen.cc output.cc outstr.cc \
 	phoenix.cc session.cc sendlist.cc string.cc telnet.cc user.cc
 OBJS = assoc.o discussion.o fdtable.o listen.o output.o outstr.o phoenix.o \
 	session.o sendlist.o string.o telnet.o user.o
+LIBS = -lgdbm
 
 all: $(EXEC) restart
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
-	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 
 $(OBJS): $(HDRS)
 

@@ -67,7 +67,7 @@ void Assoc::Delete(String &key)
    }
 }
 
-String &Assoc::Fetch(String &key)
+String Assoc::Fetch(String &key)
 {
    int hash = Hash(key);
    Pointer<AssocEntry> entry(bucket[hash]);
@@ -109,5 +109,91 @@ Pointer<AssocEntry> AssocIter::operator ++() {
       }
       bucket = 0;
    }
+   return entry;
+}
+
+void ExtAssoc::Store(String &key,String &value)
+{
+   datum k,v;
+
+   if (!dbf) return;
+   k.dptr = ~key;
+   k.dsize = key.length();
+   v.dptr = ~value;
+   v.dsize = value.length();
+   gdbm_store(dbf,k,v,GDBM_REPLACE);
+}
+
+void ExtAssoc::Delete(String &key)
+{
+   datum k;
+
+   if (!dbf) return;
+   k.dptr = ~key;
+   k.dsize = key.length();
+   if (gdbm_exists(dbf,k)) gdbm_delete(dbf,k);
+}
+
+String ExtAssoc::Fetch(String &key)
+{
+   datum k,v;
+
+   if (!dbf) return "";
+   k.dptr = ~key;
+   k.dsize = key.length();
+   v = gdbm_fetch(dbf,k);
+   if (v.dptr) {
+      String value(v.dptr,v.dsize);
+      free(v.dptr);
+      return value;
+   } else {
+      return "";
+   }
+}
+
+String ExtAssoc::Fetch(String key) const
+{
+   datum k,v;
+
+   if (!dbf) return "";
+   k.dptr = ~key;
+   k.dsize = key.length();
+   v = gdbm_fetch(dbf,k);
+   if (v.dptr) {
+      String value(v.dptr,v.dsize);
+      free(v.dptr);
+      return value;
+   } else {
+      return "";
+   }
+}
+
+ExtAssocEntry &ExtAssoc::operator [](String &key)
+{
+   return ExtAssocEntry(this,key);
+}
+
+void ExtAssocIter::GetFirst()
+{
+   datum k;
+
+   if (!array->dbf) return;
+   k = gdbm_firstkey(array->dbf);
+   String key(k.dptr,k.dsize);
+   free(k.dptr);
+   entry = (*array)[key];
+}
+
+ExtAssocEntry &ExtAssocIter::operator ++()
+{
+   datum k,n;
+
+   if (!array->dbf) return entry;
+   k.dptr = ~entry.Key();
+   k.dsize = entry.Key().length();
+   n = gdbm_nextkey(array->dbf,k);
+   String nextkey(n.dptr,n.dsize);
+   free(n.dptr);
+   entry = (*array)[nextkey];
    return entry;
 }
