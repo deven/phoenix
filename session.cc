@@ -53,7 +53,7 @@ Session::~Session()
    Close();
 }
 
-void Session::Close(boolean drain = true) // Close session.
+void Session::Close(boolean drain) // Close session.
 {
    inits.Remove(this);
    sessions.Remove(this);
@@ -218,9 +218,8 @@ boolean Session::FindSendable(char *sendlist, Session *&session,
 			      Set<Session> &sessionmatches,
 			      Discussion *&discussion,
 			      Set<Discussion> &discussionmatches,
-			      boolean member = false, boolean exact = false,
-			      boolean do_sessions = true,
-			      boolean do_discussions = true)
+			      boolean member, boolean exact,
+			      boolean do_sessions, boolean do_discussions)
 {
    int pos, count = 0;
    Session *sessionlead = 0;
@@ -295,7 +294,7 @@ Session *Session::FindSession(char *sendlist, Set<Session> &matches)
 }
 
 Discussion *Session::FindDiscussion(char *sendlist, Set<Discussion> &matches,
-				    boolean member = false)
+				    boolean member)
 {
    Session *session;
    Discussion *discussion;
@@ -719,7 +718,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
 }
 
 // Reset and return idle time, maybe report.
-int Session::ResetIdle(int min = 10)
+int Session::ResetIdle(int min)
 {
    Timestamp now;
    int idle = (now - message_time) / 60;
@@ -1763,7 +1762,7 @@ void Session::DoSend(char *args) // Do /send command.
 }
 
 // Do /blurb command (or blurb set on entry).
-void Session::DoBlurb(char *start, boolean entry = false)
+void Session::DoBlurb(char *start, boolean entry)
 {
    while (*start && isspace(*start)) start++;
    if (*start) {
