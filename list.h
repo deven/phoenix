@@ -29,7 +29,7 @@ private:
 };
 
 template <class Type>
-class List: public Object {
+class List {
 friend class ListIter<Type>;
 private:
    typedef ListNode<Type> NodeType;
@@ -112,15 +112,14 @@ template <class Type>
 class ListIter {
 private:
    typedef ListNode<Type> NodeType;
-   typedef List<Type> ListType;
    Pointer<NodeType> ptr,last;
-   Pointer<ListType> list;
+   List<Type> *list;
 public:
    ListIter() { }
-   ListIter(ListType &l): list(&l) { }
-   ListIter(Pointer<ListType> &l): list(l) { }
-   ListIter &operator =(ListType &l) { list = &l; ptr = last = 0; }
-   ListIter &operator =(Pointer<ListType> &l) { list = l; ptr = last = 0; }
+   ListIter(List<Type> &l): list(&l) { }
+   ListIter(List<Type> *l): list(l) { }
+   ListIter &operator =(List<Type> &l) { list = &l; ptr = last = 0; }
+   ListIter &operator =(List<Type> *l) { list = l; ptr = last = 0; }
    Type *operator ->() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
    Type *operator --();
