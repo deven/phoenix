@@ -825,8 +825,8 @@ void Telnet::accept_input()	// Accept input line.
       Echo = 0;
       Echo_callback = LSGA_callback = RSGA_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
-             "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
-             "if you need it.)\n\n");
+	     "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
+	     "if you need it.)\n\n");
       Welcome();
       if (!*data) return;	// Don't queue line if blank.
    }
@@ -841,13 +841,13 @@ void Telnet::accept_input()	// Accept input line.
       // Check for "on" or "off" value for echo.
       char *value = getword(tmp);
       if (match(value,"on")) {
-         Echo = (TelnetWillWont | TelnetDoDont);
-         output("Remote echoing is now enabled.\n");
+	 Echo = (TelnetWillWont | TelnetDoDont);
+	 output("Remote echoing is now enabled.\n");
       } else if (match(value,"off")) {
-         Echo = 0;
-         output("Remote echoing is now disabled.\n");
+	 Echo = 0;
+	 output("Remote echoing is now disabled.\n");
       } else {
-         output("Usage: /set echo [on|off]\n");
+	 output("Usage: /set echo [on|off]\n");
       }
 
       // Done with this input line, but leave prompt if any.
