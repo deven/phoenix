@@ -759,9 +759,11 @@ int main(int argc,char **argv)	// main program
 #ifdef USE_SIGIGNORE
 	 sigignore(SIGHUP);
 	 sigignore(SIGINT);
+	 sigignore(SIGPIPE);
 #else
 	 signal(SIGHUP,SIG_IGN);
 	 signal(SIGINT,SIG_IGN);
+	 signal(SIGPIPE,SIG_IGN);
 #endif
 	 signal(SIGQUIT,quit);
 	 signal(SIGTERM,quit);
