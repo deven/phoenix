@@ -20,6 +20,8 @@ public:
    char last_sendlist[SendlistLen];    // last explicit sendlist
    time_t login_time;		// time logged in
    time_t message_time;		// time signed on
+   char reply_sendlist[SendlistLen];   // reply sendlist for last sender
+
    Session(Telnet *t);		// constructor
    ~Session();			// destructor
    int ResetIdle(int min);	// Reset and return idle time, maybe report.

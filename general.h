@@ -39,8 +39,10 @@ const int NameLen = 33;		// maximum length of name (including null)
 const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int Port = 6789;		// TCP port to run on
 
-// Character codes.
-enum Char {
+// enumerations
+enum MessageType {Public,Private}; // types of messages
+
+enum Char {			// Character codes.
    Null, ControlA, ControlB, ControlC, ControlD, ControlE, ControlF, ControlG,
    ControlH, ControlI, ControlJ, ControlK, ControlL, ControlM, ControlN,
    ControlO, ControlP, ControlQ, ControlR, ControlS, ControlT, ControlU,

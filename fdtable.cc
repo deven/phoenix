@@ -146,8 +146,8 @@ void FDTable::SendByFD(Telnet *telnet,int fd,char *sendlist,int explicit,
    if ((t = (Telnet *) array[fd]) && t->type == TelnetFD) {
       telnet->session->ResetIdle(10);
       telnet->print("(message sent to %s.)\n",t->session->name);
-      t->PrintWithRedraw("%c\n >> Private message from %s: [%s]\n - %s\n",Bell,
-			 telnet->session->name,date(0,11,5),msg);
+      t->PrintMessage(Private,telnet->session->name,
+		      telnet->session->name_only,0,msg);
    } else {
       telnet->print("%c%cThere is no user on fd #%d. (message not sent)\n",
 		    Bell,Bell,fd);
@@ -165,9 +165,8 @@ void FDTable::SendEveryone(Telnet *telnet,char *msg)
    for (s = sessions; s; s = s->next) {
       if (s->telnet != telnet) {
 	 sent++;
-	 s->telnet->PrintWithRedraw("%c\n -> From %s to everyone: [%s]\n"
-				    " - %s\n",Bell,telnet->session->name,
-				    date(0,11,5),msg);
+	 s->telnet->PrintMessage(Public,telnet->session->name,
+				 telnet->session->name_only,0,msg);
       }
    }
 
@@ -221,8 +220,8 @@ void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
    case 1:			// Found single match, send message.
       telnet->session->ResetIdle(10);
       telnet->print("(message sent to %s.)\n",dest->session->name);
-      dest->PrintWithRedraw("%c\n >> Private message from %s: [%s]\n - %s\n",
-			    Bell,telnet->session->name,date(0,11,5),msg);
+      dest->PrintMessage(Private,telnet->session->name,
+			 telnet->session->name_only,0,msg);
       break;
    default:			// Multiple matches.
       telnet->print("\"%s\" matches %d names, including \"%s\". "
