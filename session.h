@@ -88,7 +88,7 @@ public:
    }
    void EnqueueOthers(Pointer<Output> out) { // Enqueue output to others.
       Pointer<Session> session;
-      for (session = sessions; !session.Null(); session = session->next) {
+      for (session = sessions; session; session = session->next) {
 	 if (session == this) continue;
 	 session->Enqueue(out);
       }
