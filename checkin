@@ -23,7 +23,7 @@ for x in $*; do
       else
          y="`ls -l $x`"
          (ls -l $x; rcsdiff -c $x) 2>&1 | less
-         echo -n "Continue with checkin? [yes] "
+         echo -n "Continue with checkin of $x? [yes] "
          read z
          case "$z" in [Nn]*) continue;; [Qq]*) exit 0;; *) ;; esac
          rcs -l $x
