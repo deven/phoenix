@@ -39,7 +39,7 @@ void ShutdownEvent::ShutdownWarning(char *by, time_t when)
 void ShutdownEvent::FinalWarning()
 {
    final = true;
-   SetRelTime(3);
+   SetRelTime(FinalWarningTime);
    log("Final shutdown warning.");
    Session::announce("\a>>> Server shutting down NOW!  Goodbye. <<<\n\a");
 }
@@ -73,7 +73,7 @@ void RestartEvent::RestartWarning(char *by, time_t when)
 void RestartEvent::FinalWarning()
 {
    final = true;
-   SetRelTime(3);
+   SetRelTime(FinalWarningTime);
    log("Final restart warning.");
    Session::announce("\a>>> Server restarting NOW!  Goodbye. <<<\n\a");
 }

@@ -62,6 +62,7 @@ class ShutdownEvent: public Event {
 private:
    boolean final;
 public:
+   static const int FinalWarningTime = 3;
    void ShutdownWarning(char *by, time_t when);
    void FinalWarning();
    void ShutdownServer();
@@ -79,6 +80,7 @@ class RestartEvent: public Event {
 private:
    boolean final;
 public:
+   static const int FinalWarningTime = 3;
    void RestartWarning(char *by, time_t when);
    void FinalWarning();
    void RestartServer();
