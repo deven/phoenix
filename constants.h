@@ -20,9 +20,6 @@
 //
 // $Log$
 
-// General parameters.
-const int DefaultPort = PORT;	// TCP port to run on
-
 // Internal character constants.
 const unsigned char UnquotedUnderscore = 128, Separator = 129;
 
