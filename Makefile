@@ -14,12 +14,14 @@
 # Initial revision
 #
 
-CC = /usr/ucb/cc
+CC = gcc -bsd
 CFLAGS = -g
 EXEC = conf
-HDRS =
+HDRS = conf.h
 SRCS = conf.c
 OBJS = $(SRCS:.c=.o)
+
+all: conf restart
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
@@ -27,7 +29,10 @@ $(EXEC): $(OBJS)
 
 $(OBJS): $(HDRS)
 
-clean:
-	rm -f $(EXEC) $(OBJS) core *~
+restart.o: conf.h
 
-conf.c: conf.h
+restart: restart.o
+	$(CC) $(CFLAGS) -o restart restart.o
+
+clean:
+	rm -f restart restart.o $(EXEC) $(OBJS) core *~
