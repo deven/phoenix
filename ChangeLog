@@ -1,5 +1,98 @@
 $Id: ChangeLog,v 1.4 2002/12/01 04:59:20 deven Exp $
 
+2003-02-21  Deven T. Corzine  <deven@ties.org>
+
+ * session.cc (Session::CheckNameAvailability): Added new function to check for
+   availability and later double-check after other prompts to avoid creating
+   duplicate sessions with the same name, or infringing newly-reserved names
+   or new discussions, etc.
+
+ * session.cc (Session::Transfer): Fixed bug which caused both connections to
+   close when transferring a guest session, but then disabled the transfer
+   functionality for guests, who weren't meant to have it anyhow.
+
+ * session.h, session.cc (Session::Blurb -> Session::EnteredBlurb): Renamed
+   Blurb() to EnteredBlurb().
+
+ * event.h (Event::SetRelTime): Change parameter type from time_t to int.
+ * event.cc (ShutdownEvent::FinalWarning, RestartEvent::FinalWarning), event.h:
+   Added constants for final warning time in shutdown/restart events.
+
+ * event.cc, event.h, session.cc, telnet.cc, telnet.h: Added login timeout.
+
+ * configure.ac: Added check for crypt() function.
+ * makepw.c, session.cc: Modified to generate a compile-time error if crypt()
+   is not available.
+
+ * KLUDGES: Removed note about Amiga ANSI terminal types; this was fixed
+   earlier to work with proper ANSI terminal types.  Removed note about guest
+   account being hardcoded -- it still is, but not it's controlled by the
+   configure script, so let's call it a feature!
+
+2003-02-18  Deven T. Corzine  <deven@ties.org>
+
+ * PORTING: Noted Cygwin support.
+
+ * session.cc, telnet.cc, telnet.h: Implemented CloseOnEOF flag to close on
+   Ctrl-D during login sequence.
+
+ * session.h, set.h, string2.h, string.cc, system.h, telnet.cc, telnet.h,
+   timestamp.cc, timestamp.h, user.cc, user.h, block.h, boolean.h, constants.h,
+   discussion.cc, discussion.h, event.cc, event.h, eventqueue.cc, eventqueue.h,
+   fd.h, fdtable.cc, fdtable.h, functions.h, gangplank.cc, gangplank.h,
+   general.h, globals.h, hash.cc, hash.h, line.h, listen.cc, listen.h, list.h,
+   Makefile.am, makepw.c, most.cc, name.h, object.h, outbuf.h, output.cc,
+   output.h, outstr.cc, outstr.h, passwd, pointer.h, restart.c, sendlist.cc,
+   sendlist.h, session.cc: Updated copyright dates.
+
+ * bootstrap, configure.ac: Added copyright boilerplate.
+
+ * session.cc (Session::DoWho): Modified to wrap long names only once when
+   listing in full -- if the name is still too long, it will simply be wrapped
+   by the terminal.
+
+ * string2.h, string.cc: Modified to use size_t type.  Changed Extra constant
+   to 128 bytes.  Added assign(), append() and prepend() methods for buffers.
+   Avoided unnecessary reallocations for numeric assignments.  Modified %s
+   escape in vsprintf() to use new buffer form of append() instead of creating
+   a temporary String, and to remove a redundant call to strlen().
+
+ * string.cc (String::vsprintf): Moved variable declarations outside of switch
+   statement for portability.
+
+2003-02-17  Deven T. Corzine  <deven@ties.org>
+
+ * session.cc, session.h: Added MaxLoginAttempts and removed "Login incorrect"
+   for invalid logins.
+
+ * user.cc, user.h: Added BufSize constant, increased size to 1024 bytes.
+ * timestamp.cc, timestamp.h: Added MaxFormattedLength constant, modified to
+   use strncpy() for safety.
+
+ * session.cc: Forgot to fix the comparison when reducing the display of
+   discussion titles!
+
+ * string2.h, string.cc (String::vsprintf, String::sprintf): Added functions.
+ * gangplank.cc, sendlist.cc, session.cc, telnet.cc: Modified to use
+   String::vsprintf() and String::sprintf() in preference to the system
+   vsprintf() and sprintf() functions, to avoid buffer overflows.
+
+ * string2.h, string.cc: Added NumberLength constant and operator =() calls for
+   numeric assignment.
+
+ * string2.h (String::String): Modified default constructor to allocate extra
+   bytes.
+
+ * constants.h, gangplank.cc: Removed DefaultPort constant in favor of using
+   configured PORT parameter.
+ * constants.h, telnet.h: Moved InputSize constant into Telnet class, increased
+   size to 1024 bytes.
+ * block.h, constants.h, outbuf.h: Moved BlockSize constant into Block class,
+   increased size to 4096 bytes.
+ * constants.h, telnet.h: Moved BufSize constant into Telnet class.
+
+ * configure.ac: Updated version number.  Added check for <stdarg.h>.
+
 2002-11-30  Deven T. Corzine  <deven@ties.org>
 
  * Version 1.0.0.beta.8 released.
