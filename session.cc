@@ -2681,6 +2681,8 @@ void Session::SendMessage(Sendlist *sendlist, char *msg)
 
    if (count > 1) {
       print(".) [%d people]\n", count);
+   } else if (count == 1 && sendlist->discussions.Count()) {
+      print(".) [1 person]\n");
    } else {
       output(".)\n");
    }
