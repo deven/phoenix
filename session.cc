@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.50 2000/11/29 07:55:22 deven Exp $
+// $Id: session.cc,v 1.51 2000/11/29 08:19:31 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.51  2000/11/29 08:19:31  deven
+// Modified to automatically create discussion A (if necessary) and join it
+// whenever someone signs in.  (Discussion A will have no creator set at all.)
+//
 // Revision 1.50  2000/11/29 07:55:22  deven
 // Added "width" and "height" variables to "/set" and "/display" commands to
 // view or control the (understood) terminal size.  Added "echo" variable to

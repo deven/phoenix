@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.10 2000/03/22 04:08:38 deven Exp $
+// $Id: discussion.cc,v 1.11 2000/11/29 08:18:45 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.11  2000/11/29 08:18:45  deven
+// Modified to allow system-created discussions to not have a creator.
+//
 // Revision 1.10  2000/03/22 04:08:38  deven
 // Updated copyright dates and whitespace conventions.
 //
