@@ -138,7 +138,10 @@ void FDTable::SendByFD(Telnet *telnet,int fd,char *sendlist,int explicit,
    Telnet *t;
 
    // Save last sendlist if explicit.
-   if (explicit && *sendlist) strcpy(telnet->session->last_sendlist,sendlist);
+   if (explicit && *sendlist) {
+      strncpy(telnet->session->last_sendlist,sendlist,SendlistLen);
+      telnet->session->last_sendlist[SendlistLen - 1] = 0;
+   }
 
    if ((t = (Telnet *) array[fd]) && t->type == TelnetFD) {
       time(&telnet->session->message_time); // reset idle tme
@@ -188,7 +191,10 @@ void FDTable::SendPrivate(Telnet *telnet,char *sendlist,int explicit,char *msg)
    int matches,i;
 
    // Save last sendlist if explicit.
-   if (explicit && *sendlist) strcpy(telnet->session->last_sendlist,sendlist);
+   if (explicit && *sendlist) {
+      strncpy(telnet->session->last_sendlist,sendlist,SendlistLen);
+      telnet->session->last_sendlist[SendlistLen - 1] = 0;
+   }
 
    if (!strcmp(sendlist,"me")) {
       matches = 1;
