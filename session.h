@@ -60,20 +60,25 @@ public:
    }
    void print(char *format,...); // formatted output
 
-   void Enqueue(Output *out) {	// Enqueue output buffer and object.
-      char *buf = Output.GetData();
-      if (buf) Pending.Enqueue(telnet,new Text(buf));
-      Pending.Enqueue(telnet,out);
-   }
    void EnqueueOutput(void) {	// Enqueue output buffer.
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet,new Text(buf));
+   }
+   void Enqueue(Output *out) {	// Enqueue output buffer and object.
+      EnqueueOutput();
+      Pending.Enqueue(telnet,out);
    }
    void EnqueueOthers(Output *out) { // Enqueue output to others.
       for (Session *session = sessions; session; session = session->next) {
 	 if (session == this) continue;
 	 session->Enqueue(out);
       }
+   }
+   void AcknowledgeOutput(void) { // Output acknowledgement.
+      Pending.Acknowledge();
+   }
+   boolean OutputNext(Telnet *telnet) { // Output next output block to Telnet.
+      return Pending.SendNext(telnet);
    }
 
    void Login(char *line);
