@@ -51,7 +51,7 @@ LDFLAGS =
 # CFLAGS = -g -DHOME='"/u/deven/src/conf"'
 # LDFLAGS =
 
-CC = gcc
+CC = gcc -bi486-linuxaout -V2.5.8
 EXEC = phoenixd
 HDRS = phoenix.h other.h object.h string.h assoc.h list.h set.h general.h \
 	line.h block.h outbuf.h name.h output.h outstr.h discussion.h \
