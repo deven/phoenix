@@ -50,10 +50,6 @@
 #endif
 
 // For compatibility.
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK EAGAIN
-#endif
-
 #ifndef ECONNTIMEDOUT
 #define ECONNTIMEDOUT ETIMEDOUT
 #endif
