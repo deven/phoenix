@@ -582,7 +582,8 @@ void process_input(Telnet *telnet,char *line)
 	       telnet->session->blurb[len] = 0;
 	       sprintf(telnet->session->name,"%s [%s]",
 		       telnet->session->name_only,telnet->session->blurb);
-	       telnet->print("Your blurb has been set to [%s].\n",
+	       telnet->print("Your blurb has been %s to [%s].\n",
+			     end - start > len ? "truncated" : "set",
 			     telnet->session->blurb);
 	    } else {
 	       if (telnet->session->blurb[0]) {
