@@ -723,7 +723,6 @@ void Session::ProcessInput(char *line)
    } else if (!strcmp(line," ")) {
       DoReset();
    } else if (*line) {
-      trim(line);
       DoMessage(line);
    }
 }
@@ -2273,6 +2272,7 @@ void Session::DoMessage(char *line) // Do message send.
    boolean explicit = false;	// Assume implicit sendlist.
 
    line = message_start(line,send,explicit);
+   trim(line);
 
    if (explicit) last_explicit = send;
 
