@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: makepw.c,v 1.7 2003/02/21 03:07:54 deven Exp $
+ * $Id: makepw.c,v 1.8 2003/02/24 06:32:49 deven Exp $
  *
  * Utility program to encrypt a single password in standard Unix "crypt" form.
  *
@@ -19,6 +19,9 @@
  * for more information or if any conditions of this licensing are unclear.
  *
  * $Log: makepw.c,v $
+ * Revision 1.8  2003/02/24 06:32:49  deven
+ * Removed crypt() check.
+ *
  * Revision 1.7  2003/02/21 03:07:54  deven
  * Modified to generate a compile-time error if crypt() is not available.
  *

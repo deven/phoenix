@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.11 2003/02/22 04:39:59 deven Exp $
+// $Id: telnet.cc,v 1.12 2003/02/24 06:35:42 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.12  2003/02/24 06:35:42  deven
+// Removed inet_ntoa() check.
+//
 // Revision 1.11  2003/02/22 04:39:59  deven
 // Modified Session::SetInputFunction() to set prompt with input function.
 //

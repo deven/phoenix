@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: listen.h,v 1.2 2003/02/18 05:08:56 deven Exp $
+// $Id: listen.h,v 1.3 2003/02/24 06:31:03 deven Exp $
 //
 // Listen class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: listen.h,v $
+// Revision 1.3  2003/02/24 06:31:03  deven
+// Added Listen::PortBusy() function for -cron option.
+//
 // Revision 1.2  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //
