@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: general.h,v 1.2 1993/12/11 07:37:36 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.2  1993/12/11 07:37:36  deven
+// Portability fix: if ECONNTIMEDOUT is undefined, define as ETIMEDOUT. (Sun)
+// Removed declaration for global fdtable. (now static member of class FD)
+// Removed declarations for global fd_sets readfds and writefds. (now static
+// members of class FDTable)
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //

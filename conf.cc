@@ -1,12 +1,20 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: conf.cc,v 1.2 1993/12/11 07:45:33 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.2  1993/12/11 07:45:33  deven
+// Removed global buffers, added buffers local to functions instead.  Removed
+// definition for fdtable. (now static member in class FD) Removed definitions
+// for fd_sets readfds and writefds. (now static members in class FDTable)
+// Changed all occurrences of fdtable to FD::fdtable. (kludge)  Fixed checking
+// for blurb text quoting with ""'s or []'s.  Removed FD_ZERO for readfds and
+// writefds. (now in FDTable::FDTable())  Removed unused variables in main().
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //

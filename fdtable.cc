@@ -1,12 +1,19 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: fdtable.cc,v 1.2 1993/12/11 07:55:00 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.2  1993/12/11 07:55:00  deven
+// Removed global buffer, added local buffer in function.  Added definitions
+// for FD::fdtable, FDTable::readfds and FDTable::writefds.  Added FD_ZERO's
+// for initializing readfds and writefds to FDTable::FDTable().  Added new
+// member function FD *FDTable::Closed(int fd), made FDTable::Close(int fd)
+// just delete Closed(fd).
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
