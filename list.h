@@ -29,6 +29,7 @@ private:
 public:
    List(): count(0) { }
    ~List() { while (Dequeue()) ; }
+   int Count() { return count; }
    int AddHead(Pointer<Type> &ptr);
    int AddTail(Pointer<Type> &ptr);
    Pointer<Type> RemHead();
