@@ -68,6 +68,7 @@ public:
    const char *operator ~() const { return str; }
    char *operator ~() { return str; }
    operator const char *() const { return str; }
+   operator const char *() { return str; }
    operator char *() { return str; }
    operator int() { return len; }
 #ifdef BOOL_TYPE
