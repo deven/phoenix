@@ -1203,7 +1203,7 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
       if (mark) args = mark + 1;
    }
 
-   Pointer<Sendlist> sendlist = new Sendlist(*this, send, true);
+   Pointer<Sendlist> sendlist(new Sendlist(*this, send, true));
    sendlist->Expand(who, 0);
 
    ListIter<Session> s(sessions);
@@ -1554,7 +1554,7 @@ void Session::DoIdle(char *args) // Do /idle command.
 
 void Session::DoWhat(char *args) // Do /what command.
 {
-   Pointer<Sendlist> sendlist = new Sendlist(*this, args, true, false, true);
+   Pointer<Sendlist> sendlist(new Sendlist(*this, args, true, false, true));
    Timestamp now;
    int idle, days, hours, minutes;
    int i, extend = 0;
@@ -2113,7 +2113,7 @@ void Session::DoOops(char *args) // Do /oops command.
          return;
       }
 
-      Pointer<Sendlist> sendlist = new Sendlist(*this, args);
+      Pointer<Sendlist> sendlist(new Sendlist(*this, args));
       String text = last_message->text;
 
       SendMessage(last_message->to, oops_text);
