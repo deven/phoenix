@@ -48,7 +48,7 @@
 
 # Sun:
 CFLAGS = -g -Wall
-LDFLAGS =
+LDFLAGS = -static
 
 # Mach:
 # CFLAGS = -g -DHOME='"/u/deven/src/conf"'
