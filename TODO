@@ -1,0 +1,45 @@
+add "account" layer also, for account (person) versus "user" (alias)?
+
+perhaps support highlighting somehow?
+
+filter out control characters from messages
+
+message length limits?
+
+word wrapping
+
+real accounts
+
+server echoing
+
+telnet linemode option
+
+line editing and redraw
+
+session layer (multi-session<->multi-user?)
+
+users all in memory
+
+output to files merged?
+
+support tcp w/o telnet by not blocking on options and assuming no telnet unless/until reply received.
+
+session -> add redraw -> telnet
+
+no go aheads unless sga *refused*  no block at least
+
+check options against 0 or 3,could be 1 or 2!!
+
+make user accounts
+
+privilege levels
+
+allow changed privileges with a !command
+
+log !commands?
+
+when echoing straight text, try to block it up
+
+previous idle time when reset
+
+timed messages -- delayed send, timeouts
