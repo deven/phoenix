@@ -301,7 +301,7 @@ va_dcl
 }
 
 /* VARARGS1 */
-void announce(format,va_alist) /* formatted write to all users */
+void announce(format,va_alist)	/* formatted write to all connections */
 char *format;
 va_dcl
 {
@@ -313,6 +313,24 @@ va_dcl
    va_end(ap);
    for (telnet = connections; telnet; telnet = telnet->next) {
       output(telnet,buf);
+   }
+}
+
+/* VARARGS1 */
+void notify(format,va_alist)	/* formatted write to all sessions */
+char *format;
+va_dcl
+{
+   struct session *session;
+   va_list ap;
+
+   va_start(ap);
+   (void) vsprintf(buf,format,ap);
+   va_end(ap);
+   for (session = sessions; session; session = session->next) {
+      undraw_line(session->telnet); /* undraw input line */
+      output(session->telnet,buf);
+      redraw_line(session->telnet); /* redraw input line */
    }
 }
 
@@ -744,7 +762,7 @@ void name(struct telnet *telnet,char *line)
    }
 
    /* Announce entry. */
-   announce("*** %s has entered conf! [%s] ***\n",telnet->session->name,
+   notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
 	    date(time(&telnet->session->login_time),11,5));
    telnet->session->message_time = telnet->session->login_time;
    log("Enter: %s (%s) on fd %d.",telnet->session->name,
@@ -1183,8 +1201,7 @@ void close_connection(struct telnet *telnet)
       telnet2->next = telnet->next;
    }
    if (strcmp(telnet->session->name,"[logging in]")) {
-      announce("*** %s has left conf! [%s] ***\n",telnet->session->name,
-	       date(0,11,5));
+      notify("*** %s has left conf! [%s] ***\n",session->name,date(0,11,5));
       log("Exit: %s (%s) on fd %d.",telnet->session->name,
 	  telnet->session->user->user,telnet->fd);
    }
