@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.6 1994/01/02 22:39:33 deven Exp $
+// $Id: fdtable.cc,v 1.7 1994/01/09 05:18:07 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.7  1994/01/09 05:18:07  deven
+// Removed Null() construct for Pointers, modified Pointer conversions.
+//
 // Revision 1.6  1994/01/02 22:39:33  deven
 // Modified to ignore close on unused fd.
 //

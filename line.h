@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: line.h,v 1.2 1994/01/02 11:39:27 deven Exp $
+// $Id: line.h,v 1.3 1994/01/09 05:09:33 deven Exp $
 //
 // Line class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: line.h,v $
+// Revision 1.3  1994/01/09 05:09:33  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.2  1994/01/02 11:39:27  deven
 // Updated copyright notice, made class Line derived from Object, modified
 // to use smart pointers.

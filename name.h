@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: name.h,v 1.2 1994/01/02 11:54:23 deven Exp $
+// $Id: name.h,v 1.3 1994/01/09 05:13:12 deven Exp $
 //
 // Name class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: name.h,v $
+// Revision 1.3  1994/01/09 05:13:12  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.2  1994/01/02 11:54:23  deven
 // Updated copyright notice, made class Name derived from Object, modified
 // to use smart pointers.

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.3 1994/01/02 11:51:30 deven Exp $
+// $Id: listen.cc,v 1.4 1994/01/09 05:19:22 deven Exp $
 //
 // Listen class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
+// Revision 1.4  1994/01/09 05:19:22  deven
+// Fixed to listen on INADDR_ANY instead of looking up hostname.
+//
 // Revision 1.3  1994/01/02 11:51:30  deven
 // Updated copyright notice, added destructor and Closed() functions.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.cc,v 1.3 1994/01/02 12:03:49 deven Exp $
+// $Id: outstr.cc,v 1.4 1994/01/09 05:20:14 deven Exp $
 //
 // OutputStream class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.cc,v $
+// Revision 1.4  1994/01/09 05:20:14  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.3  1994/01/02 12:03:49  deven
 // Updated copyright notice, modified to use smart pointers, added Attach().
 //

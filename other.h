@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: other.h,v 1.4 1994/01/03 10:10:31 deven Exp $
+// $Id: other.h,v 1.5 1994/01/09 06:58:17 deven Exp $
 //
 // Conferencing system server -- Other (system) include files.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: other.h,v $
+// Revision 1.5  1994/01/09 06:58:17  deven
+// Added some declarations for system functions.
+//
 // Revision 1.4  1994/01/03 10:10:31  deven
 // Added system function declarations.
 //

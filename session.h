@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.6 1994/01/03 09:31:54 deven Exp $
+// $Id: session.h,v 1.7 1994/01/09 05:16:26 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.7  1994/01/09 05:16:26  deven
+// Removed Null() construct for Pointers.
+//
 // Revision 1.6  1994/01/03 09:31:54  deven
 // Added DoClear(), removed SendByFD().
 //
