@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.5 1994/04/21 06:06:48 deven Exp $
+// $Id: user.h,v 1.6 1994/06/27 13:21:09 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.6  1994/06/27 13:21:09  deven
+// Replaced CheckReserved() with FindReserved().
+//
 // Revision 1.5  1994/04/21 06:06:48  deven
 // Updated to use List::Remove().
 //

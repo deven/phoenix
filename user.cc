@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.5 1994/04/21 06:19:03 deven Exp $
+// $Id: user.cc,v 1.6 1994/06/27 13:29:20 deven Exp $
 //
 // User class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.cc,v $
+// Revision 1.6  1994/06/27 13:29:20  deven
+// Replaced CheckReserved() with FindReserved(), stat() on passwd file, read
+// only if changed, don't call atoi("0").
+//
 // Revision 1.5  1994/04/21 06:19:03  deven
 // Renamed "conf" to "Phoenix".
 //
