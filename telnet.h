@@ -111,10 +111,11 @@ private:
    static int count;		// Count of telnet connections. (global)
    void LogCaller();		// Log calling host and port.
 public:
-   static const int width = 80;	// Hardcoded screen width ***
+   static const int default_width = 80;	// Hardcoded default screen width ***
    static const int height = 24; // Hardcoded screen height ***
    static const int HistoryMax = 200; // Save last 200 input lines. ***
    static const int KillRingMax = 1; // Save last kill. ***
+   int width;			// current screen width
    Pointer<Session> session;	// back-pointer to session structure
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
