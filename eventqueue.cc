@@ -19,7 +19,7 @@ static int EventCmp(Event *event1, Event *event2)
 
 int EventQueue::Enqueue(Event *event)
 {
-   return queue.PriorityEnqueue(event,EventCmp);
+   return queue.PriorityEnqueue(event, EventCmp);
 }
 
 void EventQueue::Dequeue(Event *event)
