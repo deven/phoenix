@@ -153,9 +153,16 @@
 List<Session> Session::inits;
 List<Session> Session::sessions;
 List<Discussion> Session::discussions;
+Assoc Session::defaults;
+
+void Session::init_defaults()
+{
+   defaults["time_format"] = "verbose";
+}
 
 Session::Session(Pointer<Telnet> &t)
 {
+   if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
    telnet = t;			// Save Telnet pointer.
    InputFunc = NULL;		// No input function.
    lines = NULL;		// No pending input lines.
@@ -747,6 +754,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/date",3)) DoDate(line);
       else if (match(line,"/signal",3)) DoSignal(line);
       else if (match(line,"/set",4)) DoSet(line);
+      else if (match(line,"/display",2)) DoDisplay(line);
       else output("Unknown /command.  Type /help for help.\n");
    } else if (!strcmp(line," ")) {
       DoReset();
@@ -777,29 +785,52 @@ void Session::NotifyExit()	// Notify other users of exit and log.
 
 void Session::PrintTimeLong(int minutes) // Print time value, long format.
 {
+   int format = 0;		// 0 = verbose, 1 = both, 2 = terse.
+   String time_format;
+
+   // Determine time format to use.
+   if (sys_vars.Known("time_format")) {
+      time_format = String(sys_vars["time_format"]);
+   } else {
+      time_format = String(defaults["time_format"]);
+   }
+   if (time_format == "verbose") format = 0;
+   if (time_format == "both") format = 1;
+   if (time_format == "terse") format = 2;
+
+   // Print time in one or both formats.
    int hours = minutes / 60;
    int days = hours / 24;
    minutes -= hours * 60;
    hours -= days * 24;
-   if (!minutes) output(" exactly");
-   if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
-		   minutes ? "," : hours || minutes ? " and" : "");
-   if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
-		    " and" : "");
-   if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
-   if (days) {
-      print(" [%dd%02d:%02d]",days,hours,minutes);
-   } else if (hours) {
-      print(" [%d:%02d]",hours,minutes);
+   if (format <= 1) {
+      if (days || hours || minutes) {
+         if (!minutes) output(" exactly");
+         if (days) print(" %d day%s%s",days,days == 1 ? "" : "s",hours &&
+		         minutes ? "," : hours || minutes ? " and" : "");
+         if (hours) print(" %d hour%s%s",hours,hours == 1 ? "" : "s",minutes ?
+		          " and" : "");
+         if (minutes) print(" %d minute%s",minutes,minutes == 1 ? "" : "s");
+      } else {
+         output(" under a minute");
+      }
    }
+   if (format >= 1) output(" ");
+   if (format == 1) output("(");
+   if (format >= 1) {
+      if (days) {
+         print("%dd%02d:%02d",days,hours,minutes);
+      } else {
+         print("%d:%02d",hours,minutes);
+      }
+   }
+   if (format == 1) output(")");
 }
 
 int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
 {
-   int now,idle,days,hours,minutes;
-
-   now = time(NULL);
-   idle = (now - message_time) / 60;
+   int now = time(NULL);
+   int idle = (now - message_time) / 60;
 
    if (min && idle >= min) {
       output("[You were idle for");
@@ -1022,15 +1053,83 @@ void Session::DoSet(char *args) // Do /set command.
       return;
    }
    if (*var == DollarSign) {
-      output("User variables are not yet implemented.\n");
-      return;
-   }
-   if (match(var,"idle")) {
+      user_vars[var] = args;
+   } else if (match(var,"idle")) {
       SetIdle(args);
-      return;
+   } else if (match(var,"time_format")) {
+      if (match(args,"verbose")) {
+         sys_vars["time_format"] = "verbose";
+      } else if (match(args,"both")) {
+         sys_vars["time_format"] = "both";
+      } else if (match(args,"terse")) {
+         sys_vars["time_format"] = "terse";
+      } else if (match(args,"default")) {
+         sys_vars.Delete("time_format");
+      } else {
+         output("Usage: /set time_format [terse|verbose|both|default]\n");
+      }
+   } else if (match(var,"uptime")) {
+      output("Server uptime is a readonly variable.\n");
    } else {
       print("Unknown system variable: \"%s\"\n",var);
+   }
+}
+
+void Session::DoDisplay(char *args) // Do /display command.
+{
+   char *var;
+
+   if (!*args) {
+      output("Usage: /display <variable>[,<variable>...]\n");
       return;
+   }
+   while (var = getword(args,Comma)) {
+      if (*var == DollarSign) {
+         if (user_vars.Known(var)) {
+            print("%s = \"%s\"\n",var,~user_vars[var]);
+         } else {
+            print("Unknown user variable: \"%s\"\n",var);
+         }
+      } else if (match(var,"idle")) {
+         output("Your idle time is");
+         PrintTimeLong((time(NULL) - message_time) / 60);
+         output(".\n");
+      } else if (match(var,"time_format")) {
+         String time_format;
+
+         output("Your time format is ");
+         if (sys_vars.Known("time_format")) {
+            time_format = String(sys_vars["time_format"]);
+         } else {
+            time_format = String(defaults["time_format"]);
+            output("the default: ");
+         }
+         if (time_format == "verbose") {
+            output("verbose.\n");
+         } else if (time_format == "both") {
+            output("both verbose and terse.\n");
+         } else if (time_format == "terse") {
+            output("terse.\n");
+         }
+      } else if (match(var,"uptime")) {
+         int uptime = (time(NULL) - ServerStartTime) / 60;
+
+         output("This server has been running for");
+         PrintTimeLong(uptime);
+         output(".\n");
+
+         FILE *fp = fopen("/proc/uptime","r");
+         if (fp) {
+            fscanf(fp,"%d",&uptime);
+            uptime /= 60;
+            output("(This machine has been running for");
+            PrintTimeLong(uptime);
+            output(".)\n");
+            fclose(fp);
+         }
+      } else {
+         print("Unknown system variable: \"%s\"\n",var);
+      }
    }
 }
 
@@ -2266,8 +2365,11 @@ body of the message.\n\n\
 Since this technique makes a single space alone on a line effectively the\n\
 same as a blank line, this special case was used instead to reset idle time\n\
 without actually sending any message.  (See \"/help unidle\".)\n");
-   } else if (match(args,"/set",4) || match(args,"set",3)) {
-      if (match(args,"idle",4)) {
+   } else if (match(args,"/set") || match(args,"set")) {
+      if (match(args,"uptime")) {
+         output("\
+Server uptime is a readonly system variable and cannot be set.\n");
+      } else if (match(args,"idle")) {
          output("\
 The \"/set idle\" command is used to set an arbitrary idle time.  Arguments\n\
 are a time specification in the format used by /who. (<d>d<hh>:<mm>)  You\n\
@@ -2278,6 +2380,11 @@ Idle time has no inherent value, and to hoard it is silly.  Yet this has\n\
 been done, if only because of the time needed to build up a high idle time.\n\
 This command is intended to take all the fun out of this game by eliminating\n\
 the challenge of accumulating a high idle time, to discourage such misuse.\n");
+      } else if (match(args,"time_format")) {
+         output("\
+The \"/set time_format\" command will set the current format used to display\n\
+times in a verbose context.\n\n\
+Valid options are: terse, verbose, both, default.\n");
       } else if (*args) {
          print("No help available for \"/set %s\".\n",args);
       } else {
@@ -2286,9 +2393,34 @@ The /set command is used to set both system variables and user variables.\n\
 System variables are specified with predefined keywords, and user variables\n\
 must be prefixed with a dollar sign.  (e.g. \"idle\" is a system variable\n\
 with a predefined purpose, and \"$idle\" is a user variable with no such\n\
-predefined purpose.)  \"idle\" is the only known system variable at present.\n\
-\n\
-(User variables are not yet implemented.)\n");
+predefined purpose.)\n\n\
+Known system variables:\n\n\
+   uptime   idle     time_format\n");
+      }
+   } else if (match(args,"/display",2) || match(args,"display")) {
+      if (match(args,"uptime")) {
+         output("\
+The \"/display uptime\" command will display how long the server has been\n\
+running, and may also display how long the machine has been running.\n");
+      } else if (match(args,"idle")) {
+         output("\
+The \"/display idle\" command will display your idle time.\n");
+      } else if (match(args,"time_format")) {
+         output("\
+The \"/display time_format\" command will display the current format used to\n\
+display times in a verbose context.\n\n\
+Valid options are: terse, verbose, both, default.\n");
+      } else if (*args) {
+         print("No help available for \"/display %s\".\n",args);
+      } else {
+         output("\
+The /display command is used to display both system variables and user\n\
+variables.  System variables are specified with predefined keywords, and\n\
+user variables must be prefixed with a dollar sign.  (e.g. \"idle\" is a\n\
+system variable with a predefined purpose, and \"$idle\" is a user variable\n\
+with no such predefined purpose.)\n\n\
+Known system variables:\n\n\
+   uptime   idle     time_format\n");
       }
    } else if (*args) {
       print("No help available for \"%s\".\n",args);
