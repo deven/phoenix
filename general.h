@@ -20,6 +20,17 @@
 
 enum boolean {false,true};	// boolean data type
 
+// Class declarations.
+class Block;
+class FD;
+class FDTable;
+class Line;
+class Listen;
+class OutputBuffer;
+class Session;
+class Telnet;
+class User;
+
 // General parameters.
 const int BlockSize = 1024;	// data size for block
 const int BufSize = 32768;	// general temporary buffer size
@@ -38,10 +49,6 @@ enum Char {
    Semicolon = ';', Backslash = '\\', Underscore = '_', Delete = 127,
    UnquotedUnderscore = 128	// unquoted underscore character in name
 };
-
-class Telnet;
-class Session;
-class User;
 
 extern "C" char *strerror(int err);
 extern "C" char *inet_ntoa(struct in_addr in);
