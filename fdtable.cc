@@ -111,7 +111,7 @@ void FDTable::Select()		// Select across all ready connections.
 	 InputReady(fd);
 	 found--;
       }
-      if (FD_ISSET(fd,&wfds)) {
+      if (FD_ISSET(fd,&wfds) && fd < used) {
 	 OutputReady(fd);
 	 found--;
       }
