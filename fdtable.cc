@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.3 2002/09/10 04:18:08 deven Exp $
+// $Id: fdtable.cc,v 1.4 2002/09/18 02:09:14 deven Exp $
 //
 // FDTable class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.4  2002/09/18 02:09:14  deven
+// Generate a compile-time error if select() not available.
+//
 // Revision 1.3  2002/09/10 04:18:08  deven
 // Modified to take FD_SETSIZE into account.  This was the portability flaw
 // which kept Cygwin from working.  Also, changed select() call to pass only

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.3 2002/08/14 00:25:45 deven Exp $
+// $Id: system.h,v 1.4 2002/09/17 04:12:52 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.4  2002/09/17 04:12:52  deven
+// Removed BSD checks, added conditional checks for various includes, based on
+// configure's tests.
+//
 // Revision 1.3  2002/08/14 00:25:45  deven
 // Added Macintosh OS X (__APPLE__ && __MACH__) test to list of BSD-derived
 // systems, defined "socklen_t" for BSD-derived systems.

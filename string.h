@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.2 2001/12/12 05:12:44 deven Exp $
+// $Id: string.h,v 1.3 2002/09/17 04:49:50 deven Exp $
 //
 // String class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.h,v $
+// Revision 1.3  2002/09/17 04:49:50  deven
+// Modified to check HAVE_BOOL (determined by configure) instead of BOOL_TYPE.
+//
 // Revision 1.2  2001/12/12 05:12:44  deven
 // Added additional operations for completeness, including const/non-const
 // variants.

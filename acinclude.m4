@@ -1,4 +1,4 @@
-# $Id$
+# $Id: acinclude.m4,v 1.1 2002/09/17 04:48:24 deven Exp $
 
 # If the compiler recognizes bool as a separate built-in type, define HAVE_BOOL.
 # Note that a typedef is not a separate type since you cannot overload a function

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: listen.cc,v 1.2 2002/09/18 02:16:32 deven Exp $
 //
 // Listen class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: listen.cc,v $
+// Revision 1.2  2002/09/18 02:16:32  deven
+// Generate a compile-time error if memset() or socket() not available.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

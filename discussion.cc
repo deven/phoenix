@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: discussion.cc,v 1.2 2002/09/18 02:21:35 deven Exp $
 //
 // Discussion class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: discussion.cc,v $
+// Revision 1.2  2002/09/18 02:21:35  deven
+// Generate a compile-time error if strcasecmp() not available.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id$
+# $Id: Makefile.am,v 1.1 2002/11/19 23:06:34 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -18,7 +18,10 @@
 # Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 # for more information or if any conditions of this licensing are unclear.
 #
-# $Log$
+# $Log: Makefile.am,v $
+# Revision 1.1  2002/11/19 23:06:34  deven
+# Initial revision
+#
 
 DEFAULT_INCLUDES =
 AM_CFLAGS = -Wall -fno-rtti -fno-exceptions

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.2 2002/09/10 04:13:35 deven Exp $
+// $Id: general.h,v 1.3 2002/09/17 03:33:51 deven Exp $
 //
 // General header file.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: general.h,v $
+// Revision 1.3  2002/09/17 03:33:51  deven
+// Stop defining ECONNTIMEDOUT as ETIMEDOUT if missing.
+//
 // Revision 1.2  2002/09/10 04:13:35  deven
 // Added prototypes for new/delete operators.
 //

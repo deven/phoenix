@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.2 2002/07/28 05:46:09 deven Exp $
+// $Id: sendlist.cc,v 1.3 2002/09/18 02:23:29 deven Exp $
 //
 // Sendlist class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.3  2002/09/18 02:23:29  deven
+// Generate a compile-time error if strchr() not available.
+//
 // Revision 1.2  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //
