@@ -1114,6 +1114,25 @@ void Session::DoSet(char *args) // Do /set command.
    }
    if (*var == DollarSign) {
       user_vars[var] = args;
+   } else if (match(var, "echo")) {
+      // Check for "on" or "off" value for echo.
+      char *value = getword(args);
+      if (value && match(value, "on")) {
+	 telnet->SetEcho(true);
+	 output("Remote echoing is now enabled.\n");
+      } else if (value && match(value, "off")) {
+	 telnet->SetEcho(false);
+	 output("Remote echoing is now disabled.\n");
+      } else {
+	 output("Usage: /set echo=[on|off]\n");
+      }
+   } else if (match(var, "height")) {
+      if (atoi(args) <= 0) {
+         output("Usage: /set height=<number of rows>\n");
+         return;
+      }
+      int height = telnet->SetHeight(atoi(args));
+      print("Terminal height is now set to %d.\n", height);
    } else if (match(var, "idle")) {
       SetIdle(args);
    } else if (match(var, "time_format")) {
@@ -1130,6 +1149,13 @@ void Session::DoSet(char *args) // Do /set command.
       }
    } else if (match(var, "uptime")) {
       output("Server uptime is a readonly variable.\n");
+   } else if (match(var, "width")) {
+      if (atoi(args) <= 0) {
+         output("Usage: /set width=<number of columns>\n");
+         return;
+      }
+      int width = telnet->SetWidth(atoi(args));
+      print("Terminal width is now set to %d.\n", width);
    } else {
       print("Unknown system variable: \"%s\"\n", var);
    }
@@ -1150,6 +1176,15 @@ void Session::DoDisplay(char *args) // Do /display command.
          } else {
             print("Unknown user variable: \"%s\"\n", var);
          }
+      } else if (match(var, "echo")) {
+	 if (telnet->GetEcho()) {
+	    output("Remote echoing is currently enabled.\n");
+	 } else {
+	    output("Remote echoing is currently disabled.\n");
+	 }
+      } else if (match(var, "height")) {
+         int height = telnet->SetHeight(-1);
+         print("Terminal height is currently set to %d.\n", height);
       } else if (match(var, "idle")) {
 	 Timestamp now;
 
@@ -1195,6 +1230,9 @@ void Session::DoDisplay(char *args) // Do /display command.
             PrintTimeLong(system);
             output(".)\n");
          }
+      } else if (match(var, "width")) {
+         int width = telnet->SetWidth(-1);
+         print("Terminal width is currently set to %d.\n", width);
       } else {
          print("Unknown system variable: \"%s\"\n", var);
       }

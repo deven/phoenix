@@ -968,47 +968,6 @@ void Telnet::accept_input()	// Accept input line.
       if (!*data) return;	// Don't queue line if blank.
    }
 
-   // Check for "/set echo" and "/set width" commands.  (kludge!) ***
-   char *tmp = data;
-   if (match(tmp, "/set", 4)) {
-      if (match(tmp, "echo", 4)) {
-         // Echo newline.
-         if (!AtEnd()) end_of_line();
-         echo(Newline);
-
-         // Check for "on" or "off" value for echo.
-         char *value = getword(tmp);
-         if (value && match(value, "on")) {
-	    Echo = TelnetEnabled;
-	    output("Remote echoing is now enabled.\n");
-         } else if (value && match(value, "off")) {
-	    Echo = 0;
-	    output("Remote echoing is now disabled.\n");
-         } else {
-	    output("Usage: /set echo [on|off]\n");
-         }
-
-         // Done with this input line, but leave prompt if any.
-         point = free = data;	// Wipe input line. (data intact)
-         mark = 0;		// Wipe mark.
-         return;
-      } else if (match(tmp, "width", 5)) {
-         // Echo newline.
-         if (!AtEnd()) end_of_line();
-         echo(Newline);
-
-         // Check for numeric value for width.
-         char *param = getword(tmp);
-         int value = param ? atoi(param) : 0;
-         print("Terminal width is now set to %d.\n", SetWidth(value));
-
-         // Done with this input line, but leave prompt if any.
-         point = free = data;	// Wipe input line. (data intact)
-         mark = 0;			// Wipe mark.
-         return;
-      }
-   }
-
    history = History;		// Reset history iterator.
 
    if (DoEcho) {		// Don't add lines not echoed!
