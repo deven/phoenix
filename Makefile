@@ -30,7 +30,7 @@ HDRS = conf.h other.h general.h line.h block.h outbuf.h session.h user.h \
 SRCS = conf.cc session.cc user.cc listen.cc telnet.cc fdtable.cc
 OBJS = conf.o session.o user.o listen.o telnet.o fdtable.o
 
-all: conf restart
+all: $(EXEC) restart
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
