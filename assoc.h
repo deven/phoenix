@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: assoc.h,v 1.1 1994/10/09 22:51:25 deven Exp $
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: assoc.h,v $
+// Revision 1.1  1994/10/09 22:51:25  deven
+// Initial revision
+//
 
 class AssocEntry: public Object {
 friend class Assoc;
