@@ -39,6 +39,7 @@
 #include "list.h"
 #include "set.h"
 #include "general.h"
+#include "assoc.h"
 #include "line.h"
 #include "block.h"
 #include "outbuf.h"

@@ -88,12 +88,16 @@ class Session: public Object {
    static List<Session> sessions; // List of signed-on sessions.
    static List<Discussion> discussions; // List of active discussions.
 public:
+   static Assoc defaults;	// default session-level system variables
+
    Pointer<User> user;		// user this session belongs to
    Pointer<Telnet> telnet;	// telnet connection for this session
    InputFuncPtr InputFunc;	// function pointer for input processor
    Pointer<Line> lines;		// unprocessed input lines
    OutputBuffer Output;		// temporary output buffer
    OutputStream Pending;	// pending output stream
+   Assoc user_vars;		// session-level user variables
+   Assoc sys_vars;		// session-level system variables
    time_t login_time;		// time logged in
    time_t message_time;		// time last message sent (for idle time)
    AwayState away;		// here/away/busy/gone state
@@ -112,6 +116,7 @@ public:
    String last_explicit;	// last explicit sendlist typed
    String reply_sendlist;	// last explicit sendlist typed
 
+   void init_defaults();
    Session(Pointer<Telnet> &t);
    ~Session();
    void Close(boolean drain = true);
@@ -188,6 +193,7 @@ public:
    void DoNuke(char *args);	// Do !nuke command.
    void DoBye(char *args);	// Do /bye command.
    void DoSet(char *args);	// Do /set command.
+   void DoDisplay(char *args);	// Do /display command.
    void DoClear(char *args);	// Do /clear command.
    void DoDetach(char *args);	// Do /detach command.
    void DoHowMany(char *args);	// Do /howmany command.
