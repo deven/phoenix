@@ -1091,6 +1091,8 @@ void Session::DoDisplay(char *args) // Do /display command.
             PrintTimeLong(system);
             output(".)\n");
          }
+      } else if (match(var, "version")) {
+         print("Gangplank server version: %s\n", VERSION);
       } else if (match(var, "width")) {
          int width = telnet->SetWidth(-1);
          print("Terminal width is currently set to %d.\n", width);
