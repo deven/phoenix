@@ -26,7 +26,7 @@
 #define LOGINLEN 32
 #define PWLEN 13
 #define INITFILE ".phoenixrc"
-#define HOST "phoenix.elf.com"
+#define HOST "phoenix.ties.org"
 #define PORT 6789
 
 #define TelnetWill 251
