@@ -307,14 +307,14 @@ boolean Session::FindSendable(char *sendlist,Pointer<Session> &session,
    discussion = NULL;
 
    if (do_sessions) {
-      if (match(sendlist,"me")) {
+      if (!strcasecmp(sendlist,"me")) {
 	 session = this;
 	 sessionmatches.Add(session);
 	 return true;
       }
 
       while (s++) {
-	 if (match(s->name,sendlist)) {
+	 if (!strcasecmp(s->name,sendlist)) {
 	    session = s;
 	    sessionmatches.Add(session);
 	 } else if (!exact && (pos = match_name(s->name,sendlist))) {
@@ -330,7 +330,7 @@ boolean Session::FindSendable(char *sendlist,Pointer<Session> &session,
    if (do_discussions) {
       while (d++) {
 	 if (member && !d->members.In(this)) continue;
-	 if (match(d->name,sendlist)) {
+	 if (!strcasecmp(d->name,sendlist)) {
 	    discussion = d;
 	    discussionmatches.Add(discussion);
 	 } else if (!exact && (pos = match_name(d->name,sendlist))) {
@@ -536,7 +536,7 @@ void Session::Name(char *line)
    } else {
       name = line;		// Save user's name.
    }
-   if (match(name,"me")) {
+   if (!strcasecmp(name,"me")) {
       output("The keyword \"me\" is reserved.  Choose another name.\n");
       telnet->Prompt("Enter name: ");
       return;
@@ -671,7 +671,7 @@ void Session::ProcessInput(char *line)
    } else if (*line == '/') {
       trim(line);
       if (match(line,"/who",2)) DoWho(line);
-      else if (match(line,"/idle",3)) DoIdle(line);
+      else if (match(line,"/idle",2)) DoIdle(line);
       else if (match(line,"/blurb",3)) DoBlurb(line);
       else if (match(line,"/here",2)) DoHere(line);
       else if (match(line,"/away",2)) DoAway(line);
@@ -688,7 +688,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/permit",4)) DoPermit(line);
       else if (match(line,"/depermit",4)) DoDepermit(line);
       else if (match(line,"/appoint",4)) DoAppoint(line);
-      else if (match(line,"/unappoint",9)) DoUnappoint(line);
+      else if (match(line,"/unappoint",10)) DoUnappoint(line);
       else if (match(line,"/rename",7)) DoRename(line);
       else if (match(line,"/clear",3)) DoClear(line);
       else if (match(line,"/unidle",7)) DoUnidle(line);
@@ -1012,7 +1012,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
    int idle,now = time(NULL);
    int count,lastcount = 0;
    boolean here,away,busy,gone,attached,detached,active,inactive,doidle,
-      unidle,privileged,guests,all;
+      unidle,privileged,guests,everyone;
 
    who.Reset();
    errors = msg = "";
@@ -1025,7 +1025,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 
    if (active = boolean(!*args)) lastcount = 1;
    here = away = busy = gone = attached = detached = inactive = doidle =
-      unidle = privileged = guests = all = false;
+      unidle = privileged = guests = everyone = false;
    while (*args) {
       mark = strchr(args,Comma);
       if (mark) *mark = 0;
@@ -1041,9 +1041,13 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
       unidle = boolean(unidle || match(args,"unidle",6));
       privileged = boolean(privileged || match(args,"privileged",10));
       guests = boolean(guests || match(args,"guests",6));
-      all = boolean(all || match(args,"all",3));
+      everyone = boolean(everyone || match(args,"everyone",8));
+      if (match(args,"all",3)) {
+	 active = true;
+	 attached = true;
+      }
       count = here + away + busy + gone + attached + detached + active +
-	 inactive + doidle + unidle + privileged + all;
+	 inactive + doidle + unidle + privileged + everyone;
       if (count == lastcount) {
 	 if (send) send.append(Separator);
 	 send.append(args);
@@ -1068,7 +1072,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 			s->away == Away && s->telnet && (idle < 10)) ||
 	  doidle && (idle >= 10) || unidle && (idle < 10) ||
 	  privileged && (s->user->priv >= 50) ||
-	  guests && (s->user->priv == 0) || all) {
+	  guests && (s->user->priv == 0) || everyone) {
 	 who.Add((Session *) s);
       }
    }
@@ -1090,6 +1094,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 	 if (doidle) ListItem(flag,last,"idle");
 	 if (unidle) ListItem(flag,last,"unidle");
 	 if (privileged) ListItem(flag,last,"privileged");
+	 if (guests) ListItem(flag,last,"a guest");
 	 if (last) {
 	    output(" or ");
 	    output((char *) last);
@@ -1158,7 +1163,11 @@ void Session::DoWho(char *args)	// Do /who command.
       }
       tmp = session->name;
       tmp.append(session->blurb);
-      print("%-32.32s%c ",(char *) tmp,tmp.length() > 32 ? '+' : ' ');
+      if (tmp.length() > 33) {
+	 print("%-31.31s]+ ",(char *) tmp);
+      } else {
+	 print("%-33.33s ",(char *) tmp);
+      }
       if (session->telnet) {
 	 if ((now - session->login_time) < 86400) {
 	    output(date(session->login_time,11,8));
@@ -1206,6 +1215,18 @@ void Session::DoWho(char *args)	// Do /who command.
       case Gone:
 	 output("Gone\n");
 	 break;
+      }
+      if (tmp.length() > 33 && who.Count() == 1) {
+	 char *p = ((char *) tmp) + 31;
+	 while (*p) {
+	    if (strlen(p) > 77) {
+	       print("+[%-75.75s]+\n",p);
+	       p += 75;
+	    } else {
+	       print("+[%s\n",p);
+	       break;
+	    }
+	 }
       }
    }
    output((char *) msg);
@@ -1536,7 +1557,7 @@ void Session::DoSend(char *args) // Do /send command.
       output("Your default sendlist has been turned off.\n");
       return;
    } else {
-      sendlist = new Sendlist(*this,args,true);
+      sendlist = new Sendlist(*this,args);
       if (sendlist->errors) {
 	 output("\a\a");
 	 output((char *) sendlist->errors);
@@ -1867,6 +1888,7 @@ void Session::DoRename(char *args) // Do /rename command.
 	 return;
       }
    }
+   SetBlurb(blurb);		// Updates name_obj.
    EnqueueOthers(new RenameNotify(name,args));
    print("You have changed your name to \"%s\".\n",args);
    name = args;
