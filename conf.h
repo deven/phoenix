@@ -26,6 +26,9 @@
 #define PORT 6789
 #define BACKLOG 8
 
+/* Special codes. */
+#define UNQUOTED_UNDERSCORE 128
+
 /* For compatibility. */
 #ifndef EWOULDBLOCK
 #define EWOULDBLOCK EAGAIN
@@ -129,7 +132,9 @@ struct session {
    struct session *user_next;	/* next session (user) */
    struct user *user;		/* user this session belongs to */
    struct telnet *telnet;	/* telnet connection for this session */
-   char name[NAMELEN];		/* current user name (pseudo) */
+   char name_only[NAMELEN];	/* current user name (pseudo) without blurb */
+   char name[NAMELEN];		/* current user name (pseudo) with blurb */
+   char default_sendlist[32];	/* current default sendlist */
    char last_sendlist[32];	/* last explicit sendlist */
    time_t login_time;		/* time logged in */
    time_t message_time;		/* time signed on */
@@ -144,6 +149,7 @@ struct user {
    char passwd[32];		/* password for this account (during login) */
    /* /// change! ^^^ */
    char reserved_name[NAMELEN];	/* reserved user name (pseudo) */
+   /* /// default blurb? */
 };
 
 void warn();
@@ -158,7 +164,7 @@ void output(struct telnet *telnet,char *buf);
 void print();
 void announce();
 void put_command(struct telnet *telnet, int cmd);
-char *message_start(char *line,char *sendlist,int len);
+char *message_start(char *line,char *sendlist,int len,int *explicit);
 int match_name(char *name,char *sendlist);
 void echo(struct telnet *telnet, func_ptr callback, int state);
 void LSGA(struct telnet *telnet, func_ptr callback, int state);

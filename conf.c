@@ -332,60 +332,87 @@ void put_command(struct telnet *telnet, int cmd)
    *((unsigned char *) block->free++) = cmd;
 }
 
-char *message_start(char *line,char *sendlist,int len)
+char *message_start(char *line,char *sendlist,int len,int *explicit)
 {
    char *p;
    char state;
    int i;
 
+   /* Assume implicit sendlist. */
+   *explicit = 0;
+
+   /* Attempt to detect smileys that shouldn't be sendlists... */
+   if (!isalpha(*line) && !isspace(*line)) {
+      /* Truncate line at first whitespace at the moment. */
+      for (p = line; *p; p++) if (isspace(*p)) break;
+      state = *p;
+      *p = 0;
+
+      /* Just special-case a few smileys... */
+      if (!strcmp(line,":-)") || !strcmp(line,":-(") || !strcmp(line,":-P") ||
+	  !strcmp(line,";-)") || !strcmp(line,":_)") || !strcmp(line,":_(") ||
+	  !strcmp(line,":)") || !strcmp(line,":(") || !strcmp(line,":P") ||
+	  !strcmp(line,";)") || !strcmp(line,"(-:") || !strcmp(line,")-:") ||
+	  !strcmp(line,"(-;") || !strcmp(line,"(_:") || !strcmp(line,")_:") ||
+	  !strcmp(line,"(:") || !strcmp(line,"):") || !strcmp(line,"(;")) {
+	 *p = state;
+	 strcpy(sendlist,"default");
+	 return line;
+      } else {
+	 *p = state;
+      }
+   }
+
+   /* Doesn't appear to be a smiley, check for explicit sendlist. */
    state = 0;
    i = 0;
    len--;
-   while (*line && i < len) {
+   for (p = line; *p && i < len; p++) {
       switch (state) {
       case 0:
-	 switch (*line) {
+	 switch (*p) {
 	 case ' ':
 	 case '\t':
-	    return NULL;
+	    strcpy(sendlist,"default");
+	    return line + (*line == ' ');
 	 case ':':
 	 case ';':
 	    sendlist[i] = 0;
-	    return ++line;
+	    if (*++p == ' ') p++;
+	    *explicit = 1;
+	    return p;
 	 case '\\':
-	    line++;
 	    state = '\\';
 	    break;
 	 case '"':
-	    line++;
 	    state = '"';
 	    break;
 	 case '_':
-	    sendlist[i++] = ' ';
-	    line++;
+	    sendlist[i++] = UNQUOTED_UNDERSCORE;
 	    break;
 	 default:
-	    sendlist[i++] = *line++;
+	    sendlist[i++] = *p;
 	    break;
 	 }
 	 break;
       case '\\':
-	 sendlist[i++] = *line++;
+	 sendlist[i++] = *p;
 	 state = 0;
 	 break;
       case '"':
-	 switch (*line) {
-	 case '"':
-	    line++;
-	    state = 0;
-	 default:
-	    sendlist[i++] = *line++;
-	    break;
+	 while (*p && i < len) {
+	    if (*p == '"') {
+	       state = 0;
+	       break;
+	    } else {
+	       sendlist[i++] = *p++;
+	    }
 	 }
 	 break;
       }
    }
-   return NULL;
+   strcpy(sendlist,"default");
+   return line + (*line == ' ');
 }
 
 int match_name(char *name,char *sendlist)
@@ -394,6 +421,9 @@ int match_name(char *name,char *sendlist)
 
    if (!*name || !*sendlist) return 0;
    for (p = name, q = sendlist; *p && *q; p++, q++) {
+      /* Let an unquoted underscore match a space or an underscore. */
+      if (*q == UNQUOTED_UNDERSCORE && (*p == ' ' || *p == '_')) continue;
+
       if ((isupper(*p) ? tolower(*p) : *p) !=
 	  (isupper(*q) ? tolower(*q) : *q)) {
 	 /* Mis-match, ignoring case. Recurse for middle matches. */
@@ -821,11 +851,39 @@ void process_input(struct telnet *telnet,char *line)
       } else if (!strcmp(line,"/date")) {
 	 /* Print current date and time. */
          print(telnet,"%s\n",date(0,0,0));
+      } else if (!strncmp(line,"/send",5)) {
+	 char *p;
+
+	 p = line + 5;
+	 while (*p && isspace(*p)) p++;
+	 if (!*p) {
+	    /* Display current sendlist. */
+	    if (!telnet->session->default_sendlist[0]) {
+	       print(telnet,"Your default sendlist is turned off.\n");
+	    } else if (!strcmp(telnet->session->default_sendlist,"everyone")) {
+	       print(telnet,"You are sending to everyone.\n");
+	    } else {
+	       print(telnet,"Your default sendlist is set to \"%s\".\n",
+		     telnet->session->default_sendlist);
+	    }
+	 } else if (!strcmp(p,"off")) {
+	    telnet->session->default_sendlist[0] = 0;
+	    print(telnet,"Your default sendlist has been turned off.\n");
+	 } else if (!strcmp(p,"everyone")) {
+	    strcpy(telnet->session->default_sendlist,p);
+	    print(telnet,"You are now sending to everyone.\n");
+	 } else {
+	    strncpy(telnet->session->default_sendlist,p,31);
+	    telnet->session->default_sendlist[31] = 0;
+	    print(telnet,"Your default sendlist is now set to \"%s\".\n",
+		  telnet->session->default_sendlist);
+	 }
       } else if (!strncmp(line,"/help",5)) {
 	 /* help?  ha! */
 	 output(telnet,"Help?  Help?!?  This program isn't done, you know.\n");
 	 output(telnet,"\nOnly known commands:\n\n");
 	 output(telnet,"/bye -- leave conf\n");
+	 output(telnet,"/send -- specify default sendlist\n");
 	 output(telnet,"/who -- gives trivial list of who is connected\n");
 	 output(telnet,"/help -- gives this dumb message\n\n");
 	 output(telnet,"No other /commands are implemented yet.\n\n");
@@ -844,23 +902,50 @@ void process_input(struct telnet *telnet,char *line)
 	 output(telnet,"Unknown /command.  Type /help for help.\n");
       }
    } else if (*line) {
+      int explicit;
       int i;
+      char c;
       char *p;
       char sendlist[32];
 
-      if (sscanf(line,"#%d;%c",&i,sendlist) == 2 ||
-	  sscanf(line,"#%d:%c",&i,sendlist) == 2) {
+      p = message_start(line,sendlist,32,&explicit);
+
+      /* Use last sendlist if none specified. */
+      if (!*sendlist) strcpy(sendlist,telnet->session->last_sendlist);
+
+      if (!*sendlist) {
+	 print(telnet,"%c%cYou have no previous sendlist. (message not "
+	       "sent)\n",7,7);
+	 return;
+      }
+
+      if (!strcmp(sendlist,"default")) {
+	 if (*telnet->session->default_sendlist) {
+	    strcpy(sendlist,telnet->session->default_sendlist);
+	 } else {
+	    print(telnet,"%c%cYou have no default sendlist. (message not "
+		  "sent)\n",7,7);
+	    return;
+	 }
+      }
+
+      if (sscanf(sendlist,"#%d%c",&i,&c) == 1) {
 	 /* Send private message by fd #. */
+	 struct session *s;
 	 struct telnet *t;
 
-	 for (t = connections; t; t = t->next) {
-	    if (t->fd == i) break;
+	 /* Save last sendlist if explicit. */
+	 if (explicit && *sendlist) {
+	    strcpy(telnet->session->last_sendlist,sendlist);
 	 }
 
-	 /* Find start of message. */
-	 p = line;
-	 while (*p != ';' && *p != ':') p++;
-	 if (*++p == ' ') p++;
+	 t = NULL;
+	 for (s = sessions; s; s = s->next) {
+	    if (s->telnet->fd == i) {
+	       t = s->telnet;
+	       break;
+	    }
+	 }
 
 	 if (t) {
 	    /* Found user, send message. */
@@ -875,15 +960,37 @@ void process_input(struct telnet *telnet,char *line)
 	    print(telnet,"%c%cThere is no user on fd %d. (message not "
 		  "sent)\n",7,7,i);
 	 }
-      } else if (p = message_start(line,sendlist,32)) {
+      } else if (!strcmp(sendlist,"everyone")) {
+	 /* Send message to everyone. */
+	 struct telnet *t,*dest;
+	 int sent;
+
+	 time(&telnet->session->message_time); /* reset idle tme */
+
+	 sent = 0;
+	 for (dest = connections; dest; dest = dest->next) {
+	    if (dest != telnet) {
+	       sent++;
+	       undraw_line(dest); /* undraw input line */
+	       print(dest,"%c\n -> From %s to everyone: [%s]\n - %s\n",7,
+		     telnet->session->name,date(0,11,5),p);
+	       redraw_line(dest); /* redraw input line */
+	    }
+	 }
+
+	 if (sent) {
+	    output(telnet,"(message sent to everyone.)\n");
+	 } else {
+	    print(telnet,"%c%cThere is no one else here! (message not "
+		   "sent)\n",7,7);
+	 }
+      } else {
 	 /* Send private message by partial name match. */
 	 struct telnet *t,*dest;
 
-	 /* Save or use last sendlist, as appropriate. */
-	 if (*sendlist) {
+	 /* Save last sendlist if explicit. */
+	 if (explicit && *sendlist) {
 	    strcpy(telnet->session->last_sendlist,sendlist);
-	 } else {
-	    strcpy(sendlist,telnet->session->last_sendlist);
 	 }
 
 	 dest = NULL;
@@ -919,21 +1026,6 @@ void process_input(struct telnet *telnet,char *line)
 	       /* Multiple-match message wasn't sent, so there's no match. */
 	       print(telnet,"%c%cNo names matched \"%s\". (message not "
 		     "sent)\n",7,7,sendlist);
-	    }
-	 }
-      } else {
-	 /* Send message to everyone. */
-	 struct telnet *t,*dest;
-
-	 time(&telnet->session->message_time); /* reset idle tme */
-	 output(telnet,"(message sent to everyone.)\n");
-
-	 for (dest = connections; dest; dest = dest->next) {
-	    if (dest != telnet) {
-	       undraw_line(dest); /* undraw input line */
-	       print(dest,"%c\n -> From %s to everyone: [%s]\n - %s\n",7,
-		     telnet->session->name,date(0,11,5),line);
-	       redraw_line(dest); /* redraw input line */
 	    }
 	 }
       }
