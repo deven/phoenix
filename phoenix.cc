@@ -200,7 +200,7 @@ void quit(int sig)		// received SIGQUIT or SIGTERM
    Shutdown = 1;
 }
 
-void alrm(int sig)		// received SIGALRM
+void alrm(int)			// received SIGALRM
 {
    // Ignore unless shutting down.
    switch (Shutdown) {
