@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.20 1994/06/27 01:12:31 deven Exp $
+// $Id: telnet.cc,v 1.21 1994/06/27 05:30:14 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.21  1994/06/27 05:30:14  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.20  1994/06/27 01:12:31  deven
 // Fixed bugs in InsertString() and history/kill rings.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.14 1994/05/13 04:28:54 deven Exp $
+// $Id: phoenix.cc,v 1.15 1994/06/27 05:28:33 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.15  1994/06/27 05:28:33  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.14  1994/05/13 04:28:54  deven
 // Modified to lookup home directory and use ~/lib/phoenix to run in.
 //
