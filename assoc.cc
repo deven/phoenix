@@ -19,6 +19,7 @@
 #include "string.h"
 #include "general.h"
 #include "assoc.h"
+#include "pointer.h"
 
 int Assoc::Hash(String &key)
 {
