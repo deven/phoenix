@@ -53,7 +53,7 @@ private:
    char *text;
 public:
    Text(char *buf): Output(TextOutput,TextClass),text(buf) { }
-   ~Text() { delete text; }
+   ~Text() { delete [] text; }
    void output(Pointer<Telnet> &telnet);
 };
 
@@ -70,7 +70,7 @@ public:
       text = new char[strlen(msg) + 1];
       strcpy(text,msg);
    }
-   ~Message() { delete text; }
+   ~Message() { delete [] text; }
    void output(Pointer<Telnet> &telnet);
 };
 

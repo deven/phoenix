@@ -31,7 +31,7 @@ public:
       next = 0;
    }
    ~Line() {			// destructor
-      delete line;
+      delete [] line;
    }
    void Append(Pointer<Line> &p) { // Add new line at end of list.
       if (next) {
