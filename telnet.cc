@@ -857,6 +857,37 @@ inline void Telnet::delete_word() // Delete word at point.
    while (point < free && isalpha(*point)) delete_char();
 }
 
+inline void Telnet::upcase_word() // Upcase word at point.
+{
+   while (point < free && !isalpha(*point)) forward_char();
+   while (point < free && isalpha(*point)) {
+      if (islower(*point)) *point = toupper(*point);
+      echo(*point++);
+   }
+}
+
+inline void Telnet::downcase_word() // Downcase word at point.
+{
+   while (point < free && !isalpha(*point)) forward_char();
+   while (point < free && isalpha(*point)) {
+      if (isupper(*point)) *point = tolower(*point);
+      echo(*point++);
+   }
+}
+
+inline void Telnet::capitalize_word() // Capitalize word at point.
+{
+   while (point < free && !isalpha(*point)) forward_char();
+   if (point < free && isalpha(*point)) {
+      if (islower(*point)) *point = toupper(*point);
+      echo(*point++);
+   }
+   while (point < free && isalpha(*point)) {
+      if (isupper(*point)) *point = tolower(*point);
+      echo(*point++);
+   }
+}
+
 inline void Telnet::transpose_words() // Exchange two words at point.
 {
    output(Bell);
@@ -1092,6 +1123,10 @@ void Telnet::InputReady()	// telnet stream can input data
 	       backward_word();
 	       state = 0;
 	       break;
+	    case 'c':
+	       capitalize_word();
+	       state = 0;
+	       break;
 	    case 'd':
 	       delete_word();
 	       state = 0;
@@ -1100,8 +1135,16 @@ void Telnet::InputReady()	// telnet stream can input data
 	       forward_word();
 	       state = 0;
 	       break;
+	    case 'l':
+	       downcase_word();
+	       state = 0;
+	       break;
 	    case 't':
 	       transpose_words();
+	       state = 0;
+	       break;
+	    case 'u':
+	       upcase_word();
 	       state = 0;
 	       break;
 	    case Backspace:

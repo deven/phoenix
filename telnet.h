@@ -176,6 +176,9 @@ public:
    void backward_word();	// Move point backward one word.
    void erase_word();		// Erase word before point.
    void delete_word();		// Delete word at point.
+   void upcase_word();		// Upcase word at point.
+   void downcase_word();	// Downcase word at point.
+   void capitalize_word();	// Capitalize word at point.
    void transpose_words();	// Transpose words at point.
    void InputReady();
    void OutputReady();
