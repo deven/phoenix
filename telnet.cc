@@ -744,11 +744,7 @@ void Telnet::kill_line()	// Kill from point to end of line.
 void Telnet::erase_line()	// Erase input line.
 {
    beginning_of_line();
-   if (End()) {
-      echo("\033[J");		// ANSI! ***
-      free = data;		// Truncate input buffer.
-   }
-   mark = 0;
+   kill_line();
 }
 
 void Telnet::previous_line()	// Go to previous input line.
