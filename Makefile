@@ -38,7 +38,7 @@ LDFLAGS =
 
 CC = gcc
 EXEC = conf
-HDRS = conf.h other.h general.h object.h pointer.h list.h line.h block.h \
+HDRS = conf.h other.h general.h object.h list.h line.h block.h \
 	outbuf.h name.h output.h outstr.h session.h user.h fd.h listen.h \
 	telnet.h fdtable.h
 SRCS = conf.cc output.cc outstr.cc session.cc user.cc listen.cc telnet.cc \
