@@ -1,12 +1,23 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.25 1994/10/29 02:27:00 deven Exp $
+// $Id: telnet.cc,v 1.26 1995/12/05 20:37:45 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.26  1995/12/05 20:37:45  deven
+// Modified banner; now "Welcome to Phoenix!" is sent immediately; the rest of
+// the banner still waits for option negotiation.  Added support for raw TCP
+// connections -- if a line of input is received before option negotiation, it
+// assumes raw TCP, and continues with login.  This can fail with telnet if a
+// line is typed before telnet opens the connection, but that's hard to avoid.
+// Added /set echo command primarily for raw TCP users; this is somewhat of a
+// kludge -- normally /set is processed by the Session class.  I'm not sure of
+// a cleaner way to do this without making something ugly like %commands, so I
+// guess this will have to do for now.
+//
 // Revision 1.25  1994/10/29 02:27:00  deven
 // Modified previous_line() and next_line() to allow movement within the line.
 //

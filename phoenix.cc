@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.17 1995/10/27 03:23:08 deven Exp $
+// $Id: phoenix.cc,v 1.18 1995/12/05 20:14:42 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.18  1995/12/05 20:14:42  deven
+// Added SystemUptime() function (reads /proc/uptime if available), added
+// ServerStartUptime to hold the system uptime at the time of server start,
+// for more reliable determination of server uptime.
+//
 // Revision 1.17  1995/10/27 03:23:08  deven
 // Added ServerStartTime and code to set the start time.
 //
