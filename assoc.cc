@@ -43,9 +43,9 @@ int Assoc::Hash(char *key)
    return hash % Size;
 }
 
-void Assoc::Store(char *key,char *value)
+void Assoc::Store(char *key, char *value)
 {
-   AssocEntry *entry = new AssocEntry(key,value);
+   AssocEntry *entry = new AssocEntry(key, value);
    int hash = Hash(key);
    entry->next = bucket[hash];
    bucket[hash] = entry;
@@ -112,7 +112,7 @@ AssocEntry &Assoc::operator [](char *key)
       if (entry->key == key) return *entry;
       entry = entry->next;
    }
-   entry = new AssocEntry(key,"");
+   entry = new AssocEntry(key, "");
    entry->next = bucket[hash];
    bucket[hash] = entry;
    count++;

@@ -161,28 +161,28 @@ public:
    void Close(boolean drain = true);
    void output(int byte);
    void output(char *buf);
-   void output(char *buf,int len);
-   void print(char *format,...);
+   void output(char *buf, int len);
+   void print(char *format, ...);
    void echo(int byte);
    void echo(char *buf);
-   void echo(char *buf,int len);
-   void echo_print(char *format,...);
+   void echo(char *buf, int len);
+   void echo_print(char *format, ...);
    void command(char *buf);	// queue command data
-   void command(char *buf,int len); // queue command data (with length)
-   void command(int byte);	    // Queue command byte.
-   void command(int byte1,int byte2); // Queue 2 command bytes.
-   void command(int byte1,int byte2,int byte3); // Queue 3 command bytes.
+   void command(char *buf, int len); // queue command data (with length)
+   void command(int byte);	     // Queue command byte.
+   void command(int byte1, int byte2); // Queue 2 command bytes.
+   void command(int byte1, int byte2, int byte3); // Queue 3 command bytes.
    void TimingMark();
-   void PrintMessage(OutputType type,Timestamp time,Name *from,Sendlist *to,
+   void PrintMessage(OutputType type, Timestamp time, Name *from, Sendlist *to,
 		     char *start);
    void Welcome();
    void UndrawInput();		// Erase input line from screen.
    void RedrawInput();		// Redraw input line on screen.
-   void set_Echo(CallbackFuncPtr callback,int state);
-   void set_LSGA(CallbackFuncPtr callback,int state);
-   void set_RSGA(CallbackFuncPtr callback,int state);
-   void set_LBin(CallbackFuncPtr callback,int state);
-   void set_RBin(CallbackFuncPtr callback,int state);
+   void set_Echo(CallbackFuncPtr callback, int state);
+   void set_LSGA(CallbackFuncPtr callback, int state);
+   void set_RSGA(CallbackFuncPtr callback, int state);
+   void set_LBin(CallbackFuncPtr callback, int state);
+   void set_RBin(CallbackFuncPtr callback, int state);
    void InsertString(String &s); // Insert string at point.
    void beginning_of_line();	// Jump to beginning of line.
    void end_of_line();		// Jump to end of line.

@@ -120,80 +120,82 @@ void OpenLog()			// class Log? ***
    struct tm *tm;
 
    if (!(tm = t.localtime())) error("OpenLog(): localtime");
-   sprintf(buf,"logs/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
-	   tm->tm_mday,tm->tm_hour,tm->tm_min);
-   if (!(logfile = fopen(buf,"a"))) error("OpenLog(): %s",buf);
+   sprintf(buf, "logs/%02d%02d%02d-%02d%02d", tm->tm_year, tm->tm_mon + 1,
+	   tm->tm_mday, tm->tm_hour, tm->tm_min);
+   if (!(logfile = fopen(buf, "a"))) error("OpenLog(): %s", buf);
    setlinebuf(logfile);
    unlink("log");
-   link(buf,"log");
-   fprintf(stderr,"Logging on \"%s\".\n",buf);
+   link(buf, "log");
+   fprintf(stderr, "Logging on \"%s\".\n", buf);
 }
 
 // Use << operator instead of printf() formats? ***
-void log(char *format,...)	// log message ***
+void log(char *format, ...)	// log message ***
 {
    char buf[BufSize];
    va_list ap;
    Timestamp t;
 
    if (!logfile) return;
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
+   va_start(ap, format);
+   (void) vsprintf(buf, format, ap);
    va_end(ap);
-   (void) fprintf(logfile,"[%s] %s\n",t.date(4,15),buf);
+   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), buf);
 }
 
-void warn(char *format,...)	// print error message ***
+void warn(char *format, ...)	// print error message ***
 {
    char buf[BufSize];
    va_list ap;
    Timestamp t;
 
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
+   va_start(ap, format);
+   (void) vsprintf(buf, format, ap);
    va_end(ap);
    if (errno >= 0 && errno < sys_nerr) {
-      (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
-      (void) fprintf(logfile,"[%s] %s: %s\n",t.date(4,15),buf,
+      (void) fprintf(stderr, "\n%s: %s\n", buf, sys_errlist[errno]);
+      (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
 		     sys_errlist[errno]);
    } else {
-      (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
-      (void) fprintf(logfile,"[%s] %s: Error %d\n",t.date(4,15),buf,errno);
+      (void) fprintf(stderr, "\n%s: Error %d\n", buf, errno);
+      (void) fprintf(logfile, "[%s] %s: Error %d\n", t.date(4, 15), buf,
+		     errno);
    }
 }
 
-void error(char *format,...)	// print error message and exit ***
+void error(char *format, ...)	// print error message and exit ***
 {
    char buf[BufSize];
    va_list ap;
    Timestamp t;
 
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
+   va_start(ap, format);
+   (void) vsprintf(buf, format, ap);
    va_end(ap);
    if (errno >= 0 && errno < sys_nerr) {
-      (void) fprintf(stderr,"\n%s: %s\n",buf,sys_errlist[errno]);
-      (void) fprintf(logfile,"[%s] %s: %s\n",t.date(4,15),buf,
+      (void) fprintf(stderr, "\n%s: %s\n", buf, sys_errlist[errno]);
+      (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
 		     sys_errlist[errno]);
    } else {
-      (void) fprintf(stderr,"\n%s: Error %d\n",buf,errno);
-      (void) fprintf(logfile,"[%s] %s: Error %d\n",t.date(4,15),buf,errno);
+      (void) fprintf(stderr, "\n%s: Error %d\n", buf, errno);
+      (void) fprintf(logfile, "[%s] %s: Error %d\n", t.date(4, 15), buf,
+		     errno);
    }
    if (logfile) fclose(logfile);
    exit(1);
 }
 
-void crash(char *format,...)	// print error message and crash ***
+void crash(char *format, ...)	// print error message and crash ***
 {
    char buf[BufSize];
    va_list ap;
    Timestamp t;
 
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
+   va_start(ap, format);
+   (void) vsprintf(buf, format, ap);
    va_end(ap);
-   (void) fprintf(stderr,"\n%s\n",buf);
-   (void) fprintf(logfile,"[%s] %s\n",t.date(4,15),buf);
+   (void) fprintf(stderr, "\n%s\n", buf);
+   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), buf);
    if (logfile) fclose(logfile);
    abort();
    exit(-1);
@@ -202,22 +204,22 @@ void crash(char *format,...)	// print error message and crash ***
 void quit(int sig)		// received SIGQUIT or SIGTERM
 {
    if (Shutdown) {
-      log("Additional shutdown signal %d received.",sig);
+      log("Additional shutdown signal %d received.", sig);
    } else {
       char buf[16];
 
-      sprintf(buf,"signal %d",sig);
-      events.Enqueue(Shutdown = new ShutdownEvent(buf,30));
+      sprintf(buf, "signal %d", sig);
+      events.Enqueue(Shutdown = new ShutdownEvent(buf, 30));
    }
 }
 
 int SystemUptime()		// Get system uptime, if available.
 {
    int uptime = 0;
-   FILE *fp = fopen("/proc/uptime","r");
+   FILE *fp = fopen("/proc/uptime", "r");
 
    if (fp) {
-      fscanf(fp,"%d",&uptime);
+      fscanf(fp, "%d", &uptime);
       fclose(fp);
    }
    return uptime;
@@ -231,7 +233,7 @@ void trim(char *&input) {
    *p = 0;
 }
 
-char *getword(char *&input,char separator = 0) {
+char *getword(char *&input, char separator = 0) {
    while (*input && isspace(*input)) input++;
    char *p = input;
    while (*input && !isspace(*input) && *input != separator) input++;
@@ -243,8 +245,8 @@ char *getword(char *&input,char separator = 0) {
    return *p ? p : 0;
 }
 
-char *match(char *&input,char *keyword,int min = 0) {
-   char *p = input,*q = keyword;
+char *match(char *&input, char *keyword, int min = 0) {
+   char *p = input, *q = keyword;
    int i;
 
    if (!min) min = strlen(keyword);
@@ -258,7 +260,7 @@ char *match(char *&input,char *keyword,int min = 0) {
    return input = p;
 }
 
-int main(int argc,char **argv)	// main program
+int main(int argc, char **argv)	// main program
 {
    struct passwd *pw;		// password file entry
    String home;			// server home directory
@@ -272,21 +274,21 @@ int main(int argc,char **argv)	// main program
    if ((pw = getpwuid(geteuid()))) {
       home = pw->pw_dir;
       home.append("/lib");	// Make sure ~/lib exists.
-      if (chdir(~home) && errno == ENOENT && mkdir(~home,0755)) {
-	 error("mkdir(\"%s\",0755)",~home);
+      if (chdir(~home) && errno == ENOENT && mkdir(~home, 0755)) {
+	 error("mkdir(\"%s\", 0755)", ~home);
       }
-      if (chdir(~home)) error("chdir(\"%s\")",~home);
+      if (chdir(~home)) error("chdir(\"%s\")", ~home);
       home.append("/phoenix");	// Make sure ~/lib/phoenix exists.
-      if (chdir(~home) && errno == ENOENT && mkdir(~home,0700)) {
-	 error("mkdir(\"%s\",0700)",~home);
+      if (chdir(~home) && errno == ENOENT && mkdir(~home, 0700)) {
+	 error("mkdir(\"%s\", 0700)", ~home);
       }
-      if (chdir(~home)) error("chdir(\"%s\")",~home);
-      if (chmod(~home,0700)) error("chmod(\"%s\",0700)",~home);
+      if (chdir(~home)) error("chdir(\"%s\")", ~home);
+      if (chmod(~home, 0700)) error("chmod(\"%s\", 0700)", ~home);
       home.append("/logs");	// Make sure "logs" directory exists.
-      mkdir(~home,0700);	// ignore errors
-      chmod(~home,0700);	// ignore errors
+      mkdir(~home, 0700);	// ignore errors
+      chmod(~home, 0700);	// ignore errors
    } else {
-      error("getpwuid(%d)",geteuid());
+      error("getpwuid(%d)", geteuid());
    }
    OpenLog();
    port = argc > 1 ? atoi(argv[1]) : 0;
@@ -294,23 +296,23 @@ int main(int argc,char **argv)	// main program
    Listen::Open(port);
 
    // fork subprocess and exit parent
-   if (strcmp(argv[argc - 1],"-debug")) {
+   if (strcmp(argv[argc - 1], "-debug")) {
       switch (pid = fork()) {
       case 0:
 	 setsid();
-	 log("Server started, running on port %d. (pid %d)",port,getpid());
+	 log("Server started, running on port %d. (pid %d)", port, getpid());
 	 break;
       case -1:
 	 error("main(): fork()");
 	 break;
       default:
-	 fprintf(stderr,"Server started, running on port %d. (pid %d)\n",
-		 port,pid);
+	 fprintf(stderr, "Server started, running on port %d. (pid %d)\n",
+		 port, pid);
 	 exit(0);
 	 break;
       }
    } else {
-      log("Server started, running on port %d. (pid %d)",port,getpid());
+      log("Server started, running on port %d. (pid %d)", port, getpid());
    }
 
 #ifdef USE_SIGIGNORE
@@ -319,13 +321,13 @@ int main(int argc,char **argv)	// main program
    sigignore(SIGPIPE);
    sigignore(SIGALRM);
 #else
-   signal(SIGHUP,SIG_IGN);
-   signal(SIGINT,SIG_IGN);
-   signal(SIGPIPE,SIG_IGN);
-   signal(SIGALRM,SIG_IGN);
+   signal(SIGHUP, SIG_IGN);
+   signal(SIGINT, SIG_IGN);
+   signal(SIGPIPE, SIG_IGN);
+   signal(SIGALRM, SIG_IGN);
 #endif
-   signal(SIGQUIT,quit);
-   signal(SIGTERM,quit);
+   signal(SIGQUIT, quit);
+   signal(SIGTERM, quit);
 
    while(1) {
       Session::CheckShutdown();

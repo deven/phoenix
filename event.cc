@@ -16,9 +16,9 @@
 void ShutdownEvent::ShutdownWarning(char *by, time_t when)
 {
    final = false;
-   log("Shutdown requested by %s in %d seconds.",by,when);
+   log("Shutdown requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will shutdown in %d seconds... <<<"
-		     "\n\a",when);
+		     "\n\a", when);
 }
 
 void ShutdownEvent::FinalWarning()
@@ -50,7 +50,7 @@ boolean ShutdownEvent::Execute()
 void RestartEvent::RestartWarning(char *by, time_t when)
 {
    final = false;
-   log("Restart requested by %s in %d seconds.",by,when);
+   log("Restart requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will restart in %d seconds... <<<\n\a",
 		     when);
 }
@@ -68,7 +68,7 @@ void RestartEvent::RestartServer()
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
-   execl("phoenixd","phoenixd",0);
+   execl("phoenixd", "phoenixd", 0);
    error("phoenixd");
 }
 

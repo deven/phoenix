@@ -47,33 +47,34 @@ Listen::Listen(int port)	// Listen on a port.
    type = ListenFD;		// Identify as a Listen FD.***
 
    // Initialize listening socket.
-   memset(&saddr,0,sizeof(saddr));
+   memset(&saddr, 0, sizeof(saddr));
    saddr.sin_family = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port = htons((u_short) port);
-   if ((fd = socket(AF_INET,SOCK_STREAM,0)) == -1) {
+   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
       error("Listen::Listen(): socket()");
    }
-   if (fcntl(fd,F_SETFD,0) == -1) error("Listen::Listen(): fcntl()");
-   if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char *) &option,sizeof(int))) {
+   if (fcntl(fd, F_SETFD, 0) == -1) error("Listen::Listen(): fcntl()");
+   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &option,
+       sizeof(int))) {
       error("Listen::Listen(): setsockopt()");
    }
 
    // Try to bind to the port.  Try real hard.
    while (1) {
-      if (bind(fd,(struct sockaddr *) &saddr,sizeof(saddr))) {
+      if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
 	 if (errno == EADDRINUSE) {
-	    if (!tries++) fprintf(stderr,"Waiting for port %d.\n",port);
+	    if (!tries++) fprintf(stderr, "Waiting for port %d.\n", port);
 	    sleep(1);
 	 } else {
-	    error("Listen::Listen(): bind(port = %d)",port);
+	    error("Listen::Listen(): bind(port = %d)", port);
 	 }
       } else {
 	 break;
       }
    }
 
-   if (listen(fd,Backlog)) error("Listen::Listen(): listen()");
+   if (listen(fd, Backlog)) error("Listen::Listen(): listen()");
 }
 
 Listen::~Listen()		// Listen destructor.

@@ -66,7 +66,7 @@ public:
       if (Acknowledged < Sent) Acknowledged++;
    }
    void Attach(Telnet *telnet);
-   void Enqueue(Telnet *telnet,OutputObj *out);
+   void Enqueue(Telnet *telnet, OutputObj *out);
    void Unenqueue(OutputObj *out);
    void Dequeue();
    boolean SendNext(Telnet *telnet);

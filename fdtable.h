@@ -56,15 +56,15 @@ public:
    void InputReady(int fd);	// Input is ready on file descriptor fd.
    void OutputReady(int fd);	// Output is ready on file descriptor fd.
    void ReadSelect(int fd) {	// Select fd for reading.
-      FD_SET(fd,&readfds);
+      FD_SET(fd, &readfds);
    }
    void NoReadSelect(int fd) {	// Do not select fd for reading.
-      FD_CLR(fd,&readfds);
+      FD_CLR(fd, &readfds);
    }
    void WriteSelect(int fd) {	// Select fd for writing.
-      FD_SET(fd,&writefds);
+      FD_SET(fd, &writefds);
    }
    void NoWriteSelect(int fd) {	// Do not select fd for writing.
-      FD_CLR(fd,&writefds);
+      FD_CLR(fd, &writefds);
    }
 };

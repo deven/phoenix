@@ -33,13 +33,13 @@
 
 #include "phoenix.h"
 
-Sendlist::Sendlist(Session &session,char *sendlist,boolean multi = false,
-		   boolean do_sessions = true,boolean do_discussions = true)
+Sendlist::Sendlist(Session &session, char *sendlist, boolean multi = false,
+		   boolean do_sessions = true, boolean do_discussions = true)
 {
-   set(session,sendlist,multi,do_sessions,do_discussions);
+   set(session, sendlist, multi, do_sessions, do_discussions);
 }
 
-Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
+Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi = false,
 			boolean do_sessions = true,
 			boolean do_discussions = true)
 {
@@ -65,11 +65,11 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
    do {				// Loop for each sendlist component.
       sessionmatches.Reset();
       discussionmatches.Reset();
-      separator = strchr(start,Separator);
+      separator = strchr(start, Separator);
       if (separator) *separator = 0;
-      if (sender.FindSendable(start,session,sessionmatches,discussion,
-			      discussionmatches,boolean(!multi),false,
-			      boolean(do_sessions),boolean(do_discussions))) {
+      if (sender.FindSendable(start, session, sessionmatches, discussion,
+			      discussionmatches, boolean(!multi), false,
+			      boolean(do_sessions), boolean(do_discussions))) {
 	 if (session) sessions.Add(session);
 	 if (discussion) discussions.Add(discussion);
       } else {
@@ -88,7 +88,7 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 	    } else {
 	       errors.append('"');
 	       errors.append(tmp);
-	       sprintf(buf,"\" matches %d name%s: ",sessionmatches.Count(),
+	       sprintf(buf, "\" matches %d name%s: ", sessionmatches.Count(),
 		       sessionmatches.Count() == 1 ? "" : "s");
 	       errors.append(buf);
 	       errors.append(session++->name);
@@ -114,7 +114,7 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 		  errors.append(tmp);
 		  errors.append("\" matches ");
 	       }
-	       sprintf(buf,"%d discussion%s: ",discussionmatches.Count(),
+	       sprintf(buf, "%d discussion%s: ", discussionmatches.Count(),
 		       discussionmatches.Count() == 1 ? "" : "s");
 	       errors.append(buf);
 	       errors.append(discussion++->name);
@@ -160,7 +160,7 @@ Sendlist &Sendlist::set(Session &sender,char *sendlist,boolean multi = false,
 }
 
 // Enqueues message to sendlist, returns count of recipients.
-int Sendlist::Expand(Set<Session> &who,Session *sender)
+int Sendlist::Expand(Set<Session> &who, Session *sender)
 {
    who.Reset();
 

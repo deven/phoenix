@@ -99,7 +99,7 @@
 // Initial revision
 //
 
-enum AwayState {Here,Away,Busy,Gone}; // Degrees of "away" status.
+enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
 class Session: public Object {
    static List<Session> inits;	// List of sessions initializing.
@@ -140,7 +140,7 @@ public:
    void Close(boolean drain = true);
    void Transfer(Telnet *t);
    void Attach(Telnet *t);
-   void Detach(Telnet *t,boolean intentional);
+   void Detach(Telnet *t, boolean intentional);
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);
    void InitInputFunction();
@@ -156,16 +156,16 @@ public:
       if (!buf) return;		// return if no data
       while (*buf) Output.out(*((unsigned char *) buf++));
    }
-   void print(char *format,...); // formatted output
-   static void announce(char *format,...); // formatted output to all sessions
+   void print(char *format, ...); // formatted output
+   static void announce(char *format, ...); // formatted output to all sessions
 
    void EnqueueOutput(void) {	// Enqueue output buffer.
       char *buf = Output.GetData();
-      if (buf) Pending.Enqueue(telnet,new Text(buf));
+      if (buf) Pending.Enqueue(telnet, new Text(buf));
    }
    void Enqueue(OutputObj *out) { // Enqueue output buffer and object.
       EnqueueOutput();
-      Pending.Enqueue(telnet,out);
+      Pending.Enqueue(telnet, out);
    }
    void EnqueueOthers(OutputObj *out) { // Enqueue output to others.
       ListIter<Session> session(sessions);
@@ -178,27 +178,28 @@ public:
       return Pending.SendNext(telnet);
    }
 
-   boolean FindSendable(char *sendlist,Session *&session,
+   boolean FindSendable(char *sendlist, Session *&session,
 			Set<Session> &sessionmatches, Discussion *&discussion,
 			Set<Discussion> &discussionmatches,
-			boolean member = false,boolean exact = false,
+			boolean member = false, boolean exact = false,
 			boolean do_sessions = true,
 			boolean do_discussions = true);
-   Session *FindSession(char *sendlist,Set<Session> &matches);
-   Discussion *FindDiscussion(char *sendlist,Set<Discussion> &matches,
+   Session *FindSession(char *sendlist, Set<Session> &matches);
+   Discussion *FindDiscussion(char *sendlist, Set<Discussion> &matches,
 				      boolean member = false);
    void PrintSessions(Set<Session> &sessions);
    void PrintDiscussions(Set<Discussion> &discussions);
-   void SessionMatches(char *name,Set<Session> &matches);
-   void DiscussionMatches(char *name,Set<Discussion> &matches);
+   void SessionMatches(char *name, Set<Session> &matches);
+   void DiscussionMatches(char *name, Set<Discussion> &matches);
    void Login(char *line);
    void Password(char *line);
    void EnteredName(char *line);
    void TransferSession(char *line);
    void Blurb(char *line);
    void ProcessInput(char *line);
-   void ListItem(boolean &flag,String &last,char *str);
-   boolean GetWhoSet(char *args,Set<Session> &who,String &errors,String &msg);
+   void ListItem(boolean &flag, String &last, char *str);
+   boolean GetWhoSet(char *args, Set<Session> &who, String &errors,
+		     String &msg);
    void NotifyEntry();		// Notify other users of entry and log.
    void NotifyExit();		// Notify other users of exit and log.
    void PrintTimeLong(int minutes); // Print time value, long format.
@@ -220,7 +221,7 @@ public:
    void DoSignal(char *args);	// Do /signal command.
    void DoSend(char *args);	// Do /send command.
    void DoWhy(char *args);	// Do /why command.
-   void DoBlurb(char *start,boolean entry = false); // Do /blurb command.
+   void DoBlurb(char *start, boolean entry = false); // Do /blurb command.
    void DoHere(char *args);	// Do /here command.
    void DoAway(char *args);	// Do /away command.
    void DoBusy(char *args);	// Do /busy command.
@@ -239,6 +240,6 @@ public:
    void DoRename(char *args);	 // Do /rename command.
    void DoReset();		 // Do <space><return> idle time reset.
    void DoMessage(char *line);	 // Do message send.
-   void SendMessage(Sendlist *sendlist,char *msg);
+   void SendMessage(Sendlist *sendlist, char *msg);
    static void CheckShutdown();	// Exit if shutting down and no users are left.
 };

@@ -57,7 +57,7 @@ void OutputStream::Attach(Telnet *telnet) // Review detached output.
 }
 
 // Enqueue output.
-void OutputStream::Enqueue(Telnet *telnet,OutputObj *out)
+void OutputStream::Enqueue(Telnet *telnet, OutputObj *out)
 {
    if (!out) return;
    if (tail) {
