@@ -1719,7 +1719,8 @@ void Session::DoSend(char *args) // Do /send command.
       for (p = args; *p; p++) {
 	 switch (*p) {
 	 case Backslash:
-	    if (*++p) slist.append(*p);
+	    if (p[1]) p++;
+	    slist.append(*p);
 	    break;
 	 case Quote:
 	    while (*p) {
@@ -2503,7 +2504,12 @@ char *message_start(char *line, String &sendlist,
          if (*++p == Space) p++;
          return p;
       case Backslash:
-	 if (*++p) sendlist.append(*p);
+         if (*++p) {
+            sendlist.append(*p);
+         } else {
+            sendlist = "default";
+            return line;
+         }
          break;
       case Quote:
 	 while (*++p) {
