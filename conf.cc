@@ -430,7 +430,7 @@ void blurb(Telnet *telnet,char *line)
    // Print welcome banner and do a /who list.
    telnet->output("\n\nWelcome to conf.  Type \"/help\" for a list of "
 		  "commands.\n\n");
-   Session::who_cmd(telnet);
+   telnet->session->DoWho();
 
    // Set normal input routine.
    telnet->SetInputFunction(process_input);
@@ -462,8 +462,7 @@ void process_input(Telnet *telnet,char *line)
       if (!strncasecmp(line,"/bye",4)) {
 	 telnet->session->DoBye();
       } else if (!strncasecmp(line,"/who",4)) {
-	 // /who list.
-	 Session::who_cmd(telnet);
+	 telnet->session->DoWho();
       } else if (!strcasecmp(line,"/date")) {
 	 // Print current date and time.
          telnet->print("%s\n",date(0,0,0));
