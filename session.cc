@@ -1593,6 +1593,10 @@ void Session::DoCreate(char *args) // Do /create command.
 
 void Session::DoDestroy(char *args) // Do /destroy command.
 {
+   if (!*args) {
+      output("Usage: /destroy <disc>[,<disc>...]\n");
+      return;
+   }
    char *name = getword(args);
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
@@ -1610,6 +1614,10 @@ void Session::DoDestroy(char *args) // Do /destroy command.
 
 void Session::DoJoin(char *args) // Do /join command.
 {
+   if (!*args) {
+      output("Usage: /join <disc>[,<disc>...]\n");
+      return;
+   }
    char *name = getword(args);
    Set<Discussion> matches;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
@@ -1623,6 +1631,10 @@ void Session::DoJoin(char *args) // Do /join command.
 
 void Session::DoQuit(char *args) // Do /quit command.
 {
+   if (!*args) {
+      output("Usage: /quit <disc>[,<disc>...]\n");
+      return;
+   }
    char *name = getword(args);
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
@@ -1641,6 +1653,10 @@ void Session::DoQuit(char *args) // Do /quit command.
 void Session::DoPermit(char *args) // Do /permit command.
 {
    char *name = getword(args);
+   if (!*args) {
+      output("Usage: /permit <disc> <person>[,<person>...]\n");
+      return;
+   }
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1658,6 +1674,10 @@ void Session::DoPermit(char *args) // Do /permit command.
 void Session::DoDepermit(char *args) // Do /depermit command.
 {
    char *name = getword(args);
+   if (!*args) {
+      output("Usage: /depermit <disc> <person>[,<person>...]\n");
+      return;
+   }
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1675,6 +1695,10 @@ void Session::DoDepermit(char *args) // Do /depermit command.
 void Session::DoAppoint(char *args) // Do /appoint command.
 {
    char *name = getword(args);
+   if (!*args) {
+      output("Usage: /appoint <disc> <person>[,<person>...]\n");
+      return;
+   }
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1692,6 +1716,10 @@ void Session::DoAppoint(char *args) // Do /appoint command.
 void Session::DoUnappoint(char *args) // Do /unappoint command.
 {
    char *name = getword(args);
+   if (!*args) {
+      output("Usage: /unappoint <disc> <person>[,<person>...]\n");
+      return;
+   }
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1713,6 +1741,10 @@ void Session::DoRename(char *args) // Do /rename command.
    Pointer<Discussion> discussion;
    Set<Discussion> discussionmatches;
 
+   if (!*args) {
+      output("Usage: /rename <name>\n");
+      return;
+   }
    if (match(args,"me")) {
       output("The keyword \"me\" is reserved.  (name unchanged)\n");
       return;
