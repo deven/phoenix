@@ -11,6 +11,7 @@
 // Initial revision
 //
 
+extern "C" {
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -27,8 +28,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-
-extern "C" {
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 };
