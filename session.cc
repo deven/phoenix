@@ -84,6 +84,7 @@ Session::Session(Telnet *t)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
    priv = 0;			// No privileges yet.
+   attempts = 0;		// No login attempts yet.
    oops_text = "Oops!  Sorry, that last message was intended for someone else...";
                                 // Set default /oops text.
    inits.AddTail(this);		// Add session to initializing list.
@@ -425,16 +426,11 @@ void Session::Login(char *line)
    if (*line) {
       User::UpdateAll();	// Update user accounts.
       user = User::GetUser(line);
-      if (!user) {
-	 telnet->output("Login incorrect.\n");
-	 telnet->Prompt("login: ");
-	 return;
-      }
    } else {
       telnet->Prompt("login: ");
       return;
    }
-   if (user->password) {
+   if (!user || user->password) {
       // Warn if echo can't be turned off.
       if (!telnet->Echo) {
 	 telnet->output("\n\aSorry, password probably WILL echo.\n\n");
@@ -465,8 +461,12 @@ void Session::Password(char *line)
    User::UpdateAll();		// Update user accounts.
 
    // Check against encrypted password.
-   if (strcmp(crypt(line, user->password), user->password)) {
+   if (!user || strcmp(crypt(line, user->password), user->password)) {
       telnet->output("Login incorrect.\n");
+      if (++attempts >= MaxLoginAttempts) {
+         Close();
+         return;
+      }
       telnet->Prompt("login: "); // Prompt for login.
       SetInputFunction(&Session::Login); // Set login input routine.
       user = 0;

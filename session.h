@@ -30,6 +30,7 @@ class Session: public Object {
    static List<Session> sessions; // List of signed-on sessions.
    static List<Discussion> discussions; // List of active discussions.
 public:
+   static const int MaxLoginAttempts = 3; // maximum login attempts allowed
    static Hash defaults;	// default session-level system variables
 
    Pointer<User> user;		// user this session belongs to
@@ -47,6 +48,7 @@ public:
    char SignalPrivate;		// Signal for private messages? (boolean)
    char SignedOn;		// Session signed on? (boolean)
    char closing;		// Session closing? (boolean)
+   int attempts;		// login attempts
    int priv;			// current privilege level
    String name;			// current user name (pseudo)
    String blurb;		// current user blurb
