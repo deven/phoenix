@@ -87,6 +87,20 @@ int Session::ResetIdle(int min) // Reset and return idle time, maybe report.
    return idle;
 }
 
+void Session::notify(char *format,...) // formatted write to all sessions
+{
+   char buf[BufSize];
+   Session *session;
+   va_list ap;
+
+   va_start(ap,format);
+   (void) vsprintf(buf,format,ap);
+   va_end(ap);
+   for (session = sessions; session; session = session->next) {
+      session->telnet->OutputWithRedraw(buf);
+   }
+}
+
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
    if (Shutdown && !sessions) {
