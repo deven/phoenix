@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
+// $Id: session.cc,v 1.4 2002/09/10 05:59:18 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.4  2002/09/10 05:59:18  deven
+// Changed /who continuations from "]+...+[" to "+...>" in case names are long.
+//
 // Revision 1.3  2002/07/28 05:46:09  deven
 // Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
 //

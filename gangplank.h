@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: gangplank.h,v 1.2 2002/09/10 04:14:40 deven Exp $
 //
 // Primary header file.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.h,v $
+// Revision 1.2  2002/09/10 04:14:40  deven
+// Resequenced include files to include "general.h" before "object.h" due to
+// the addition of new/delete prototypes.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

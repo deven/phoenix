@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: event.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: event.h,v 1.2 2002/09/10 04:10:15 deven Exp $
 //
 // Event and derived classes, interfaces.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: event.h,v $
+// Revision 1.2  2002/09/10 04:10:15  deven
+// Changed pure virtual function Execute() to call abort() instead.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
