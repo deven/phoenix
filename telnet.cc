@@ -313,7 +313,7 @@ void Telnet::set_RSGA(CallbackFuncPtr callback,int state)
 Telnet::Telnet(int lfd)		// Telnet constructor.
 {
    type = TelnetFD;		// Identify as a Telnet FD.
-   session = 0;			// no Session (yet)
+   session = NULL;		// no Session (yet)
    data = new char[InputSize];	// Allocate input line buffer.
    end = data + InputSize;	// Save end of allocated block.
    point = free = data;		// Mark input line as empty.
@@ -363,7 +363,12 @@ void Telnet::Prompt(char *p) {	// Print and set new prompt.
 
 Telnet::~Telnet()
 {
-   delete session;		// Free session structure.
+   if (session->telnet) {
+      session->telnet = NULL;	// Detach associated session.
+      log("Detach: %s (%s) on fd %d.",session->name_only,session->user->user,
+	  fd);
+   }
+
    delete data;			// Free input line buffer.
 
    if (fd != -1) {		// Skip all this if there's no connection.
