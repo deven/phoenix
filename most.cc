@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: most.cc,v 1.2 2003/02/18 05:08:56 deven Exp $
+// $Id: most.cc,v 1.3 2003/02/24 02:19:04 deven dead $
 //
 // Module which includes most other modules, for compiler efficiency.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: most.cc,v $
+// Revision 1.3  2003/02/24 02:19:04  deven
+// Retired most.cc hack.
+//
 // Revision 1.2  2003/02/18 05:08:56  deven
 // Updated copyright dates.
 //
