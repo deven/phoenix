@@ -249,6 +249,18 @@ void Session::announce(char *format,...) // formatted output to all sessions
    }
 }
 
+char *match(char *&input,char *keyword,int min = 0) {
+   char *p = input,*q = keyword;
+   if (!min) min = strlen(keyword);
+   for (int i = 0; *q; p++, q++, i++) {
+      if (isspace(*p) || !*p || isalpha(*q) && !isalpha(*p)) break;
+      if ((isupper(*p) ? tolower(*p) : *p) != *q) return 0;
+   }
+   if (i < min || *p && !isspace(*p) && !*q) return 0;
+   while (isspace(*p)) p++;
+   return input = p;
+}
+
 int match_name(char *name,char *sendlist) // returns position of match or 0.
 {
    char *start,*p,*q;
@@ -269,7 +281,7 @@ int match_name(char *name,char *sendlist) // returns position of match or 0.
 
 Pointer<Session> Session::FindSession(char *sendlist,Set<Session> &matches)
 {
-   if (!strcasecmp(sendlist,"me")) return this;
+   if (match(sendlist,"me")) return this;
 
    int pos,count = 0;
    Pointer<Session> lead,match;
@@ -316,15 +328,15 @@ Pointer<Discussion> Session::FindDiscussion(char *sendlist,
 
 void Session::Login(char *line)
 {
-   if (!strcasecmp(line,"/bye")) {
-      DoBye();
+   if (match(line,"/bye",4)) {
+      DoBye(line);
       return;
-// } else if (!strcasecmp(line,"/who")) {
-//    DoWho();
+// } else if (match(line,"/who",2)) {
+//    DoWho(line);
 //    telnet->Prompt("login: ");
 //    return;
-// } else if (!strcasecmp(line,"/idle")) {
-//    DoIdle();
+// } else if (match(line,"/idle",2)) {
+//    DoIdle(line);
 //    telnet->Prompt("login: ");
 //    return;
    }
@@ -432,7 +444,7 @@ void Session::Name(char *line)
 
 void Session::TransferSession(char *line)
 {
-   if (strncasecmp(line,"yes",1)) {
+   if (match(line,"yes",1)) {
       telnet->output("Session not transferred.\n");
       telnet->Prompt("Enter name: ");
       SetInputFunction(Name);
@@ -486,7 +498,7 @@ void Session::Blurb(char *line)
 
    // Print welcome banner and do a /who list.
    output("\n\nWelcome to conf.  Type \"/help\" for a list of commands.\n\n");
-   DoWho();			// Enqueues output.
+   DoWho("");			// Enqueues output.
 
    SetInputFunction(ProcessInput); // Set normal input routine.
 }
@@ -501,65 +513,28 @@ void Session::ProcessInput(char *line)
          output("Sorry, all !commands are privileged.\n");
          return;
       }
-      if (!strncasecmp(line,"!restart",8)) {
-	 while (*line && !isspace(*line)) line++;
-	 while (*line && isspace(*line)) line++;
-	 DoRestart(line);
-      } else if (!strncasecmp(line,"!down",5)) {
-	 while (*line && !isspace(*line)) line++;
-	 while (*line && isspace(*line)) line++;
-	 DoDown(line);
-      } else if (!strncasecmp(line,"!nuke ",6)) {
-	 while (*line && !isspace(*line)) line++;
-	 while (*line && isspace(*line)) line++;
-	 DoNuke(line);
-      } else {
-	 // Unknown !command.
-	 output("Unknown !command.\n");
-      }
+      if (match(line,"!restart",8)) DoRestart(line);
+      else if (match(line,"!down",5)) DoDown(line);
+      else if (match(line,"!nuke",5)) DoNuke(line);
+      else output("Unknown !command.\n");
    } else if (*line == '/') {
-      if (!strncasecmp(line,"/bye",4)) {
-	 DoBye();
-      } else if (!strncasecmp(line,"/clear",6)) {
-	 DoClear();
-      } else if (!strncasecmp(line,"/unidle",7)) {
-	 DoUnidle();
-      } else if (!strncasecmp(line,"/detach",4)) {
-	 DoDetach();
-      } else if (!strncasecmp(line,"/who",4)) {
-	 DoWho();
-      } else if (!strncasecmp(line,"/why",4)) {
-	 DoWhy();
-      } else if (!strncasecmp(line,"/idle",3)) {
-	 line++;
-	 while (*line && isalpha(*line)) line++;
-	 DoIdle(line);
-      } else if (!strcasecmp(line,"/date")) {
-	 DoDate();
-      } else if (!strncasecmp(line,"/signal",7)) {
-	 DoSignal(line + 7);
-      } else if (!strncasecmp(line,"/send",5)) {
-	 DoSend(line + 5);
-      } else if (!strncasecmp(line,"/blurb",3)) { // /blurb command.
-	 while (*line && !isspace(*line)) line++;
-	 DoBlurb(line);
-      } else if (!strncasecmp(line,"/here",5)) {
-	 while (*line && !isspace(*line)) line++;
-	 DoHere(line);
-      } else if (!strncasecmp(line,"/away",5)) {
-	 while (*line && !isspace(*line)) line++;
-	 DoAway(line);
-      } else if (!strncasecmp(line,"/busy",5)) {
-	 while (*line && !isspace(*line)) line++;
-	 DoBusy(line);
-      } else if (!strncasecmp(line,"/gone",5)) {
-	 while (*line && !isspace(*line)) line++;
-	 DoGone(line);
-      } else if (!strncasecmp(line,"/help",5)) { // /help command.
-	 DoHelp();
-      } else {			// Unknown /command.
-	 output("Unknown /command.  Type /help for help.\n");
-      }
+      if (match(line,"/who",2)) DoWho(line);
+      else if (match(line,"/idle",3)) DoIdle(line);
+      else if (match(line,"/blurb",3)) DoBlurb(line);
+      else if (match(line,"/here",2)) DoHere(line);
+      else if (match(line,"/away",2)) DoAway(line);
+      else if (match(line,"/busy",2)) DoBusy(line);
+      else if (match(line,"/gone",2)) DoGone(line);
+      else if (match(line,"/help",2)) DoHelp(line);
+      else if (match(line,"/send",2)) DoSend(line);
+      else if (match(line,"/bye",4)) DoBye(line);
+      else if (match(line,"/clear",3)) DoClear(line);
+      else if (match(line,"/unidle",7)) DoUnidle(line);
+      else if (match(line,"/detach",4)) DoDetach(line);
+      else if (match(line,"/why",4)) DoWhy(line);
+      else if (match(line,"/date",3)) DoDate(line);
+      else if (match(line,"/signal",3)) DoSignal(line);
+      else output("Unknown /command.  Type /help for help.\n");
    } else if (!strcmp(line," ")) {
       DoReset();
    } else if (*line) {
@@ -713,7 +688,7 @@ void Session::DoRestart(char *args) // Do !restart command.
       announce("\a\a>>> Server restarting NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 4;
-   } else if (!strcasecmp(args,"cancel")) {
+   } else if (match(args,"cancel")) {
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
@@ -756,7 +731,7 @@ void Session::DoDown(char *args) // Do !down command.
       announce("\a\a>>> Server shutting down NOW!  Goodbye. <<<\n\a\a");
       alarm(5);
       Shutdown = 2;
-   } else if (!strcasecmp(args,"cancel")) {
+   } else if (match(args,"cancel")) {
       if (Shutdown > 2) {
 	 Shutdown = 0;
 	 alarm(0);
@@ -845,17 +820,17 @@ void Session::DoNuke(char *args) // Do !nuke command.
    }
 }
 
-void Session::DoBye()		// Do /bye command.
+void Session::DoBye(char *args)	// Do /bye command.
 {
    Close();			// Close session.
 }
 
-void Session::DoClear()		// Do /clear command.
+void Session::DoClear(char *args) // Do /clear command.
 {
    output("\033[H\033[J");	// ANSI! ***
 }
 
-void Session::DoDetach()	// Do /detach command.
+void Session::DoDetach(char *args) // Do /detach command.
 {
    ResetIdle(10);
    output("You have been detached.\n");
@@ -863,7 +838,7 @@ void Session::DoDetach()	// Do /detach command.
    if (telnet) telnet->Close(); // Drain connection, then close.
 }
 
-void Session::DoWho()		// Do /who command.
+void Session::DoWho(char *args)	// Do /who command.
 {
    String tmp;
    int idle,days,hours,minutes,now = time(NULL);
@@ -952,7 +927,7 @@ void Session::DoWho()		// Do /who command.
    }
 }
 
-void Session::DoWhy()		// Do /why command.
+void Session::DoWhy(char *args)	// Do /why command.
 {
    String tmp;
    int idle,days,hours,minutes,now = time(NULL);
@@ -1115,69 +1090,79 @@ void Session::DoIdle(char *args) // Do /idle command.
    if (col) output(Newline);
 }
 
-void Session::DoDate()		// Do /date command.
+void Session::DoDate(char *args) // Do /date command.
 {
    print("%s\n",date(0,0,0));	// Print current date and time.
 }
 
-void Session::DoSignal(char *p)	// Do /signal command.
+void Session::DoSignal(char *args) // Do /signal command.
 {
-   while (*p && isspace(*p)) p++;
-   if (!strncasecmp(p,"on",2)) {
+   if (match(args,"on",2)) {
       SignalPublic = SignalPrivate = true;
       output("All signals are now on.\n");
-   } else if (!strncasecmp(p,"off",3)) {
+   } else if (match(args,"off",2)) {
       SignalPublic = SignalPrivate = false;
       output("All signals are now off.\n");
-   } else if (!strncasecmp(p,"public",6)) {
-      p += 6;
-      while (*p && isspace(*p)) p++;
-      if (!strncasecmp(p,"on",2)) {
+   } else if (match(args,"public",2)) {
+      if (match(args,"on",2)) {
 	 SignalPublic = true;
 	 output("Signals for public messages are now on.\n");
-      } else if (!strncasecmp(p,"off",3)) {
+      } else if (match(args,"off",2)) {
 	 SignalPublic = false;
 	 output("Signals for public messages are now off.\n");
+      } else if (*args) {
+	 output("Usage: /signal public [on|off]\n");
       } else {
-	 output("/signal public syntax error!\n");
+	 print("Signals are %s for public messages.\n",SignalPublic ? "on" :
+	       "off");
       }
-   } else if (!strncasecmp(p,"private",7)) {
-      p += 7;
-      while (*p && isspace(*p)) p++;
-      if (!strncasecmp(p,"on",2)) {
+   } else if (match(args,"private",2)) {
+      if (match(args,"on",2)) {
 	 SignalPrivate = true;
 	 output("Signals for private messages are now on.\n");
-      } else if (!strncasecmp(p,"off",3)) {
+      } else if (match(args,"off",2)) {
 	 SignalPrivate = false;
 	 output("Signals for private messages are now off.\n");
+      } else if (*args) {
+	 output("Usage: /signal private [on|off]\n");
       } else {
-	 output("/signal private syntax error!\n");
+	 print("Signals are %s for private messages.\n",SignalPrivate ? "on" :
+	       "off");
       }
+   } else if (*args) {
+      output("Usage: /signal [public|private] [on|off]\n");
    } else {
-      output("/signal syntax error!\n");
+      if (SignalPublic == SignalPrivate) {
+	 print("Signals are %s for both public and private messages.\n",
+	       SignalPublic ? "on" : "off");
+      } else {
+	 print("Signals are %s for public messages and %s for private "
+	       "messages.\n",SignalPublic ? "on" : "off",
+	       SignalPrivate ? "on" : "off");
+      }
    }
 }
 
-void Session::DoSend(char *p)	// Do /send command.
+void Session::DoSend(char *args) // Do /send command.
 {
-   while (*p && isspace(*p)) p++;
-   if (!*p) {			// Display current sendlist.
+   while (*args && isspace(*args)) args++;
+   if (!*args) {			// Display current sendlist.
       if (!default_sendlist) {
 	 output("Your default sendlist is turned off.\n");
-      } else if (!strcasecmp(default_sendlist,"everyone")) {
+      } else if (match(default_sendlist,"everyone")) {
 	 output("You are sending to everyone.\n");
       } else {
 	 print("Your default sendlist is set to \"%s\".\n",
 	       (char *) default_sendlist);
       }
-   } else if (!strcasecmp(p,"off")) {
+   } else if (match(args,"off")) {
       default_sendlist = (char *) NULL;
       output("Your default sendlist has been turned off.\n");
-   } else if (!strcasecmp(p,"everyone")) {
+   } else if (match(args,"everyone")) {
       default_sendlist = "everyone";
       output("You are now sending to everyone.\n");
    } else {
-      default_sendlist = p;
+      default_sendlist = args;
       print("Your default sendlist is now set to \"%s\".\n",
 	    (char *) default_sendlist);
    }
@@ -1255,7 +1240,17 @@ void Session::DoGone(char *args) // Do /gone command.
    EnqueueOthers(new GoneNotify(name_obj));
 }
 
-void Session::DoHelp()		// Do /help command.
+void Session::DoUnidle(char *args) // Do /unidle idle time reset.
+{
+   if (!ResetIdle(1)) output("Your idle time has been reset.\n");
+}
+
+void Session::DoReset()		// Do <space><return> idle time reset.
+{
+   ResetIdle(1);
+}
+
+void Session::DoHelp(char *args) // Do /help command.
 {
    output("Known commands: /blurb (set a descriptive blurb), /bye (leave conf)"
 	  ", /date\n(display current date and time), /detach (disconnect witho"
@@ -1347,16 +1342,6 @@ char *message_start(char *line,String &sendlist,boolean &explicit)
    return line + (*line == Space);
 }
 
-void Session::DoReset()		// Do <space><return> idle time reset.
-{
-   ResetIdle(1);
-}
-
-void Session::DoUnidle()	// Do /unidle idle time reset.
-{
-   if (!ResetIdle(1)) output("Your idle time has been reset.\n");
-}
-
 void Session::DoMessage(char *line) // Do message send.
 {
    String sendlist;
@@ -1375,7 +1360,7 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Use default sendlist if indicated.
-   if (!strcasecmp((char *) sendlist,"default")) {
+   if (match(sendlist,"default")) {
       if (default_sendlist) {
 	 sendlist = default_sendlist;
       } else {
@@ -1387,7 +1372,7 @@ void Session::DoMessage(char *line) // Do message send.
    // Save last sendlist if explicit.
    if (explicit && sendlist) last_sendlist = sendlist;
 
-   if (!strcasecmp((char *) sendlist,"everyone")) {
+   if (match(sendlist,"everyone")) {
       SendEveryone(line);
    } else {
       SendPrivate(sendlist,line);

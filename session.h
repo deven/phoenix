@@ -144,23 +144,23 @@ public:
    void DoRestart(char *args);	// Do !restart command.
    void DoDown(char *args);	// Do !down command.
    void DoNuke(char *args);	// Do !nuke command.
-   void DoBye();		// Do /bye command.
-   void DoClear();		// Do /clear command.
-   void DoDetach();		// Do /detach command.
-   void DoWho();		// Do /who command.
+   void DoBye(char *args);	// Do /bye command.
+   void DoClear(char *args);	// Do /clear command.
+   void DoDetach(char *args);	// Do /detach command.
+   void DoWho(char *args);	// Do /who command.
    void DoIdle(char *args);	// Do /idle command.
-   void DoDate();		// Do /date command.
-   void DoSignal(char *p);	// Do /signal command.
-   void DoSend(char *p);	// Do /send command.
-   void DoWhy();		// Do /why command.
+   void DoDate(char *args);	// Do /date command.
+   void DoSignal(char *args);	// Do /signal command.
+   void DoSend(char *args);	// Do /send command.
+   void DoWhy(char *args);	// Do /why command.
    void DoBlurb(char *start,boolean entry = false); // Do /blurb command.
    void DoHere(char *args);	// Do /here command.
    void DoAway(char *args);	// Do /away command.
    void DoBusy(char *args);	// Do /busy command.
    void DoGone(char *args);	// Do /gone command.
-   void DoHelp();		// Do /help command.
+   void DoHelp(char *args);	// Do /help command.
+   void DoUnidle(char *args);	// Do /unidle idle time reset.
    void DoReset();		// Do <space><return> idle time reset.
-   void DoUnidle();		// Do /unidle idle time reset.
    void DoMessage(char *line);	// Do message send.
    void SendEveryone(char *msg);
    void SendPrivate(char *sendlist,char *msg);
