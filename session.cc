@@ -632,7 +632,7 @@ void Session::DoHelp()		// Do /help command.
 	  "/send -- specify default sendlist\n"
 	  "/signal -- turns public/private signals on/off\n"
 	  "/who -- gives a list of who is connected\n"
-	  "No other /commands are implemented yet. (except /why)\n\n"
+	  "No other /commands are implemented yet. [except /why! :-)]\n\n"
 	  "There are two ways to specify a user to send a private message.  "
 	  "You can use\n"
 	  "either a '#' and the fd number for the user, (as listed by /who) "
@@ -644,9 +644,7 @@ void Session::DoHelp()		// Do /help command.
 	  "Any other line not beginning with a slash is simply sent to "
 	  "everyone.\n\n"
 	  "The following are recognized as smileys instead of as sendlists:"
-	  "\n\n"
-	  "\t:-) :-( :-P ;-) :_) :_( :) :( :P ;) (-: )-: (-; (_: )_: (: ): (;"
-	  "\n\n");
+	  "\n\n\t:-) :-( :-P ;-) :_) :_( :) :( :P ;)\n\n");
 }
 
 void Session::DoReset()		// Do <space><return> idle time reset.

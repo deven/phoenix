@@ -146,9 +146,7 @@ char *message_start(char *line,char *sendlist,int len,boolean &explicit)
       if (!strcmp(line,":-)") || !strcmp(line,":-(") || !strcmp(line,":-P") ||
 	  !strcmp(line,";-)") || !strcmp(line,":_)") || !strcmp(line,":_(") ||
 	  !strcmp(line,":)") || !strcmp(line,":(") || !strcmp(line,":P") ||
-	  !strcmp(line,";)") || !strcmp(line,"(-:") || !strcmp(line,")-:") ||
-	  !strcmp(line,"(-;") || !strcmp(line,"(_:") || !strcmp(line,")_:") ||
-	  !strcmp(line,"(:") || !strcmp(line,"):") || !strcmp(line,"(;")) {
+	  !strcmp(line,";)")) {
 	 *p = state;
 	 strcpy(sendlist,"default");
 	 return line;
