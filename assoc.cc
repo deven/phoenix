@@ -4,7 +4,7 @@
 //
 // Assoc (associative array) class implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.cc,v $
 // Revision 1.2  1995/10/27 03:04:21  deven

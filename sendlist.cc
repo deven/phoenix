@@ -4,7 +4,7 @@
 //
 // Sendlist class implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.cc,v $
 // Revision 1.5  1994/05/10 06:38:34  deven

@@ -4,7 +4,7 @@
 #
 # Phoenix conferencing system server -- Makefile.
 #
-# Copyright 1994 by Deven T. Corzine.  All rights reserved.
+# Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
 # Revision 1.11  1995/12/05 18:09:18  deven

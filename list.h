@@ -4,7 +4,7 @@
 //
 // List class interface & implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
 // Revision 1.6  1994/04/21 05:55:54  deven

@@ -4,7 +4,7 @@
 //
 // OutputStream class interface.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.h,v $
 // Revision 1.6  1996/02/19 23:50:34  deven

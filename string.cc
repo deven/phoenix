@@ -4,7 +4,7 @@
 //
 // String class implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.cc,v $
 // Revision 1.3  1996/02/17 00:14:30  deven

@@ -4,7 +4,7 @@
 //
 // Set class interface & implementation.
 //
-// Copyright 1994 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: set.h,v $
 // Revision 1.5  1994/04/21 05:56:10  deven
