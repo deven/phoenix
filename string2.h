@@ -36,6 +36,7 @@
 class String {
 private:
    static const int Extra = 16;
+   static const int NumberLength = 32;
    char *str;
    int len;
    int extra;
@@ -61,6 +62,10 @@ public:
    String &operator =(String &s);
    String &operator =(const char *s);
    String &operator =(char *s) { return operator =((const char *) s); }
+   String &operator =(int n);
+   String &operator =(unsigned int n);
+   String &operator =(long n);
+   String &operator =(unsigned long n);
    String &append(const String &s);
    String &append(String &s);
    String &append(const char *s);
