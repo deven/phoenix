@@ -57,6 +57,7 @@
 
 #include "conf.h"
 
+List<Session> Session::inits;
 List<Session> Session::sessions;
 
 Session::Session(Pointer<Telnet> &t)
@@ -69,13 +70,13 @@ Session::Session(Pointer<Telnet> &t)
    blurb[0] = 0;		// No blurb.
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
-   SignedOn = false;		// No signed on yet.
+   SignedOn = false;		// Not signed on yet.
    last_sendlist[0] = 0;	// No previous sendlist yet.
    reply_sendlist[0] = 0;	// No reply sendlist yet.
    strcpy(default_sendlist,"everyone");	// Default sendlist is "everyone".
    message_time = time(&login_time);	// Reset timestamps.
-
    user = new User(this);	// Create a new User for this Session. ***
+   inits.AddTail(this);		// Add session to initializing list.
 }
 
 Session::~Session()
@@ -86,6 +87,8 @@ Session::~Session()
 void Session::Close(boolean drain = true) // Close session.
 {
    ListIter<Session> session(sessions);
+   while (session++) if (session == this) session.Remove();
+   session = inits;
    while (session++) if (session == this) session.Remove();
 
    if (SignedOn) NotifyExit();	// Notify and log exit if signed on.
@@ -189,6 +192,12 @@ void Session::announce(char *format,...) // formatted output to all sessions
    va_end(ap);
 
    ListIter<Session> session(sessions);
+   while (session++) {
+      session->output(buf);
+      session->EnqueueOutput();
+   }
+
+   session = inits;
    while (session++) {
       session->output(buf);
       session->EnqueueOutput();
@@ -343,6 +352,10 @@ void Session::Blurb(char *line)
    }
 
    SignedOn = true;		// Session is signed on.
+   sessions.AddTail(this);	// Add session to signed-on list.
+   // Link new session into user list. ***
+   ListIter<Session> session(inits);
+   while (session++) if (session == this) session.Remove();
 
    NotifyEntry();		// Notify other users of entry.
 
@@ -419,8 +432,6 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
 {
    log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
-   sessions.AddTail(this);	// Add session to global list.
-   // Link new session into user list. ***
 }
 
 void Session::NotifyExit()	// Notify other users of exit and log.
