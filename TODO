@@ -1,4 +1,22 @@
-$Id: TODO,v 1.1 2001/11/30 23:53:32 deven Exp $
+$Id: TODO,v 1.2 2002/09/10 04:49:48 deven Exp $
+
+Install Bugzilla at bugzilla.gangplank.org, start tracking there instead.
+
+Create mailing lists for users, administrators, developers, and announcements.
+
+Use getrlimit(), setrlimit() and sysconf() in addition to getdtablesize().
+
+Add support for poll(), possible Linux's poll2() and NetBSD's kqueue, in
+addition to select().
+
+Possibly add native Winsock support to avoid Cygwin dependencies, using either
+asynchronous I/O or (preferably) I/O completion ports under NT, if available.
+
+Possibly port to Visual C++ if it doesn't work out of the box?
+
+Start using autoconf (and automake?) to avoid manual configuration.
+
+Help automate basics like admin account setup, guest access, port number, etc.
 
 Review old Phoenix TODO list for relevant tasks.
 
