@@ -1,5 +1,13 @@
 $Id: NEWS,v 1.1 2001/11/30 23:53:32 deven Exp $
 
+December 2, 2001:
+
+ * Release Version: 1.0.0.beta.2
+
+ * Forgot to test the initial release; it's a "brown paper bag" release
+   that fails to compile.  See the RELEASES file for more details.  This
+   release has been tested, and fixes the minor bug in the first release.
+
 November 30, 2001:
 
  * Release Version: 1.0.0.beta.1
