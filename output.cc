@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.6 1994/04/15 23:13:31 deven Exp $
+// $Id: output.cc,v 1.7 1994/04/21 06:09:51 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.7  1994/04/21 06:09:51  deven
+// Renamed "conf" to "Phoenix", added discussion-related notifications and
+// /rename notification.
+//
 // Revision 1.6  1994/04/15 23:13:31  deven
 // Changed call to PrintMessage() to include Sendlist, had all output types
 // changed to add the now-separate blurb.

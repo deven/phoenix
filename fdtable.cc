@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.9 1994/02/05 18:30:22 deven Exp $
+// $Id: fdtable.cc,v 1.10 1994/04/21 06:09:17 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.10  1994/04/21 06:09:17  deven
+// Renamed "conf" to "Phoenix".
+//
 // Revision 1.9  1994/02/05 18:30:22  deven
 // Added [] to array delete.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: discussion.cc,v 1.1 1994/04/21 06:07:38 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: discussion.cc,v $
+// Revision 1.1  1994/04/21 06:07:38  deven
+// Initial revision
+//
 
 #include "phoenix.h"
 

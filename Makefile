@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.8 1994/04/16 05:43:16 deven Exp $
+# $Id: Makefile,v 1.9 1994/04/21 05:52:53 deven Exp $
 #
 # Phoenix conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.9  1994/04/21 05:52:53  deven
+# Renamed "conf" to "Phoenix".
+#
 # Revision 1.8  1994/04/16 05:43:16  deven
 # Updated Makefile to include new source files.
 #

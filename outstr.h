@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outstr.h,v 1.4 1994/01/19 22:02:48 deven Exp $
+// $Id: outstr.h,v 1.5 1994/04/21 05:59:03 deven Exp $
 //
 // OutputStream class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outstr.h,v $
+// Revision 1.5  1994/04/21 05:59:03  deven
+// Added declaration for Unenqueue() function.
+//
 // Revision 1.4  1994/01/19 22:02:48  deven
 // Changed Pointer parameters to reference parameters.
 //

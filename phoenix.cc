@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.12 1994/04/15 22:36:05 deven Exp $
+// $Id: phoenix.cc,v 1.13 1994/04/21 06:11:00 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: conf.cc,v $
+// $Log: phoenix.cc,v $
+// Revision 1.13  1994/04/21 06:11:00  deven
+// Renamed "conf" to "Phoenix", added trim(), getword() and match() functions.
+//
 // Revision 1.12  1994/04/15 22:36:05  deven
 // Moved message_start() and match_name() routines to live with the Session
 // class routines that call them.

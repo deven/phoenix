@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.h,v 1.7 1994/04/16 05:45:12 deven Exp $
+// $Id: phoenix.h,v 1.8 1994/04/21 05:53:30 deven Exp $
 //
 // Phoenix conferencing system server -- Primary header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: conf.h,v $
+// $Log: phoenix.h,v $
+// Revision 1.8  1994/04/21 05:53:30  deven
+// Renamed "conf" to "Phoenix", moved discussion.h after session.h.
+//
 // Revision 1.7  1994/04/16 05:45:12  deven
 // Added new header files.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.2 1994/04/16 10:43:38 deven Exp $
+// $Id: sendlist.cc,v 1.3 1994/04/21 06:14:23 deven Exp $
 //
 // Sendlist class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.3  1994/04/21 06:14:23  deven
+// Renamed "conf" to "Phoenix", cleaned up Sendlist code.
+//
 // Revision 1.2  1994/04/16 10:43:38  deven
 // Replaced Enqueue() with Expand().
 //

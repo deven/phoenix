@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.14 1994/04/17 11:29:28 deven Exp $
+// $Id: telnet.cc,v 1.15 1994/04/21 06:17:17 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.15  1994/04/21 06:17:17  deven
+// Renamed "conf" to "Phoenix", changed message format, added input history,
+// simple kill ring, added word editing commands.
+//
 // Revision 1.14  1994/04/17 11:29:28  deven
 // Fixed TIMING-MARK test -- no longer requires reply TIMING-MARK options
 // to arrive before ECHO option; ECHO might be requested right off by the

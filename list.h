@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.5 1994/04/15 22:16:15 deven Exp $
+// $Id: list.h,v 1.6 1994/04/21 05:55:54 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.6  1994/04/21 05:55:54  deven
+// Added First() and Remove() functions.
+//
 // Revision 1.5  1994/04/15 22:16:15  deven
 // Added Reset() and In() methods.
 //
