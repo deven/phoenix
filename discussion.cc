@@ -112,7 +112,7 @@ void Discussion::Permit(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args)) {
+      while (user = getword(args,Comma)) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
 	       session->print("Discussion %s is already public.\n",~name);
@@ -172,7 +172,7 @@ void Discussion::Depermit(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args)) {
+      while (user = getword(args,Comma)) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
 	       Public = false;
@@ -248,7 +248,7 @@ void Discussion::Appoint(Session *session,char *args) {
    char *user;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args)) {
+      while (user = getword(args,Comma)) {
 	 if (s = session->FindSession(user,matches)) {
 	    if (IsModerator(s)) {
 	       session->print("%s is already a moderator of discussion %s.\n",
@@ -275,7 +275,7 @@ void Discussion::Unappoint(Session *session,char *args) {
    Name *n;
 
    if (IsCreator(session) || IsModerator(session)) {
-      while (user = getword(args)) {
+      while (user = getword(args,Comma)) {
 	 if (s = session->FindSession(user,matches)) {
 	    if (n = IsModerator(s)) {
 	       moderators.Remove(n);

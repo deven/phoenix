@@ -1822,7 +1822,7 @@ void Session::DoDestroy(char *args) // Do /destroy command.
       output("Usage: /destroy <disc>[,<disc>...]\n");
       return;
    }
-   char *name = getword(args);
+   char *name = getword(args,Comma);
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1843,7 +1843,7 @@ void Session::DoJoin(char *args) // Do /join command.
       output("Usage: /join <disc>[,<disc>...]\n");
       return;
    }
-   char *name = getword(args);
+   char *name = getword(args,Comma);
    Set<Discussion> matches;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
@@ -1860,7 +1860,7 @@ void Session::DoQuit(char *args) // Do /quit command.
       output("Usage: /quit <disc>[,<disc>...]\n");
       return;
    }
-   char *name = getword(args);
+   char *name = getword(args,Comma);
    Set<Discussion> matches,matches2;
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 

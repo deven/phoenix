@@ -233,13 +233,13 @@ void trim(char *&input) {
    *p = 0;
 }
 
-char *getword(char *&input) {
+char *getword(char *&input,char separator = 0) {
    while (*input && isspace(*input)) input++;
    char *p = input;
-   while (*input && !isspace(*input) && *input != Comma) input++;
+   while (*input && !isspace(*input) && *input != separator) input++;
    if (*input) {
       while (*input && isspace(*input)) *input++ = 0;
-      if (*input == Comma) *input++ = 0;
+      if (*input == separator) *input++ = 0;
       while (*input && isspace(*input)) *input++ = 0;
    }
    return *p ? p : 0;
