@@ -8,6 +8,8 @@
 //
 // $Log$
 
+template <class Type> class SetIter;
+
 template <class Type>
 class Set {
 friend class SetIter<Type>;
