@@ -20,8 +20,6 @@
 #
 # $Log$
 
-AM_CFLAGS = -Wall -fno-rtti -fno-exceptions
-AM_CXXFLAGS = -Wall -fno-rtti -fno-exceptions
 bin_PROGRAMS = makepw restart gangplank
 makepw_SOURCES = makepw.c
 restart_SOURCES = restart.c
