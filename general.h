@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.17 1996/02/21 20:32:36 deven Exp $
+// $Id: general.h,v 1.18 1996/04/05 02:39:36 deven Exp $
 //
 // Phoenix conferencing system server -- General header file.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.18  1996/04/05 02:39:36  deven
+// Added Latin-1 characters and expanded on ASCII characters.
+//
 // Revision 1.17  1996/02/21 20:32:36  deven
 // Updated copyright notice.  Moved boolean stuff out to boolean.h.  Changed
 // character constants from enum to const char.

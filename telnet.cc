@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.28 1996/02/21 21:04:08 deven Exp $
+// $Id: telnet.cc,v 1.29 1996/04/05 02:46:24 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.29  1996/04/05 02:46:24  deven
+// Added support for Latin-1 characters and compose sequences (starting with
+// Control-C) to create them on an ASCII keyboard...
+//
 // Revision 1.28  1996/02/21 21:04:08  deven
 // Updated copyright notice.  Changed temporary smart pointers back to real
 // pointers.  Changed NULL to 0.  Added "default" case to make GCC 2.7.2 happy.
