@@ -1,12 +1,21 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.38 2000/08/15 02:03:29 deven Exp $
+// $Id: telnet.cc,v 1.39 2000/11/29 08:01:39 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.39  2000/11/29 08:01:39  deven
+// Added support for telnet option subnegotiation sequences.  Added support
+// for NAWS (Negotiate About Window Size) telnet option and subnegotiation
+// sequence to discover the proper terminal size.  Added SetWidth() and
+// SetHeight() functions, and used them for initialization and the NAWS
+// option.  Removed "/set echo" and "/set width" kludges entirely; these are
+// now implemented in the Session class where they belong.  To enable remote
+// echo before a session is initialized, defined C-x C-e keystroke toggle.
+//
 // Revision 1.38  2000/08/15 02:03:29  deven
 // Added "/set width" command to change current terminal width.  Still a very
 // nasty kludge that doesn't belong here.

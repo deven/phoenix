@@ -1,12 +1,19 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.49 2000/04/25 04:57:51 deven Exp $
+// $Id: session.cc,v 1.50 2000/11/29 07:55:22 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.50  2000/11/29 07:55:22  deven
+// Added "width" and "height" variables to "/set" and "/display" commands to
+// view or control the (understood) terminal size.  Added "echo" variable to
+// "/set" and "/display" commands to view or force remote echo mode without
+// regard to actual TELNET option negotiation, for use with raw TCP.  Both of
+// these features call functions in the Telnet class for implementation.
+//
 // Revision 1.49  2000/04/25 04:57:51  deven
 // Implemented /also and /oops.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.20 2000/11/29 07:19:44 deven Exp $
+// $Id: telnet.h,v 1.21 2000/11/29 07:54:47 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.21  2000/11/29 07:54:47  deven
+// Added GetEcho() and SetEcho() functions.
+//
 // Revision 1.20  2000/11/29 07:19:44  deven
 // Added support for NAWS (Negotiate About Window Size) option negotiation,
 // made height variable, added SetWidth() and SetHeight() functions.
