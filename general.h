@@ -18,8 +18,6 @@
 #define EWOULDBLOCK EAGAIN
 #endif
 
-enum boolean {false,true};	// boolean data type
-
 // Class declarations.
 class Block;
 class FD;
@@ -40,6 +38,14 @@ const int SendlistLen = 33;	// maximum length of sendlist (including null)
 const int Port = 6789;		// TCP port to run on
 
 // enumerations
+#ifdef NO_BOOLEAN
+#define boolean int
+#define false (0)
+#define true (1)
+#else
+enum boolean {false,true};	// boolean data type
+#endif
+
 enum MessageType {Public,Private}; // types of messages
 
 enum Char {			// Character codes.
