@@ -199,12 +199,31 @@ void Telnet::PrintMessage(MessageType type,char *from,char *reply_to,char *to,
    output(Bell);
    switch (type) {
    case Public:
-      print("\n -> From %s to everyone: [%s]\n - %s\n",from,date(0,11,5),msg);
+      print("\n -> From %s to everyone: [%s]\n - ",from,date(0,11,5));
       break;
    case Private:
-      print("\n >> Private message from %s: [%s]\n - %s\n",from,date(0,11,5),msg);
+      print("\n >> Private message from %s: [%s]\n - ",from,date(0,11,5));
       break;
    }
+   start = msg;
+   while (*start) {
+      wrap = 0;
+      for (p = start, col = 0; *p && col <= 75; p++, col++) {
+	 if (*p == Space) wrap = p;
+      }
+      if (!*p) {
+	 output(start,p - start);
+	 break;
+      } else if (wrap) {
+	 output(start,wrap - start);
+	 start = wrap + 1;
+      } else {
+	 output(start,p - start);
+	 start = p;
+      }
+      output("\n - ");
+   }
+   output(Newline);
    RedrawInput();
 }
 
