@@ -120,11 +120,11 @@ public:
    OutputBuffer Command;	// pending command output
    int outstanding;		// outstanding acknowledgement count
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
-   char undrawn;		// input line undrawn for output? (boolean)
-   char blocked;		// output blocked? (boolean)
-   char closing;		// connection closing? (boolean)
-   char acknowledge;		// use telnet TIMING-MARK option? (boolean)
-   char DoEcho;			// should server be echoing? (boolean)
+   boolean undrawn;		// input line undrawn for output?
+   boolean blocked;		// output blocked?
+   boolean closing;		// connection closing?
+   boolean acknowledge;		// use telnet TIMING-MARK option?
+   boolean DoEcho;		// should server be echoing?
    char Echo;			// telnet ECHO option (local)
    char LSGA;			// telnet SUPPRESS-GO-AHEAD option (local)
    char RSGA;			// telnet SUPPRESS-GO-AHEAD option (remote)
