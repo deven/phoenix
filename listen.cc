@@ -62,16 +62,12 @@ Listen::Listen(int port)	// Listen on a port.
    }
 
    // Try to bind to the port.  Try real hard.
-   while (1) {
-      if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
-	 if (errno == EADDRINUSE) {
-	    if (!tries++) fprintf(stderr, "Waiting for port %d.\n", port);
-	    sleep(1);
-	 } else {
-	    error("Listen::Listen(): bind(port = %d)", port);
-	 }
+   while (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
+      if (errno == EADDRINUSE) {
+	 if (!tries++) fprintf(stderr, "Waiting for port %d.\n", port);
+	 sleep(1);
       } else {
-	 break;
+	 error("Listen::Listen(): bind(port = %d)", port);
       }
    }
 
