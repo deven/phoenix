@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.2 1993/12/11 08:02:32 deven Exp $
+// $Id: telnet.cc,v 1.3 1993/12/12 00:47:45 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.3  1993/12/12 00:47:45  deven
+// Added announce() and nuke() member functions.
+//
 // Revision 1.2  1993/12/11 08:02:32  deven
 // Removed global buffers, added local buffers to functions.  Fixed Telnet
 // destructor to call NoReadSelect() and NoWriteSelect() only if fd != -1,

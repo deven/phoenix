@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.2 1993/12/11 07:55:00 deven Exp $
+// $Id: fdtable.cc,v 1.3 1993/12/12 00:37:48 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.3  1993/12/12 00:37:48  deven
+// Changed announce() to unformatted.  Removed SendByFD(), SendEveryone() and
+// SendPrivate() member functions.
+//
 // Revision 1.2  1993/12/11 07:55:00  deven
 // Removed global buffer, added local buffer in function.  Added definitions
 // for FD::fdtable, FDTable::readfds and FDTable::writefds.  Added FD_ZERO's

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: telnet.h,v 1.2 1993/12/12 00:00:41 deven Exp $
 //
 // Telnet class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
+// Revision 1.2  1993/12/12 00:00:41  deven
+// Added static member functions announce() and nuke().
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
