@@ -1,18 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: pointer.h,v 1.2 2000/03/22 04:07:45 deven Exp $
+// $Id$
 //
 // Pointer class inline/template functions.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: pointer.h,v $
-// Revision 1.2  2000/03/22 04:07:45  deven
-// Updated copyright dates.
-//
-// Revision 1.1  1996/02/21 20:43:05  deven
-// Initial revision
-//
+// $Log$
 
 template <class Type>
 inline Pointer<Type>::Pointer(Pointer &p)

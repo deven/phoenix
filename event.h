@@ -1,18 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: event.h,v 1.2 2000/03/22 04:06:13 deven Exp $
+// $Id$
 //
 // Event and derived classes, interfaces.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: event.h,v $
-// Revision 1.2  2000/03/22 04:06:13  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.1  1996/05/13 18:48:26  deven
-// Initial revision
-//
+// $Log$
 
 // Types of Event subclasses.
 enum EventType {

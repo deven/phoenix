@@ -1,112 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.29 2000/04/25 04:57:13 deven Exp $
+// $Id$
 //
 // Session class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: session.h,v $
-// Revision 1.29  2000/04/25 04:57:13  deven
-// Added DoAlso(), DoOops() and oops_text field.
-//
-// Revision 1.28  2000/03/22 07:13:37  deven
-// Added output(const char *buf).
-//
-// Revision 1.27  2000/03/22 04:06:48  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.26  1996/05/12 07:25:08  deven
-// Changed login_time and message_time to Timestamp objects.  Added default
-// ResetIdle() parameter.
-//
-// Revision 1.25  1996/02/21 20:40:45  deven
-// Updated copyright notice.  Set return type of RemoveDiscussion() to void.
-// Changed temporary smart pointers back to real pointers.
-//
-// Revision 1.24  1996/02/19 23:50:58  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.23  1996/02/19 23:40:08  deven
-// Changed Name() to EnteredName() to avoid conflict with class Name.
-//
-// Revision 1.22  1995/10/27 03:55:22  deven
-// Added user_vars and sys_vars Assoc arrays per session and static defaults
-// Assoc array for all sessions.  Added init_defaults() and DoDisplay().
-//
-// Revision 1.21  1995/10/26 15:46:20  deven
-// Added DoSet() function.
-//
-// Revision 1.20  1995/05/05 04:24:00  deven
-// Added /howmany command.
-//
-// Revision 1.19  1995/02/28 16:29:55  deven
-// Added privilege level to session.
-//
-// Revision 1.18  1994/07/21 05:55:43  deven
-// Added basic colon and semicolon processing.
-//
-// Revision 1.17  1994/04/21 06:06:20  deven
-// Various Sendlist and Discussion changes.
-//
-// Revision 1.16  1994/04/16 10:40:21  deven
-// Added ListItem() and GetWhoSet().
-//
-// Revision 1.15  1994/04/16 05:49:49  deven
-// Added static member discussions, modified Session class to use String class,
-// added FindDiscussion declaration, changed DoBlurb to void, fixed Do*() to
-// accept args.
-//
-// Revision 1.14  1994/02/17 05:24:37  deven
-// Added PrintTimeLong() function.
-//
-// Revision 1.13  1994/02/07 21:49:40  deven
-// Added SetIdle(), SetBlurb() and Unidle(), modified DoIdle().
-//
-// Revision 1.12  1994/02/05 18:27:07  deven
-// Added here/away/busy/gone states.
-//
-// Revision 1.11  1994/01/20 05:32:35  deven
-// Added Transfer() and TransferSession(), modified Detach().
-//
-// Revision 1.10  1994/01/20 02:19:05  deven
-// Added Session::inits as List<Session> for initializing sessions.
-//
-// Revision 1.9  1994/01/20 00:22:29  deven
-// Changed Session::sessions into a List<Session>, removed next, user_next.
-//
-// Revision 1.8  1994/01/19 22:08:48  deven
-// Added last_message field, added FindSession() function, changed Pointer
-// parameters to reference parameters, added DoRestart() function.
-//
-// Revision 1.7  1994/01/09 05:16:26  deven
-// Removed Null() construct for Pointers.
-//
-// Revision 1.6  1994/01/03 09:31:54  deven
-// Added DoClear(), removed SendByFD().
-//
-// Revision 1.5  1994/01/02 12:06:43  deven
-// Updated copyright notice, made class Session derived from Object, modified
-// to use smart pointers, added Close(), Attach() and Detach() functions, made
-// some other minor modifications.
-//
-// Revision 1.4  1993/12/31 07:59:22  deven
-// Updated for variable output stream windows and TIMING-MARK acknowledgements,
-// added DoDetach() function for /detach command.
-//
-// Revision 1.3  1993/12/21 15:14:28  deven
-// Did major restructuring to route most I/O through Session class.  All
-// Session-level output is now stored in a symbolic queue, as a block of
-// text, a message, a notification, etc.  Support is ready for /detach.
-//
-// Revision 1.2  1993/12/11 23:57:41  deven
-// Added static member sessions.  Added member functions SendEveryone(),
-// SendByFD(), SendPrivate() and Link().  Added static member functions
-// notify(), who_cmd(), CheckShutdown().
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 

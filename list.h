@@ -1,44 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.10 2000/03/22 07:12:31 deven Exp $
+// $Id$
 //
 // List class interface & implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: list.h,v $
-// Revision 1.10  2000/03/22 07:12:31  deven
-// Added forward declarations for List and ListIter.  Rewrote operator ->()
-// and operator Type *().
-//
-// Revision 1.9  2000/03/22 04:04:23  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.8  1996/05/13 18:31:24  deven
-// Added PriorityEnqueue() function.
-//
-// Revision 1.7  1996/02/21 20:27:51  deven
-// Updated copyright notice.  Fixed (previously reversed) Shift()/Unshift()
-// semantics.  Changed temporary smart pointers back to real pointers.
-//
-// Revision 1.6  1994/04/21 05:55:54  deven
-// Added First() and Remove() functions.
-//
-// Revision 1.5  1994/04/15 22:16:15  deven
-// Added Reset() and In() methods.
-//
-// Revision 1.4  1994/02/05 18:24:40  deven
-// Made List class normal instead of reference-counted.
-//
-// Revision 1.3  1994/01/20 00:21:28  deven
-// Modified to keep track of last node in ListIter for Remove().
-//
-// Revision 1.2  1994/01/19 21:53:49  deven
-// Updated list class, merged node class, added iterator class.
-//
-// Revision 1.1  1994/01/02 11:40:20  deven
-// Initial revision
-//
+// $Log$
 
 template <class Type> class List;
 template <class Type> class ListIter;

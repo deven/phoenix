@@ -1,114 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.24 2000/03/22 23:50:36 deven Exp $
+// $Id$
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: phoenix.cc,v $
-// Revision 1.24  2000/03/22 23:50:36  deven
-// Reduced signal shutdown timeout to 5 seconds.
-//
-// Revision 1.23  2000/03/22 18:41:06  deven
-// Changed logfile name to use a 4-digit year.
-//
-// Revision 1.22  2000/03/22 04:09:27  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.21  1996/05/13 18:33:49  deven
-// Added main server EventQueue object.  Modified type of Shutdown variable to
-// Pointer<Event> instead of int.  Removed alrm(), modified to ignore SIGALRM.
-// Moved shutdown code in alrm(), RestartServer() and ShutdownServer() to new
-// ShutdownEvent and RestartEvent class methods.  Modified quit() to enqueue a
-// ShutdownEvent.  Modified main server loop to execute ready events and pass
-// timeout for next event to Select() routine.
-//
-// Revision 1.20  1996/05/12 07:30:11  deven
-// Modified to use Timestamp class, moved date() to Timestamp::date().
-//
-// Revision 1.19  1996/02/21 20:56:12  deven
-// Updated copyright notice.  Printed shutdown signal in logfile, ignored other
-// signal numbers in handlers.  Moved declaration for new ANSI "for" scoping,
-// and added extra parens around assignment in conditional context to make
-// GCC 2.7.2 happy.
-//
-// Revision 1.18  1995/12/05 20:14:42  deven
-// Added SystemUptime() function (reads /proc/uptime if available), added
-// ServerStartUptime to hold the system uptime at the time of server start,
-// for more reliable determination of server uptime.
-//
-// Revision 1.17  1995/10/27 03:23:08  deven
-// Added ServerStartTime and code to set the start time.
-//
-// Revision 1.16  1995/10/26 15:47:26  deven
-// Changed getword() parameters to accept arbitrary separator instead of just
-// assuming Comma.  Defaults to no additional separator besides whitespace.
-//
-// Revision 1.15  1994/06/27 05:28:33  deven
-// Changed unary minus to unary tilde on strings.
-//
-// Revision 1.14  1994/05/13 04:28:54  deven
-// Modified to lookup home directory and use ~/lib/phoenix to run in.
-//
-// Revision 1.13  1994/04/21 06:11:00  deven
-// Renamed "conf" to "Phoenix", added trim(), getword() and match() functions.
-//
-// Revision 1.12  1994/04/15 22:36:05  deven
-// Moved message_start() and match_name() routines to live with the Session
-// class routines that call them.
-//
-// Revision 1.11  1994/02/05 18:29:50  deven
-// Only avoid fork() if last argument is -debug, do signal handling always.
-//
-// Revision 1.10  1994/01/19 22:14:48  deven
-// Removed strerror() definition, reworked into warn() and error() directly,
-// modified match_name() to be iterative instead of recursive, returning a
-// position instead of boolean, added support for server restart and for
-// running on a non-default port.
-//
-// Revision 1.9  1994/01/09 07:02:47  deven
-// Changed setpgrp() to setsid().
-//
-// Revision 1.8  1994/01/09 05:17:33  deven
-// Removed state machine from message_start().
-//
-// Revision 1.7  1994/01/02 11:30:23  deven
-// Updated copyright notice, added crash() function, changed Telnet::announce()
-// to Session::announce(), removed several dead variables.
-//
-// Revision 1.6  1993/12/31 07:45:55  deven
-// Removed support for reversed smileys (e.g. "(-:") in case of match against
-// a name, and because they're not as likely to be typed reflexively.
-//
-// Revision 1.5  1993/12/21 15:14:28  deven
-// Did major restructuring to route most I/O through Session class.  All
-// Session-level output is now stored in a symbolic queue, as a block of
-// text, a message, a notification, etc.  Support is ready for /detach.
-//
-// Revision 1.4  1993/12/13 22:49:43  deven
-// Modified to use encrypted passwords in password file, and to recognize '#'
-// as a comment.  (only if in first column at present)
-//
-// Revision 1.3  1993/12/12 00:05:04  deven
-// Removed definition and initialization for global variable sessions.  Removed
-// global functions notify() and who_cmd().  Added code to handle "/bye" typed
-// at login: prompt.  Made accounts, commands and keywords case-insensitive.
-// Changed around various calls to call new methods.  Made /blurb command say
-// "truncated" if the blurb was too long.  Added calls to Session::Link() and
-// Session::CheckShutdown().
-//
-// Revision 1.2  1993/12/11 07:45:33  deven
-// Removed global buffers, added buffers local to functions instead.  Removed
-// definition for fdtable. (now static member in class FD) Removed definitions
-// for fd_sets readfds and writefds. (now static members in class FDTable)
-// Changed all occurrences of fdtable to FD::fdtable. (kludge)  Fixed checking
-// for blurb text quoting with ""'s or []'s.  Removed FD_ZERO for readfds and
-// writefds. (now in FDTable::FDTable())  Removed unused variables in main().
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 

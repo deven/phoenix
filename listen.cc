@@ -1,37 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.8 2000/03/22 04:08:56 deven Exp $
+// $Id$
 //
 // Listen class implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: listen.cc,v $
-// Revision 1.8  2000/03/22 04:08:56  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.7  1996/02/21 20:53:17  deven
-// Updated copyright notice.
-//
-// Revision 1.6  1994/04/21 06:09:30  deven
-// Renamed "conf" to "Phoenix".
-//
-// Revision 1.5  1994/01/19 22:28:20  deven
-// Fixed to clear close-on-exec flag for listen socket, check fd first in
-// InputReady(), removed RequestShutdown() function.
-//
-// Revision 1.4  1994/01/09 05:19:22  deven
-// Fixed to listen on INADDR_ANY instead of looking up hostname.
-//
-// Revision 1.3  1994/01/02 11:51:30  deven
-// Updated copyright notice, added destructor and Closed() functions.
-//
-// Revision 1.2  1993/12/12 00:43:09  deven
-// Added Open() member function.
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 

@@ -1,38 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.8 2000/03/22 07:13:08 deven Exp $
+// $Id$
 //
 // Set class interface & implementation.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: set.h,v $
-// Revision 1.8  2000/03/22 07:13:08  deven
-// Added forward declaration of SetIter.
-//
-// Revision 1.7  2000/03/22 04:04:31  deven
-// Updated copyright dates.
-//
-// Revision 1.6  1996/02/21 20:31:16  deven
-// Updated copyright notice.  Fixed operator =() to return *this.  Removed
-// operator --().  Changed return type of Remove() to void.  Changed temporary
-// smart pointers back to real pointers.
-//
-// Revision 1.5  1994/04/21 05:56:10  deven
-// Added First() function, rewrote implementation of Remove() function.
-//
-// Revision 1.4  1994/04/15 22:16:32  deven
-// Added Reset() method.
-//
-// Revision 1.3  1994/02/05 18:25:14  deven
-// Made Set class normal instead of reference-counted.
-//
-// Revision 1.2  1994/01/20 00:21:53  deven
-// Removed int() conversion.
-//
-// Revision 1.1  1994/01/19 21:54:14  deven
-// Initial revision
-//
+// $Log$
 
 template <class Type> class SetIter;
 

@@ -1,61 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.15 2000/03/22 04:09:00 deven Exp $
+// $Id$
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: output.cc,v $
-// Revision 1.15  2000/03/22 04:09:00  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.14  1996/05/12 07:29:06  deven
-// Modified to use Timestamp class and print results of Timestamp::stamp().
-//
-// Revision 1.13  1996/02/21 20:53:38  deven
-// Updated copyright notice.  Changed temporary smart pointers back to real
-// pointers.
-//
-// Revision 1.12  1996/02/19 23:51:32  deven
-// Changed "Output" class to "OutputObj" to avoid conflicts.
-//
-// Revision 1.11  1996/02/19 23:25:47  deven
-// Changed "explicit" to "is_explicit" to make GCC 2.7.2 happy.
-//
-// Revision 1.10  1994/07/21 05:56:47  deven
-// Fixed /appoint and /unappoint notification messages.
-//
-// Revision 1.9  1994/06/27 05:28:24  deven
-// Changed unary minus to unary tilde on strings.
-//
-// Revision 1.8  1994/05/13 04:28:29  deven
-// Changed (char *) casts to unary operator -() instead.
-//
-// Revision 1.7  1994/04/21 06:09:51  deven
-// Renamed "conf" to "Phoenix", added discussion-related notifications and
-// /rename notification.
-//
-// Revision 1.6  1994/04/15 23:13:31  deven
-// Changed call to PrintMessage() to include Sendlist, had all output types
-// changed to add the now-separate blurb.
-//
-// Revision 1.5  1994/02/05 18:30:33  deven
-// Added here/away/busy/gone output types.
-//
-// Revision 1.4  1994/01/20 05:33:20  deven
-// Added transfer notification.
-//
-// Revision 1.3  1994/01/19 22:17:45  deven
-// Changed Pointer parameters to reference parameters.
-//
-// Revision 1.2  1994/01/02 12:02:15  deven
-// Updated copyright notice, modified to use smart pointers, added attach
-// and detach notifications.
-//
-// Revision 1.1  1993/12/21 15:33:31  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 

@@ -1,33 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: outbuf.h,v 1.7 2000/03/22 04:05:42 deven Exp $
+// $Id$
 //
 // OutputBuffer class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: outbuf.h,v $
-// Revision 1.7  2000/03/22 04:05:42  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.6  1996/02/21 20:34:57  deven
-// Updated copyright notice.  Changed NULL to 0.
-//
-// Revision 1.5  1996/02/19 22:24:52  deven
-// Removed declarations from for loops due to new ANSI scoping rules.
-//
-// Revision 1.4  1994/01/02 11:59:56  deven
-// Updated copyright notice.
-//
-// Revision 1.3  1993/12/31 07:50:16  deven
-// Added cast to boolean to satisfy gcc 2.5.7 warnings.
-//
-// Revision 1.2  1993/12/21 15:32:03  deven
-// Added GetData() function, changed out() functions to return boolean.
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 class OutputBuffer {
 public:

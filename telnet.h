@@ -1,83 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.21 2000/11/29 07:54:47 deven Exp $
+// $Id$
 //
 // Telnet class interface.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: telnet.h,v $
-// Revision 1.21  2000/11/29 07:54:47  deven
-// Added GetEcho() and SetEcho() functions.
-//
-// Revision 1.20  2000/11/29 07:19:44  deven
-// Added support for NAWS (Negotiate About Window Size) option negotiation,
-// made height variable, added SetWidth() and SetHeight() functions.
-//
-// Revision 1.19  2000/08/15 02:03:10  deven
-// Modified to make screen width variable.
-//
-// Revision 1.18  2000/03/22 07:13:56  deven
-// Marked constants width, height, HistoryMax and KillRingMax as static and
-// as integers.
-//
-// Revision 1.17  2000/03/22 04:07:38  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.16  1996/05/20 05:17:13  deven
-// Changed boolean flags from type "char" to type "boolean" instead.  Removed
-// "blocked" variable -- no longer honoring Telnet Go Ahead commands...
-//
-// Revision 1.15  1996/05/12 07:26:06  deven
-// Changed PrintMessage() to use Timestamp for time argument.
-//
-// Revision 1.14  1996/04/05 06:04:46  deven
-// Added support for telnet TRANSMIT-BINARY option.
-//
-// Revision 1.13  1996/02/21 20:42:27  deven
-// Updated copyright notice.  Removed unused Closed() declaration.  Changed
-// temporary smart pointers back to real pointers.
-//
-// Revision 1.12  1994/07/21 06:06:45  deven
-// Added basic colon and semicolon processing.
-//
-// Revision 1.11  1994/04/21 08:53:26  deven
-// Added upcase_word(), downcase_word(), capitalize_word() functions.
-//
-// Revision 1.10  1994/04/21 06:07:14  deven
-// Added input history, sort of kill ring, word editing commands.
-//
-// Revision 1.9  1994/04/15 22:32:40  deven
-// Changed prompt to use String class, modified PrintMessage declaration.
-//
-// Revision 1.8  1994/01/20 05:33:01  deven
-// Added count and Count().
-//
-// Revision 1.7  1994/01/19 22:12:22  deven
-// Changed Pointer parameter to a reference parameter, updated InputReady()
-// and OutputReady(), removed fake ShutdownCommand.
-//
-// Revision 1.6  1994/01/03 09:34:19  deven
-// Added counter for outstanding acknowledgements on connection.
-//
-// Revision 1.5  1994/01/02 12:12:35  deven
-// Updated copyright notice, modified to use smart pointers, removed nuke()
-// and announce(), made other minor modifications.
-//
-// Revision 1.4  1993/12/31 08:13:31  deven
-// Added support for telnet TIMING-MARK option.
-//
-// Revision 1.3  1993/12/21 15:14:28  deven
-// Did major restructuring to route most I/O through Session class.  All
-// Session-level output is now stored in a symbolic queue, as a block of
-// text, a message, a notification, etc.  Support is ready for /detach.
-//
-// Revision 1.2  1993/12/12 00:00:41  deven
-// Added static member functions announce() and nuke().
-//
-// Revision 1.1  1993/12/08 02:36:57  deven
-// Initial revision
-//
+// $Log$
 
 // Telnet commands.
 enum TelnetCommand {

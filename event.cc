@@ -1,21 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: event.cc,v 1.3 2000/03/22 23:39:51 deven Exp $
+// $Id$
 //
 // Event and derived classes, implementations.
 //
 // Copyright 1992-1996, 2000-2001 by Deven T. Corzine.  All rights reserved.
 //
-// $Log: event.cc,v $
-// Revision 1.3  2000/03/22 23:39:51  deven
-// Reduced final warning timeout to 3 seconds.
-//
-// Revision 1.2  2000/03/22 04:09:11  deven
-// Updated copyright dates and whitespace conventions.
-//
-// Revision 1.1  1996/05/13 18:48:34  deven
-// Initial revision
-//
+// $Log$
 
 #include "phoenix.h"
 
