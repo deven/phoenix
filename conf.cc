@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include "byteorder.h"
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/socket.h>
