@@ -36,49 +36,46 @@ FDTable::FDTable() {		// constructor
    FD_ZERO(&writefds);
    used = 0;
    size = getdtablesize();
-   array = new FD *[size];
+   array = new Pointer<FD> [size];
    for (int i = 0; i < size; i++) array[i] = 0;
 }
 
 FDTable::~FDTable() {		// destructor
-   for (int i = 0; i < used; i++) {
-      if (array[i]) delete array[i];
-   }
+   for (int i = 0; i < used; i++) array[i] = NULL;
    delete array;
 }
 
 void FDTable::OpenListen(int port) { // Open a listening port.
-   Listen *l = new Listen(port);
+   Pointer<Listen> l = new Listen(port);
    if (l->fd < 0 || l->fd >= size) {
       error("FDTable::OpenListen(port = %d): fd %d: range error! [0-%d]",
 	    port,l->fd,size-1);
    }
    if (l->fd >= used) used = l->fd + 1;
-   array[l->fd] = l;
+   array[l->fd] = l.GetPointer();
    l->ReadSelect();
 }
 
 void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
-   Telnet *t = new Telnet(lfd);
+   Pointer<Telnet> t = new Telnet(lfd);
    if (t->fd < 0 || t->fd >= size) {
       warn("FDTable::OpenTelnet(lfd = %d): fd %d: range error! [0-%d]",lfd,
 	   t->fd,size - 1);
-      delete t;
       return;
    }
    if (t->fd >= used) used = t->fd + 1;
-   array[t->fd] = t;
+   array[t->fd] = t.GetPointer();
 }
 
-FD *FDTable::Closed(int fd) {	// Close fd, return pointer to FD object.
+Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
    if (fd < 0 || fd >= used) {
       error("FDTable::Closed(fd = %d): range error! [0-%d]",fd,used - 1);
    }
-   FD *FD = array[fd];
-   array[fd] = 0;
+   Pointer<FD> FD = array[fd];
+   array[fd] = NULL;
    if (fd == used - 1) {	// Fix highest used index if necessary.
       while (used > 0) {
-	 if (array[--used]) {
+	 if (!array[--used].Null()) {
 	    used++;
 	    break;
 	 }
@@ -88,7 +85,7 @@ FD *FDTable::Closed(int fd) {	// Close fd, return pointer to FD object.
 }
 
 void FDTable::Close(int fd) {	// Close fd, deleting FD object.
-   delete Closed(fd);
+   Closed(fd);
 }
 
 void FDTable::Select()		// Select across all ready connections.
@@ -132,30 +129,25 @@ void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
 
 void FDTable::announce(char *buf) // unformatted write to all connections ***
 {
-   Telnet *t;
-
    for (int i = 0; i < used; i++) {
-      if ((t = (Telnet *) array[i]) && t->type == TelnetFD) {
-	 t->UndrawInput();
-	 t->output(buf);
-	 t->RedrawInput();
+      if (array[i] && array[i]->type == TelnetFD) {
+	 array[i]->UndrawInput();
+	 array[i]->output(buf);
+	 array[i]->RedrawInput();
       }
    }
 }
 
-void FDTable::nuke(Telnet *telnet,int fd,boolean drain)
+void FDTable::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
 {
-   Telnet *t;
-
-   if (fd >= 0 && fd < used && (t = (Telnet *) array[fd]) &&
-       t->type == TelnetFD) {
-      t->UndrawInput();
-      t->print("\a\a\a*** You have been nuked by %s. ***\n",
+   if (fd >= 0 && fd < used && array[fd] && array[fd]->type == TelnetFD) {
+      array[i]->UndrawInput();
+      array[i]->print("\a\a\a*** You have been nuked by %s. ***\n",
 	       telnet->session->name);
-      log("%s (%s) on fd %d has been nuked by %s (%s).",t->session->name_only,
-	  t->session->user->user,fd,telnet->session->name_only,
-	  telnet->session->user->user);
-      t->nuke(telnet,drain);
+      log("%s (%s) on fd %d has been nuked by %s (%s).",
+	  array[i]->session->name_only,array[i]->session->user->user,fd,
+	  telnet->session->name_only,telnet->session->user->user);
+      array[i]->nuke(telnet,drain);
    } else {
       telnet->print("There is no user on fd %d.\n",fd);
    }

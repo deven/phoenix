@@ -57,7 +57,7 @@ void Telnet::announce(char *format,...) // formatted write to all connections
    fdtable.announce(buf);
 }
 
-void Telnet::nuke(Telnet *telnet,int fd,boolean drain)
+void Telnet::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
 {
    fdtable.nuke(telnet,fd,drain);
 }
@@ -216,7 +216,8 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
    if (acknowledge) Output.out(TelnetIAC,TelnetDo,TelnetTimingMark);
 }
 
-void Telnet::PrintMessage(OutputType type,time_t time,Name *from,char *start)
+void Telnet::PrintMessage(OutputType type,time_t time,Pointer<Name> from,
+			  char *start)
 {
    char *wrap,*p;
    int col;
@@ -229,8 +230,7 @@ void Telnet::PrintMessage(OutputType type,time_t time,Name *from,char *start)
       break;
    case PrivateMessage:
       // Save name to reply to.
-      if (reply_to && --reply_to->RefCnt == 0) delete reply_to;
-      if (reply_to = from) reply_to->RefCnt++;
+      reply_to = from;
 
       // Print message header.
       if (session->SignalPrivate) output(Bell);
@@ -382,7 +382,7 @@ void Telnet::Prompt(char *p) {	// Print and set new prompt.
 
 Telnet::~Telnet()
 {
-   if (session->telnet) {
+   if (!session->telnet.Null()) {
       session->telnet = NULL;	// Detach associated session.
       log("Detach: %s (%s) on fd %d.",session->name_only,session->user->user,
 	  fd);
