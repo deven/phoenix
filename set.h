@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.2 1994/01/20 00:21:53 deven Exp $
+// $Id: set.h,v 1.3 1994/02/05 18:25:14 deven Exp $
 //
 // Set class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: set.h,v $
+// Revision 1.3  1994/02/05 18:25:14  deven
+// Made Set class normal instead of reference-counted.
+//
 // Revision 1.2  1994/01/20 00:21:53  deven
 // Removed int() conversion.
 //

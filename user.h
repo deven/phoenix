@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.3 1994/01/19 22:10:10 deven Exp $
+// $Id: user.h,v 1.4 1994/02/05 18:28:23 deven Exp $
 //
 // User class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: user.h,v $
+// Revision 1.4  1994/02/05 18:28:23  deven
+// Completely reorganized User class.
+//
 // Revision 1.3  1994/01/19 22:10:10  deven
 // Changed Pointer parameter to a reference parameter.
 //
