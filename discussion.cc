@@ -45,23 +45,23 @@ Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
 
 Name *Discussion::Allowed(Session *session) {
    SetIter<Name> name(allowed);
-   while (name++) if (!strcasecmp(name->name, session->name)) return name;
+   while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
    return 0;
 }
 
 Name *Discussion::Denied(Session *session) {
    SetIter<Name> name(denied);
-   while (name++) if (!strcasecmp(name->name, session->name)) return name;
+   while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
    return 0;
 }
 
 boolean Discussion::IsCreator(Session *session) {
-   return boolean(creator && !strcasecmp(creator->name,session->name));
+   return boolean(creator && !strcasecmp(~creator->name, ~session->name));
 }
 
 Name *Discussion::IsModerator(Session *session) {
    SetIter<Name> name(moderators);
-   while (name++) if (!strcasecmp(name->name, session->name)) return name;
+   while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
    return 0;
 }
 
