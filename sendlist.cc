@@ -55,7 +55,8 @@ Sendlist &Sendlist::set(Session &sender,String &sendlist,boolean multi = false,
       separator = strchr(start,Separator);
       if (separator) *separator = 0;
       if (sender.FindSendable(start,session,sessionmatches,discussion,
-		       discussionmatches,true,do_sessions,do_discussions)) {
+			      discussionmatches,true,false,do_sessions,
+			      do_discussions)) {
 	 if (session) sessions.Add(session);
 	 if (discussion) discussions.Add(discussion);
       } else {
