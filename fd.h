@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.3 1993/12/11 23:42:42 deven Exp $
+// $Id: fd.h,v 1.4 1993/12/21 15:21:07 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.4  1993/12/21 15:21:07  deven
+// Removed virtual member function output().
+//
 // Revision 1.3  1993/12/11 23:42:42  deven
 // Made fdtable a protected member, added Select() stub function.
 //

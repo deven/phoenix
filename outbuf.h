@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: outbuf.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: outbuf.h,v 1.2 1993/12/21 15:32:03 deven Exp $
 //
 // OutputBuffer class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: outbuf.h,v $
+// Revision 1.2  1993/12/21 15:32:03  deven
+// Added GetData() function, changed out() functions to return boolean.
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
