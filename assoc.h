@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: assoc.h,v 1.2 1995/10/27 02:51:58 deven Exp $
+// $Id: assoc.h,v 1.3 1996/02/19 22:21:43 deven Exp $
 //
 // Assoc (associative array) class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: assoc.h,v $
+// Revision 1.3  1996/02/19 22:21:43  deven
+// Fixed bug illuminated by GCC 2.7.2 -- the operator =() methods didn't return
+// any value; now they return *this as intended.
+//
 // Revision 1.2  1995/10/27 02:51:58  deven
 // Added Known() boolean test, fixed tilde operator to call tilde on String.
 //

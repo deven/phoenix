@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.10 1994/07/21 05:56:47 deven Exp $
+// $Id: output.cc,v 1.11 1996/02/19 23:25:47 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.11  1996/02/19 23:25:47  deven
+// Changed "explicit" to "is_explicit" to make GCC 2.7.2 happy.
+//
 // Revision 1.10  1994/07/21 05:56:47  deven
 // Fixed /appoint and /unappoint notification messages.
 //

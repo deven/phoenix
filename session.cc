@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.38 1996/02/16 23:42:36 deven Exp $
+// $Id: session.cc,v 1.39 1996/02/19 23:27:42 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.39  1996/02/19 23:27:42  deven
+// Changed "explicit" to "is_explicit" to make GCC 2.7.2 happy.
+//
 // Revision 1.38  1996/02/16 23:42:36  deven
 // Modified to save original input for last explicit sendlist instead of saving
 // parsed sendlist with internal codes.  Fixed parsing of quoted sendlists.
