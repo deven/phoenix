@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.6 2002/09/20 04:29:22 deven Exp $
+// $Id: gangplank.cc,v 1.7 2002/11/22 05:06:47 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.7  2002/11/22 05:06:47  deven
+// Modified startup messages in logfile to include server version number.
+//
 // Revision 1.6  2002/09/20 04:29:22  deven
 // Generate a compile-time error if mkdir() or strerror() not available.
 // Reverse parameters to setvbuf() if configure says so.  Don't compile code
