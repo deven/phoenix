@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.39 2000/11/29 08:01:39 deven Exp $
+// $Id: telnet.cc,v 1.40 2000/11/29 08:35:06 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.40  2000/11/29 08:35:06  deven
+// Reversed changes made in revision 1.25 to move within an input line by one
+// screen line at a time with previous_line() and next_line().  It seemed like
+// a good idea at the time, but it didn't really work that well in practice.
+//
 // Revision 1.39  2000/11/29 08:01:39  deven
 // Added support for telnet option subnegotiation sequences.  Added support
 // for NAWS (Negotiate About Window Size) telnet option and subnegotiation
