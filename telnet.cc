@@ -1010,19 +1010,24 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    case 'b':
 	       backward_word();
+	       state = 0;
 	       break;
 	    case 'd':
 	       delete_word();
+	       state = 0;
 	       break;
 	    case 'f':
 	       forward_word();
+	       state = 0;
 	       break;
 	    case 't':
 	       transpose_words();
+	       state = 0;
 	       break;
 	    case Backspace:
 	    case Delete:
 	       erase_word();
+	       state = 0;
 	       break;
 	    default:
 	       output(Bell);
