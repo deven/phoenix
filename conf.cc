@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.11 1994/02/05 18:29:50 deven Exp $
+// $Id: conf.cc,v 1.12 1994/04/15 22:36:05 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.12  1994/04/15 22:36:05  deven
+// Moved message_start() and match_name() routines to live with the Session
+// class routines that call them.
+//
 // Revision 1.11  1994/02/05 18:29:50  deven
 // Only avoid fork() if last argument is -debug, do signal handling always.
 //

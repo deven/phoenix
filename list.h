@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.4 1994/02/05 18:24:40 deven Exp $
+// $Id: list.h,v 1.5 1994/04/15 22:16:15 deven Exp $
 //
 // List class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: list.h,v $
+// Revision 1.5  1994/04/15 22:16:15  deven
+// Added Reset() and In() methods.
+//
 // Revision 1.4  1994/02/05 18:24:40  deven
 // Made List class normal instead of reference-counted.
 //
