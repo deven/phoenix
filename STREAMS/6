@@ -1,0 +1,47 @@
+From coderpunks-errors@toad.com  Sat Apr 20 13:18:31 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id NAA10384 for <deven@escher.ties.org>; Sat, 20 Apr 1996 13:18:24 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id NAA32611 for <deven@asylum.sf.ca.us>; Sat, 20 Apr 1996 13:18:21 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id NAA10696; Sat, 20 Apr 1996 13:18:14 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id KAA11205 for coderpunks-outgoing; Sat, 20 Apr 1996 10:13:31 -0700 (PDT)
+Received: from mail.Clark.Net (mail.clark.net [168.143.0.10]) by toad.com (8.7.5/8.7.3) with ESMTP id KAA11197 for <coderpunks@toad.com>; Sat, 20 Apr 1996 10:13:25 -0700 (PDT)
+Received: from clark.net (root@clark.net [168.143.0.7]) by mail.Clark.Net (8.7.3/8.6.5) with ESMTP id NAA24154; Sat, 20 Apr 1996 13:13:16 -0400 (EDT)
+Received: from [168.143.8.144] (cme.clark.net [168.143.8.144]) by clark.net (8.7.1/8.7.1) with SMTP id NAA05465; Sat, 20 Apr 1996 13:13:12 -0400 (EDT)
+X-Sender: cme@clark.net
+Message-Id: <v02140b03ad9eca466f04@[168.143.8.144]>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Date: Sat, 20 Apr 1996 13:13:50 -0400
+To: Raph Levien <raph@c2.org>
+From: cme@acm.org (Carl Ellison)
+Subject: Re: Stream transformation
+Cc: coderpunks@toad.com
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+Raph,
+
+        I like your approach.
+
+        I don't know if you ever saw an Evans & Sutherland PS300, but in
+that product I implemented a general form of what you're describing --
+called "Function Networks" -- for processing input device streams [tablet,
+knobs, keyboard, pushbuttons, serial lines, ...], driving both the host
+process and  real-time display structures.  Each function network instance
+had multiple inputs and multiple outputs, if you desired them, some of
+which were streams and some were constants [e.g., crypto keys, in our
+case].
+
+        The structure made network stacks downright trivial, although that
+wasn't its purpose.  I've been thinking for some time that it would make a
+good language for describing composed crypto functions [e.g., my favorite
+des|tran|des|tran|des].  Your structure should be good for that as well.
+
+ - Carl
+
+
++--------------------------------------------------------------------------+
+| Carl M. Ellison   cme@acm.org     http://www.clark.net/pub/cme           |
+| PGP: E0414C79B5AF36750217BC1A57386478 & 61E2DE7FCB9D7984E9C8048BA63221A2 |
+|   "Officer, officer, arrest that man!  He's whistling a dirty song."     |
++---------------------------------------------- Jean Ellison (aka Mother) -+
