@@ -35,3 +35,20 @@ void ExitNotify::output(Pointer<Telnet> telnet)
    telnet->print("*** %s has left conf! [%s] ***\n",name->name,
 		 date(time,11,5));
 }
+
+void AttachNotify::output(Pointer<Telnet> telnet)
+{
+   telnet->print("*** %s is now attached. [%s] ***\n",name->name,
+		 date(time,11,5));
+}
+
+void DetachNotify::output(Pointer<Telnet> telnet)
+{
+   if (intentional) {
+      telnet->print("*** %s has intentionally detached. [%s] ***\n",
+		    name->name,date(time,11,5));
+   } else {
+      telnet->print("*** %s has accidentally detached. [%s] ***\n",
+		    name->name,date(time,11,5));
+   }
+}
