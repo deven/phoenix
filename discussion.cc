@@ -4,7 +4,7 @@
 //
 // Discussion class implementation.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
 // Revision 1.9  1996/05/12 07:28:17  deven

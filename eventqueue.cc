@@ -4,7 +4,7 @@
 //
 // EventQueue class implementation.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: eventqueue.cc,v $
 // Revision 1.1  1996/05/13 18:48:48  deven

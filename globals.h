@@ -4,7 +4,7 @@
 //
 // Phoenix conferencing system server -- Global variables header file.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: globals.h,v $
 // Revision 1.1  1996/05/13 18:26:36  deven

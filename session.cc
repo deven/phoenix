@@ -4,7 +4,7 @@
 //
 // Session class implementation.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
 // Revision 1.45  1996/05/13 18:44:32  deven

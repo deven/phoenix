@@ -4,7 +4,7 @@
 //
 // Pointer class inline/template functions.
 //
-// Copyright 1992-1996 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: pointer.h,v $
 // Revision 1.1  1996/02/21 20:43:05  deven
