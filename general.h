@@ -44,10 +44,6 @@ extern int errno;		// error number
 
 extern Session *sessions;	// active sessions ***
 
-extern FDTable fdtable;		// File descriptor table. ***
-extern fd_set readfds;		// read fdset for select() ***
-extern fd_set writefds;		// write fdset for select() ***
-
 extern FILE *logfile;		// log file ***
 
 extern int Shutdown;		// shutdown flag
