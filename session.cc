@@ -838,9 +838,9 @@ void Session::DoWho()		// Do /who command.
    // Output /who header.
    output("\n Name                              On Since");
    for (i = 0; i < extend; i++) output(Space);
-   output("  Idle  Away  User\n ----                              --------");
+   output("  Idle  Away\n ----                              --------");
    for (i = 0; i < extend; i++) output(Space);
-   output("  ----  ----  ----\n");
+   output("  ----  ----\n");
 
    while (session++) {
       if (session->telnet) {
@@ -882,20 +882,18 @@ void Session::DoWho()		// Do /who command.
       }
       switch(session->away) {
       case Here:
-	 output("Here  ");
+	 output("Here\n");
 	 break;
       case Away:
-	 output("Away  ");
+	 output("Away\n");
 	 break;
       case Busy:
-	 output("Busy  ");
+	 output("Busy\n");
 	 break;
       case Gone:
-	 output("Gone  ");
+	 output("Gone\n");
 	 break;
       }
-      output(session->user->user);
-      output(Newline);
    }
 }
 
