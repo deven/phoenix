@@ -139,6 +139,7 @@ public:
 // Pointer<Sendlist> reply_sendlist;   // reply sendlist for last sender
    String last_explicit;	// last explicit sendlist typed
    String reply_sendlist;	// last explicit sendlist typed
+   String oops_text;		// /oops message text
 
    void init_defaults();
    Session(Telnet *t);
@@ -248,6 +249,8 @@ public:
    void DoAppoint(char *args);	// Do /appoint command.
    void DoUnappoint(char *args); // Do /unappoint command.
    void DoRename(char *args);	 // Do /rename command.
+   void DoAlso(char *args);	 // Do /also command.
+   void DoOops(char *args);	 // Do /oops command.
    void DoReset();		 // Do <space><return> idle time reset.
    void DoMessage(char *line);	 // Do message send.
    void SendMessage(Sendlist *sendlist, char *msg);

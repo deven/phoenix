@@ -222,6 +222,8 @@ Session::Session(Telnet *t)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
    priv = 0;			// No privileges yet.
+   oops_text = "Oops!  Sorry, that last message was intended for someone else...";
+                                // Set default /oops text.
    inits.AddTail(this);		// Add session to initializing list.
 }
 
@@ -804,6 +806,8 @@ void Session::ProcessInput(char *line)
       else if (match(line, "/signal", 3)) DoSignal(line);
       else if (match(line, "/set", 4)) DoSet(line);
       else if (match(line, "/display", 2)) DoDisplay(line);
+      else if (match(line, "/also", 3)) DoAlso(line);
+      else if (match(line, "/oops", 3)) DoOops(line);
       else output("Unknown /command.  Type /help for help.\n");
    } else if (!strcmp(line, " ")) {
       DoReset();
@@ -2191,6 +2195,54 @@ void Session::DoRename(char *args) // Do /rename command.
    name_obj = new Name(this, name, blurb);
 }
 
+void Session::DoAlso(char *args) // Do /also command.
+{
+   Pointer<Sendlist> sendlist;
+
+   if (!*args) {
+      output("Usage: /also <sendlist>\n");
+      return;
+   }
+
+   if (!last_message) {
+      output("You have no previous message to resend.\n");
+      return;
+   }
+
+   sendlist = new Sendlist(*this, args);
+
+   SendMessage(sendlist, last_message->text);
+}
+
+void Session::DoOops(char *args) // Do /oops command.
+{
+   if (!*args) {
+      output("Usage: /oops <sendlist> OR /oops text [<message>]\n");
+      return;
+   } else if (match(args, "text")) {
+      trim(args);
+
+      if (*args) {
+         oops_text = args;
+         print("Your /oops text is now \"%s\".\n", ~oops_text);
+      } else {
+         print("Your /oops text is currently \"%s\".\n", ~oops_text);
+      }
+   } else {
+      if (!last_message) {
+         output("You have no previous message to resend.\n");
+         return;
+      }
+
+      Pointer<Sendlist> sendlist = new Sendlist(*this, args);
+      String text = last_message->text;
+
+      SendMessage(last_message->to, oops_text);
+      SendMessage(sendlist, text);
+      last_sendlist = sendlist;
+   }
+}
+
 void Session::DoHelp(char *args) // Do /help command.
 {
    if (match(args, "/who", 2) || match(args, "who", 3) ||
@@ -2493,6 +2545,16 @@ with no such predefined purpose.)\n\n\
 Known system variables:\n\n\
    uptime   idle     time_format\n");
       }
+   } else if (match(args, "/also", 3) || match(args, "also")) {
+      output("\
+The /also command is used to send a copy of the last message to another\n\
+sendlist.\n");
+   } else if (match(args, "/oops", 3) || match(args, "oops")) {
+      output("\
+The /oops command is used to send an \"oops\" message to the (unintended)\n\
+recipient of the last message, and to resend the last message to another\n\
+sendlist.  The \"/oops text <message>\" form can be used to change the\n\
+text of the \"oops\" message.\n");
    } else if (*args) {
       print("No help available for \"%s\".\n", args);
    } else {
