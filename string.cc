@@ -23,6 +23,7 @@
 // Initial revision
 //
 
+#include <stdio.h>
 #include <string.h>
 #include "boolean.h"
 #include "object.h"
@@ -58,6 +59,38 @@ String::String(const char *s, int n)
       for (int i=0; i<=len; i++) str[i] = 0;
    }
    extra = 0;
+}
+
+String::String(int n)
+{
+   str = new char[32];
+   sprintf(str, "%d", n);
+   len = strlen(str);
+   extra = 32 - len - 1;
+}
+
+String::String(unsigned int n)
+{
+   str = new char[32];
+   sprintf(str, "%ud", n);
+   len = strlen(str);
+   extra = 32 - len - 1;
+}
+
+String::String(long n)
+{
+   str = new char[32];
+   sprintf(str, "%ld", n);
+   len = strlen(str);
+   extra = 32 - len - 1;
+}
+
+String::String(unsigned long n)
+{
+   str = new char[32];
+   sprintf(str, "%lud", n);
+   len = strlen(str);
+   extra = 32 - len - 1;
 }
 
 String &String::operator =(const String &s)
