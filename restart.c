@@ -66,6 +66,14 @@
 #endif
 #endif
 
+#ifndef HAVE_MEMSET
+#error memset() required!
+#endif
+
+#ifndef HAVE_SOCKET
+#error socket() required!
+#endif
+
 int check_for_server(int port)	/* check for running server */
 {
    struct sockaddr_in saddr;	/* socket address */

@@ -37,6 +37,14 @@
 
 #include "gangplank.h"
 
+#ifndef HAVE_MKDIR
+#error mkdir() required!
+#endif
+
+#ifndef HAVE_STRERROR
+#error strerror() required!
+#endif
+
 EventQueue events;		// Server event queue.
 
 Pointer<Event> Shutdown;	// Pointer to Shutdown event, if any.

@@ -56,6 +56,10 @@
 #include <crypt.h>
 #endif
 
+#ifndef HAVE_GETPASS
+#error getpass() required!
+#endif
+
 int main(int argc, char **argv)
 {
    char pw[9], salt[3];
