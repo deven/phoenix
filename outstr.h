@@ -27,20 +27,21 @@
 // Initial revision
 //
 
-class OutputStream {
+class OutputStreamObject {
+friend class OutputStream;
 private:
-   class OutputObject {
-   public:
-      OutputObject *next;
-      Pointer<OutputObj> Output;
+   OutputStreamObject *next;
+   Pointer<OutputObj> Output;
 
-      OutputObject(OutputObj *out): Output(out) { next = 0; }
-      void output(Telnet *telnet);
-   };
+   OutputStreamObject(OutputObj *out): Output(out) { next = 0; }
+   void output(Telnet *telnet);
+};
+
+class OutputStream {
 public:
-   OutputObject *head;		// first output object
-   OutputObject *sent;		// next output object to send
-   OutputObject *tail;		// last output object
+   OutputStreamObject *head;	// first output object
+   OutputStreamObject *sent;	// next output object to send
+   OutputStreamObject *tail;	// last output object
    int Acknowledged;		// count of acknowledged objects in queue
    int Sent;			// count of sent objects in queue
    OutputStream() {		// constructor
@@ -49,7 +50,7 @@ public:
    }
    ~OutputStream() {		// destructor
       while (head) {		// Free any remaining output in queue.
-	 OutputObject *out = head;
+	 OutputStreamObject *out = head;
 	 head = out->next;
 	 delete out;
       }

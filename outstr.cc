@@ -37,7 +37,7 @@
 
 #include "phoenix.h"
 
-void OutputStream::OutputObject::output(Telnet *telnet)
+void OutputStreamObject::output(Telnet *telnet)
 {				// Output object.
    if (!Output) return;
    Output->output(telnet);
@@ -56,10 +56,10 @@ void OutputStream::Enqueue(Telnet *telnet,OutputObj *out)
 {
    if (!out) return;
    if (tail) {
-      tail->next = new OutputObject(out);
+      tail->next = new OutputStreamObject(out);
       tail = tail->next;
    } else {
-      head = tail = new OutputObject(out);
+      head = tail = new OutputStreamObject(out);
    }
    if (!telnet) return;
    if (telnet->acknowledge) {
@@ -69,17 +69,17 @@ void OutputStream::Enqueue(Telnet *telnet,OutputObj *out)
    }
 }
 
-void OutputStream::Unenqueue(Pointer<OutputObj> &out)
+void OutputStream::Unenqueue(OutputObj *out)
 {
    if (!out) return;
-   for (OutputObject *node = head; node; node = node->next) {
+   for (OutputStreamObject *node = head; node; node = node->next) {
       if (node->Output == out) node->Output = 0;
    }
 }
 
 void OutputStream::Dequeue()	// Dequeue all acknowledged output.
 {
-   OutputObject *out;
+   OutputStreamObject *out;
 
    if (Acknowledged) {
       while (Acknowledged && Sent && (out = head)) {
