@@ -565,6 +565,7 @@ boolean Session::CheckNameAvailability(char *name, boolean double_check,
 
 void Session::EnteredName(char *line)
 {
+   trim(line);
    if (!*line) {		// blank line
       if (user->reserved) {
 	 name = user->reserved;
