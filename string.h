@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.8 2000/03/22 07:11:53 deven Exp $
+// $Id: string.h,v 1.9 2000/03/22 23:57:28 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.9  2000/03/22 23:57:28  deven
+// Added constructors for integer types.
+//
 // Revision 1.8  2000/03/22 07:11:53  deven
 // Marked Extra constant as static.  Added operator const char *().
 //

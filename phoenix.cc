@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.23 2000/03/22 18:41:06 deven Exp $
+// $Id: phoenix.cc,v 1.24 2000/03/22 23:50:36 deven Exp $
 //
 // Phoenix conferencing system server -- Main program.
 //
 // Copyright 1992-1996, 2000 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: phoenix.cc,v $
+// Revision 1.24  2000/03/22 23:50:36  deven
+// Reduced signal shutdown timeout to 5 seconds.
+//
 // Revision 1.23  2000/03/22 18:41:06  deven
 // Changed logfile name to use a 4-digit year.
 //
