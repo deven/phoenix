@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: set.h,v 1.1 1994/01/19 21:54:14 deven Exp $
+// $Id: set.h,v 1.2 1994/01/20 00:21:53 deven Exp $
 //
 // Set class interface & implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: set.h,v $
+// Revision 1.2  1994/01/20 00:21:53  deven
+// Removed int() conversion.
+//
 // Revision 1.1  1994/01/19 21:54:14  deven
 // Initial revision
 //
