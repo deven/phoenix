@@ -12,11 +12,23 @@
 //
 
 template <class Type>
+class ListNode: public Object {
+friend class List<Type>;
+friend class ListIter<Type>;
+private:
+   Pointer<ListNode> next;	// Next node.
+   Pointer<ListNode> prev;	// Previous node.
+   Pointer<Type> obj;		// Object this node refers to.
+   ListNode(Pointer<Type> &ptr): obj(ptr) { }
+};
+
+template <class Type>
 class List: public Object {
 private:
+   typedef ListNode<Type> NodeType;
    int count;
-   Pointer<Node<Type>> head;
-   Pointer<Node<Type>> tail;
+   Pointer<NodeType> head;
+   Pointer<NodeType> tail;
 public:
    List(): count(0) { }
    ~List() { while (Dequeue()) ; }
