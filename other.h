@@ -36,4 +36,17 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+
+// Declarations for system functions.
+char *strerror(int err);
+char *inet_ntoa(struct in_addr in);
+int strcasecmp(const char *s1,const char *s2);
+int strncasecmp(const char *s1,const char *s2,size_t len);
+time_t time(time_t *time);
+char *ctime(time_t *time);
+struct tm *localtime(time_t *time);
+int setlinebuf(FILE *file);
+char *crypt(char *crypted,char *salt);
+char *gethostname(char *hostname,int len);
+int getdtablesize();
 };
