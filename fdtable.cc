@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: fdtable.cc,v 1.2 2001/12/12 05:46:27 deven Exp $
 //
 // FDTable class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.2  2001/12/12 05:46:27  deven
+// Modified to explicitly construct null-pointer return value.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: system.h,v 1.2 2001/12/12 05:44:36 deven Exp $
 //
 // System include files.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: system.h,v $
+// Revision 1.2  2001/12/12 05:44:36  deven
+// Added <time.h> header, avoid including <crypt.h> on BSD systems.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

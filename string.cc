@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: string.cc,v 1.2 2001/12/12 05:13:43 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.2  2001/12/12 05:13:43  deven
+// Updated include files for portability.  Added additional operations for
+// completeness, including const/non-const variants.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: object.h,v 1.2 2001/12/12 05:56:12 deven Exp $
 //
 // Object class interface and implementation, Pointer class interface.
 //
@@ -19,6 +19,15 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: object.h,v $
+// Revision 1.2  2001/12/12 05:56:12  deven
+// Made Object destructor virtual, just in case.  Modified DeleteReference()
+// to set a negative reference count to allow for some temporary pointers to
+// the object being destructed, without calling the destructors again in an
+// endless loop when such temporary pointers go out of scope.  Modified the
+// destructor sanity check to only check for a positive reference count, due
+// to the above modification.  Added Pointer constructor for int to allow
+// explicit construction of null pointers.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: telnet.cc,v 1.2 2001/12/12 05:45:28 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.2  2001/12/12 05:45:28  deven
+// Modified to assign null string instead of null pointer to wipe prompt.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
