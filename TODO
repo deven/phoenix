@@ -1,15 +1,135 @@
+*** Integrate Berkeley DB library for external data storage at least, if not
+*** actual persistent objects. (multiple access issues?)
+
 *** PROBLEM:  anonymous signons with duplicate and reserved names!!!
+
+Add DB support, have an Associative class for it, allowing both internal hash
+tables and external (DB) hash tables a la perl, use String type for key/data!
+Maybe even overload [] to act like {} perl associative array reference...
+Have [] dereference to Element object which knows the reference internally,
+then have conversions Element <-> String cause actual hash table lookup/store
+and (possibly) DB read/write.  Make sure Element <-> Element copies, using
+operator=, so foo["bar"]=foo["baz"] will work.  Also have numeric->String so
+foo[1] will be the same as foo["1"].  Have Element.operator=(String) maybe too.
+
+If a sendlist match fails, attempt match against non-joined discussions for a
+better error message.  Fix sendlist matching in /who (et al) to be consistent.
+
+spruce up ; and : processing -- fix smiley processing!
+
+/also, /oops
+
+Add "realms" which users can be in, perhaps visible, perhaps not.  Need a realm
+for family...
+
+Create a generalized I/O streams facility that can have modules added and
+removed a la SysV STREAMS or Amiga InputHandlers.  Use for any I/O or stream
+manipulation, chain together.  Possible uses:  tcp (data transfer), udp (data
+transfer), FD?, telnet (protocol), tcpuser (for non-telnet TCP users?), lclient
+(pretend to be a lily server), lily (for managing "forked session" to lily),
+phoenix client (could connect to either tcp or udp for data transfer), tee (to
+split a stream), IRC (client, forked), listen (listening TCP socket), lookup
+(to do DNS queries), terminal handling (variable by type), editing (emacs, vi,
+unix line mode, etc), pager (would interact with editing and terminal), parser
+(for /,!,% commands or whatever, other classes could interface to parser to get
+commands installed), games, talk (protocol), encrypt, mux, multi-server, etc.
+Modules would have to have clearly defined stream connections; some are simple
+filters (e.g. pager) and others are single stream sources/sinks (e.g. tcp) and
+others may have more complex configurations (e.g. tee) -- adding and removing
+modules should be possible on the fly...
+
+Maybe use canonical names in ; expansion?
+
+TAB sendlist completion & cycling.
+
+Telnet::PrintMessage still has an "everyone" send -- is this used?
+
+If a client is doing local echo, does ;/: expansion happen invisibly?
+
+Add some option to implicitly copy message to self?  If so, erase input line?
+
+Allow system variables (e.g. uptime) to be abbreviated?
+
+Make more generalized parser and keyword matching?  (needs to be tunable)
+
+Abstract out terminal handling, editing (emacs-style vs. basic input line vs.
+possibly vi-style?) and telnet protocol itself into separate classes that can
+be disabled, perhaps a la STREAMS modules or such.
+
+Given event queue, have raw TCP connections require a time delay, so telnet
+won't be faked out as easily.
+
+-------------------------------------------------------------------------------
+"Enter name: " prompt should not have appeared below!
+(Also, should the echo be done anyhow, despite CR's?)
+[for input received before echo is negotiated, that is]
+-------------------------------------------------------------------------------
+deven
+REDACTED
+
+Trying 192.48.232.17...
+Connected to asylum.elf.com.
+Escape character is '^]'.
+
+Welcome to Phoenix!
+
+A "guest" account is available.
+
+login: Password:
+
+Your default name is "Deven".
+
+Enter name: Re-attaching to detached session...
+[You were idle for 19 minutes.]
+You have been detached.
+*** 12bit is now attached. [12:24] ***
+*** 12bit has intentionally detached. [12:24] ***
+*** End of reviewed output. ***
+Enter name: /who me
+
+ Name                              On Since  Idle  Away
+ ----                              --------  ----  ----
+ Deven [errands]                    Nov 13   1:48  Gone
+-------------------------------------------------------------------------------
+
+Make /date into /display variables.
+
+Add /set banner and /display banner, and /news...
+
+Move some Session string fields into sys_vars?
+
+Allow $variables in general command parameters. (need better parser)
+
+Modify String class to allow initialization/cast from int->String.
+
+Create timestamp and duration classes, use internally and for user /eval's.
+
+Allow /save command to save user or system variables persistently.
+
+Make an Assoc-based substitute for match() against a known set of keywords to
+avoid having to do an exhaustive search.  Downcase initialization and match
+string to make case-insensitive.  Maybe use for sendlist items, maybe not.
+(If used for sendlists, how to handle collisions and updates of match set?)
+
+Allow for client<->server encryption of basic TCP stream.
+
+Allow user<->user encryption on a per-message or per-user basis.  Allow for
+multiple-recipient encrypted messages and some sort of encrypted discussions.
+
+Do NOT allow guest users to create discussions!
+
+Add privileged discussion overrides.
 
 Possibly have here/away/busy/gone set "transient" blurbs, and /blurb set
 "persistent" blurbs.  here/away/busy/gone without arguments would revert
 to last persistent blurb.  Maybe allow /finger or some other command show
 both transient AND persistent blurbs...
+Possible: *** User [persistent, maybe] is now "gone". [transient, if any] ***
 
 When persistent object database is done, possible allow commands to make
 current session state permanent, like "/save blurb" or such?
 
-Should transferring a session reset idle time?  Probably not.  (But it does!)
-Should detaching really reset idle?  Not sure...
+Should detaching reset idle?  Not sure...
 
 *** (18:06) Chaos! All members of perl are now moderators ***
 
@@ -167,16 +287,7 @@ Do direct DNS lookup?  What RFC?  (1034/1035 I think.)  tcp or udp?  (both?)
 
 Fix for very long names, /who wraps as if blurb.
 
-Use unsigned for idle?  check for overflow on /setidle.
-
-Add GDBM support, have an Associative class for it, allowing both internal hash
-tables and external (GDBM) hash tables a la perl, use String type for key/data!
-Maybe even overload [] to act like {} perl associative array reference...
-Have [] dereference to Element object which knows the reference internally,
-then have conversions Element <-> String cause actual hash table lookup/store
-and (possibly) GDBM read/write.  Make sure Element <-> Element copies, using
-operator=, so foo["bar"]=foo["baz"] will work.  Also have numeric->String so
-foo[1] will be the same as foo["1"].  Have Element.operator=(String) maybe too.
+Use unsigned for idle?  check for overflow on /set idle.
 
 *** Update client editing to match server!
 
@@ -201,10 +312,6 @@ Fix trim(line) on messages.  Need to keep leading spaces.
 
 Allow login & password both at the login: prompt (ideally blank password)
 Better, use ...'s for password echo.
-
-spruce up ; and : processing -- fix smiley processing!
-
-/also, /oops
 
 fix sending to Name object (with last or default sendlist or other?) when
 associated session is gone.
@@ -241,9 +348,6 @@ Have import and export procedures for object database for easy hand editing.
 Maybe allow << to work on String or File objects as well as Datum objects?
 
 Add receive blurb limit.
-
-Change /setidle to /set idle, maybe have getword() treat = like ,?
-(or have getword() accept alternate termination characters in parameters)
 
 have match_name() take "exact" parameter to return boolean, match whitespace
 and _'s uniformly, middle and ends.
