@@ -140,6 +140,8 @@ public:
    void TransferSession(char *line);
    void Blurb(char *line);
    void ProcessInput(char *line);
+   void ListItem(boolean &flag,String &last,char *str);
+   boolean GetWhoSet(char *args,Set<Session> &who,String &errors);
    void NotifyEntry();		// Notify other users of entry and log.
    void NotifyExit();		// Notify other users of exit and log.
    void PrintTimeLong(int minutes); // Print time value, long format.

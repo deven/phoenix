@@ -858,21 +858,128 @@ void Session::DoDetach(char *args) // Do /detach command.
    if (telnet) telnet->Close(); // Drain connection, then close.
 }
 
+void Session::ListItem(boolean &flag,String &last,char *str)
+{
+   if (flag) {
+      if (last) {
+	 output(", ");
+	 output((char *) last);
+      }
+      last = str;
+   } else {
+      output(str);
+      flag = true;
+   }
+}
+
+boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors)
+{
+   String send;
+   char *mark;
+   int idle,now = time(NULL);
+   int count,lastcount = 0;
+   boolean here,away,busy,gone,attached,detached,active,inactive,doidle,
+      unidle,privileged,all;
+
+   // Check if anyone is signed on at all.
+   if (!sessions.Count()) {
+      output("Nobody is signed on.\n");
+      return true;
+   }
+
+   if (active = boolean(!*args)) lastcount++;
+   here = away = busy = gone = attached = detached = inactive = doidle =
+      unidle = privileged = all = false;
+   while (*args) {
+      mark = strchr(args,Comma);
+      if (mark) *mark = 0;
+      here = boolean(here || match(args,"here",4));
+      away = boolean(away || match(args,"away",4));
+      busy = boolean(busy || match(args,"busy",4));
+      gone = boolean(gone || match(args,"gone",4));
+      attached = boolean(attached || match(args,"attached",8));
+      detached = boolean(detached || match(args,"detached",8));
+      active = boolean(active || match(args,"active",6));
+      inactive = boolean(inactive || match(args,"inactive",8));
+      doidle = boolean(doidle || match(args,"idle",4));
+      unidle = boolean(unidle || match(args,"unidle",6));
+      privileged = boolean(privileged || match(args,"privileged",10));
+      all = boolean(all || match(args,"all",3));
+      count = here + away + busy + gone + attached + detached + active +
+	 inactive + doidle + unidle + privileged + all;
+      if (count == lastcount) {
+	 if (send) send.append(Separator);
+	 send.append(args);
+	 args = strchr(args,0);
+      }
+      lastcount = count;
+      if (mark) args = mark + 1;
+   }
+
+   Pointer<Sendlist> sendlist = new Sendlist(*this,send);
+   count = sendlist->Expand(who);
+
+   ListIter<Session> s(sessions);
+   while (s++) {
+      idle = (now - s->message_time) / 60;
+      if (here && s->away == Here || away && s->away == Away ||
+	  busy && s->away == Busy || gone && s->away == Gone ||
+	  attached && s->telnet || detached && !s->telnet ||
+	  active && ((s->away == Here) || (idle < 10)) ||
+	  inactive && ((s->away != Here) || (idle >= 10)) ||
+	  doidle && (idle >= 10) || unidle && (idle < 10) ||
+	  privileged && (s->user->priv >= 50) || all) {
+	 who.Add((Session *) s);
+      }
+   }
+
+   if (!who.Count()) {
+      if (lastcount) {
+	 boolean flag = false;
+	 String last;
+
+	 output("Nobody is ");
+	 if (here) ListItem(flag,last,"\"here\"");
+	 if (away) ListItem(flag,last,"\"away\"");
+	 if (busy) ListItem(flag,last,"\"busy\"");
+	 if (gone) ListItem(flag,last,"\"gone\"");
+	 if (attached) ListItem(flag,last,"attached");
+	 if (detached) ListItem(flag,last,"detached");
+	 if (active) ListItem(flag,last,"active");
+	 if (inactive) ListItem(flag,last,"inactive");
+	 if (doidle) ListItem(flag,last,"idle");
+	 if (unidle) ListItem(flag,last,"unidle");
+	 if (privileged) ListItem(flag,last,"privileged");
+	 if (last) {
+	    output(" or ");
+	    output((char *) last);
+	 }
+	 output(".\n");
+      }
+      if (sendlist->errors) {
+	 output("\a\a");
+	 output((char *) sendlist->errors);
+      }
+      return true;
+   }
+   errors = sendlist->errors;
+   return false;
+}
+
 void Session::DoWho(char *args)	// Do /who command.
 {
+   Set<Session> who;
+   String errors;
    String tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
    char buf[32];
 
-   // Check if anyone is signed on at all.
-   if (!sessions.Count()) {
-      output("Nobody is signed on.\n");
-      return;
-   }
+   // Handle arguments.
+   if (GetWhoSet(args,who,errors)) return;
 
    // Scan users for long idle times.
-   ListIter<Session> session(sessions);
+   SetIter<Session> session(who);
    while (session++) {
       days = (now - session->message_time) / 86400;
       if (!days) continue;
@@ -948,10 +1055,16 @@ void Session::DoWho(char *args)	// Do /who command.
 	 break;
       }
    }
+   if (errors) {
+      output("\a\a");
+      output((char *) errors);
+   }
 }
 
 void Session::DoWhy(char *args)	// Do /why command.
 {
+   Set<Session> who;
+   String errors;
    String tmp;
    int idle,days,hours,minutes,now = time(NULL);
    int i,extend = 0;
@@ -962,14 +1075,11 @@ void Session::DoWhy(char *args)	// Do /why command.
       return;
    }
 
-   // Check if anyone is signed on at all.
-   if (!sessions.Count()) {
-      output("Nobody is signed on.\n");
-      return;
-   }
+   // Handle arguments.
+   if (GetWhoSet(args,who,errors)) return;
 
    // Scan users for long idle times.
-   ListIter<Session> session(sessions);
+   SetIter<Session> session(who);
    while (session++) {
       days = (now - session->message_time) / 86400;
       if (!days) continue;
@@ -983,10 +1093,10 @@ void Session::DoWhy(char *args)	// Do /why command.
    // Output /why header.
    output("\n Name                              On Since");
    for (i = 0; i < extend; i++) output(Space);
-   output("  Idle  Away  User      FD\n ----                              "
-	  "--------");
+   output("  Idle  Away  User      FD  Priv\n");
+   output(" ----                              --------");
    for (i = 0; i < extend; i++) output(Space);
-   output("  ----  ----  ----      --\n");
+   output("  ----  ----  ----      --  ----\n");
 
    while (session++) {
       if (session->telnet) {
@@ -1043,38 +1153,45 @@ void Session::DoWhy(char *args)	// Do /why command.
       }
       print("%-8s  ",(char *) session->user->user);
       if (session->telnet) {
-	 print("%2d\n",session->telnet->fd);
+	 print("%2d  ",session->telnet->fd);
       } else {
-	 output("--\n");
+	 output("--  ");
       }
+      print("%4d\n",session->user->priv);
+   }
+   if (errors) {
+      output("\a\a");
+      output((char *) errors);
    }
 }
 
 void Session::DoIdle(char *args) // Do /idle command.
 {
+   Set<Session> who;
+   String errors;
    String tmp;
    int idle,days,hours,minutes;
    int now = time(NULL);
    int col = 0;
 
-   // Check if anyone is signed on at all.
-   if (!sessions.Count()) {
-      output("Nobody is signed on.\n");
-      return;
-   }
+   // Handle arguments.
+   if (GetWhoSet(args,who,errors)) return;
 
    // Output /idle header.
-   if (sessions.Count() == 1) { // get LISTED user count better. ***
-      output("\n Name                              Idle\n ----              "
-	     "                ----\n");
+   if (who.Count() == 1) {
+      output("\n"
+	     " Name                              Idle\n"
+	     " ----                              ----\n");
    } else {
-      output("\n Name                              Idle  Name               "
-	     "               Idle\n ----                              ----  "
-	     "----                              ----\n");
+      output("\n"
+	     " Name                              Idle "
+	     " Name                              Idle\n"
+	     " ----                              ---- "
+	     " ----                              ----\n");
    }
 
    // Output data about each user.
-   ListIter<Session> session(sessions);
+   SetIter<Session> session(who);
    while (session++) {
       if (session->telnet) {
 	 output(Space);
@@ -1106,6 +1223,10 @@ void Session::DoIdle(char *args) // Do /idle command.
       col = !col;
    }
    if (col) output(Newline);
+   if (errors) {
+      output("\a\a");
+      output((char *) errors);
+   }
 }
 
 void Session::DoDate(char *args) // Do /date command.
@@ -1435,14 +1556,15 @@ void Session::SendEveryone(char *msg)
 void Session::SendPrivate(char *send,char *msg)
 {
    Pointer<Sendlist> sendlist = new Sendlist(*this,send);
+   Set<Session> recipients;
+   int count = sendlist->Expand(recipients);
    boolean first,flag;
 
-   if (sendlist->errors) {
-      output("\a\a");
-      output((char *) sendlist->errors);
-   }
-
-   if (!sendlist->sessions.Count() && !sendlist->discussions.Count()) {
+   if (!count) {
+      if (sendlist->errors) {
+	 output("\a\a");
+	 output((char *) sendlist->errors);
+      }
       output("(message not sent)\n");
       return;
    }
@@ -1519,16 +1641,15 @@ void Session::SendPrivate(char *send,char *msg)
       print(" [%d members]",discussion->members.Count());
    }
 
-   last_message = new Message(PrivateMessage,name_obj,sendlist,msg);
-
-   boolean self;
-   int count = sendlist->Enqueue((Message *) last_message,this,self);
    if (count > 1) {
       print(".) [%d people]\n",count);
    } else {
       output(".)\n");
    }
-   if (self) Enqueue((Message *) last_message);
+
+   last_message = new Message(PrivateMessage,name_obj,sendlist,msg);
+   session = recipients;
+   while (session++) session->Enqueue((Message *) last_message);
 }
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
