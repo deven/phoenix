@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.7 1994/01/03 03:47:57 deven Exp $
+// $Id: session.cc,v 1.8 1994/01/03 09:32:59 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.8  1994/01/03 09:32:59  deven
+// Added "end of reviewed output" message, added /clear and /unidle commands,
+// removed all fd's from user view, rewrote /help text.
+//
 // Revision 1.7  1994/01/03 03:47:57  deven
 // Fixed !nuke to close detached session.
 //
