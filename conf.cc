@@ -152,7 +152,7 @@ char *message_start(char *line,char *sendlist,int len,int *explicit)
    state = 0;
    i = 0;
    len--;
-   for (p = line; *p && i < len; p++) {
+   for (p = line; *p; p++) {
       switch (state) {
       case 0:
 	 switch (*p) {
@@ -173,24 +173,24 @@ char *message_start(char *line,char *sendlist,int len,int *explicit)
 	    state = Quote;
 	    break;
 	 case Underscore:
-	    sendlist[i++] = UnquotedUnderscore;
+	    if (i < len) sendlist[i++] = UnquotedUnderscore;
 	    break;
 	 default:
-	    sendlist[i++] = *p;
+	    if (i < len) sendlist[i++] = *p;
 	    break;
 	 }
 	 break;
       case Backslash:
-	 sendlist[i++] = *p;
+	 if (i < len) sendlist[i++] = *p;
 	 state = 0;
 	 break;
       case Quote:
-	 while (*p && i < len) {
+	 while (*p) {
 	    if (*p == Quote) {
 	       state = 0;
 	       break;
 	    } else {
-	       sendlist[i++] = *p++;
+	       if (i < len) sendlist[i++] = *p++;
 	    }
 	 }
 	 break;
