@@ -83,7 +83,7 @@ public:
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
    static void announce(char *format,...);
-   static void nuke(Telnet *telnet,int fd,int drain);
+   static void nuke(Telnet *telnet,int fd,boolean drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Prompt(char *p);
@@ -101,7 +101,7 @@ public:
    int EndLine() { return (Start() + End()) / width; }
    int EndColumn() { return (Start() + End()) % width; }
    void Close();		// Close telnet connection.
-   void nuke(Telnet *telnet,int drain);
+   void nuke(Telnet *telnet,boolean drain);
    void Drain();
    void SaveInputLine(char *line);
    void SetInputFunction(InputFuncPtr input);

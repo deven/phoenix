@@ -39,7 +39,7 @@ public:
    void InputReady(int fd);	// Input is ready on file descriptor fd.
    void OutputReady(int fd);	// Output is ready on file descriptor fd.
    void announce(char *buf);	// unformatted write to all connections
-   void nuke(Telnet *telnet,int fd,int drain);
+   void nuke(Telnet *telnet,int fd,boolean drain);
    void ReadSelect(int fd) {	// Select fd for reading.
       FD_SET(fd,&readfds);
    }
