@@ -571,7 +571,7 @@ void Session::Blurb(char *line)
    NotifyEntry();		// Notify other users of entry.
 
    // Print welcome banner and do a /who list and a /howmany.
-   output("\n\nWelcome to Phoenix.  "
+   output("\n\nWelcome to Gangplank.  "
 	  "Type \"/help\" for a list of commands.\n\n");
 
    Session *session;
@@ -825,7 +825,7 @@ void Session::DoRestart(char *args) // Do !restart command.
 
    if (!strcmp(args, "!")) {
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has restarted Phoenix! ***\n", ~name, ~blurb);
+      announce("*** %s%s has restarted Gangplank! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new RestartEvent(who));
    } else if (match(args, "cancel")) {
       if (Shutdown) {
@@ -852,7 +852,7 @@ void Session::DoRestart(char *args) // Do !restart command.
       int seconds;
       if (sscanf(args, "%d", &seconds) != 1) seconds = 30;
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has restarted Phoenix! ***\n", ~name, ~blurb);
+      announce("*** %s%s has restarted Gangplank! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new RestartEvent(who, seconds));
    }
 }
@@ -866,7 +866,7 @@ void Session::DoDown(char *args) // Do !down command.
 
    if (!strcmp(args, "!")) {
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has shut down Phoenix! ***\n", ~name, ~blurb);
+      announce("*** %s%s has shut down Gangplank! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new ShutdownEvent(who));
    } else if (match(args, "cancel")) {
       if (Shutdown) {
@@ -891,7 +891,7 @@ void Session::DoDown(char *args) // Do !down command.
       int seconds;
       if (sscanf(args, "%d", &seconds) != 1) seconds = 30;
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has shut down Phoenix! ***\n", ~name, ~blurb);
+      announce("*** %s%s has shut down Gangplank! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new ShutdownEvent(who, seconds));
    }
 }
@@ -2124,7 +2124,7 @@ void Session::DoHelp(char *args) // Do /help command.
    if (match(args, "/who", 2) || match(args, "who", 3) ||
        match(args, "/idle", 2) || match(args, "idle", 4)) {
       output("\
-The /who and /idle commands are used to list users on Phoenix.  Both /who\n\
+The /who and /idle commands are used to list users on Gangplank.  Both /who\n\
 and /idle take identical arguments, but the output differs.  /who will give\n\
 more information, while /idle will give a more compact presentation.\n\n\
 Both /who and /idle will accept either categorical keywords or strings to\n\
@@ -2258,7 +2258,7 @@ sendlist completely.  \"/send\" alone will display your current default\n\
 sendlist without changing it.  /send may be abbreviated to /s.\n");
    } else if (match(args, "/bye", 4) || match(args, "bye", 3)) {
       output("\
-The /bye command is used to leave Phoenix completely.  If you sign off, you\n\
+The /bye command is used to leave Gangplank completely.  If you sign off, you\n\
 will be disconnected from the system and unable to receive messages at all.\n\
 You may wish to consider using the /detach command instead.\n");
    } else if (match(args, "/what", 3) || match(args, "what", 4)) {
@@ -2311,7 +2311,7 @@ In general, when you become unidle, you will receive a report of the previous\
 \nidle time if it exceeded the normal threshold of ten minutes.\n");
    } else if (match(args, "/detach", 4) || match(args, "detach", 6)) {
       output("\
-The /detach command is used to disconnect from Phoenix without signing off.\n\
+The /detach command is used to disconnect from Gangplank without signing off.\n\
 You can still receive messages while detached, to be reviewed later.  When\n\
 the /detach command is used, others are notified that you intentionally\n\
 detached.  If any other event causes you to become detached (e.g. network\n\
