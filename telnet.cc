@@ -597,6 +597,7 @@ void Telnet::InputReady(int fd)	// telnet stream can input data
       case EWOULDBLOCK:
 	 break;
       case ECONNRESET:
+      case ECONNTIMEDOUT:
 	 delete this;
 	 break;
       default:
@@ -920,6 +921,10 @@ void Telnet::OutputReady(int fd) // telnet stream can output data
 	 case EINTR:
 	 case EWOULDBLOCK:
 	    return;
+	 case ECONNRESET:
+	 case ECONNTIMEDOUT:
+	    delete this;
+	    break;
 	 default:
 	    warn("Telnet::OutputReady(): write(fd = %d)",fd);
 	    delete this;
