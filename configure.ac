@@ -17,6 +17,9 @@ AC_ARG_ENABLE(port,
    AC_DEFINE(GUEST_ACCESS, 1, [Define to enable guest access.])
 )
 
+# Check for Cygwin environment.
+AC_CYGWIN
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -59,6 +62,12 @@ if test "$GCC" = yes; then
     CFLAGS="$CFLAGS -fno-rtti"
     CXXFLAGS="$CXXFLAGS -fno-rtti"
   fi
+fi
+
+# Apply Cygwin-specific options only if running under Cygwin.
+if test "$CYGWIN" = yes; then
+  CFLAGS="$CFLAGS -DFD_SETSIZE=256"
+  CXXFLAGS="$CXXFLAGS -DFD_SETSIZE=256"
 fi
 
 # Checks for library functions.
