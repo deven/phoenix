@@ -18,8 +18,8 @@ Session *Session::sessions = NULL;
 Session::Session(Telnet *t)
 {
    telnet = t;			// Save Telnet pointer.
-   next = 0;			// No next session yet.
-   user_next = 0;		// No next session for user yet.
+   next = NULL;			// No next session yet.
+   user_next = NULL;		// No next session for user yet.
    name_only[0] = 0;		// No name yet.
    name[0] = 0;			// No name yet.
    blurb[0] = 0;		// No blurb yet.
