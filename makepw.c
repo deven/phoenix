@@ -24,12 +24,20 @@
  *
  */
 
+#if defined(__BSD__) || defined(BSD) || defined(BSD4_3) || defined(BSD4_4) || \
+    defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define NO_CRYPT_H
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+
+#ifndef NO_CRYPT_H
 #include <crypt.h>
+#endif
 
 main(int argc, char **argv)
 {
