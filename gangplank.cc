@@ -248,8 +248,6 @@ char *match(char *&input, char *keyword, int min) {
 
 int main(int argc, char **argv)	// main program
 {
-   struct passwd *pw;		// password file entry
-   String home;			// server home directory
    int pid;			// server process number
    int port;			// TCP port to use
 
@@ -257,28 +255,19 @@ int main(int argc, char **argv)	// main program
    ServerStartTime = 0;
    ServerStartUptime = SystemUptime();
 
-   if ((pw = getpwuid(geteuid()))) {
-      home = pw->pw_dir;
-      home.append("/lib");	// Make sure ~/lib exists.
-      if (chdir(~home) && errno == ENOENT && mkdir(~home, 0755)) {
-	 error("mkdir(\"%s\", 0755)", ~home);
-      }
-      if (chdir(~home)) error("chdir(\"%s\")", ~home);
-      home.append("/gangplank"); // Make sure ~/lib/gangplank exists.
-      if (chdir(~home) && errno == ENOENT && mkdir(~home, 0700)) {
-	 error("mkdir(\"%s\", 0700)", ~home);
-      }
-      if (chdir(~home)) error("chdir(\"%s\")", ~home);
-      if (chmod(~home, 0700)) error("chmod(\"%s\", 0700)", ~home);
-      home.append("/logs");	// Make sure "logs" directory exists.
-      mkdir(~home, 0700);	// ignore errors
-      chmod(~home, 0700);	// ignore errors
-   } else {
-      error("getpwuid(%d)", geteuid());
+   // Change to LIBDIR (create if necessary).
+   if (chdir(LIBDIR) && errno == ENOENT && mkdir(LIBDIR, 0700)) {
+      error("mkdir(\"%s\", 0700)", LIBDIR);
    }
+   if (chdir(LIBDIR)) error("chdir(\"%s\")", LIBDIR);
+
+   // Create logs subdirectory (ignore errors since it may exist), open log.
+   mkdir("logs", 0700);		// ignore errors
    OpenLog();
    port = argc > 1 ? atoi(argv[1]) : 0;
    if (!port) port = PORT;
+
+   // Open listening port.
    Listen::Open(port);
 
 #if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
@@ -312,6 +301,7 @@ int main(int argc, char **argv)	// main program
    log("Listening for connections on TCP port %d.", port);
 #endif
 
+   // Setup signal handlers.
 #ifdef USE_SIGIGNORE
    sigignore(SIGHUP);
    sigignore(SIGINT);
@@ -326,6 +316,7 @@ int main(int argc, char **argv)	// main program
    signal(SIGQUIT, quit);
    signal(SIGTERM, quit);
 
+   // Main loop.
    while(1) {
       Session::CheckShutdown();
       FD::Select(events.Execute());

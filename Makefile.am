@@ -37,7 +37,11 @@
 # Initial revision
 #
 
-bin_PROGRAMS = makepw restart gangplank
+DEFS = -DSERVER_PATH=\"$(sbindir)/gangplank\" -DLIBDIR=\"$(pkglibdir)\"
+
+bin_PROGRAMS = makepw restart
+sbin_PROGRAMS = gangplank
+
 makepw_SOURCES = makepw.c
 restart_SOURCES = restart.c
 gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
@@ -48,5 +52,6 @@ gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
 	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
 	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
 	globals.h
+
 EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING RELEASES \
 	TOUR bootstrap passwd
