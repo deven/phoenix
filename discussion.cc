@@ -47,9 +47,11 @@ Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
    name = Name;
    title = Title;
    Public = ispublic;
-   creator = s->name_obj;
-   members.Add(s);
-   moderators.Add(s->name_obj);
+   if (s) {
+      creator = s->name_obj;
+      members.Add(s);
+      moderators.Add(s->name_obj);
+   }
 }
 
 Name *Discussion::Allowed(Session *session) {
@@ -65,7 +67,7 @@ Name *Discussion::Denied(Session *session) {
 }
 
 boolean Discussion::IsCreator(Session *session) {
-   return boolean(!strcasecmp(creator->name, session->name));
+   return boolean(creator && !strcasecmp(creator->name,session->name));
 }
 
 Name *Discussion::IsModerator(Session *session) {
@@ -77,7 +79,6 @@ Name *Discussion::IsModerator(Session *session) {
 boolean Discussion::Permitted(Session *session) {
    SetIter<Name> name;
 
-   if (!strcasecmp(creator->name, session->name)) return true;
    if (IsCreator(session) || IsModerator(session)) return true;
    if (!Public && !Allowed(session)) return false;
    if (Denied(session)) return false;
