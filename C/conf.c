@@ -1,5 +1,5 @@
 /*
- * $Id: conf.c,v 1.6 1993/04/08 20:30:23 deven Exp $
+ * $Id: conf.c,v 1.7 1993/12/21 19:52:17 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,9 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.c,v $
+ * Revision 1.7  1993/12/21 19:52:17  deven
+ * Modified to use external encrypted password file.
+ *
  * Revision 1.6  1993/04/08 20:30:23  deven
  * Switched to log directory instead of single log file.
  *
