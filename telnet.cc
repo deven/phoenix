@@ -904,7 +904,7 @@ void Telnet::accept_input()	// Accept input line.
 
 void Telnet::insert_char(int ch) // Insert character at point.
 {
-   if (ch >= 32 && ch < Delete) {
+   if (ch >= Space && ch < Delete || ch >= NBSpace && ch <= y_umlaut) {
       for (char *p = free++; p > point; p--) *p = p[-1];
       *point++ = ch;
       // Echo character if necessary.
@@ -1321,6 +1321,403 @@ void Telnet::InputReady()	// telnet stream can input data
 	    }
 	    state = 0;
 	    break;
+	 case ControlC:		// Compose character.
+	    state = 0;
+	    switch (n) {
+	    // Extended compose sequences.
+	    case Quote:
+	       state = Umlaut;
+	       break;
+	    case Backquote:
+	       state = Backquote;
+	       break;
+	    case SingleQuote:
+	       state = AcuteAccent;
+	       break;
+	    case Carat:
+	       state = Carat;
+	       break;
+	    case Tilde:
+	       state = Tilde;
+	       break;
+	    case 'o':
+	       state = DegreeSign;
+	       break;
+	    case Slash:
+	       state = Slash;
+	       break;
+	    case Comma:
+	       state = Cedilla;
+	       break;
+
+	    // Simple compose sequences.
+	    case Space:
+	       insert_char(NBSpace);
+	       break;
+	    case Exclamation:
+	       insert_char(InvertedExclamation);
+	       break;
+	    case PoundSign:
+	       insert_char(PoundSterling);
+	       break;
+	    case DollarSign:
+	       insert_char(GeneralCurrencySign);
+	       break;
+	    case Period:
+	       insert_char(MiddleDot);
+	       break;
+	    case One:
+	       insert_char(SuperscriptOne);
+	       break;
+	    case Two:
+	       insert_char(SuperscriptTwo);
+	       break;
+	    case Three:
+	       insert_char(SuperscriptThree);
+	       break;
+	    case Plus:
+	       insert_char(PlusMinus);
+	       break;
+	    case Minus:
+	       insert_char(SoftHyphen);
+	       break;
+	    case LessThan:
+	       insert_char(LeftAngleQuote);
+	       break;
+	    case GreaterThan:
+	       insert_char(RightAngleQuote);
+	       break;
+	    case Question:
+	       insert_char(InvertedQuestion);
+	       break;
+	    case 'A':
+	       insert_char(AE_ligature);
+	       break;
+	    case 'C':
+	       insert_char(Copyright);
+	       break;
+	    case 'E':
+	       insert_char(ETH_Icelandic);
+	       break;
+	    case 'F':
+	       insert_char(FeminineOrdinal);
+	       break;
+	    case 'M':
+	       insert_char(MasculineOrdinal);
+	       break;
+	    case 'N':
+	       insert_char(NotSign);
+	       break;
+	    case 'P':
+	       insert_char(ParagraphSign);
+	       break;
+	    case 'R':
+	       insert_char(RegisteredTrademark);
+	       break;
+	    case 'S':
+	       insert_char(SectionSign);
+	       break;
+	    case 'T':
+	       insert_char(THORN_Icelandic);
+	       break;
+	    case 'Y':
+	       insert_char(YenSign);
+	       break;
+	    case 'a':
+	       insert_char(ae_ligature);
+	       break;
+	    case 'c':
+	       insert_char(CentSign);
+	       break;
+	    case 'e':
+	       insert_char(eth_Icelandic);
+	       break;
+	    // case 'o': (above)
+	    case 's':
+	       insert_char(sz_ligature);
+	       break;
+	    case 't':
+	       insert_char(thorn_Icelandic);
+	       break;
+	    case 'u':
+	       insert_char(MicroSign);
+	       break;
+	    case 'x':
+	       insert_char(MultiplySign);
+	       break;
+	    case VerticalBar:
+	       insert_char(BrokenVerticalBar);
+	       break;
+	    case Underscore:
+	       insert_char(MacronAccent);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    break;
+	 case Umlaut:		// Compose umlaut-accented character.
+	    switch (n) {
+	    case Quote:
+	       insert_char(Umlaut);
+	       break;
+	    case 'A':
+	       insert_char(A_umlaut);
+	       break;
+	    case 'E':
+	       insert_char(E_umlaut);
+	       break;
+	    case 'I':
+	       insert_char(I_umlaut);
+	       break;
+	    case 'O':
+	       insert_char(O_umlaut);
+	       break;
+	    case 'U':
+	       insert_char(U_umlaut);
+	       break;
+	    case 'a':
+	       insert_char(a_umlaut);
+	       break;
+	    case 'e':
+	       insert_char(e_umlaut);
+	       break;
+	    case 'i':
+	       insert_char(i_umlaut);
+	       break;
+	    case 'o':
+	       insert_char(o_umlaut);
+	       break;
+	    case 'u':
+	       insert_char(u_umlaut);
+	       break;
+	    case 'y':
+	       insert_char(y_umlaut);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case Backquote:	// Compose grave-accented character.
+	    switch (n) {
+	    case Backquote:
+	       insert_char(Backquote);
+	       break;
+	    case 'A':
+	       insert_char(A_grave);
+	       break;
+	    case 'E':
+	       insert_char(E_grave);
+	       break;
+	    case 'I':
+	       insert_char(I_grave);
+	       break;
+	    case 'O':
+	       insert_char(O_grave);
+	       break;
+	    case 'U':
+	       insert_char(U_grave);
+	       break;
+	    case 'a':
+	       insert_char(a_grave);
+	       break;
+	    case 'e':
+	       insert_char(e_grave);
+	       break;
+	    case 'i':
+	       insert_char(i_grave);
+	       break;
+	    case 'o':
+	       insert_char(o_grave);
+	       break;
+	    case 'u':
+	       insert_char(u_grave);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case AcuteAccent:	// Compose acute-accented character.
+	    switch (n) {
+	    case SingleQuote:
+	       insert_char(AcuteAccent);
+	       break;
+	    case 'A':
+	       insert_char(A_acute);
+	       break;
+	    case 'E':
+	       insert_char(E_acute);
+	       break;
+	    case 'I':
+	       insert_char(I_acute);
+	       break;
+	    case 'O':
+	       insert_char(O_acute);
+	       break;
+	    case 'U':
+	       insert_char(U_acute);
+	       break;
+	    case 'Y':
+	       insert_char(Y_acute);
+	       break;
+	    case 'a':
+	       insert_char(a_acute);
+	       break;
+	    case 'e':
+	       insert_char(e_acute);
+	       break;
+	    case 'i':
+	       insert_char(i_acute);
+	       break;
+	    case 'o':
+	       insert_char(o_acute);
+	       break;
+	    case 'u':
+	       insert_char(u_acute);
+	       break;
+	    case 'y':
+	       insert_char(y_acute);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case Carat:		// Compose circumflex-accented character.
+	    switch (n) {
+	    case Carat:
+	       insert_char(Carat);
+	       break;
+	    case 'A':
+	       insert_char(A_circumflex);
+	       break;
+	    case 'E':
+	       insert_char(E_circumflex);
+	       break;
+	    case 'I':
+	       insert_char(I_circumflex);
+	       break;
+	    case 'O':
+	       insert_char(O_circumflex);
+	       break;
+	    case 'U':
+	       insert_char(U_circumflex);
+	       break;
+	    case 'a':
+	       insert_char(a_circumflex);
+	       break;
+	    case 'e':
+	       insert_char(e_circumflex);
+	       break;
+	    case 'i':
+	       insert_char(i_circumflex);
+	       break;
+	    case 'o':
+	       insert_char(o_circumflex);
+	       break;
+	    case 'u':
+	       insert_char(u_circumflex);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case Tilde:		// Compose tilde-accented character.
+	    switch (n) {
+	    case Tilde:
+	       insert_char(Tilde);
+	       break;
+	    case 'A':
+	       insert_char(A_tilde);
+	       break;
+	    case 'N':
+	       insert_char(N_tilde);
+	       break;
+	    case 'O':
+	       insert_char(O_tilde);
+	       break;
+	    case 'a':
+	       insert_char(a_tilde);
+	       break;
+	    case 'n':
+	       insert_char(n_tilde);
+	       break;
+	    case 'o':
+	       insert_char(o_tilde);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case DegreeSign:	// Compose ring-accented character.
+	    switch (n) {
+	    case 'o':
+	       insert_char(DegreeSign);
+	       break;
+	    case 'A':
+	       insert_char(A_ring);
+	       break;
+	    case 'a':
+	       insert_char(a_ring);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case Slash:		// Compose slash-accented character.
+	    switch (n) {
+	    case Slash:
+	       insert_char(DivisionSign);
+	       break;
+	    case Two:
+	       insert_char(OneHalf);
+	       break;
+	    case Three:
+	       insert_char(ThreeFourths);
+	       break;
+	    case Four:
+	       insert_char(OneFourth);
+	       break;
+	    case 'O':
+	       insert_char(O_slash);
+	       break;
+	    case 'o':
+	       insert_char(o_slash);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
+	 case Cedilla:		// Compose cedilla-accented character.
+	    switch (n) {
+	    case Comma:
+	       insert_char(Cedilla);
+	       break;
+	    case 'C':
+	       insert_char(C_cedilla);
+	       break;
+	    case 'c':
+	       insert_char(c_cedilla);
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    state = 0;
+	    break;
 	 default:		// Normal data.
 	    state = 0;
 	    from--;		// Backup to current input character.
@@ -1334,6 +1731,9 @@ void Telnet::InputReady()	// telnet stream can input data
 		  break;
 	       case ControlB:
 		  backward_char();
+		  break;
+	       case ControlC:	// Compose character.
+		  state = ControlC;
 		  break;
 	       case ControlD:
 		  delete_char();
