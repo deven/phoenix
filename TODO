@@ -1,7 +1,33 @@
-Instead of dequoting sendlist items in message_start(), do it elsewhere, and
-call from DoWho(), etc.  Maybe do dequoting in Sendlist::set()?
+*** Fix this fucking thing to build cleanly again!
+
+*** Allow /set date to adjust server time relative to system time...
+
+Implement /oops and /also (have /also extend last sendlist)
+
+add /last command to show last message sent to someone.  (if multiple, replay
+the set of last messages sent to those people) [dunno about discussions]
+/last alone should replay the last message sent.  Should /last also *set* the
+last message so that /also and /oops work relative to it?
+
+finger-type info -- real name, web page, email, etc.
+
+/notify, /info, /group, /finger, server banner w/admin address, crash recovery
+
+guest questionnaire
+
+Fix the input editing for up & down arrows.  Add i-search?
+
+Should input editing use String class?  Maybe make a Buffer class or extend
+the String class to serve the purpose?  (Maybe allow String or Buffer objects
+to store text in multiple allocated blocks of memory, but presented logically
+as a contiguous region?)
 
 Write String::sprintf() (how to buffer?)...
+
+Modify String class to do [] operator as substrings?  Can it be done as lvalue?
+
+Instead of dequoting sendlist items in message_start(), do it elsewhere, and
+call from DoWho(), etc.  Maybe do dequoting in Sendlist::set()?
 
 Modify "busy" state to discourage others sending to busy people.  Does this
 need a /confirm command or something else?  Also, discourage sending while
@@ -33,8 +59,6 @@ user-level Timestamps in /eval...
     buffer to expire if undelivered.)
 
 *** Add /leave command.  Force disconnect unless /leave cancel is done.
-
-*** Allow /set date to adjust server time relative to system time...
 
 "trolling" flag? :-)  [Maybe allow "sealed" messages?]
 
@@ -91,8 +115,6 @@ If a sendlist match fails, attempt match against non-joined discussions for a
 better error message.  Fix sendlist matching in /who (et al) to be consistent.
 
 spruce up ; and : processing -- fix smiley processing!
-
-/also, /oops
 
 Add "realms" which users can be in, perhaps visible, perhaps not.  Need a realm
 for family...
@@ -306,7 +328,7 @@ Show discussion quits on /bye?
 
 Show multi-discussion notifications.
 
-Destroy discussions when empty unless special.
+Destroy discussions when empty unless special?  Maybe an idle timeout?
 
 "/here" alone act as "/here off"?  have "/here same"?  configurable default?
 
@@ -316,12 +338,6 @@ For /detach, always switch to "gone" unless here/away/busy/gone keyword
 specified.  (same or brb as keywords?)  allow blurb w/detach
 
 pronouns?
-
-finger-type info -- real name, web page, email, etc.
-
-/notify, /info, /group, /finger, server banner w/admin address, crash recovery
-
-guest questionnaire
 
 /submit
 
@@ -538,16 +554,9 @@ network speed varies...  (measure round-trip time of TIMING-MARKs?)
 
 add blurb notification (not double notify for /here [blurb]?)
 
-Implement /oops and /also (have /also extend last sendlist)
-
 /reply command to set automatic reply while away/busy/gone.
 (also "reply" keyword on /away et al, but still take blurb, prompt for reply.)
 ["Automatic reply from ...", send only once.]
-
-add /last command to show last message sent to someone.  (if multiple, replay
-the set of last messages sent to those people) [dunno about discussions]
-/last alone should replay the last message sent.  Should /last also *set* the
-last message so the /also and /oops work relative to it?
 
 multiple reserved names
 
