@@ -93,6 +93,7 @@ public:
    static void nuke(Pointer<Telnet> telnet,int fd,boolean drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
+   void Closed();
    void Prompt(char *p);
    boolean AtEnd() { return boolean(point == free); }
    int Start() { return prompt_len; }
@@ -107,7 +108,8 @@ public:
    int End() { return free - data; }
    int EndLine() { return (Start() + End()) / width; }
    int EndColumn() { return (Start() + End()) % width; }
-   void Close(boolean drain = true); // Close telnet connection.
+   void Close(boolean drain = true);
+   void Closed(boolean intentional = false);
    void nuke(Pointer<Telnet> telnet,boolean drain);
    void output(int byte);
    void output(char *buf);
