@@ -1,0 +1,16 @@
+.deps
+Makefile
+Makefile.in
+Makefile.in~
+aclocal.m4
+autom4te.cache
+config.h
+config.h.in
+config.h.in~
+configure
+config.log
+config.status
+gangplank
+makepw
+restart
+stamp-h1
