@@ -1396,16 +1396,7 @@ void Session::DoWho(char *args)	// Do /who command.
 	 break;
       }
       if (tmp.length() > 33 && who.Count() == 1) {
-	 char *p = (~tmp) + 32;
-	 while (*p) {
-	    if (strlen(p) > 78) {
-	       print(">%-77.77s+\n", p);
-	       p += 77;
-	    } else {
-	       print(">%s\n", p);
-	       break;
-	    }
-	 }
+	 print(">%s\n", (~tmp) + 32);
       }
    }
    output(~msg);
