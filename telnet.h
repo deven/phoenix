@@ -178,6 +178,8 @@ public:
    static int Count() { return count; }
    void Closed();
    void Prompt(char *p);
+   boolean GetEcho() { return Echo == TelnetEnabled; }
+   void SetEcho(boolean flag) { Echo = flag ? TelnetEnabled : 0; }
    boolean AtStart() { return boolean(point == data); }
    boolean AtEnd() { return boolean(point == free); }
    int Start() { return prompt.length(); }

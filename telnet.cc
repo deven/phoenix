@@ -962,8 +962,8 @@ void Telnet::accept_input()	// Accept input line.
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
          RBin_callback = NAWS_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
-	     "TCP connection.\n(Use \"/set echo on\" to enable remote echo "\
-	     "if you need it.)\n\n");
+	     "TCP connection.\n(Use C-x C-e to toggle remote echo if you "\
+	     "need it.)\n\n");
       Welcome();
       if (!*data) return;	// Don't queue line if blank.
    }
@@ -1758,6 +1758,17 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    }
 	    break;
+	 case ControlX:		// Command character.
+	    state = 0;
+	    switch (n) {
+	    case ControlE:	// Toggle remote echo.
+	       SetEcho(!GetEcho());
+	       break;
+	    default:
+	       output(Bell);
+	       break;
+	    }
+	    break;
 	 case Umlaut:		// Compose umlaut-accented character.
 	    switch (n) {
 	    case Quote:
@@ -2105,6 +2116,9 @@ void Telnet::InputReady()	// telnet stream can input data
 		  break;
 	       case ControlY:
 		  yank();
+		  break;
+	       case ControlX:	// Command character.
+		  state = ControlX;
 		  break;
 	       case Backspace:
 	       case Delete:
