@@ -241,7 +241,7 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
 {
    if (discussion->Public) {
       if (removed) {
-	 if (match(removed->name,telnet->session->name)) {
+	 if (removed->name == telnet->session->name) {
 	    telnet->print("*** %s%s has depermitted and removed you from "
 			  "discussion %s. [%s] ***\n",~name->name,~name->blurb,
 			  ~discussion->name,date(time,11,5));
@@ -262,7 +262,7 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
 		       ~name->blurb,~discussion->name,date(time,11,5));
       } else {
 	 if (removed) {
-	    if (match(removed->name,telnet->session->name)) {
+	    if (removed->name == telnet->session->name) {
 	       telnet->print("*** %s%s has depermitted and removed you from "
 			     "private discussion %s. [%s] ***\n",~name->name,
 			     ~name->blurb,~discussion->name,date(time,11,5));
@@ -280,34 +280,50 @@ void DepermitNotify::output(Pointer<Telnet> &telnet)
    }
 }
 
-AppointNotify::AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-			     time_t when = 0):
+AppointNotify::AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
+			     Pointer<Session> &s2, time_t when = 0):
 			     Output(AppointOutput,NotificationClass,when)
 {
    discussion = d;
-   name = s->name_obj;
+   appointer = s1->name_obj;
+   appointee = s2->name_obj;
 }
 
 void AppointNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s%s has appointed you as a moderator of discussion "
-		 "%s. [%s] ***\n",~name->name,~name->blurb,~discussion->name,
-		 date(time,11,5));
+   if (appointee->name == telnet->session->name) {
+      telnet->print("*** %s%s has appointed you as a moderator of discussion "
+		    "%s. [%s] ***\n",~appointer->name,~appointer->blurb,
+		    ~discussion->name,date(time,11,5));
+   } else {
+      telnet->print("*** %s%s has appointed %s%s as a moderator of discussion "
+		    "%s. [%s] ***\n",~appointer->name,~appointer->blurb,
+		    ~appointee->name,~appointee->blurb,~discussion->name,
+		    date(time,11,5));
+   }
 }
 
-UnappointNotify::UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s,
-				 time_t when = 0):
+UnappointNotify::UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
+				 Pointer<Session> &s2, time_t when = 0):
 				 Output(UnappointOutput,NotificationClass,when)
 {
    discussion = d;
-   name = s->name_obj;
+   unappointer = s1->name_obj;
+   unappointee = s2->name_obj;
 }
 
 void UnappointNotify::output(Pointer<Telnet> &telnet)
 {
-   telnet->print("*** %s%s has unappointed you as a moderator of discussion "
-		 "%s. [%s] ***\n",~name->name,~name->blurb,~discussion->name,
-		 date(time,11,5));
+   if (unappointee->name == telnet->session->name) {
+      telnet->print("*** %s%s has unappointed you as a moderator of "
+		    "discussion %s. [%s] ***\n",~unappointer->name,
+		    ~unappointer->blurb,~discussion->name,date(time,11,5));
+   } else {
+      telnet->print("*** %s%s has unappointed %s%s as a moderator of "
+		    "discussion %s. [%s] ***\n",~unappointer->name,
+		    ~unappointer->blurb,~unappointee->name,~unappointee->blurb,
+		    ~discussion->name,date(time,11,5));
+   }
 }
 
 void RenameNotify::output(Pointer<Telnet> &telnet)

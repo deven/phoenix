@@ -243,18 +243,22 @@ public:
 class AppointNotify: public Output {
 private:
    Pointer<Discussion> discussion;
-   Pointer<Name> name;
+   Pointer<Name> appointer;
+   Pointer<Name> appointee;
 public:
-   AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   AppointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
+		 Pointer<Session> &s2,time_t when = 0);
    void output(Pointer<Telnet> &telnet);
 };
 
 class UnappointNotify: public Output {
 private:
    Pointer<Discussion> discussion;
-   Pointer<Name> name;
+   Pointer<Name> unappointer;
+   Pointer<Name> unappointee;
 public:
-   UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s,time_t when = 0);
+   UnappointNotify(Pointer<Discussion> &d,Pointer<Session> &s1,
+		   Pointer<Session> &s2,time_t when = 0);
    void output(Pointer<Telnet> &telnet);
 };
 

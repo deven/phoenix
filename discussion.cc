@@ -246,7 +246,7 @@ void Discussion::Appoint(Session *session,char *args) {
 			      ~s->name,~name);
 	    } else {
 	       moderators.Add(s->name_obj);
-	       EnqueueOthers(new AppointNotify(this,session),session);
+	       EnqueueOthers(new AppointNotify(this,session,s),session);
 	       session->print("You have appointed %s as a moderator of "
 			      "discussion %s.\n",~s->name,~name);
 	    }
@@ -270,7 +270,7 @@ void Discussion::Unappoint(Session *session,char *args) {
 	 if (s = session->FindSession(user,matches)) {
 	    if (n = IsModerator(s)) {
 	       moderators.Remove(n);
-	       EnqueueOthers(new UnappointNotify(this,session),session);
+	       EnqueueOthers(new UnappointNotify(this,session,s),session);
 	       session->print("You have unappointed %s as a moderator of "
 			      "discussion %s.\n",~s->name,~name);
 	    } else {
