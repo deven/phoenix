@@ -31,14 +31,14 @@ private:
 public:
    int Count() { return l.Count(); }
    void Reset() { l.Reset(); }
-   int In(Type *ptr);
+   boolean In(Type *ptr);
    void Add(Type *ptr);
    void Remove(Type *ptr);
    Type *First();
 };
 
 template <class Type>
-int Set<Type>::In(Type *ptr) {
+boolean Set<Type>::In(Type *ptr) {
    ListIter<Type> i(l);
    while (i++) if (i == ptr) return true;
    return false;
