@@ -16,7 +16,7 @@
 
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.4 2003/02/18 05:08:56 deven Exp $
+# $Id: Makefile.am,v 1.6 2003/02/24 06:23:12 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -35,6 +35,13 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile.am,v $
+# Revision 1.6  2003/02/24 06:23:12  deven
+# Added -D options for SERVER_PATH and LIBDIR, moved server to sbin directory
+# and removed restart program.
+#
+# Revision 1.5  2003/02/22 05:04:55  deven
+# Removed "most.cc" hack -- its benefits are no longer compelling.
+#
 # Revision 1.4  2003/02/18 05:08:56  deven
 # Updated copyright dates.
 #
@@ -114,29 +121,40 @@ am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
 
-bin_PROGRAMS = makepw restart gangplank
-makepw_SOURCES = makepw.c
-restart_SOURCES = restart.c
-gangplank_SOURCES = hash.cc string.cc most.cc gangplank.h system.h boolean.h \
-	object.h general.h constants.h functions.h string2.h list.h set.h \
-	hash.h timestamp.h line.h block.h outbuf.h name.h output.h outstr.h \
-	event.h eventqueue.h sendlist.h session.h discussion.h user.h \
-	fdtable.h fd.h listen.h telnet.h pointer.h globals.h
+DEFS = -DSERVER_PATH=\"$(sbindir)/gangplank\" -DLIBDIR=\"$(pkglibdir)\"
 
-EXTRA_DIST = discussion.cc event.cc eventqueue.cc fdtable.cc gangplank.cc \
-	listen.cc most.cc output.cc outstr.cc sendlist.cc session.cc \
-	telnet.cc timestamp.cc user.cc CREDITS HISTORY KLUDGES LICENSE.QPL \
-	OVERVIEW PORTING RELEASES TOUR bootstrap passwd
+bin_PROGRAMS = makepw
+sbin_PROGRAMS = gangplank
+
+makepw_SOURCES = makepw.c
+gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
+	gangplank.cc hash.cc listen.cc output.cc outstr.cc sendlist.cc \
+	session.cc string.cc telnet.cc timestamp.cc user.cc gangplank.h \
+	system.h boolean.h object.h general.h constants.h functions.h \
+	string2.h list.h set.h hash.h timestamp.h line.h block.h outbuf.h \
+	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
+	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
+	globals.h
+
+
+EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING RELEASES \
+	TOUR bootstrap passwd
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
-bin_PROGRAMS = makepw$(EXEEXT) restart$(EXEEXT) gangplank$(EXEEXT)
-PROGRAMS = $(bin_PROGRAMS)
+bin_PROGRAMS = makepw$(EXEEXT)
+sbin_PROGRAMS = gangplank$(EXEEXT)
+PROGRAMS = $(bin_PROGRAMS) $(sbin_PROGRAMS)
 
-am_gangplank_OBJECTS = hash.$(OBJEXT) string.$(OBJEXT) most.$(OBJEXT)
+am_gangplank_OBJECTS = discussion.$(OBJEXT) event.$(OBJEXT) \
+	eventqueue.$(OBJEXT) fdtable.$(OBJEXT) gangplank.$(OBJEXT) \
+	hash.$(OBJEXT) listen.$(OBJEXT) output.$(OBJEXT) \
+	outstr.$(OBJEXT) sendlist.$(OBJEXT) session.$(OBJEXT) \
+	string.$(OBJEXT) telnet.$(OBJEXT) timestamp.$(OBJEXT) \
+	user.$(OBJEXT)
 gangplank_OBJECTS = $(am_gangplank_OBJECTS)
 gangplank_LDADD = $(LDADD)
 gangplank_DEPENDENCIES =
@@ -146,22 +164,20 @@ makepw_OBJECTS = $(am_makepw_OBJECTS)
 makepw_LDADD = $(LDADD)
 makepw_DEPENDENCIES =
 makepw_LDFLAGS =
-am_restart_OBJECTS = restart.$(OBJEXT)
-restart_OBJECTS = $(am_restart_OBJECTS)
-restart_LDADD = $(LDADD)
-restart_DEPENDENCIES =
-restart_LDFLAGS =
-
-DEFS = @DEFS@
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I.
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/hash.Po ./$(DEPDIR)/makepw.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/most.Po ./$(DEPDIR)/restart.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/string.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/discussion.Po ./$(DEPDIR)/event.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/eventqueue.Po ./$(DEPDIR)/fdtable.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/gangplank.Po ./$(DEPDIR)/hash.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/listen.Po ./$(DEPDIR)/makepw.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/output.Po ./$(DEPDIR)/outstr.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sendlist.Po ./$(DEPDIR)/session.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/string.Po ./$(DEPDIR)/telnet.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/timestamp.Po ./$(DEPDIR)/user.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -173,12 +189,12 @@ CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 CXXFLAGS = @CXXFLAGS@
-DIST_SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES) $(restart_SOURCES)
+DIST_SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES)
 DIST_COMMON = README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
 	Makefile.in NEWS TODO acinclude.m4 aclocal.m4 config.guess \
 	config.h.in config.sub configure configure.ac depcomp \
 	install-sh missing mkinstalldirs
-SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES) $(restart_SOURCES)
+SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES)
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -242,15 +258,36 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+install-sbinPROGRAMS: $(sbin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(sbinPROGRAMS_INSTALL) $$p $(DESTDIR)$(sbindir)/$$f"; \
+	   $(INSTALL_PROGRAM_ENV) $(sbinPROGRAMS_INSTALL) $$p $(DESTDIR)$(sbindir)/$$f; \
+	  else :; fi; \
+	done
+
+uninstall-sbinPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f $(DESTDIR)$(sbindir)/$$f"; \
+	  rm -f $(DESTDIR)$(sbindir)/$$f; \
+	done
+
+clean-sbinPROGRAMS:
+	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
 gangplank$(EXEEXT): $(gangplank_OBJECTS) $(gangplank_DEPENDENCIES)
 	@rm -f gangplank$(EXEEXT)
 	$(CXXLINK) $(gangplank_LDFLAGS) $(gangplank_OBJECTS) $(gangplank_LDADD) $(LIBS)
 makepw$(EXEEXT): $(makepw_OBJECTS) $(makepw_DEPENDENCIES)
 	@rm -f makepw$(EXEEXT)
 	$(LINK) $(makepw_LDFLAGS) $(makepw_OBJECTS) $(makepw_LDADD) $(LIBS)
-restart$(EXEEXT): $(restart_OBJECTS) $(restart_DEPENDENCIES)
-	@rm -f restart$(EXEEXT)
-	$(LINK) $(restart_LDFLAGS) $(restart_OBJECTS) $(restart_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -258,11 +295,22 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/discussion.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eventqueue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fdtable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gangplank.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/listen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makepw.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/most.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/restart.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/output.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/outstr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sendlist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/telnet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timestamp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/user.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -365,9 +413,6 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="${top_distdir}" distdir="$(distdir)" \
-	  dist-hook
 	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
 	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
 	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
@@ -425,7 +470,7 @@ check: check-am
 all-am: Makefile $(PROGRAMS) config.h
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(sbindir)
 
 install: install-am
 install-exec: install-exec-am
@@ -453,7 +498,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-sbinPROGRAMS \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -470,7 +516,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-binPROGRAMS install-sbinPROGRAMS
 
 install-info: install-info-am
 
@@ -487,23 +533,22 @@ mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
+	uninstall-sbinPROGRAMS
 
 .PHONY: GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic dist dist-all dist-gzip distcheck distclean \
-	distclean-compile distclean-depend distclean-generic \
-	distclean-hdr distclean-tags distcleancheck distdir dvi dvi-am \
-	info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic tags uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am
+	clean-generic clean-sbinPROGRAMS dist dist-all dist-gzip \
+	distcheck distclean distclean-compile distclean-depend \
+	distclean-generic distclean-hdr distclean-tags distcleancheck \
+	distdir dvi dvi-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-exec \
+	install-exec-am install-info install-info-am install-man \
+	install-sbinPROGRAMS install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic tags \
+	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am \
+	uninstall-sbinPROGRAMS
 
-
-dist-hook:
-	chmod -R u+w $(distdir)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
