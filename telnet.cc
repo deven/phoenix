@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.11 1994/02/05 18:37:21 deven Exp $
+// $Id: telnet.cc,v 1.12 1994/02/06 03:56:50 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.12  1994/02/06 03:56:50  deven
+// Fixed to warn user if acknowledgements disabled, sent two initial timing
+// marks to check multiple acknowledgements in case exactly one is returned.
+//
 // Revision 1.11  1994/02/05 18:37:21  deven
 // Added [] to array deletes, handled EWOULDBLOCK and EAGAIN independently.
 //
