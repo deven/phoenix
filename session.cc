@@ -2305,7 +2305,8 @@ void Session::DoReset()		// Do <space><return> idle time reset.
    ResetIdle(1);
 }
 
-char *message_start(char *line,String &sendlist,boolean &explicit)
+char *message_start(char *line,String &sendlist,String &last_explicit_sendlist,
+   boolean &explicit)
 {
    char *p;
    int i;
@@ -2341,14 +2342,15 @@ char *message_start(char *line,String &sendlist,boolean &explicit)
          return line + (*line == Space);
       case Colon:
       case Semicolon:
-         if (*++p == Space) p++;
          explicit = true;
+         last_explicit_sendlist = String(line,p - line);
+         if (*++p == Space) p++;
          return p;
       case Backslash:
 	 if (*++p) sendlist.append(*p);
          break;
       case Quote:
-	 while (*p) {
+	 while (*++p) {
 	    if (*p == Quote) {
 	       break;
 	    } else if (*p == Backslash) {
@@ -2356,7 +2358,6 @@ char *message_start(char *line,String &sendlist,boolean &explicit)
 	    } else {
 	       sendlist.append(*p);
 	    }
-	    p++;
 	 }
          break;
       case Underscore:
@@ -2380,10 +2381,8 @@ void Session::DoMessage(char *line) // Do message send.
    String send;
    boolean explicit = false;	// Assume implicit sendlist.
 
-   line = message_start(line,send,explicit);
+   line = message_start(line,send,last_explicit,explicit);
    trim(line);
-
-   if (explicit) last_explicit = send;
 
    // Use last sendlist if none specified.
    if (!send) {
