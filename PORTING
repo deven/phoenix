@@ -4,6 +4,7 @@ Gangplank has been known to build and run on the following platforms:
 
  * Linux (i386) - Red Hat 6.x, 7.x; Debian 2.2
  * FreeBSD 4.x, 5.x (i386)
+ * NetBSD 1.6 (i386)
  * Macintosh OS X (Darwin)
  * Solaris 8 (SPARC)
  * SunOS 4.1.4
