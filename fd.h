@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: fd.h,v 1.2 1993/12/11 07:33:55 deven Exp $
 //
 // FD class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
+// Revision 1.2  1993/12/11 07:33:55  deven
+// Added static member of type FDTable to class FD.  Changed ReadSelect(),
+// NoReadSelect(), WriteSelect(), NoWriteSelect() to call counterparts in
+// class FDTable, which now contains the readfds and writefds fd_sets.
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //

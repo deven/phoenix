@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.h,v 1.1 1993/12/08 02:36:57 deven Exp $
+// $Id: fdtable.h,v 1.2 1993/12/11 07:35:40 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
+// Revision 1.2  1993/12/11 07:35:40  deven
+// Added static members readfds and writefds of type fd_set to class FDTable.
+// Added declaration for new member function FD *Closed(int fd).
+// Added ReadSelect(int fd), NoReadSelect(int fd), WriteSelect(int fd),
+// NoWriteSelect(int fd) to manipulate the fd_sets.
+//
 // Revision 1.1  1993/12/08 02:36:57  deven
 // Initial revision
 //
