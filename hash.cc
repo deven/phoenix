@@ -28,7 +28,7 @@
 #include "hash.h"
 #include "pointer.h"
 
-int Assoc::Hash(char *key)
+int Hash::Hash(char *key)
 {
    unsigned long hash = 0;
    unsigned char *ptr = (unsigned char *) key;
@@ -43,9 +43,9 @@ int Assoc::Hash(char *key)
    return hash % Size;
 }
 
-void Assoc::Store(char *key, char *value)
+void Hash::Store(char *key, char *value)
 {
-   AssocEntry *entry = new AssocEntry(key, value);
+   HashEntry *entry = new HashEntry(key, value);
    int hash = Hash(key);
    entry->next = bucket[hash];
    bucket[hash] = entry;
@@ -60,10 +60,10 @@ void Assoc::Store(char *key, char *value)
    }
 }
 
-void Assoc::Delete(char *key)
+void Hash::Delete(char *key)
 {
    int hash = Hash(key);
-   Pointer<AssocEntry> entry(bucket[hash]);
+   Pointer<HashEntry> entry(bucket[hash]);
    if (entry->key == key) {
       bucket[hash] = entry->next;
       count--;
@@ -79,10 +79,10 @@ void Assoc::Delete(char *key)
    }
 }
 
-boolean Assoc::Known(char *key)
+boolean Hash::Known(char *key)
 {
    int hash = Hash(key);
-   AssocEntry *entry = bucket[hash];
+   HashEntry *entry = bucket[hash];
 
    while (entry) {
       if (entry->key == key) return true;
@@ -91,10 +91,10 @@ boolean Assoc::Known(char *key)
    return false;
 }
 
-String Assoc::Fetch(char *key)
+String Hash::Fetch(char *key)
 {
    int hash = Hash(key);
-   AssocEntry *entry = bucket[hash];
+   HashEntry *entry = bucket[hash];
 
    while (entry) {
       if (entry->key == key) return entry->value;
@@ -103,32 +103,32 @@ String Assoc::Fetch(char *key)
    return String();
 }
 
-AssocEntry &Assoc::operator [](char *key)
+HashEntry &Hash::operator [](char *key)
 {
    int hash = Hash(key);
-   AssocEntry *entry = bucket[hash];
+   HashEntry *entry = bucket[hash];
 
    while (entry) {
       if (entry->key == key) return *entry;
       entry = entry->next;
    }
-   entry = new AssocEntry(key, "");
+   entry = new HashEntry(key, "");
    entry->next = bucket[hash];
    bucket[hash] = entry;
    count++;
    return *entry;
 }
 
-AssocEntry *AssocIter::operator ++() {
+HashEntry *HashIter::operator ++() {
    if (entry) {
       if (entry = entry->next) return entry;
-      while (++bucket < Assoc::Size) {
+      while (++bucket < Hash::Size) {
 	 if (entry = array->bucket[bucket]) return entry;
       }
       bucket = 0;
    } else {
       bucket = 0;
-      while (++bucket < Assoc::Size) {
+      while (++bucket < Hash::Size) {
 	 if (entry = array->bucket[bucket]) return entry;
       }
       bucket = 0;
