@@ -22,6 +22,10 @@
 
 #include "gangplank.h"
 
+#ifndef HAVE_CRYPT
+#error crypt() required!
+#endif
+
 #ifndef HAVE_STRCASECMP
 #error strcasecmp() required!
 #endif
