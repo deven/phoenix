@@ -334,8 +334,8 @@ void Telnet::Close()		// Close telnet connection.
 
 void Telnet::nuke(Telnet *telnet,int drain)
 {
-   telnet->print("User \"%s\" (%s) on fd %d has been nuked.\n",session->name,
-		 session->user->user,fd);
+   telnet->print("User \"%s\" (%s) on fd %d has been nuked.\n",
+		 session->name_only,session->user->user,fd);
    if (Output.head && drain) {
       Drain();
    } else {

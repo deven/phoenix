@@ -72,6 +72,7 @@ void welcome(Telnet *telnet);
 void login(Telnet *telnet,char *line);
 void password(Telnet *telnet,char *line);
 void name(Telnet *telnet,char *line);
+void blurb(Telnet *telnet,char *line);
 void process_input(Telnet *telnet,char *line);
 void who_cmd(Telnet *telnet);
 void erase_line(Telnet *telnet);
