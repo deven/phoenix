@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: output.cc,v 1.1 1993/12/21 15:33:31 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: output.cc,v $
+// Revision 1.1  1993/12/21 15:33:31  deven
+// Initial revision
+//
 
 #include "conf.h"
 

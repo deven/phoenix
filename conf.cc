@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.4 1993/12/13 22:49:43 deven Exp $
+// $Id: conf.cc,v 1.5 1993/12/21 15:14:28 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.5  1993/12/21 15:14:28  deven
+// Did major restructuring to route most I/O through Session class.  All
+// Session-level output is now stored in a symbolic queue, as a block of
+// text, a message, a notification, etc.  Support is ready for /detach.
+//
 // Revision 1.4  1993/12/13 22:49:43  deven
 // Modified to use encrypted passwords in password file, and to recognize '#'
 // as a comment.  (only if in first column at present)

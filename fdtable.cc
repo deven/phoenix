@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.3 1993/12/12 00:37:48 deven Exp $
+// $Id: fdtable.cc,v 1.4 1993/12/21 15:22:51 deven Exp $
 //
 // FDTable class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.cc,v $
+// Revision 1.4  1993/12/21 15:22:51  deven
+// Modified announce() and nuke() slightly.
+//
 // Revision 1.3  1993/12/12 00:37:48  deven
 // Changed announce() to unformatted.  Removed SendByFD(), SendEveryone() and
 // SendPrivate() member functions.

@@ -1,12 +1,18 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.2 1993/12/12 00:44:01 deven Exp $
+// $Id: session.cc,v 1.3 1993/12/21 15:14:28 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.3  1993/12/21 15:14:28  deven
+// Did major restructuring to route most I/O through Session class.  All
+// Session-level output is now stored in a symbolic queue, as a block of
+// text, a message, a notification, etc.  Support is ready for /detach.
+// Added /idle command, CheckShutdown() function.
+//
 // Revision 1.2  1993/12/12 00:44:01  deven
 // Added static member sessions.  Added Link(), notify(), who_cmd(),
 // CheckShutdown(), SendEveryone(), SendByFD() and SendPrivate() member
