@@ -1,0 +1,139 @@
+From coderpunks-errors@toad.com  Wed Apr 17 00:51:33 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id AAA16195 for <deven@escher.ties.org>; Wed, 17 Apr 1996 00:51:23 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id AAA23339 for <deven@asylum.sf.ca.us>; Wed, 17 Apr 1996 00:51:18 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id AAA13688; Wed, 17 Apr 1996 00:51:14 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id VAA26379 for coderpunks-outgoing; Tue, 16 Apr 1996 21:35:38 -0700 (PDT)
+Received: from infinity.c2.org (infinity.c2.org [140.174.185.11]) by toad.com (8.7.5/8.7.3) with ESMTP id VAA26370 for <coderpunks@toad.com>; Tue, 16 Apr 1996 21:35:20 -0700 (PDT)
+Received: (from raph@localhost) by infinity.c2.org (8.7.4/8.6.9)
+	id VAA01771; Tue, 16 Apr 1996 21:29:07 -0700 (PDT)
+	Community ConneXion: Privacy & Community: <URL:http://www.c2.net>
+Date: Tue, 16 Apr 1996 21:29:07 -0700 (PDT)
+From: Raph Levien <raph@c2.org>
+Message-Id: <199604170429.VAA01771@infinity.c2.org>
+To: coderpunks@toad.com
+Subject: Stream transformation
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+Coderpunks,
+
+   One of the most tricky aspects of programming crypto and network
+code is the difficulty of getting stream processing right, especially
+when it has to be asynchronous or nonblocking. I've been studying
+webservers and crypto libraries, and have found that each has a
+slightly different way of handling the problem.
+
+   In its most basic form, a stream transformer takes a stream of
+bytes as its input and produces a stream of bytes as its output.
+Ideally, you'd like to be able to compose such transformers, so that
+the semantics are similar to Unix pipes (but hopefully with much
+better performance).
+   There are also more sophisticated variations on stream
+transformers. For example, one could implement MIME multipart parsing
+as a stream transformer that accepted the multipart, and called a
+closure (i.e. callback) for each of the parts, passing in a stream
+for each part to its closure.
+
+   I've seen this kind of thing done many different ways. RIPEM, for
+example, has a pretty clean procedural method. In RIPEM, a stream
+transformer is implemented as three functions, Init, Update, and
+Final. In general, the Update function is called with a (buffer, size)
+pair, and returns (by setting &reference args) a (buffer, size) pair
+corresponding to the output. The Final function returns the (buffer,
+size) pair. The input data is allocated by the caller, and the output
+data is allocated internally to the stream transformer. All of the
+calls share a common "context" data structure.
+   SSLeay has a rather similar interface, except that the output
+buffer is allocated by the caller. Thus, the caller has to be aware of
+just how much expansion the transformer can do. For example, a
+decompressor wouldn't fit neatly into the SSLeay framework. That's ok,
+though, because it's just a framework, and it's not necessary to
+rigidly conform to it.
+
+   Single-process Web servers (such as thttpd and Boa) tend to be
+centered very much around the main select() loop. In general, they
+don't need to do much processing of the data - just grab it from a
+file and send it out over the Net. Most of the fancy stuff is
+delegated to a CGI script, which tends to be very heavyweight. I think
+we're going to see more applications that require efficient handling
+of Web requests. Hal's keyserver proxy is a case in point.
+
+   A completely different approach is taken by PGP 3.0. This API,
+unlike the more ad-hoc approaches outlined above, tried to fit stream
+transformers into a consistent, clean abstraction. Thus, with PGP 3.0
+it is quite easy to compose several individual transforms into a pipe.
+   I have to say that I like the idea of the PGP approach, but have
+several qualms about it. For one, even though the interface is pretty
+clean as far as _users_ of the transformers go, it gets pretty messy
+to write a transformer. Derek showed me the no-op transformer (copy
+input to output), and it was almost 100 lines of code. Not terribly
+difficult code, but 100 lines nonetheless.
+   Also, the PGP stream model isn't really suitable for network code,
+for example a webserver. When an output blocks, you have to keep
+trying feeding input to the pipeline until it finally unblocks.
+In the meantime, the pipeline is recomputing the same transform over
+and over.
+
+   I've been looking at this problem, and have been toying with a
+possible solution. It's fairly rich in semantics, but the code looks
+pretty tight. I've got about 500 lines of portable C that implements
+the basic infrastructure, full nonblocking file I/O, and some toy
+transformers, including a lowercaser and a base 64 encoder. These are
+40 and 73 lines of C, respectively.
+
+   I'm not going to go into details of my solution here, but basically
+it creates a pointer structure corresponding to the transformers, with
+two kinds of structures: fifos, which have one input and one output
+each, and transformers, which can be at the input or output ports of
+an arbitrary number of fifos. The fifo holds buffered data, and is
+thus responsible for memory allocation. Each transformer is centered
+around a "progress" function, which does whatever is necessary -
+generally taking data from the input fifo, processing it, and sending
+the result to the output fifo. The progress function must also check
+for EOF input or blocked output, accounting for a couple of lines or
+so each.
+
+   It's very easy to use transformers. For example, here's the main()
+function for an example that transforms its input to lowercase and
+then base64 encodes it.
+
+int main (int argc, char **argv) {
+  AST_fifo *fifo, *fifo2, *fifo3;
+  int status;
+  int i;
+
+  AST_init ();
+
+  fifo = AST_file_read (0);
+  fifo2 = AST_lowercase (fifo);
+  fifo3 = AST_b64e (fifo2);
+  AST_file_write (fifo3, 1);
+
+  do {
+    status = AST_progress_file ();
+  } while (status == AST_AGAIN);
+
+  return 0;
+}
+
+   Similarly, a Web server would be centered around a transformer
+which simply transforms an HTTP request into a response.
+
+   It's a bit early to say, but the pragmatics look fairly decent. I
+ran a simple test in which I repeatedly sets up and tears down a
+pipeline, lowercasing a very small string. Each iteration takes about
+28 us. Adding an additional transformer into the pipeline costs about
+14 us each. This is a bit heavyweight compared with a simple procedure
+call. It turns out to be about the same as an MD5 of a 256 byte block.
+However, it's quite lightweight compared with such things as forking
+off a shell command, making a network connection, or an RSA operation.
+
+   My main question is: how useful is this work to other people? I
+will probably end up using something like this in the (eventual)
+recode of premail in C, but I'm interested in whether anyone else
+finds it interesting or potentially useful. I'm toying with writing it
+up as a paper, but obviously don't want to if it's "only interesting
+to other hippopotamuses."
+
+Raph
