@@ -878,10 +878,12 @@ void Session::DoDown(char *args) // Do !down command.
 	    log("Shutdown cancelled by %s (%s).", ~name, ~user->user);
 	    announce("*** %s%s has cancelled the server shutdown. ***\n",
 		     ~name, ~blurb);
+	    break;
 	 case Restart_Event:
 	    log("Restart cancelled by %s (%s).", ~name, ~user->user);
 	    announce("*** %s%s has cancelled the server restart. ***\n", ~name,
 		     ~blurb);
+	    break;
 	 default:
 	    break;		// Should never get here!
 	 }
