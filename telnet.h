@@ -89,7 +89,6 @@ public:
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
 
-   static void nuke(Pointer<Telnet> telnet,int fd,boolean drain);
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
    void Closed();
@@ -109,7 +108,6 @@ public:
    int EndColumn() { return (Start() + End()) % width; }
    void Close(boolean drain = true);
    void Closed(boolean intentional = false);
-   void nuke(Pointer<Telnet> telnet,boolean drain);
    void output(int byte);
    void output(char *buf);
    void output(char *buf,int len);

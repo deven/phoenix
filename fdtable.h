@@ -41,7 +41,6 @@ public:
    void Select();		// Select across all ready connections.
    void InputReady(int fd);	// Input is ready on file descriptor fd.
    void OutputReady(int fd);	// Output is ready on file descriptor fd.
-   void nuke(Pointer<Telnet> telnet,int fd,boolean drain);
    void ReadSelect(int fd) {	// Select fd for reading.
       FD_SET(fd,&readfds);
    }

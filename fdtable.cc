@@ -126,18 +126,3 @@ void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
    }
    array[fd]->OutputReady(fd);
 }
-
-void FDTable::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
-{
-   if (fd >= 0 && fd < used && array[fd] && array[fd]->type == TelnetFD) {
-      array[i]->UndrawInput();
-      array[i]->print("\a\a\a*** You have been nuked by %s. ***\n",
-	       telnet->session->name);
-      log("%s (%s) on fd %d has been nuked by %s (%s).",
-	  array[i]->session->name_only,array[i]->session->user->user,fd,
-	  telnet->session->name_only,telnet->session->user->user);
-      array[i]->nuke(telnet,drain);
-   } else {
-      telnet->print("There is no user on fd %d.\n",fd);
-   }
-}
