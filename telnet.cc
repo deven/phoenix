@@ -166,9 +166,9 @@ void Telnet::LogCaller() {	// Log calling host and port.
    struct sockaddr_in saddr;
    int saddrlen = sizeof(saddr);
 
-   if (!getpeername(fd,(struct sockaddr *) &saddr,&saddrlen)) {
-      log("Accepted connection on fd %d from %s port %d.",fd,
-	  inet_ntoa(saddr.sin_addr),saddr.sin_port);
+   if (!getpeername(fd, (struct sockaddr *) &saddr, &saddrlen)) {
+      log("Accepted connection on fd %d from %s port %d.", fd,
+	  inet_ntoa(saddr.sin_addr), saddr.sin_port);
    } else {
       warn("Telnet::LogCaller(): getpeername()");
    }
@@ -178,13 +178,13 @@ void Telnet::output(int byte)	// queue output byte
 {
    switch (byte) {
    case TelnetIAC:		// command escape: double it
-      if (Output.out(TelnetIAC,TelnetIAC)) WriteSelect();
+      if (Output.out(TelnetIAC, TelnetIAC)) WriteSelect();
       break;
    case Return:			// carriage return: send "\r\0"
-      if (Output.out(Return,Null)) WriteSelect();
+      if (Output.out(Return, Null)) WriteSelect();
       break;
    case Newline:		// newline: send "\r\n"
-      if (Output.out(Return,Newline)) WriteSelect();
+      if (Output.out(Return, Newline)) WriteSelect();
       break;
    default:			// normal character: send it
       if (Output.out(byte)) WriteSelect();
@@ -201,13 +201,13 @@ void Telnet::output(char *buf)	// queue output data
    while (*buf) {
       switch (byte = *((unsigned char *) buf++)) {
       case TelnetIAC:		// command escape: double it
-	 Output.out(TelnetIAC,TelnetIAC);
+	 Output.out(TelnetIAC, TelnetIAC);
 	 break;
       case Return:		// carriage return: send "\r\0"
-	 Output.out(Return,Null);
+	 Output.out(Return, Null);
 	 break;
       case Newline:		// newline: send "\r\n"
-	 Output.out(Return,Newline);
+	 Output.out(Return, Newline);
 	 break;
       default:			// normal character: send it
 	 Output.out(byte);
@@ -216,7 +216,7 @@ void Telnet::output(char *buf)	// queue output data
    }
 }
 
-void Telnet::output(char *buf,int len) // queue output data (with length)
+void Telnet::output(char *buf, int len) // queue output data (with length)
 {
    int byte;
 
@@ -225,13 +225,13 @@ void Telnet::output(char *buf,int len) // queue output data (with length)
    while (--len) {
       switch (byte = *((unsigned char *) buf++)) {
       case TelnetIAC:		// command escape: double it
-	 Output.out(TelnetIAC,TelnetIAC);
+	 Output.out(TelnetIAC, TelnetIAC);
 	 break;
       case Return:		// carriage return: send "\r\0"
-	 Output.out(Return,Null);
+	 Output.out(Return, Null);
 	 break;
       case Newline:		// newline: send "\r\n"
-	 Output.out(Return,Newline);
+	 Output.out(Return, Newline);
 	 break;
       default:			// normal character: send it
 	 Output.out(byte);
@@ -240,13 +240,13 @@ void Telnet::output(char *buf,int len) // queue output data (with length)
    }
 }
 
-void Telnet::print(char *format,...) // formatted write
+void Telnet::print(char *format, ...) // formatted write
 {
    char buf[BufSize];
    va_list ap;
 
-   va_start(ap,format);
-   (void) vsprintf(buf,format,ap);
+   va_start(ap, format);
+   (void) vsprintf(buf, format, ap);
    va_end(ap);
    output(buf);
 }
@@ -261,19 +261,19 @@ void Telnet::echo(char *buf)	// echo output data
    if (Echo == TelnetEnabled && DoEcho && !undrawn) output(buf);
 }
 
-void Telnet::echo(char *buf,int len) // echo output data (with length)
+void Telnet::echo(char *buf, int len) // echo output data (with length)
 {
-   if (Echo == TelnetEnabled && DoEcho && !undrawn) output(buf,len);
+   if (Echo == TelnetEnabled && DoEcho && !undrawn) output(buf, len);
 }
 
-void Telnet::echo_print(char *format,...) // formatted echo
+void Telnet::echo_print(char *format, ...) // formatted echo
 {
    char buf[BufSize];
    va_list ap;
 
    if (Echo == TelnetEnabled && DoEcho && !undrawn) {
-      va_start(ap,format);
-      (void) vsprintf(buf,format,ap);
+      va_start(ap, format);
+      (void) vsprintf(buf, format, ap);
       va_end(ap);
       output(buf);
    }
@@ -285,16 +285,16 @@ void Telnet::command(int byte)	// Queue command byte.
    Command.out(byte);		// Queue command byte.
 }
 
-void Telnet::command(int byte1,int byte2) // Queue 2 command bytes.
+void Telnet::command(int byte1, int byte2) // Queue 2 command bytes.
 {
    WriteSelect();		// Always write for command output.
-   Command.out(byte1,byte2);	// Queue 2 command bytes.
+   Command.out(byte1, byte2);	// Queue 2 command bytes.
 }
 
-void Telnet::command(int byte1,int byte2,int byte3) // Queue 3 command bytes.
+void Telnet::command(int byte1, int byte2, int byte3) // Queue 3 command bytes.
 {
    WriteSelect();		// Always write for command output.
-   Command.out(byte1,byte2,byte3); // Queue 3 command bytes.
+   Command.out(byte1, byte2, byte3); // Queue 3 command bytes.
 }
 
 void Telnet::command(char *buf)	// queue command data
@@ -304,7 +304,7 @@ void Telnet::command(char *buf)	// queue command data
    while (*buf) Command.out(*((unsigned char *) buf++));
 }
 
-void Telnet::command(char *buf,int len) // queue command data (with length)
+void Telnet::command(char *buf, int len) // queue command data (with length)
 {
    if (!buf || !*buf) return;	// return if no data
    WriteSelect();		// Always write for command output.
@@ -315,14 +315,14 @@ void Telnet::TimingMark(void)	// Queue Telnet TIMING-MARK option in OUTPUT.
 {
    if (acknowledge) {
       outstanding++;
-      Output.out(TelnetIAC,TelnetDo,TelnetTimingMark);
+      Output.out(TelnetIAC, TelnetDo, TelnetTimingMark);
    }
 }
 
-void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
-			  Sendlist *to,char *start)
+void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
+			  Sendlist *to, char *start)
 {
-   char *wrap,*p;
+   char *wrap, *p;
    int col;
    boolean flag;
 
@@ -330,7 +330,7 @@ void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
    case PublicMessage:
       // Print message header.
       if (session->SignalPublic) output(Bell);
-      print("\n -> From %s%s to everyone:",~from->name,~from->blurb);
+      print("\n -> From %s%s to everyone:", ~from->name, ~from->blurb);
       break;
    case PrivateMessage:
       // Save name to reply to.
@@ -393,7 +393,7 @@ void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
 
 	 if (to->discussions.Count()) {
 	    if (!first) output("; ");
-	    print("discussion%s ",to->discussions.Count() == 1 ? "" : "s");
+	    print("discussion%s ", to->discussions.Count() == 1 ? "" : "s");
 	    first = true;
 
 	    SetIter<Discussion> discussion(to->discussions);
@@ -413,7 +413,7 @@ void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
    }
 
    // Print timestamp. (make optional? ***)
-   print(" [%s]\n - ",time.stamp());
+   print(" [%s]\n - ", time.stamp());
 
    while (*start) {
       wrap = 0;
@@ -421,14 +421,14 @@ void Telnet::PrintMessage(OutputType type,Timestamp time,Name *from,
 	 if (*p == Space) wrap = p;
       }
       if (!*p) {
-	 output(start,p - start);
+	 output(start, p - start);
 	 break;
       } else if (wrap) {
-	 output(start,wrap - start);
+	 output(start, wrap - start);
 	 start = wrap + 1;
 	 if (*start == Space) start++;
       } else {
-	 output(start,p - start);
+	 output(start, p - start);
 	 start = p;
       }
       output("\n - ");
@@ -483,65 +483,65 @@ void Telnet::Welcome()
 }
 
 // Set telnet ECHO option. (local)
-void Telnet::set_Echo(CallbackFuncPtr callback,int state)
+void Telnet::set_Echo(CallbackFuncPtr callback, int state)
 {
    if (state) {
-      command(TelnetIAC,TelnetWill,TelnetEcho);
+      command(TelnetIAC, TelnetWill, TelnetEcho);
       Echo |= TelnetWillWont;	// mark WILL sent
    } else {
-      command(TelnetIAC,TelnetWont,TelnetEcho);
+      command(TelnetIAC, TelnetWont, TelnetEcho);
       Echo &= ~TelnetWillWont;	// mark WON'T sent
    }
    Echo_callback = callback;	// save callback function
 }
 
 // Set telnet SUPPRESS-GO-AHEAD option. (local)
-void Telnet::set_LSGA(CallbackFuncPtr callback,int state)
+void Telnet::set_LSGA(CallbackFuncPtr callback, int state)
 {
    if (state) {
-      command(TelnetIAC,TelnetWill,TelnetSuppressGoAhead);
+      command(TelnetIAC, TelnetWill, TelnetSuppressGoAhead);
       LSGA |= TelnetWillWont;	// mark WILL sent
    } else {
-      command(TelnetIAC,TelnetWont,TelnetSuppressGoAhead);
+      command(TelnetIAC, TelnetWont, TelnetSuppressGoAhead);
       LSGA &= ~TelnetWillWont;	// mark WON'T sent
    }
    LSGA_callback = callback;	// save callback function
 }
 
 // Set telnet SUPPRESS-GO-AHEAD option. (remote)
-void Telnet::set_RSGA(CallbackFuncPtr callback,int state)
+void Telnet::set_RSGA(CallbackFuncPtr callback, int state)
 {
    if (state) {
-      command(TelnetIAC,TelnetDo,TelnetSuppressGoAhead);
+      command(TelnetIAC, TelnetDo, TelnetSuppressGoAhead);
       RSGA |= TelnetDoDont;	// mark DO sent
    } else {
-      command(TelnetIAC,TelnetDont,TelnetSuppressGoAhead);
+      command(TelnetIAC, TelnetDont, TelnetSuppressGoAhead);
       RSGA &= ~TelnetDoDont;	// mark DON'T sent
    }
    RSGA_callback = callback;	// save callback function
 }
 
 // Set telnet TRANSMIT-BINARY option. (local)
-void Telnet::set_LBin(CallbackFuncPtr callback,int state)
+void Telnet::set_LBin(CallbackFuncPtr callback, int state)
 {
    if (state) {
-      command(TelnetIAC,TelnetWill,TelnetTransmitBinary);
+      command(TelnetIAC, TelnetWill, TelnetTransmitBinary);
       LBin |= TelnetWillWont;	// mark WILL sent
    } else {
-      command(TelnetIAC,TelnetWont,TelnetTransmitBinary);
+      command(TelnetIAC, TelnetWont, TelnetTransmitBinary);
       LBin &= ~TelnetWillWont;	// mark WON'T sent
    }
    LBin_callback = callback;	// save callback function
 }
 
 // Set telnet TRANSMIT-BINARY option. (remote)
-void Telnet::set_RBin(CallbackFuncPtr callback,int state)
+void Telnet::set_RBin(CallbackFuncPtr callback, int state)
 {
    if (state) {
-      command(TelnetIAC,TelnetDo,TelnetTransmitBinary);
+      command(TelnetIAC, TelnetDo, TelnetTransmitBinary);
       RBin |= TelnetDoDont;	// mark DO sent
    } else {
-      command(TelnetIAC,TelnetDont,TelnetTransmitBinary);
+      command(TelnetIAC, TelnetDont, TelnetTransmitBinary);
       RBin &= ~TelnetDoDont;	// mark DON'T sent
    }
    RBin_callback = callback;	// save callback function
@@ -573,12 +573,12 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    LBin_callback = 0;		// no TRANSMIT-BINARY callback (local)
    RBin_callback = 0;		// no TRANSMIT-BINARY callback (remote)
 
-   fd = accept(lfd,0,0);	// Accept TCP connection.
+   fd = accept(lfd, 0, 0);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
 
    count++;			// Increment connection count.
 
-   if (fcntl(fd,F_SETFD,0) == -1) error("Telnet::Telnet(): fcntl()");
+   if (fcntl(fd, F_SETFD, 0) == -1) error("Telnet::Telnet(): fcntl()");
 
    LogCaller();			// Log calling host and port.
    NonBlocking();		// Place fd in non-blocking mode.
@@ -588,16 +588,16 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    ReadSelect();		// Select new connection for reading.
 
    // Test TIMING-MARK option before sending initial option negotions.
-   command(TelnetIAC,TelnetDo,TelnetTimingMark);
-   command(TelnetIAC,TelnetDo,TelnetTimingMark);
+   command(TelnetIAC, TelnetDo, TelnetTimingMark);
+   command(TelnetIAC, TelnetDo, TelnetTimingMark);
    outstanding = 2;		// Two outstanding acknowledgements.
 
    // Start initial options negotiations.
-   set_LSGA(Welcome,true);
-   set_RSGA(Welcome,true);
-   set_LBin(Welcome,true);
-   set_RBin(Welcome,true);
-   set_Echo(Welcome,true);
+   set_LSGA(Welcome, true);
+   set_RSGA(Welcome, true);
+   set_LBin(Welcome, true);
+   set_RBin(Welcome, true);
+   set_Echo(Welcome, true);
 
    // Send welcome banner.
    output("\nWelcome to Phoenix!\n\n");
@@ -627,7 +627,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
       WriteSelect();
 
       // Detach associated session.
-      if (session) session->Detach(this,boolean(closing));
+      if (session) session->Detach(this, boolean(closing));
       session = 0;
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
@@ -637,7 +637,7 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
 void Telnet::Closed()		// Connection is closed.
 {
    // Detach associated session.
-   if (session) session->Detach(this,boolean(closing));
+   if (session) session->Detach(this, boolean(closing));
    session = 0;
 
    // Free input line buffer.
@@ -671,7 +671,7 @@ void Telnet::UndrawInput()	// Erase input line from screen.
    }
    // ANSI! ***
    if (lines) {
-      print("\r\033[%dA\033[J",lines); // Move cursor up and erase.
+      print("\r\033[%dA\033[J", lines); // Move cursor up and erase.
    } else {
       output("\r\033[J"); // Erase line.
    }
@@ -679,22 +679,22 @@ void Telnet::UndrawInput()	// Erase input line from screen.
 
 void Telnet::RedrawInput()	// Redraw input line on screen.
 {
-   int lines,columns;
+   int lines, columns;
 
    if (!undrawn) return;
    undrawn = false;
    if (prompt) output(~prompt);
    if (End()) {
-      echo(data,End());
+      echo(data, End());
       if (!AtEnd()) {		// Move cursor back to point.
 	 lines = EndLine() - PointLine();
 	 columns = EndColumn() - PointColumn();
 	 // ANSI! ***
-	 if (lines) echo_print("\033[%dA",lines);
+	 if (lines) echo_print("\033[%dA", lines);
 	 if (columns > 0) {
-	    echo_print("\033[%dD",columns);
+	    echo_print("\033[%dD", columns);
 	 } else if (columns < 0) {
-	    echo_print("\033[%dC",-columns);
+	    echo_print("\033[%dC", -columns);
 	 }
       }
    }
@@ -703,15 +703,15 @@ void Telnet::RedrawInput()	// Redraw input line on screen.
 void Telnet::InsertString(String &s) // Insert string at point.
 {
    char *p;
-   int n,slen = s.length();
+   int n, slen = s.length();
 
    if (!s) return;
    if (free + slen >= end) {
       n = end - data;
       char *tmp = new char[n + slen];
-      strncpy(tmp,data,point - data);
-      strncpy(tmp + (point - data),s,slen);
-      strncpy(tmp + (point - data) + slen,point,free - point);
+      strncpy(tmp, data, point - data);
+      strncpy(tmp + (point - data), s, slen);
+      strncpy(tmp + (point - data) + slen, point, free - point);
       if (mark) {
 	 if (mark < point) {
 	    mark = tmp + (mark - data);
@@ -730,32 +730,32 @@ void Telnet::InsertString(String &s) // Insert string at point.
       for (p = s; *p; p++) *point++ = *p;
       free += slen;
    }
-   echo(point - slen,(free - point) + slen);
+   echo(point - slen, (free - point) + slen);
    if (!AtEnd()) {		// Move cursor back to point.
       int lines = EndLine() - PointLine();
       int columns = EndColumn() - PointColumn();
       // ANSI! ***
-      if (lines) echo_print("\033[%dA",lines);
+      if (lines) echo_print("\033[%dA", lines);
       if (columns > 0) {
-	 echo_print("\033[%dD",columns);
+	 echo_print("\033[%dD", columns);
       } else if (columns < 0) {
-	 echo_print("\033[%dC",-columns);
+	 echo_print("\033[%dC", -columns);
       }
    }
 }
 
 void Telnet::beginning_of_line() // Jump to beginning of line.
 {
-   int lines,columns;
+   int lines, columns;
 
    if (Point()) {
       lines = PointLine() - StartLine();
       columns = PointColumn() - StartColumn();
-      if (lines) echo_print("\033[%dA",lines); // ANSI! ***
+      if (lines) echo_print("\033[%dA", lines); // ANSI! ***
       if (columns > 0) {
-	 echo_print("\033[%dD",columns); // ANSI! ***
+	 echo_print("\033[%dD", columns); // ANSI! ***
       } else if (columns < 0) {
-	 echo_print("\033[%dC",-columns); // ANSI! ***
+	 echo_print("\033[%dC", -columns); // ANSI! ***
       }
    }
    point = data;
@@ -763,16 +763,16 @@ void Telnet::beginning_of_line() // Jump to beginning of line.
 
 void Telnet::end_of_line()	// Jump to end of line.
 {
-   int lines,columns;
+   int lines, columns;
 
    if (End() && !AtEnd()) {
       lines = EndLine() - PointLine();
       columns = EndColumn() - PointColumn();
-      if (lines) echo_print("\033[%dB",lines); // ANSI! ***
+      if (lines) echo_print("\033[%dB", lines); // ANSI! ***
       if (columns > 0) {
-	 echo_print("\033[%dC",columns); // ANSI! ***
+	 echo_print("\033[%dC", columns); // ANSI! ***
       } else if (columns < 0) {
-	 echo_print("\033[%dD",-columns); // ANSI! ***
+	 echo_print("\033[%dD", -columns); // ANSI! ***
       }
    }
    point = free;
@@ -787,7 +787,7 @@ void Telnet::kill_line()	// Kill from point to end of line.
       if (KillRing.Count() >= KillRingMax) KillRing.RemHead();
 
       // Add new kill.
-      KillRing.AddTail(new StringObj(point,free - point));
+      KillRing.AddTail(new StringObj(point, free - point));
 
       free = point;		// Truncate input buffer.
       if (mark > point) mark = point;
@@ -898,17 +898,17 @@ void Telnet::accept_input()	// Accept input line.
 
    // Check for "/set echo" command.  (kludge!) ***
    char *tmp = data;
-   if (match(tmp,"/set",4) && match(tmp,"echo",4)) {
+   if (match(tmp, "/set", 4) && match(tmp, "echo", 4)) {
       // Echo newline.
       if (!AtEnd()) end_of_line();
       echo(Newline);
 
       // Check for "on" or "off" value for echo.
       char *value = getword(tmp);
-      if (value && match(value,"on")) {
+      if (value && match(value, "on")) {
 	 Echo = TelnetEnabled;
 	 output("Remote echoing is now enabled.\n");
-      } else if (value && match(value,"off")) {
+      } else if (value && match(value, "off")) {
 	 Echo = 0;
 	 output("Remote echoing is now disabled.\n");
       } else {
@@ -928,7 +928,7 @@ void Telnet::accept_input()	// Accept input line.
       if (History.Count() >= HistoryMax) History.RemHead();
 
       // Add new history line.
-      History.AddTail(new StringObj(data,free - data));
+      History.AddTail(new StringObj(data, free - data));
    }
 
    // Flush any pending output to connection.
@@ -990,7 +990,7 @@ void Telnet::backward_char()	// Move point backward one character.
       if (PointColumn()) {	// Backspace on current screen line.
 	 echo(Backspace);
       } else {			// Move to end of previous screen line.
-	 echo_print("\033[A\033[%dC",width - 1); // ANSI! ***
+	 echo_print("\033[A\033[%dC", width - 1); // ANSI! ***
       }
       point--;			// Change point in buffer.
    }
@@ -1099,11 +1099,11 @@ void Telnet::InputReady()	// telnet stream can input data
 {
    char buf[BufSize];
    Block *block;
-   register char *from,*from_end;
+   register char *from, *from_end;
    register int n;
 
    if (fd == -1) return;
-   n = read(fd,buf,BufSize);
+   n = read(fd, buf, BufSize);
    switch (n) {
    case -1:
 #ifdef EWOULDBLOCK
@@ -1120,7 +1120,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	 Closed();
 	 return;
       default:
-	 warn("Telnet::InputReady(): read(fd = %d)",fd);
+	 warn("Telnet::InputReady(): read(fd = %d)", fd);
 	 Closed();
 	 return;
       }
@@ -1136,7 +1136,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	 if (free >= end) {
 	    n = end - data;
 	    char *tmp = new char[n + InputSize];
-	    strncpy(tmp,data,n);
+	    strncpy(tmp, data, n);
 	    point = tmp + (point - data);
 	    if (mark) mark = tmp + (mark - data);
 	    free = tmp + n;
@@ -1202,17 +1202,17 @@ void Telnet::InputReady()	// telnet stream can input data
 		  if (!(RBin & TelnetDoDont)) {
 		     // Turn on TRANSMIT-BINARY option.
 		     RBin |= TelnetDoDont;
-		     command(TelnetIAC,TelnetDo,TelnetTransmitBinary);
+		     command(TelnetIAC, TelnetDo, TelnetTransmitBinary);
 
 		     // Me, too!
-		     if (!LBin) set_LBin(LBin_callback,true);
+		     if (!LBin) set_LBin(LBin_callback, true);
 		  }
 	       } else {
 		  RBin &= ~TelnetWillWont;
 		  if (RBin & TelnetDoDont) {
 		     // Turn off TRANSMIT-BINARY option.
 		     RBin &= ~TelnetDoDont;
-		     command(TelnetIAC,TelnetDont,TelnetTransmitBinary);
+		     command(TelnetIAC, TelnetDont, TelnetTransmitBinary);
 		  }
 	       }
 	       if (RBin_callback) {
@@ -1226,17 +1226,17 @@ void Telnet::InputReady()	// telnet stream can input data
 		  if (!(RSGA & TelnetDoDont)) {
 		     // Turn on SUPPRESS-GO-AHEAD option.
 		     RSGA |= TelnetDoDont;
-		     command(TelnetIAC,TelnetDo,TelnetSuppressGoAhead);
+		     command(TelnetIAC, TelnetDo, TelnetSuppressGoAhead);
 
 		     // Me, too!
-		     if (!LSGA) set_LSGA(LSGA_callback,true);
+		     if (!LSGA) set_LSGA(LSGA_callback, true);
 		  }
 	       } else {
 		  RSGA &= ~TelnetWillWont;
 		  if (RSGA & TelnetDoDont) {
 		     // Turn off SUPPRESS-GO-AHEAD option.
 		     RSGA &= ~TelnetDoDont;
-		     command(TelnetIAC,TelnetDont,TelnetSuppressGoAhead);
+		     command(TelnetIAC, TelnetDont, TelnetSuppressGoAhead);
 		  }
 	       }
 	       if (RSGA_callback) {
@@ -1251,7 +1251,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    default:
 	       // Don't know this option, refuse it.
-	       if (state == TelnetWill) command(TelnetIAC,TelnetDont,n);
+	       if (state == TelnetWill) command(TelnetIAC, TelnetDont, n);
 	       break;
 	    }
 	    state = 0;
@@ -1266,17 +1266,17 @@ void Telnet::InputReady()	// telnet stream can input data
 		  if (!(LBin & TelnetWillWont)) {
 		     // Turn on TRANSMIT-BINARY option.
 		     LBin |= TelnetWillWont;
-		     command(TelnetIAC,TelnetWill,TelnetTransmitBinary);
+		     command(TelnetIAC, TelnetWill, TelnetTransmitBinary);
 
 		     // You can too.
-		     if (!RBin) set_RBin(RBin_callback,true);
+		     if (!RBin) set_RBin(RBin_callback, true);
 		  }
 	       } else {
 		  LBin &= ~TelnetDoDont;
 		  if (LBin & TelnetWillWont) {
 		     // Turn off TRANSMIT-BINARY option.
 		     LBin &= ~TelnetWillWont;
-		     command(TelnetIAC,TelnetWont,TelnetTransmitBinary);
+		     command(TelnetIAC, TelnetWont, TelnetTransmitBinary);
 		  }
 	       }
 	       if (LBin_callback) {
@@ -1290,14 +1290,14 @@ void Telnet::InputReady()	// telnet stream can input data
 		  if (!(Echo & TelnetWillWont)) {
 		     // Turn on ECHO option.
 		     Echo |= TelnetWillWont;
-		     command(TelnetIAC,TelnetWill,TelnetEcho);
+		     command(TelnetIAC, TelnetWill, TelnetEcho);
 		  }
 	       } else {
 		  Echo &= ~TelnetDoDont;
 		  if (Echo & TelnetWillWont) {
 		     // Turn off ECHO option.
 		     Echo &= ~TelnetWillWont;
-		     command(TelnetIAC,TelnetWont,TelnetEcho);
+		     command(TelnetIAC, TelnetWont, TelnetEcho);
 		  }
 	       }
 	       if (Echo_callback) {
@@ -1311,17 +1311,17 @@ void Telnet::InputReady()	// telnet stream can input data
 		  if (!(LSGA & TelnetWillWont)) {
 		     // Turn on SUPPRESS-GO-AHEAD option.
 		     LSGA |= TelnetWillWont;
-		     command(TelnetIAC,TelnetWill,TelnetSuppressGoAhead);
+		     command(TelnetIAC, TelnetWill, TelnetSuppressGoAhead);
 
 		     // You can too.
-		     if (!RSGA) set_RSGA(RSGA_callback,true);
+		     if (!RSGA) set_RSGA(RSGA_callback, true);
 		  }
 	       } else {
 		  LSGA &= ~TelnetDoDont;
 		  if (LSGA & TelnetWillWont) {
 		     // Turn off SUPPRESS-GO-AHEAD option.
 		     LSGA &= ~TelnetWillWont;
-		     command(TelnetIAC,TelnetWont,TelnetSuppressGoAhead);
+		     command(TelnetIAC, TelnetWont, TelnetSuppressGoAhead);
 		  }
 	       }
 	       if (LSGA_callback) {
@@ -1331,7 +1331,7 @@ void Telnet::InputReady()	// telnet stream can input data
 	       break;
 	    default:
 	       // Don't know this option, refuse it.
-	       if (state == TelnetDo) command(TelnetIAC,TelnetWont,n);
+	       if (state == TelnetDo) command(TelnetIAC, TelnetWont, n);
 	       break;
 	    }
 	    state = 0;
@@ -1967,7 +1967,7 @@ void Telnet::OutputReady()	// telnet stream can output data
    // Send command data, if any.
    while (Command.head) {
       block = Command.head;
-      n = write(fd,block->data,block->free - block->data);
+      n = write(fd, block->data, block->free - block->data);
       switch (n) {
       case -1:
 #ifdef EWOULDBLOCK
@@ -1984,7 +1984,7 @@ void Telnet::OutputReady()	// telnet stream can output data
 	    Closed();
 	    return;
 	 default:
-	    warn("Telnet::OutputReady(): write(fd = %d)",fd);
+	    warn("Telnet::OutputReady(): write(fd = %d)", fd);
 	    Closed();
 	    return;
 	 }
@@ -2007,7 +2007,7 @@ void Telnet::OutputReady()	// telnet stream can output data
    while (Output.head) {
       while (Output.head) {
 	 block = Output.head;
-	 n = write(fd,block->data,block->free - block->data);
+	 n = write(fd, block->data, block->free - block->data);
 	 switch (n) {
 	 case -1:
 #ifdef EWOULDBLOCK
@@ -2020,7 +2020,7 @@ void Telnet::OutputReady()	// telnet stream can output data
 	    case EINTR:
 	       return;
 	    default:
-	       warn("Telnet::OutputReady(): write(fd = %d)",fd);
+	       warn("Telnet::OutputReady(): write(fd = %d)", fd);
 	       Closed();
 	       return;
 	    }

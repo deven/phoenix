@@ -37,7 +37,7 @@
 //
 
 // Types of FD subclasses.
-enum FDType {UnknownFD,ListenFD,TelnetFD};
+enum FDType { UnknownFD, ListenFD, TelnetFD };
 
 class FD: public Object {	// File descriptor.
 protected:
@@ -52,15 +52,15 @@ public:
    virtual void InputReady() = 0;
    virtual void OutputReady() = 0;
    virtual void Closed() = 0;
-   virtual ~FD() {}
+   virtual ~FD() { }
    void NonBlocking() {		// Place fd in non-blocking mode.
       int flags;
 
-      if ((flags = fcntl(fd,F_GETFL)) < 0) {
+      if ((flags = fcntl(fd, F_GETFL)) < 0) {
 	 error("FD::NonBlocking(): fcntl(F_GETFL)");
       }
       flags |= O_NONBLOCK;
-      if (fcntl(fd,F_SETFL,flags) == -1) {
+      if (fcntl(fd, F_SETFL, flags) == -1) {
 	 error("FD::NonBlocking(): fcntl(F_SETFL)");
       }
    }

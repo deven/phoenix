@@ -57,7 +57,7 @@ public:
 	 block = head;
 	 head = block->next;
 	 len = block->free - block->data;
-	 strncpy(p,block->data,len);
+	 strncpy(p, block->data, len);
 	 delete block;
       }
       tail = 0;
@@ -75,7 +75,7 @@ public:
       *tail->free++ = byte;
       return select;
    }
-   boolean out(int byte1,int byte2) { // Output two bytes, return if new.
+   boolean out(int byte1, int byte2) { // Output two bytes, return if new.
       boolean select;
       if (select = boolean(!tail)) {
 	 head = tail = new Block;
@@ -87,8 +87,8 @@ public:
       *tail->free++ = byte2;
       return select;
    }
-   boolean out(int byte1,int byte2,int byte3) { // Output three bytes, return
-      boolean select;				// if new.
+   boolean out(int byte1, int byte2, int byte3) { // Output three bytes, return
+      boolean select;				  // if new.
       if (select = boolean(!tail)) {
 	 head = tail = new Block;
       } else if (tail->free >= tail->block + BlockSize - 2) {

@@ -34,5 +34,5 @@ public:
    String name;			// Current name (pseudo) for this session.
    String blurb;		// Current blurb for this session.
 
-   Name(Session *s,String &n,String &b): session(s),name(n),blurb(b) { }
+   Name(Session *s, String &n, String &b): session(s), name(n), blurb(b) { }
 };

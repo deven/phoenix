@@ -41,12 +41,13 @@ public:
    String blurb;		// default blurb
    int priv;			// privilege level
 
-   User(char *login,char *pass,char *name,char *bl,int p): user(login),
-   password(pass),reserved(name),blurb(bl),priv(p) { users.AddTail(this); }
+   User(char *login, char *pass, char *name, char *bl, int p): user(login),
+   password(pass), reserved(name), blurb(bl), priv(p) { users.AddTail(this); }
    ~User() { users.Remove(this); }
    static User *GetUser(char *login);
-   static void Update(char *login,char *pass,char *name,char *defblurb,int p);
+   static void Update(char *login, char *pass, char *name, char *defblurb,
+		      int p);
    static void UpdateAll();
-   boolean FindReserved(char *name,User *&user);
+   boolean FindReserved(char *name, User *&user);
    void AddSession(Session *s) { sessions.AddTail(s); }
 };

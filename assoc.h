@@ -31,7 +31,7 @@ private:
    Pointer<AssocEntry> next;	// Next entry on hash chain.
    String key;			// Key for associative array entry.
    String value;		// Value for associative array entry.
-   AssocEntry(char *k,char *v): key(k),value(v) { }
+   AssocEntry(char *k, char *v): key(k), value(v) { }
 public:
    String Key() { return key; }
    String Value() { return value; }
@@ -68,10 +68,10 @@ public:
    void Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
    boolean Known(String &key) { return Known(~key); }
    boolean Known(char *key);
-   void Store(String &key,String &value) { Store(~key,~value); }
-   void Store(String &key,char *value) { Store(~key,value); }
-   void Store(char *key,String &value) { Store(key,~value); }
-   void Store(char *key,char *value);
+   void Store(String &key, String &value) { Store(~key, ~value); }
+   void Store(String &key, char *value) { Store(~key, value); }
+   void Store(char *key, String &value) { Store(key, ~value); }
+   void Store(char *key, char *value);
    void Delete(String &key) { Delete(~key); }
    void Delete(char *key);
    String Fetch(String &key) { return Fetch(~key); }
@@ -87,8 +87,8 @@ private:
    int bucket;
 public:
    AssocIter(): bucket(0) { }
-   AssocIter(Assoc &a): array(&a),bucket(0) { }
-   AssocIter(Assoc *a): array(a),bucket(0) { }
+   AssocIter(Assoc &a): array(&a), bucket(0) { }
+   AssocIter(Assoc *a): array(a), bucket(0) { }
    AssocIter &operator =(Assoc &a) {
       array = &a;
       entry = 0;

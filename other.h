@@ -65,19 +65,19 @@ extern "C" {
 
 // Declarations for system functions.
 char *inet_ntoa(struct in_addr in);
-int strcasecmp(const char *s1,const char *s2);
-int strncasecmp(const char *s1,const char *s2,size_t len);
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t len);
 void setlinebuf(FILE *stream);
 pid_t setsid();
-char *crypt(const char *key,const char *salt);
-int socket(int domain,int type,int protocol);
-int setsockopt(int s,int level,int optname,const void *optval,int optlen);
-int bind(int s,struct sockaddr *name,int namelen);
-int listen(int s,int backlog);
-void bzero(void *b,int length);
-int getpeername(int s,struct sockaddr *name,int *namelen);
-int accept(int s,struct sockaddr *addr,int *addrlen);
+char *crypt(const char *key, const char *salt);
+int socket(int domain, int type, int protocol);
+int setsockopt(int s, int level, int optname, const void *optval, int optlen);
+int bind(int s, struct sockaddr *name, int namelen);
+int listen(int s, int backlog);
+void bzero(void *b, int length);
+int getpeername(int s, struct sockaddr *name, int *namelen);
+int accept(int s, struct sockaddr *addr, int *addrlen);
 int getdtablesize();
-int select(int width,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,
+int select(int width, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	   struct timeval *timeout);
 };

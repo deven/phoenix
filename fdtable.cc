@@ -116,7 +116,7 @@ void FDTable::Select(struct timeval *timeout)
 {
    fd_set rfds = readfds;
    fd_set wfds = writefds;
-   int found = select(size,&rfds,&wfds,0,timeout);
+   int found = select(size, &rfds, &wfds, 0, timeout);
 
    if (found < 0) {
       if (errno == EINTR) return;
@@ -125,11 +125,11 @@ void FDTable::Select(struct timeval *timeout)
 
    // Check for I/O ready on connections.
    for (int fd = 0; found && fd < used; fd++) {
-      if (FD_ISSET(fd,&rfds)) {
+      if (FD_ISSET(fd, &rfds)) {
 	 InputReady(fd);
 	 found--;
       }
-      if (FD_ISSET(fd,&wfds)) {
+      if (FD_ISSET(fd, &wfds)) {
 	 OutputReady(fd);
 	 found--;
       }
