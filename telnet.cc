@@ -306,8 +306,10 @@ void Telnet::Welcome()
    if (RBin == TelnetDoDont) return;
    if (Echo == TelnetWillWont) return;
 
+#ifdef GUEST_ACCESS
    // Announce guest account.
    output("A \"guest\" account is available.\n\n");
+#endif
 
    // Did the SUPPRESS-GO-AHEAD option work?  I don't care!
 
