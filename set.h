@@ -19,6 +19,7 @@ public:
    int In(Pointer<Type> &ptr);
    void Add(Pointer<Type> &ptr);
    void Remove(Pointer<Type> &ptr);
+   Pointer<Type> First();
 };
 
 template <class Type>
@@ -35,8 +36,12 @@ void Set<Type>::Add(Pointer<Type> &ptr) {
 
 template <class Type>
 void Set<Type>::Remove(Pointer<Type> &ptr) {
-   ListIter<Type> i(l);
-   while (i++) if (ptr == i) i.Remove();
+   l.Remove(ptr);
+}
+
+template <class Type>
+Pointer<Type> Set<Type>::First() {
+   return l.First();
 }
 
 template <class Type>
