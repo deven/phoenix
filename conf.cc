@@ -666,7 +666,7 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strcmp(sendlist,"everyone")) {
 	 telnet->session->SendEveryone(p);
       } else {
-	 FD::fdtable.SendPrivate(telnet,sendlist,explicit,p);
+	 telnet->session->SendPrivate(sendlist,explicit,p);
       }
    }
 }
