@@ -643,6 +643,11 @@ void welcome(struct telnet *telnet)
 	     "half-duplex mode.\n\n");
    }
 
+   /* Warn if about to shut down! */
+   if (shutdown) {
+      output(telnet,"*** This server is about to shut down! ***\n\n");
+   }
+
    /* Send login prompt. */
    output(telnet,"login: ");
 
