@@ -475,8 +475,8 @@ void process_input(Telnet *telnet,char *line)
 	    strcpy(telnet->session->default_sendlist,p);
 	    telnet->print("You are now sending to everyone.\n");
 	 } else {
-	    strncpy(telnet->session->default_sendlist,p,31);
-	    telnet->session->default_sendlist[31] = 0;
+	    strncpy(telnet->session->default_sendlist,p,SendlistLen);
+	    telnet->session->default_sendlist[SendlistLen - 1] = 0;
 	    telnet->print("Your default sendlist is now set to \"%s\".\n",
 		  telnet->session->default_sendlist);
 	 }
@@ -522,9 +522,9 @@ void process_input(Telnet *telnet,char *line)
       int i;
       char c;
       char *p;
-      char sendlist[32];
+      char sendlist[SendlistLen];
 
-      p = message_start(line,sendlist,32,&explicit);
+      p = message_start(line,sendlist,SendlistLen,&explicit);
 
       // Use last sendlist if none specified.
       if (!*sendlist) strcpy(sendlist,telnet->session->last_sendlist);
