@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.4 1994/01/09 05:19:22 deven Exp $
+// $Id: listen.cc,v 1.5 1994/01/19 22:28:20 deven Exp $
 //
 // Listen class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
+// Revision 1.5  1994/01/19 22:28:20  deven
+// Fixed to clear close-on-exec flag for listen socket, check fd first in
+// InputReady(), removed RequestShutdown() function.
+//
 // Revision 1.4  1994/01/09 05:19:22  deven
 // Fixed to listen on INADDR_ANY instead of looking up hostname.
 //
