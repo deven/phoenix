@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.18 1994/07/21 05:55:43 deven Exp $
+// $Id: session.h,v 1.19 1995/02/28 16:29:55 deven Exp $
 //
 // Session class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.h,v $
+// Revision 1.19  1995/02/28 16:29:55  deven
+// Added privilege level to session.
+//
 // Revision 1.18  1994/07/21 05:55:43  deven
 // Added basic colon and semicolon processing.
 //
