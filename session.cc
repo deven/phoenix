@@ -649,7 +649,7 @@ void Session::DoHelp()		// Do /help command.
 
 void Session::DoReset()		// Do <space><return> idle time reset.
 {
-   if (ResetIdle(1)) output("Your idle time has been reset.\n");
+   ResetIdle(1);
 }
 
 void Session::DoMessage(char *line) // Do message send.
