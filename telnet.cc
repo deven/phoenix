@@ -355,6 +355,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    fd = accept(lfd,NULL,NULL);	// Accept TCP connection.
    if (fd == -1) return;	// Return if failed.
 
+   if (fcntl(fd,F_SETFD,0) == -1) error("Telnet::Telnet(): fcntl()");
+
    LogCaller();			// Log calling host and port.
    NonBlocking();		// Place fd in non-blocking mode.
 
