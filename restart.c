@@ -39,7 +39,7 @@ int check_for_server(int port)	/* check for running server */
    }
    if (bind(fd,(struct sockaddr *) &saddr,sizeof(saddr))) {
       close(fd);
-      return (errno == EADDRINUSE);
+      return 1;
    }
    close(fd);
    return 0;
