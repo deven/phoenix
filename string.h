@@ -13,12 +13,14 @@
 
 class String {
 private:
+   const int Extra = 16;
    char *str;
    int len;
+   int extra;
 public:
    String() {
       str = new char[1];
-      len = 0;
+      len = extra = 0;
       str[len] = 0;
    }
    String(const String &s);
