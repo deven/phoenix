@@ -4,7 +4,7 @@
 //
 // Telnet class interface.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.h,v $
 // Revision 1.4  1993/12/31 08:13:31  deven

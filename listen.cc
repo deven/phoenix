@@ -4,7 +4,7 @@
 //
 // Listen class implementation.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.cc,v $
 // Revision 1.2  1993/12/12 00:43:09  deven
