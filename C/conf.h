@@ -1,5 +1,5 @@
 /*
- * $Id: conf.h,v 1.2 1993/04/07 21:41:12 deven Exp $
+ * $Id: conf.h,v 1.3 1996/03/06 06:18:56 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,9 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.h,v $
+ * Revision 1.3  1996/03/06 06:18:56  deven
+ * Renamed "shutdown" variable to "Shutdown".
+ *
  * Revision 1.2  1993/04/07 21:41:12  deven
  * Added session layer.
  *
