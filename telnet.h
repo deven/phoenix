@@ -74,6 +74,7 @@ enum TelnetCommand {
 
 // Telnet options.
 enum TelnetOption {
+   TelnetTransmitBinary = 0,
    TelnetEcho = 1,
    TelnetSuppressGoAhead = 3,
    TelnetTimingMark = 6
@@ -121,9 +122,13 @@ public:
    char Echo;			// telnet ECHO option (local)
    char LSGA;			// telnet SUPPRESS-GO-AHEAD option (local)
    char RSGA;			// telnet SUPPRESS-GO-AHEAD option (remote)
+   char LBin;			// telnet TRANSMIT-BINARY option (local)
+   char RBin;			// telnet TRANSMIT-BINARY option (remote)
    CallbackFuncPtr Echo_callback; // ECHO callback (local)
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
+   CallbackFuncPtr LBin_callback; // TRANSMIT-BINARY callback (local)
+   CallbackFuncPtr RBin_callback; // TRANSMIT-BINARY callback (remote)
 
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
@@ -167,6 +172,8 @@ public:
    void set_Echo(CallbackFuncPtr callback,int state);
    void set_LSGA(CallbackFuncPtr callback,int state);
    void set_RSGA(CallbackFuncPtr callback,int state);
+   void set_LBin(CallbackFuncPtr callback,int state);
+   void set_RBin(CallbackFuncPtr callback,int state);
    void InsertString(String &s); // Insert string at point.
    void beginning_of_line();	// Jump to beginning of line.
    void end_of_line();		// Jump to end of line.
