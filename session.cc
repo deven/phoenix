@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.6 2002/11/26 06:40:14 deven Exp $
+// $Id: session.cc,v 1.7 2003/02/17 06:40:06 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,10 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.7  2003/02/17 06:40:06  deven
+// Modified to use String::vsprintf() and String::sprintf() in preference to
+// the system vsprintf() and sprintf() functions, to avoid buffer overflows.
+//
 // Revision 1.6  2002/11/26 06:40:14  deven
 // Added missing ~ operator where String objects were being passed as char *.
 // Added [1 person] to message confirmation where a single recipient is being

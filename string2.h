@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string2.h,v 1.5 2003/02/17 06:32:55 deven Exp $
+// $Id: string2.h,v 1.6 2003/02/17 06:35:51 deven Exp $
 //
 // String class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string2.h,v $
+// Revision 1.6  2003/02/17 06:35:51  deven
+// Added String::vsprintf() and String::sprintf() functions.
+//
 // Revision 1.5  2003/02/17 06:32:55  deven
 // Added NumberLength constant and operator =() calls for numeric assignment.
 //
