@@ -16,7 +16,7 @@ extern EventQueue events;	// Server event queue.
 
 extern FILE *logfile;		// log file ***
 
-extern int Shutdown;		// shutdown flag
+extern Pointer<Event> Shutdown;	// Pointer to Shutdown event, if any.
 
 extern Timestamp ServerStartTime; // time server started
 extern int ServerStartUptime;	// system uptime when server started

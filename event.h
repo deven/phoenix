@@ -10,7 +10,7 @@
 
 // Types of Event subclasses.
 enum EventType {
-   Unknown_Event
+   Unknown_Event,Shutdown_Event,Restart_Event
 };
 
 class Event: public Object {
@@ -35,4 +35,38 @@ public:
       Timestamp now;
       time = now + when;
    }
+};
+
+class ShutdownEvent: public Event {
+private:
+   boolean final;
+public:
+   void ShutdownWarning(char *by, time_t when);
+   void FinalWarning();
+   void ShutdownServer();
+   ShutdownEvent(char *by, time_t when): Event(Shutdown_Event,when) {
+      ShutdownWarning(by,when);
+   }
+   ShutdownEvent(char *by): Event(Shutdown_Event,0) {
+      log("Immediate shutdown requested by %s.",by);
+      FinalWarning();
+   }
+   boolean Execute();
+};
+
+class RestartEvent: public Event {
+private:
+   boolean final;
+public:
+   void RestartWarning(char *by, time_t when);
+   void FinalWarning();
+   void RestartServer();
+   RestartEvent(char *by, time_t when): Event(Restart_Event,when) {
+      RestartWarning(by,when);
+   }
+   RestartEvent(char *by): Event(Restart_Event,0) {
+      log("Immediate restart requested by %s.",by);
+      FinalWarning();
+   }
+   boolean Execute();
 };
