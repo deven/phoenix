@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.4 2003/02/18 05:08:56 deven Exp $
+# $Id: Makefile.am,v 1.5 2003/02/22 05:04:55 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,9 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile.am,v $
+# Revision 1.5  2003/02/22 05:04:55  deven
+# Removed "most.cc" hack -- its benefits are no longer compelling.
+#
 # Revision 1.4  2003/02/18 05:08:56  deven
 # Updated copyright dates.
 #
