@@ -2,12 +2,13 @@ $Id: PORTING,v 1.1 2001/12/12 06:02:48 deven Exp $
 
 Gangplank has been successfully compiled on the following platforms:
 
- * Red Hat Linux 6.1 (i386)
- * Red Hat Linux 7.2 (i386)
+ * Red Hat Linux 6.x (i386)
+ * Red Hat Linux 7.x (i386)
  * Debian GNU/Linux 2.2 "potato" (i386)
  * FreeBSD 4.4-RELEASE (i386) [using gmake]
+ * Macintosh OS X (Darwin) [using cc]
  * Solaris 8 (SPARC)
 
 Gangplank is known to compile with GCC 2.95 using "gcc", and with GCC 3.0.3
-using "g++".  (Although Gangplank does not use any standard C++ libraries,
-evidently GCC 3 still requires "-lstdc++" for any C++ code.)
+or GCC 3.1 using "g++".  (Although Gangplank does not use any standard C++
+libraries, evidently GCC 3 still requires "-lstdc++" for any C++ code.)
