@@ -1,0 +1,52 @@
+From coderpunks-errors@toad.com  Tue Apr 30 01:35:05 1996
+Return-Path: coderpunks-errors@toad.com
+Received: from asylum.apocalypse.org (root@asylum.sf.ca.us [192.48.232.17]) by escher.ties.org (8.7.5/8.7.5) with SMTP id BAA32395 for <deven@escher.ties.org>; Tue, 30 Apr 1996 01:34:58 -0400
+Received: from orion.ties.org (UH-ORION.BU.EDU [155.41.80.4]) by asylum.apocalypse.org (8.6.12/8.6.12) with ESMTP id BAA06320 for <deven@asylum.sf.ca.us>; Tue, 30 Apr 1996 01:34:55 -0400
+Received: from toad.com (toad.com [140.174.2.1]) by orion.ties.org (8.7.1/8.7.1/ties-hub) with ESMTP id BAA05136; Tue, 30 Apr 1996 01:34:51 -0400 (EDT)
+Received: (from majordom@localhost) by toad.com (8.7.5/8.7.3) id PAA15332 for coderpunks-outgoing; Mon, 29 Apr 1996 15:54:13 -0700 (PDT)
+Received: from mail.eskimo.com (root@mail.eskimo.com [204.122.16.4]) by toad.com (8.7.5/8.7.3) with ESMTP id PAA15322 for <coderpunks@toad.com>; Mon, 29 Apr 1996 15:53:47 -0700 (PDT)
+Received: from eskimo.com (root@eskimo.com [204.122.16.13]) by mail.eskimo.com (8.7.3/8.6.12) with ESMTP id TAA01483; Mon, 29 Apr 1996 19:19:13 -0700 (PDT)
+Received: from eskimo.com by eskimo.com (8.7.5) id TAA20683; Mon, 29 Apr 1996 19:19:04 -0700 (PDT)
+Date: Mon, 29 Apr 1996 19:19:01 -0700 (PDT)
+From: Wei Dai <weidai@eskimo.com>
+To: Hal <hfinney@shell.portal.com>
+cc: coderpunks@toad.com
+Subject: Filters and pipelines in Crypto++
+In-Reply-To: <199604300053.RAA06331@jobe.shell.portal.com>
+Message-ID: <Pine.SUN.3.93.960429190242.19141B-100000@eskimo.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-coderpunks@toad.com
+Precedence: bulk
+
+On Mon, 29 Apr 1996, Hal wrote:
+
+> So a Filter can take either Put() or Get()?  If Put(), the pipeline is
+> considered outgoing, and the filter transforms the data and then Put()s
+> it into the next object.  On a Get(), the pipeline is consdered incoming,
+> and the filter Get()s the data from the attached object, then transforms
+> and returns it?
+
+Filters always do transformations on Put(), never on Get().  When you call
+Get() on a Filter, it calls Get() on the attached object and returns
+whatever the attached object returns without modification.  This is done
+so that a series of attached Filters that ends with a ByteQueue looks
+exactly like single BufferedTransformation object.
+
+> Or is it more the case that Put() is the model which is preferred?
+>
+> One thing that confused me is looking at the base64 classes.  I could
+> understand the encoder.  It takes data given to it by Put() and encodes
+> it, then passes it on.  But the decoder also appeared to be driven by a
+> Put() rather than a Get(), and that seemed backwards.  I guess the Source
+> is driving things, pushing its data into the decoder, which then pushes
+> it into the encryptor or whatever?
+
+Yes, everything is driven by the source with Put().  The information flows
+downward via a series of Put() calls, being transformed by each Filter,
+and at the end either disappears into a Sink object, or is stored in a
+ByteQueue, depending on what the last attached object it.  If it is a
+ByteQueue, then you can call Get() on the pipeline, which causes the data
+stored in the ByteQueue to propagate upwards unchanged.
+
+Wei Dai
