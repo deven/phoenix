@@ -140,7 +140,7 @@ void Session::Close(boolean drain = true) // Close session.
       t->Close(drain);
    }
 
-   user->sessions.Remove(this);	// Disassociate from user.
+   if (user) user->sessions.Remove(this); // Disassociate from user.
    user = NULL;
 }
 
