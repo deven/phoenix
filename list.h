@@ -59,8 +59,8 @@ public:
    Pointer<Type> Dequeue() { return RemHead(); }
    int Push(Type *ptr) { return AddTail(ptr); }
    Pointer<Type> Pop() { return RemTail(); }
-   int Shift(Type *ptr) { return AddHead(ptr); }
-   Type *Unshift() { return RemHead(); }
+   Pointer<Type> Shift() { return RemHead(); }
+   int Unshift(Type *ptr) { return AddHead(ptr); }
    Pointer<Type> First();
    void Remove(Type *obj);
 };
