@@ -59,7 +59,7 @@ void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
 }
 
 Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
-   if (fd < 0 || fd >= used) return 0;
+   if (fd < 0 || fd >= used) return Pointer<FD>(0);
    Pointer<FD> FD(array[fd]);
    array[fd] = 0;
    if (fd == used - 1) {	// Fix highest used index if necessary.
