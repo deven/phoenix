@@ -1117,20 +1117,24 @@ void Session::DoDisplay(char *args) // Do /display command.
             output("terse.\n");
          }
       } else if (match(var,"uptime")) {
-         int uptime = (time(NULL) - ServerStartTime) / 60;
+         int system = SystemUptime();
+         int uptime;
+
+         if (system && ServerStartUptime) {
+            uptime = (system - ServerStartUptime) / 60;
+         } else {
+            uptime = (time(NULL) - ServerStartTime) / 60;
+         }
 
          output("This server has been running for");
          PrintTimeLong(uptime);
          output(".\n");
 
-         FILE *fp = fopen("/proc/uptime","r");
-         if (fp) {
-            fscanf(fp,"%d",&uptime);
-            uptime /= 60;
+         if (system) {
+            system /= 60;
             output("(This machine has been running for");
-            PrintTimeLong(uptime);
+            PrintTimeLong(system);
             output(".)\n");
-            fclose(fp);
          }
       } else {
          print("Unknown system variable: \"%s\"\n",var);

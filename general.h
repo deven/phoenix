@@ -98,6 +98,7 @@ extern FILE *logfile;		// log file ***
 extern int Shutdown;		// shutdown flag
 
 extern time_t ServerStartTime;	// time server started
+extern int ServerStartUptime;	// system uptime when server started
 
 // enumerations
 #ifdef NO_BOOLEAN
@@ -136,6 +137,7 @@ void quit(int);
 void alrm(int);
 void RestartServer();
 void ShutdownServer();
+int SystemUptime();		// Get system uptime, if available.
 void trim(char *&input);
 char *getword(char *&input,char separator = 0);
 char *match(char *&input,char *keyword,int min = 0);
