@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.2 1993/12/11 07:37:36 deven Exp $
+// $Id: general.h,v 1.3 1993/12/11 23:52:27 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1993 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.3  1993/12/11 23:52:27  deven
+// Removed declaration for global sessions.  Added declarations for library
+// functions strcasecmp() and strncasecmp().  Removed declarations for global
+// functions notify() and who_cmd().
+//
 // Revision 1.2  1993/12/11 07:37:36  deven
 // Portability fix: if ECONNTIMEDOUT is undefined, define as ETIMEDOUT. (Sun)
 // Removed declaration for global fdtable. (now static member of class FD)
