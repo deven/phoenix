@@ -56,7 +56,7 @@ FDTable::FDTable() {		// constructor
 
 FDTable::~FDTable() {		// destructor
    for (int i = 0; i < used; i++) array[i] = NULL;
-   delete array;
+   delete [] array;
 }
 
 void FDTable::OpenListen(int port) { // Open a listening port.
