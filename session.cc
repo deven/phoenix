@@ -685,10 +685,11 @@ void Session::Blurb(char *line)
 
    NotifyEntry();		// Notify other users of entry.
 
-   // Print welcome banner and do a /who list.
+   // Print welcome banner and do a /who list and a /howmany.
    output("\n\nWelcome to Phoenix.  "
 	  "Type \"/help\" for a list of commands.\n\n");
    DoWho("");			// Enqueues output.
+   DoHowMany("");
 
    telnet->History.Reset();	// Reset input history.
 
@@ -735,6 +736,7 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/clear",3)) DoClear(line);
       else if (match(line,"/unidle",7)) DoUnidle(line);
       else if (match(line,"/detach",4)) DoDetach(line);
+      else if (match(line,"/howmany",3)) DoHowMany(line);
       else if (match(line,"/why",4)) DoWhy(line);
       else if (match(line,"/date",3)) DoDate(line);
       else if (match(line,"/signal",3)) DoSignal(line);
@@ -1020,6 +1022,44 @@ void Session::DoDetach(char *args) // Do /detach command.
       output("Guest users are not allowed to detach from the system.  Use "
 	     "/bye to sign off.\n");
    }
+}
+
+void Session::DoHowMany(char *args) // Do /howmany command.
+{
+   int here = 0,away = 0,busy = 0,gone = 0,attached = 0,detached = 0,total = 0;
+
+   ListIter<Session> s(sessions);
+   while (s++) {
+      switch (s->away) {
+      case Here:
+	 here++;
+	 break;
+      case Away:
+	 away++;
+	 break;
+      case Busy:
+	 busy++;
+	 break;
+      case Gone:
+	 gone++;
+	 break;
+      }
+      if (s->telnet) {
+	 attached++;
+      } else {
+	 detached++;
+      }
+      total++;
+   }
+
+   output("\nActive Users:\n\n  \"Here\"     \"Away\"     \"Busy\"     "
+	  "\"Gone\"    Attached   Detached    Total\n");
+   print(" %3d %3d%%   %3d %3d%%   %3d %3d%%   %3d %3d%%   %3d %3d%%   "
+	 "%3d %3d%%   %3d 100%%\n",here,(here * 1000 + 5)/(total * 10),away,
+	 (away * 1000 + 5)/(total * 10),busy,(busy * 1000 + 5)/(total * 10),
+	 gone,(gone * 1000 + 5)/(total * 10),attached,(attached * 1000 + 5)/
+	 (total * 10),detached,(detached * 1000 + 5)/(total * 10),total);
+   print("\nDiscussions in use: %d\n\n",discussions.Count());
 }
 
 void Session::ListItem(boolean &flag,String &last,char *str)
@@ -1480,7 +1520,7 @@ void Session::DoWhat(char *args) // Do /what command.
 
    while (discussion++) {
       output(Space);
-      print("%-15.15s %3d%c",~discussion->name,discussion->members.Count(),
+      print("%-15.15s%3d%c ",~discussion->name,discussion->members.Count(),
 	    discussion->members.In(this) ? '*' : Space);
       idle = (now - discussion->message_time) / 60;
       if (idle) {
@@ -2157,8 +2197,15 @@ If you miss some of the detached output, do NOT press return, but disconnect\n\
 instead locally.  When you reattach, the same output will be reviewed again.\n\
 Output is only discarded when it has crossed the network (acknowledgements\n\
 are used) and the user has entered an input line.\n");
+   } else if (match(args,"/howmany",3) || match(args,"howmany",7) ||
+	      match(args,"how",3)) {
+      output("\
+The /howmany command shows how many users are \"here\", \"away\", \"busy\"\n\
+and \"gone\", how many users are attached and detached, total number of\n\
+users signed on, and how many discussions are active.\n");
    } else if (match(args,"/why",4) || match(args,"why",3)) {
-      output("The /why command is pretty self-explanatory.\n");
+      output("\
+The /why command is pretty self-explanatory.\n");
    } else if (match(args,"/date",3) || match(args,"date",4)) {
       output("\
 The /date command prints the current date and time like the date(1) command.\n\
@@ -2207,9 +2254,9 @@ without actually sending any message.  (See \"/help unidle\".)\n");
    } else {
       output("\
 Known commands:\n\n\
-   /who     /blurb    /create    /permit     /clear     /detach\n\
-   /what    /here     /destroy   /depermit   /unidle    /bye\n\
-   /why     /away     /join      /appoint    /date\n\
+   /who     /blurb    /create    /permit     /clear     /howmany\n\
+   /what    /here     /destroy   /depermit   /unidle    /detach\n\
+   /why     /away     /join      /appoint    /date      /bye\n\
    /idle    /busy     /quit      /unappoint  /setidle\n\
    /help    /gone     /send      /rename     /signal\n\n\
 Type \"/help <command>\" for more information about a particular command.\n");
