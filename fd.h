@@ -38,8 +38,8 @@ public:
    static void Select() {
       fdtable.Select();
    }
-   virtual void InputReady(int fd) = 0;
-   virtual void OutputReady(int fd) = 0;
+   virtual void InputReady() = 0;
+   virtual void OutputReady() = 0;
    virtual void Closed() = 0;
    virtual ~FD() {}
    void NonBlocking() {		// Place fd in non-blocking mode.
@@ -54,15 +54,15 @@ public:
       }
    }
    void ReadSelect() {		// Select fd for reading.
-      fdtable.ReadSelect(fd);
+      if (fd != -1) fdtable.ReadSelect(fd);
    }
    void NoReadSelect() {	// Do not select fd for reading.
-      fdtable.NoReadSelect(fd);
+      if (fd != -1) fdtable.NoReadSelect(fd);
    }
    void WriteSelect() {		// Select fd for writing.
-      fdtable.WriteSelect(fd);
+      if (fd != -1) fdtable.WriteSelect(fd);
    }
    void NoWriteSelect() {	// Do not select fd for writing.
-      fdtable.NoWriteSelect(fd);
+      if (fd != -1) fdtable.NoWriteSelect(fd);
    }
 };
