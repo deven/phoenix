@@ -106,6 +106,22 @@ void Session::Close(boolean drain = true) // Close session.
    user = NULL;			// Disassociate from user.
 }
 
+void Session::Transfer(Pointer<Telnet> &t) // Transfer session to connection.
+{
+   Pointer<Telnet> old(telnet);
+   telnet = t;
+   telnet->session = this;
+   log("Transfer: %s (%s) from fd %d to fd %d.",name_only,user->user,old->fd,
+       t->fd);
+   old->output("*** This session has been transferred to a new connection. ***"
+	       "\n");
+   old->Close();
+   EnqueueOthers(new TransferNotify(name_obj));
+   Pending.Attach(telnet);
+   output("*** End of reviewed output. ***\n");
+   EnqueueOutput();
+}
+
 void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
 {
    if (t) {
@@ -326,15 +342,56 @@ void Session::Name(char *line)
    ListIter<Session> session(sessions);
    while (session++) {
       if (!strcasecmp(session->name_only,name_only)) {
-	 if (!strcmp(session->user->user,user->user) && !session->telnet) {
-	    telnet->output("Re-attaching to detached session...\n");
-	    session->Attach(telnet);
+	 if (!strcmp(session->user->user,user->user)) {
+	    if (session->telnet) {
+	       telnet->output("You are attached elsewhere under that name.\n");
+	       telnet->Prompt("Transfer active session? [no] ");
+	       SetInputFunction(TransferSession);
+	       return;
+	    } else {
+	       telnet->output("Re-attaching to detached session...\n");
+	       session->Attach(telnet);
+	       telnet = NULL;
+	       Close();
+	       return;
+	    }
+	 } else {
+	    telnet->output("That name is already in use.  Choose another.\n");
+	    telnet->Prompt("Enter name: ");
+	    return;
+	 }
+      }
+   }
+   telnet->Prompt("Enter blurb: "); // Prompt for blurb.
+   SetInputFunction(Blurb);	    // Set blurb input routine.
+}
+
+void Session::TransferSession(char *line)
+{
+   if (strncasecmp(line,"yes",1)) {
+      telnet->output("Session not transferred.\n");
+      telnet->Prompt("Enter name: ");
+      SetInputFunction(Name);
+      return;
+   }
+   ListIter<Session> session(sessions);
+   while (session++) {
+      if (!strcasecmp(session->name_only,name_only)) {
+	 if (!strcmp(session->user->user,user->user)) {
+	    if (session->telnet) {
+	       telnet->output("Transferring active session...\n");
+	       session->Transfer(telnet);
+	    } else {
+	       telnet->output("Re-attaching to detached session...\n");
+	       session->Attach(telnet);
+	    }
 	    telnet = NULL;
 	    Close();
 	    return;
 	 } else {
-	    telnet->output("That name is already in use.  Choose another.\n");
+	    telnet->output("That name is now taken.  Choose another.\n");
 	    telnet->Prompt("Enter name: ");
+	    SetInputFunction(Name);
 	    return;
 	 }
       }
