@@ -41,11 +41,11 @@
 
 class String {
 private:
-   static const int Extra = 16;
-   static const int NumberLength = 32;
+   static const size_t Extra = 16;
+   static const size_t NumberLength = 32;
    char *str;
-   int len;
-   int extra;
+   size_t len;
+   size_t extra;
 public:
    String() {
       str = new char[Extra + 1];
@@ -57,8 +57,8 @@ public:
    String(String &s);
    String(const char *s);
    String(char *s);
-   String(const char *s, int n);
-   String(char *s, int n);
+   String(const char *s, size_t n);
+   String(char *s, size_t n);
    String(int n);
    String(unsigned int n);
    String(long n);
@@ -109,7 +109,7 @@ public:
 #ifdef HAVE_BOOL
    operator bool() { return len != 0; }
 #endif
-   int length() { return len; }
+   size_t length() { return len; }
 };
 
 class StringObj: public Object, public String {
@@ -118,6 +118,6 @@ public:
    StringObj(String &s): Object(), String(s) { }
    StringObj(const char *s): Object(), String(s) { }
    StringObj(char *s): Object(), String(s) { }
-   StringObj(const char *s, int n): Object(), String(s, n) { }
-   StringObj(char *s, int n): Object(), String(s, n) { }
+   StringObj(const char *s, size_t n): Object(), String(s, n) { }
+   StringObj(char *s, size_t n): Object(), String(s, n) { }
 };
