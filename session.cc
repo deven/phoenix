@@ -652,6 +652,19 @@ void Session::SetIdle(char *args) // Set idle time.
    }
 }
 
+void Session::SetBlurb(char *newblurb) // Set a new blurb.
+{
+   ResetIdle(10);
+   if (newblurb) {
+      strcpy(blurb,newblurb);
+      sprintf(name,"%s [%s]",name_only,blurb);
+   } else {
+      blurb[0] = 0;
+      strcpy(name,name_only);
+   }
+   name_obj = new Name(this,name_obj,name);
+}
+
 void Session::DoRestart(char *args) // Do !restart command.
 {
    if (!strcmp(args,"!")) {
@@ -1035,27 +1048,21 @@ int Session::DoBlurb(char *start,boolean entry = false)
 	 int over = len - (NameLen - strlen(name_only) - 4);
 	 if (over < 0) over = 0;
 	 len -= over;
-	 strncpy(blurb,start,len);
-	 blurb[len] = 0;
-	 sprintf(name,"%s [%s]",name_only,blurb);
-	 name_obj = new Name(this,name_obj,name);
+	 start[len] = 0;
+	 SetBlurb(start);
 	 if (!entry) print("Your blurb has been %s to [%s].\n",over ?
 			   "truncated" : "set",blurb);
 	 return over;
       } else {
 	 if (entry || blurb[0]) {
-	    blurb[0] = 0;
-	    strcpy(name,name_only);
-	    name_obj = new Name(this,name_obj,name);
+	    SetBlurb(NULL);
 	    if (!entry) output("Your blurb has been turned off.\n");
 	 } else {
 	    if (!entry) output("Your blurb was already turned off.\n");
 	 }
       }
    } else if (entry) {
-      blurb[0] = 0;
-      strcpy(name,name_only);
-      name_obj = new Name(this,name_obj,name);
+      SetBlurb(NULL);
    } else {
       if (blurb[0]) {
 	 if (!entry) print("Your blurb is currently set to [%s].\n",blurb);
