@@ -461,30 +461,7 @@ void process_input(Telnet *telnet,char *line)
 	 while (*line && !isspace(*line)) line++;
 	 telnet->session->DoBlurb(line);
       } else if (!strncasecmp(line,"/help",5)) {
-	 telnet->output("Currently known commands:\n\n"
-			"/blurb -- set a descriptive blurb\n"
-			"/bye -- leave conf\n"
-			"/date -- display current date and time\n"
-			"/help -- gives this thrilling message\n"
-			"/send -- specify default sendlist\n"
-			"/signal -- turns public/private signals on/off\n"
-			"/who -- gives a list of who is connected\n"
-			"No other /commands are implemented yet. "
-			"(except /why)\n\n"
-			"There are two ways to specify a user to send a "
-			"private message.  You can use\n"
-			"either a '#' and the fd number for the user, (as "
-			"listed by /who) or an\n"
-			"substring of the user's name. (case-insensitive)  "
-			"Follow either form with\n"
-			"a semicolon or colon and the message. (e.g. "
-			"\"#4;hi\", \"dev;hi\", ...)\n\n"
-			"Any other line not beginning with a slash is "
-			"simply sent to everyone.\n\n"
-			"The following are recognized as smileys instead of "
-			"as sendlists:\n\n"
-			"\t:-) :-( :-P ;-) :_) :_( :) :( :P ;) (-: )-: (-; "
-			"(_: )_: (: ): (;\n\n");
+	 telnet->session->DoHelp();
       } else {
 	 // Unknown /command.
 	 telnet->output("Unknown /command.  Type /help for help.\n");
