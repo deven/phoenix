@@ -399,11 +399,70 @@ void Session::DoDown(char *args) // Do !down command.
 
 void Session::DoNuke(char *args) // Do !nuke command.
 {
-   int fd;
-   if (sscanf(args,"%d",&fd) == 1) {
-      Telnet::nuke(telnet,fd < 0 ? -fd : fd,boolean(fd >= 0));
+   boolean drain;
+   Pointer<Session> session,target,extra;
+   Pointer<Telnet> telnet;
+   int matches = 0;
+
+   if (drain = boolean(*args == '!')) args++;
+
+   if (!strcasecmp(args,"me")) {
+      target = this;
    } else {
-      print("Bad fd #: \"%s\"\n",args);
+      for (session = sessions; !session.Null(); session = session->next) {
+	 if (strcasecmp(session->name_only,args)) {
+	    if (match_name(session->name_only,args)) {
+	       if (matches++) {
+		  extra = session;
+	       } else {
+		  target = session;
+	       }
+	    }
+	 } else {		// Found exact match; use it.
+	    target = session;
+	    matches = 1;
+	    break;
+	 }
+      }
+
+      // kludge ***
+      for (unsigned char *p = (unsigned char *) args; *p; p++) {
+	 if (*p == UnquotedUnderscore) *p = Underscore;
+      }
+
+      switch (matches) {
+      case 0:			// No matches.
+	 print("\a\aNo names matched \"%s\". (nobody nuked)\n",args);
+	 return;
+      case 1:			// Found single match, nuke session.
+	 break;
+      default:			// Multiple matches.
+	 print("\a\a\"%s\" matches %d names, including \"%s\" and \"%s\". "
+	       "(nobody nuked)\n",args,matches,target->name_only,
+	       extra->name_only);
+	 return;
+      }
+   }
+
+   // Nuke target session.  // Should require confirmation! ***
+   if (drain) {
+      print("%s has been nuked.\n",target->name_only);
+   } else {
+      print("%s has been nuked without delay.\n",target->name_only);
+   }
+
+   if (target->telnet.Null()) {
+      log("%s (%s), detached, has been nuked by %s (%s).",target->name_only,
+	  target->user->user,name_only,user->user);
+   } else {
+      telnet = target->telnet;
+      target->telnet = NULL;
+      log("%s (%s) on fd %d has been nuked by %s (%s).",target->name_only,
+	  target->user->user,target->telnet->fd,name_only,user->user);
+      telnet->UndrawInput();
+      telnet->print("\a\a\a*** You have been nuked by %s. ***\n",name);
+      telnet->RedrawInput();
+      telnet->Close(drain);
    }
 }
 
