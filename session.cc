@@ -151,6 +151,7 @@ Session::Session(Pointer<Telnet> &t)
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// Not signed on yet.
+   priv = 0;			// No privileges yet.
    message_time = time(&login_time);	// Reset timestamps.
    inits.AddTail(this);		// Add session to initializing list.
 }
@@ -665,9 +666,10 @@ void Session::Blurb(char *line)
    DoBlurb(line,true);
 
    SignedOn = true;		// Session is signed on.
+   priv = user->priv;		// Initialize privilege level from User.
    sessions.AddHead(this);	// Add session to signed-on list.
    user->AddSession(this);	// Add session to user list.
-   inits.Remove(this);
+   inits.Remove(this);		// Remove session from initializing list.
 
    NotifyEntry();		// Notify other users of entry.
 
@@ -688,7 +690,7 @@ void Session::ProcessInput(char *line)
       trim(line);
       // add !priv command? ***
       // do individual privilege levels for each !command? ***
-      if (user->priv < 50) {
+      if (priv < 50) {
          output("Sorry, all !commands are privileged.\n");
          return;
       }
@@ -831,7 +833,7 @@ void Session::SetIdle(char *args) // Set idle time.
       return;
    }
 
-   if (num < login_time && user->priv < 50) {
+   if (num < login_time && priv < 50) {
       output("Sorry, you can't be idle longer than you've been signed on.\n");
       return;
    } else {
@@ -1076,7 +1078,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
    ListIter<Session> s(sessions);
    while (s++) {
       idle = (now - s->message_time) / 60;
-      if (here && s->away == Here || away && s->away == Away ||
+      if (everyone || here && s->away == Here || away && s->away == Away ||
 	  busy && s->away == Busy || gone && s->away == Gone ||
 	  attached && s->telnet || detached && !s->telnet ||
 	  active && (s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
@@ -1084,8 +1086,7 @@ boolean Session::GetWhoSet(char *args,Set<Session> &who,String &errors,
 	  inactive && !(s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
 			s->away == Away && s->telnet && (idle < 10)) ||
 	  doidle && (idle >= 10) || unidle && (idle < 10) ||
-	  privileged && (s->user->priv >= 50) ||
-	  guests && (s->user->priv == 0) || everyone) {
+	  privileged && (s->priv >= 50) || guests && (s->priv == 0)) {
 	 who.Add((Session *) s);
       }
    }
@@ -1257,7 +1258,7 @@ void Session::DoWhy(char *args)	// Do /why command.
    int i,extend = 0;
    char buf[32];
 
-   if (user->priv < 50) {
+   if (priv < 50) {
       output("Why not?\n");
       return;
    }
@@ -1340,11 +1341,12 @@ void Session::DoWhy(char *args)	// Do /why command.
       }
       print("%-8s  ",~session->user->user);
       if (session->telnet) {
-	 print("%2d  ",session->telnet->fd);
+	 print("%2d ",session->telnet->fd);
       } else {
-	 output("--  ");
+	 output("-- ");
       }
-      print("%4d\n",session->user->priv);
+      output((session->priv == session->user->priv) ? " " : "*");
+      print("%4d\n",session->priv);
    }
    output(~msg);
    if (errors) {
