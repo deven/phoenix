@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.5 2002/11/26 04:27:51 deven Exp $
+// $Id: string.cc,v 1.6 2003/02/17 06:32:55 deven Exp $
 //
 // String class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: string.cc,v $
+// Revision 1.6  2003/02/17 06:32:55  deven
+// Added NumberLength constant and operator =() calls for numeric assignment.
+//
 // Revision 1.5  2002/11/26 04:27:51  deven
 // Modified to include both <string.h> and <strings.h> if both are available.
 //
