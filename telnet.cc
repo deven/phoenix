@@ -997,8 +997,15 @@ void Telnet::InputReady()	// telnet stream can input data
       switch (errno) {
       case EINTR:
 	 return;
+#ifdef ECONNRESET
       case ECONNRESET:
+#endif
+#ifdef ECONNTIMEDOUT
       case ECONNTIMEDOUT:
+#endif
+#ifdef ETIMEDOUT
+      case ETIMEDOUT:
+#endif
 	 Closed();
 	 return;
       default:
@@ -1970,8 +1977,15 @@ void Telnet::OutputReady()	// telnet stream can output data
 	 switch (errno) {
 	 case EINTR:
 	    return;
-	 case ECONNRESET:
-	 case ECONNTIMEDOUT:
+#ifdef ECONNRESET
+      case ECONNRESET:
+#endif
+#ifdef ECONNTIMEDOUT
+      case ECONNTIMEDOUT:
+#endif
+#ifdef ETIMEDOUT
+      case ETIMEDOUT:
+#endif
 	    Closed();
 	    return;
 	 default:
