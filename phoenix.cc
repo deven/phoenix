@@ -10,6 +10,8 @@
 
 #include "phoenix.h"
 
+EventQueue events;		// Server event queue.
+
 int Shutdown;			// shutdown flag ***
 
 // have to use non-blocking code instead? ***
@@ -271,6 +273,6 @@ int main(int argc,char **argv)	// main program
 
    while(1) {
       Session::CheckShutdown();
-      FD::Select();
+      FD::Select(events.Execute());
    }
 }

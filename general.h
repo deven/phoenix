@@ -21,6 +21,8 @@ class FDTable;
 class Line;
 class Listen;
 class OutputBuffer;
+class Event;
+class EventQueue;
 class Sendlist;
 class Session;
 class Telnet;
