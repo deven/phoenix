@@ -136,6 +136,15 @@ void Session::DoNuke(char *args) // Do !nuke command.
    }
 }
 
+void Session::DoBye()		// Do /bye command.
+{
+   if (telnet->Output.head) {
+      telnet->Drain();
+   } else {
+      telnet->Close();
+   }
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];
