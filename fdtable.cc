@@ -13,7 +13,6 @@
 
 #include "conf.h"
 
-static char buf[BufSize];	// temporary buffer ***
 
 FDTable::FDTable() {		// constructor
    used = 0;
@@ -109,6 +108,7 @@ void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
 
 void FDTable::announce(char *format,...) // formatted write to all connections
 {
+   char buf[BufSize];
    Telnet *t;
    va_list ap;
 
