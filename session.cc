@@ -139,14 +139,14 @@ void Session::Login(char *line)
    if (!strcasecmp(line,"/bye")) {
       DoBye();
       return;
-   } else if (!strcasecmp(line,"/who")) {
-      DoWho();
-      telnet->Prompt("login: ");
-      return;
-   } else if (!strcasecmp(line,"/idle")) {
-      DoIdle();
-      telnet->Prompt("login: ");
-      return;
+//   } else if (!strcasecmp(line,"/who")) {
+//      DoWho();
+//      telnet->Prompt("login: ");
+//      return;
+//   } else if (!strcasecmp(line,"/idle")) {
+//      DoIdle();
+//      telnet->Prompt("login: ");
+//      return;
    } else if (!strcasecmp(line,"guest")) {
       strcpy(user->user,line);
       name[0] = 0;
