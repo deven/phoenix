@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: sendlist.cc,v 1.2 2002/07/28 05:46:09 deven Exp $
 //
 // Sendlist class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: sendlist.cc,v $
+// Revision 1.2  2002/07/28 05:46:09  deven
+// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
