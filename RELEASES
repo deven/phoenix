@@ -12,6 +12,11 @@ Stable Releases
 Development/Test Releases
 -------------------------
 
+ * August 22, 2002: Version 1.0.0.beta.4
+
+   Added portability fixes for Macintosh OS X.  Also cleaned up warnings from
+   GCC 3.1, mainly from duplicate default parameter initializers.
+
  * December 12, 2001: Version 1.0.0.beta.3
 
    This is a portability release.  The previous release was only tested under
