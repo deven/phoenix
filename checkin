@@ -8,6 +8,7 @@
 #
 # $Log$
 
+stty erase '^h'
 for x in $*; do
    if [ -f $x ]; then
       rcs -u $x >/dev/null 2>&1
