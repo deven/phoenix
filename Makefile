@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id$
+# $Id: Makefile,v 1.1 1993/12/08 02:36:57 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1993 by Deven T. Corzine.  All rights reserved.
 #
-# $Log$
+# $Log: Makefile,v $
+# Revision 1.1  1993/12/08 02:36:57  deven
+# Initial revision
+#
 
 # ESIX:
 CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
