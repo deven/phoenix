@@ -85,12 +85,5 @@ string.o: boolean.h object.h string.h string.cc
 clean:
 	rm -f makepw makepw.o restart restart.o $(EXEC) $(OBJS) core *~
 
-checkin: FORCE
-	./checkin Makefile $(HDRS) $(SRCS) passwd
-
-FORCE:
-
-done: checkin all
-
-install: done
+install: all
 	install -c $(EXEC) $(UTIL) /usr/local/bin/$(EXEC)
