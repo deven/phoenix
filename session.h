@@ -43,6 +43,7 @@ public:
    void DoDate();		// Do /date command.
    void DoSignal(char *p);	// Do /signal command.
    void DoSend(char *p);	// Do /send command.
+   void DoWhy();		// Do /why command.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);
