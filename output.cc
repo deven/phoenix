@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.5 1994/02/05 18:30:33 deven Exp $
+// $Id: output.cc,v 1.6 1994/04/15 23:13:31 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.6  1994/04/15 23:13:31  deven
+// Changed call to PrintMessage() to include Sendlist, had all output types
+// changed to add the now-separate blurb.
+//
 // Revision 1.5  1994/02/05 18:30:33  deven
 // Added here/away/busy/gone output types.
 //

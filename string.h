@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.1 1994/02/05 18:19:01 deven Exp $
+// $Id: string.h,v 1.2 1994/04/15 22:08:55 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.2  1994/04/15 22:08:55  deven
+// Changed String objects to non-reference-counted, modified to include extra
+// bytes in string and to always have a non-null pointer allocated.
+//
 // Revision 1.1  1994/02/05 18:19:01  deven
 // Initial revision
 //

@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.12 1994/02/06 03:56:50 deven Exp $
+// $Id: telnet.cc,v 1.13 1994/04/15 23:32:56 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.13  1994/04/15 23:32:56  deven
+// Changed prompt to String object, modified PrintMessage for multiple
+// recipients.
+//
 // Revision 1.12  1994/02/06 03:56:50  deven
 // Fixed to warn user if acknowledgements disabled, sent two initial timing
 // marks to check multiple acknowledgements in case exactly one is returned.

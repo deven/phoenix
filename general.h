@@ -1,12 +1,17 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.10 1994/02/05 18:18:35 deven Exp $
+// $Id: general.h,v 1.11 1994/04/16 05:46:26 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.11  1994/04/16 05:46:26  deven
+// Added class declarations, removed name and sendlist length limits, added
+// Comma and Separator codes, removed match_name() and message_start()
+// functions.
+//
 // Revision 1.10  1994/02/05 18:18:35  deven
 // Removed #define of EWOULDBLOCK to EAGAIN. (handled individually now)
 //

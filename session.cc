@@ -1,12 +1,25 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.17 1994/02/17 06:30:59 deven Exp $
+// $Id: session.cc,v 1.18 1994/04/16 05:50:57 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.18  1994/04/16 05:50:57  deven
+// Modified to use String class, added discussions definition, changed name,
+// name_only and blurb references all over ([]'s stored with infinite blurb),
+// moved in match_name() and message_start() from conf.cc, removed blurb
+// truncation code, added FindDiscussion() function, added short time form
+// to long time descriptions over one hour, allowed privileged users to set
+// any idle time (faking new login time), allowed login time column of /who
+// and /why to switch to month/year form after one year, truncate infinite
+// name/blurb in /who, /why and /idle listings, changed /signal command to
+// use new keyword match() routine, implemented multiple sendlists, added
+// idle time to message confirmation, put extra info in brackets, added
+// recipient count for messages going to multiple recipients.
+//
 // Revision 1.17  1994/02/17 06:30:59  deven
 // Modified not to truncate idle time to logged-in time; make 'em guess!
 //

@@ -1,12 +1,15 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.7 1994/02/05 18:13:45 deven Exp $
+# $Id: Makefile,v 1.8 1994/04/16 05:43:16 deven Exp $
 #
 # Conferencing system server -- Makefile.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: Makefile,v $
+# Revision 1.8  1994/04/16 05:43:16  deven
+# Updated Makefile to include new source files.
+#
 # Revision 1.7  1994/02/05 18:13:45  deven
 # Added string.h and string.cc modules.
 #

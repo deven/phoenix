@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id$
+// $Id: sendlist.cc,v 1.1 1994/04/15 23:30:06 deven Exp $
 //
 // Sendlist class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
-// $Log$
+// $Log: sendlist.cc,v $
+// Revision 1.1  1994/04/15 23:30:06  deven
+// Initial revision
+//
 
 #include "conf.h"
 
