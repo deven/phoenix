@@ -187,6 +187,27 @@ void Telnet::PrintWithRedraw(char *format,...)
    RedrawInput();
 }
 
+void Telnet::PrintMessage(MessageType type,char *from,char *reply_to,char *to,
+			  char *msg)
+{
+   char *p,*start,*wrap;
+   int col;
+
+   strncpy(session->reply_sendlist,reply_to,SendlistLen);
+   session->reply_sendlist[SendlistLen - 1] = 0;
+   UndrawInput();
+   output(Bell);
+   switch (type) {
+   case Public:
+      print("\n -> From %s to everyone: [%s]\n - %s\n",from,date(0,11,5),msg);
+      break;
+   case Private:
+      print("\n >> Private message from %s: [%s]\n - %s\n",from,date(0,11,5),msg);
+      break;
+   }
+   RedrawInput();
+}
+
 // Set telnet ECHO option. (local)
 void Telnet::set_echo(CallbackFuncPtr callback,int state)
 {
