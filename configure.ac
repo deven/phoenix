@@ -41,7 +41,13 @@ AC_CXX_EXCEPTIONS
 AC_CXX_RTTI
 AC_HEADER_TIME
 AC_STRUCT_TM
-AC_CHECK_TYPE([socklen_t], [int])
+
+# Check for socklen_t type.
+AC_CHECK_TYPE([socklen_t], , [AC_DEFINE([socklen_t], [int],
+  [Define to `int' if <sys/socket.h> does not define.])], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif])
 
 # Apply GCC-specific options only if GCC is in use.
 if test "$GCC" = yes; then
