@@ -47,7 +47,6 @@ extern "C" {
 #include <netinet/in.h>
 
 // Declarations for system functions.
-char *strerror(int err);
 char *inet_ntoa(struct in_addr in);
 int strcasecmp(const char *s1,const char *s2);
 int strncasecmp(const char *s1,const char *s2,size_t len);

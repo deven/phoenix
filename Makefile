@@ -29,7 +29,7 @@
 # LDFLAGS = -bsd
 
 # Sun:
-CFLAGS = -g -DNEED_STRERROR
+CFLAGS = -g
 LDFLAGS =
 
 # Mach:
