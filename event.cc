@@ -97,3 +97,10 @@ boolean RestartEvent::Execute()
       return true;
    }
 }
+
+boolean LoginTimeoutEvent::Execute()
+{
+   telnet->output("\nLogin timed out!\n");
+   telnet->Close();
+   return false;
+}

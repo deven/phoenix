@@ -31,7 +31,7 @@
 
 // Types of Event subclasses.
 enum EventType {
-   Unknown_Event, Shutdown_Event, Restart_Event
+   Unknown_Event, Shutdown_Event, Restart_Event, Login_Timeout_Event
 };
 
 class Event: public Object {
@@ -88,6 +88,17 @@ public:
    RestartEvent(char *by): Event(Restart_Event, 0) {
       log("Immediate restart requested by %s.", by);
       FinalWarning();
+   }
+   boolean Execute();
+};
+
+class LoginTimeoutEvent: public Event {
+private:
+   Pointer<Telnet> telnet;
+public:
+   LoginTimeoutEvent(Telnet *t, time_t when):
+      Event(Login_Timeout_Event, when) {
+      telnet = t;
    }
    boolean Execute();
 };

@@ -511,6 +511,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
 
    ReadSelect();		// Select new connection for reading.
 
+   ResetLoginTimeout();		// Reset login timeout.
+
    // Test TIMING-MARK option before sending initial option negotions.
    command(TelnetIAC, TelnetDo, TelnetTimingMark);
    command(TelnetIAC, TelnetDo, TelnetTimingMark);
@@ -579,6 +581,24 @@ void Telnet::Closed()		// Connection is closed.
    Output.~OutputBuffer();	// Destroy data output buffer.
    count--;			// Decrement connection count.
    fd = -1;			// Connection is closed.
+}
+
+void Telnet::ResetLoginTimeout() // Reset login timeout.
+{
+   if (LoginTimeout) {
+      LoginTimeout->SetRelTime(LoginTimeoutTime);
+      events.Requeue(LoginTimeout);
+   } else {
+      LoginTimeout = new LoginTimeoutEvent(this, LoginTimeoutTime);
+      events.Enqueue(LoginTimeout);
+   }
+}
+
+void Telnet::LoginSequenceFinished() // Login sequence is finished.
+{
+   CloseOnEOF = false;
+   events.Dequeue(LoginTimeout);
+   LoginTimeout = 0;
 }
 
 void Telnet::UndrawInput()	// Erase input line from screen.
@@ -813,6 +833,8 @@ void Telnet::do_colon()		// Do colon processing.
 void Telnet::accept_input()	// Accept input line.
 {
    if (!session) return;
+
+   if (LoginTimeout) ResetLoginTimeout();
 
    *free = 0;			// Make input line null-terminated.
 
