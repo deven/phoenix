@@ -1,5 +1,5 @@
 /*
- * $Id: conf.c,v 1.1 1993/03/05 18:04:17 deven Exp $
+ * $Id: conf.c,v 1.2 1993/03/17 07:09:05 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,13 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.c,v $
+ * Revision 1.2  1993/03/17 07:09:05  deven
+ * Fixed to use *current* input function when processing saved lines, taking
+ * into account that those lines may change the input function.  Fixed the
+ * match_name function to match correctly, if a bit inefficiently.  Added
+ * SO_REUSEADDR option on listening socket to avoid time delay on server
+ * restart.  Warn instead of aborting on accept() failure.
+ *
  * Revision 1.1  1993/03/05 18:04:17  deven
  * Initial revision
  *
