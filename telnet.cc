@@ -1,12 +1,16 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.5 1993/12/31 08:15:49 deven Exp $
+// $Id: telnet.cc,v 1.6 1994/01/02 12:14:23 deven Exp $
 //
 // Telnet class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: telnet.cc,v $
+// Revision 1.6  1994/01/02 12:14:23  deven
+// Updated copyright notice, modified to use smart pointers, removed nuke()
+// and announce(), made a number of minor modifications.
+//
 // Revision 1.5  1993/12/31 08:15:49  deven
 // Added support for telnet TIMING-MARK option.  Option is sent once in
 // command queue before other initial option requests, and is enabled if
