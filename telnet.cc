@@ -10,11 +10,6 @@
 
 #include "conf.h"
 
-void Telnet::nuke(Pointer<Telnet> telnet,int fd,boolean drain)
-{
-   fdtable.nuke(telnet,fd,drain);
-}
-
 void Telnet::LogCaller() {	// Log calling host and port.
    struct sockaddr_in saddr;
    int saddrlen = sizeof(saddr);
@@ -348,13 +343,6 @@ void Telnet::Close(boolean drain = true) // Close telnet connection.
    } else {			// No output pending, close immediately.
       fdtable.Close(fd);
    }
-}
-
-void Telnet::nuke(Telnet *telnet,boolean drain)
-{
-   telnet->print("User \"%s\" (%s) on fd %d has been nuked.\n",
-		 session->name_only,session->user->user,fd);
-   Close(drain);
 }
 
 void Telnet::Closed()		// Connection is closed.
