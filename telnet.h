@@ -97,13 +97,25 @@ enum TelnetOption {
    TelnetTransmitBinary = 0,
    TelnetEcho = 1,
    TelnetSuppressGoAhead = 3,
-   TelnetTimingMark = 6
+   TelnetTimingMark = 6,
+   TelnetNAWS = 31
 };
 
 // Telnet option bits.
 const int TelnetWillWont = 1;
 const int TelnetDoDont = 2;
 const int TelnetEnabled = (TelnetDoDont|TelnetWillWont);
+
+// Telnet subnegotiation states.
+enum TelnetSubnegotiationState {
+   TelnetSB_Idle,
+   TelnetSB_NAWS_WidthHigh,
+   TelnetSB_NAWS_WidthLow,
+   TelnetSB_NAWS_HeightHigh,
+   TelnetSB_NAWS_HeightLow,
+   TelnetSB_NAWS_Done,
+   TelnetSB_Unknown
+};
 
 // Telnet options are stored in a single byte each, with bit 0 representing
 // WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
@@ -121,6 +133,8 @@ public:
    static const int KillRingMax = 1; // Save last kill. ***
    int width;			// current screen width
    int height;			// current screen height
+   int NAWS_width;		// NAWS negotiated screen width
+   int NAWS_height;		// NAWS negotiated screen height
    Pointer<Session> session;	// back-pointer to session structure
    char *data;			// start of input data
    char *free;			// start of free area of allocated block
@@ -136,7 +150,7 @@ public:
    OutputBuffer Output;		// pending data output
    OutputBuffer Command;	// pending command output
    int outstanding;		// outstanding acknowledgement count
-   unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
+   unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
    boolean undrawn;		// input line undrawn for output?
    boolean closing;		// connection closing?
    boolean acknowledge;		// use telnet TIMING-MARK option?
@@ -146,11 +160,14 @@ public:
    char RSGA;			// telnet SUPPRESS-GO-AHEAD option (remote)
    char LBin;			// telnet TRANSMIT-BINARY option (local)
    char RBin;			// telnet TRANSMIT-BINARY option (remote)
+   char NAWS;			// telnet NAWS option (remote)
    CallbackFuncPtr Echo_callback; // ECHO callback (local)
    CallbackFuncPtr LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
    CallbackFuncPtr LBin_callback; // TRANSMIT-BINARY callback (local)
    CallbackFuncPtr RBin_callback; // TRANSMIT-BINARY callback (remote)
+   CallbackFuncPtr NAWS_callback; // NAWS callback (remote)
+   enum TelnetSubnegotiationState sb_state; // subnegotiation state
 
    Telnet(int lfd);		// constructor
    ~Telnet();			// destructor
@@ -198,6 +215,7 @@ public:
    void set_RSGA(CallbackFuncPtr callback, int state);
    void set_LBin(CallbackFuncPtr callback, int state);
    void set_RBin(CallbackFuncPtr callback, int state);
+   void set_NAWS(CallbackFuncPtr callback, int state);
    void InsertString(String &s); // Insert string at point.
    void beginning_of_line();	// Jump to beginning of line.
    void end_of_line();		// Jump to end of line.
