@@ -693,8 +693,9 @@ void Session::DoDetach()	// Do /detach command.
 
 void Session::DoWho()		// Do /who command.
 {
-   int idle,days,hours,minutes;
-   int now = time(NULL);
+   int idle,days,hours,minutes,now = time(NULL);
+   int i,extend = 0;
+   char buf[32];
 
    // Check if anyone is signed on at all.
    if (!sessions.Count()) {
@@ -702,13 +703,25 @@ void Session::DoWho()		// Do /who command.
       return;
    }
 
-   // Output /who header.
-   output("\n"
-	  " Name                              On Since   Idle  User\n"
-	  " ----                              --------   ----  ----\n");
-
-   // Output data about each user.
+   // Scan users for long idle times.
    ListIter<Session> session(sessions);
+   while (session++) {
+      days = (now - session->message_time) / 86400;
+      if (!days) continue;
+      sprintf(buf,"%d",days);
+      i = strlen(buf);
+      if (!session->telnet) i++;
+      if (i > extend) extend = i;
+   }
+   sprintf(buf,"%%%ddd",extend);
+
+   // Output /who header.
+   output("\n Name                              On Since");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  Idle  Away  User\n ----                              --------");
+   for (i = 0; i < extend; i++) output(Space);
+   output("  ----  ----  ----\n");
+
    while (session++) {
       if (session->telnet) {
 	 output(Space);
@@ -733,17 +746,33 @@ void Session::DoWho()		// Do /who command.
 	 minutes = idle - hours * 60;
 	 days = hours / 24;
 	 hours -= days * 24;
-	 if (days > 9 || days && !session->telnet) {
-	    print("%2dd%02d:%02d ",days,hours,minutes);
-	 } else if (days) {
-	    print("%dd%02d:%02d  ",days,hours,minutes);
+	 if (days) {
+	    print(buf,days);
+	    print("%02d:%02d  ",hours,minutes);
 	 } else if (hours) {
-	    print("  %2d:%02d  ",hours,minutes);
+	    for (i = 0; i < extend; i++) output(Space);
+	    print(" %2d:%02d  ",hours,minutes);
 	 } else {
-	    print("     %2d  ",minutes);
+	    for (i = 0; i < extend; i++) output(Space);
+	    print("    %2d  ",minutes);
 	 }
       } else {
-	 output("         ");
+	 for (i = 0; i < extend; i++) output(Space);
+	 output("        ");
+      }
+      switch(session->away) {
+      case Here:
+	 output("Here  ");
+	 break;
+      case Away:
+	 output("Away  ");
+	 break;
+      case Busy:
+	 output("Busy  ");
+	 break;
+      case Gone:
+	 output("Gone  ");
+	 break;
       }
       output(session->user->user);
       output(Newline);
