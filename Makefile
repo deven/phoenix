@@ -36,7 +36,7 @@ $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
 	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
 
-$(SRCS): $(HDRS)
+$(OBJS): $(HDRS)
 
 .cc.o:
 	$(CC) $(CFLAGS) -c $<
