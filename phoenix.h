@@ -59,6 +59,8 @@
 #include "name.h"
 #include "output.h"
 #include "outstr.h"
+#include "event.h"
+#include "eventqueue.h"
 #include "sendlist.h"
 #include "session.h"
 #include "discussion.h"

@@ -43,7 +43,9 @@ public:
    FDType type;
    int fd;
    static void CloseAll() { fdtable.CloseAll(); }
-   static void Select() { fdtable.Select(); }
+   static void Select(struct timeval *timeout) {
+      fdtable.Select(timeout);
+   }
    virtual void InputReady() = 0;
    virtual void OutputReady() = 0;
    virtual void Closed() = 0;

@@ -59,6 +59,7 @@ public:
    int AddTail(Type *ptr);
    Pointer<Type> RemHead();
    Pointer<Type> RemTail();
+   int PriorityEnqueue(Type *ptr,int (*compare)(Type *,Type *));
    int Enqueue(Type *ptr) { return AddTail(ptr); }
    Pointer<Type> Dequeue() { return RemHead(); }
    int Push(Type *ptr) { return AddTail(ptr); }
@@ -130,6 +131,31 @@ Pointer<Type> List<Type>::RemTail() {
    }
    node->next = node->prev = 0;
    return node->obj;
+}
+
+template <class Type>
+int List<Type>::PriorityEnqueue(Type *ptr,int (*compare)(Type *,Type *)) {
+   Pointer<NodeType> scan;
+   int pos = 1;
+
+   if (!head || compare(ptr,head->obj) < 0) {
+      AddHead(ptr);
+      return pos;
+   }
+
+   for (scan = head->next, pos = 2; scan; scan = scan->next, pos++) {
+      if (compare(ptr,scan->obj) < 0) {
+	 NodeType *node = new NodeType(ptr);
+
+	 node->prev = scan->prev;
+	 node->next = scan;
+	 node->prev->next = node;
+	 node->next->prev = node;
+	 return pos;
+      }
+   }
+
+   return AddTail(ptr);
 }
 
 template <class Type>
