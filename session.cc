@@ -187,7 +187,11 @@ void Session::Login(char *line)
    }
 
    // Warn if echo can't be turned off.
-   if (!telnet->Echo) telnet->print("\n\aSorry, password WILL echo.\n\n");
+   if (!telnet->Echo) {
+      telnet->output("\n\aSorry, password WILL echo.\n\n");
+   } else if (telnet->Echo != TelnetEnabled) {
+      telnet->output("\nWarning: password may echo.\n\n");
+   }
    telnet->Prompt("Password: "); // Prompt for password.
    telnet->DoEcho = false;	 // Disable echoing.
    SetInputFunction(Password);	 // Set password input routine.
