@@ -79,6 +79,8 @@ public:
    String &prepend(const char *s);
    String &prepend(char *s) { return prepend((const char *) s); }
    String &prepend(char c);
+   String &vsprintf(const char *format, va_list ap);
+   String &sprintf(const char *format, ...);
    int operator ==(const String &s) {
       return len == s.len && !strncmp(str, s.str, len);
    }

@@ -61,15 +61,15 @@
 extern int sys_nerr;
 extern char *str_errlist[];
 
-char *strerror(int errno)
+char *strerror(int n)
 {
-   static char message[16];
+   static String msg;
 
-   if (errno >= 0 && errno < sys_nerr) {
-      return sys_errlist[errno];
+   if (n >= 0 && n < sys_nerr) {
+      return (char *) sys_errlist[n];
    } else {
-      sprintf(message, "Error %d", errno);
-      return message;
+      msg.sprintf("Unknown error %d", n);
+      return ~msg;
    }
 }
 #endif
@@ -106,63 +106,63 @@ void operator delete[](void *p)	// Provide a basic delete[] operator.
 
 void OpenLog()			// class Log? ***
 {
-   char buf[32];
+   String filename;
    Timestamp t;
    struct tm *tm;
 
    if (!(tm = t.localtime())) error("OpenLog(): localtime");
-   sprintf(buf, "logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
+   filename.sprintf("logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
 	   tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
-   if (!(logfile = fopen(buf, "a"))) error("OpenLog(): %s", buf);
+   if (!(logfile = fopen(~filename, "a"))) error("OpenLog(): %s", ~filename);
 #ifdef SETVBUF_REVERSED
    setvbuf(logfile, _IOLBF, NULL, 0);
 #else
    setvbuf(logfile, NULL, _IOLBF, 0);
 #endif
    unlink("log");
-   link(buf, "log");
-   fprintf(stderr, "Logging on \"%s\".\n", buf);
+   link(~filename, "log");
+   fprintf(stderr, "Logging on \"%s\".\n", ~filename);
 }
 
 // Use << operator instead of printf() formats? ***
 void log(char *format, ...)	// log message ***
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
    Timestamp t;
 
    if (!logfile) return;
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), buf);
+   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
 void warn(char *format, ...)	// print error message ***
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
    Timestamp t;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(stderr, "\n%s: %s\n", buf, strerror(errno));
-   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
+   (void) fprintf(stderr, "\n%s: %s\n", ~msg, strerror(errno));
+   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), ~msg,
 		  strerror(errno));
 }
 
 void error(char *format, ...)	// print error message and exit ***
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
    Timestamp t;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(stderr, "\n%s: %s\n", buf, strerror(errno));
-   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), buf,
+   (void) fprintf(stderr, "\n%s: %s\n", ~msg, strerror(errno));
+   (void) fprintf(logfile, "[%s] %s: %s\n", t.date(4, 15), ~msg,
 		  strerror(errno));
    if (logfile) fclose(logfile);
    exit(1);
@@ -170,15 +170,15 @@ void error(char *format, ...)	// print error message and exit ***
 
 void crash(char *format, ...)	// print error message and crash ***
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
    Timestamp t;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   (void) fprintf(stderr, "\n%s\n", buf);
-   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), buf);
+   (void) fprintf(stderr, "\n%s\n", ~msg);
+   (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
    if (logfile) fclose(logfile);
    abort();
    exit(-1);
@@ -189,10 +189,10 @@ void quit(int sig)		// received SIGQUIT or SIGTERM
    if (Shutdown) {
       log("Additional shutdown signal %d received.", sig);
    } else {
-      char buf[16];
+      String signal;
 
-      sprintf(buf, "signal %d", sig);
-      events.Enqueue(Shutdown = new ShutdownEvent(buf, 5));
+      signal.sprintf("signal %d", sig);
+      events.Enqueue(Shutdown = new ShutdownEvent(~signal, 5));
    }
 }
 

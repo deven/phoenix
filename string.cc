@@ -47,6 +47,10 @@
 #include <stdlib.h>
 #endif
 
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -126,7 +130,7 @@ String::String(char *s, int n)
 String::String(int n)
 {
    str = new char[NumberLength];
-   sprintf(str, "%d", n);
+   ::sprintf(str, "%d", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
 }
@@ -134,7 +138,7 @@ String::String(int n)
 String::String(unsigned int n)
 {
    str = new char[NumberLength];
-   sprintf(str, "%ud", n);
+   ::sprintf(str, "%ud", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
 }
@@ -142,7 +146,7 @@ String::String(unsigned int n)
 String::String(long n)
 {
    str = new char[NumberLength];
-   sprintf(str, "%ld", n);
+   ::sprintf(str, "%ld", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
 }
@@ -150,7 +154,7 @@ String::String(long n)
 String::String(unsigned long n)
 {
    str = new char[NumberLength];
-   sprintf(str, "%lud", n);
+   ::sprintf(str, "%lud", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
 }
@@ -206,7 +210,7 @@ String &String::operator =(int n)
 {
    delete [] str;
    str = new char[NumberLength];
-   sprintf(str, "%d", n);
+   ::sprintf(str, "%d", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
    return *this;
@@ -216,7 +220,7 @@ String &String::operator =(unsigned int n)
 {
    delete [] str;
    str = new char[NumberLength];
-   sprintf(str, "%ud", n);
+   ::sprintf(str, "%ud", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
    return *this;
@@ -226,7 +230,7 @@ String &String::operator =(long n)
 {
    delete [] str;
    str = new char[NumberLength];
-   sprintf(str, "%ld", n);
+   ::sprintf(str, "%ld", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
    return *this;
@@ -236,7 +240,7 @@ String &String::operator =(unsigned long n)
 {
    delete [] str;
    str = new char[NumberLength];
-   sprintf(str, "%lud", n);
+   ::sprintf(str, "%lud", n);
    len = strlen(str);
    extra = NumberLength - len - 1;
    return *this;
@@ -399,5 +403,141 @@ String &String::prepend(char c)
    }
    *str = c;
    str[++len] = 0;
+   return *this;
+}
+
+// Handle vsprintf-style formatting.  (This is a simplified implementation.)
+String &String::vsprintf(const char *format, va_list ap)
+{
+   // Save old string for now, in case the value is used by the format string.
+   char *old = str;
+
+   // Allocate a new string as large as the format string, and then some.
+   len = strlen(format);
+   str = new char[len + Extra + 1];
+   extra = len + Extra;
+   len = 0;
+   str[len] = 0;
+
+   // Process the format string.
+   for (const char *p = format; *p; p++) {
+      // Check format string for % escapes.
+      if (*p != '%' || *++p == '%') {
+         append(*p);
+      } else {
+         // Initialize parameter defaults.
+         boolean left_justify = false;
+         boolean zero_padding = false;
+         boolean width_specified = false;
+         boolean precision_specified = false;
+         int width = 0;
+         int prec = 0;
+
+         // Check if format specifies left-justified output.
+         if (*p == '-') {
+            left_justify = true;
+            p++;
+         }
+
+         // Check for a format width specification.
+         if (*p == '*') {
+            // Width specified as "*" -- get from argument list.
+            p++;
+            width_specified = true;
+            width = va_arg(ap, int);
+         } else {
+            // Parse digits (if any) as width specification.
+            if (*p == '0') zero_padding = true;
+            if (*p >= '0' && *p <= '9') width_specified = true;
+            while (*p >= '0' && *p <= '9') width = width * 10 + *p++ - '0';
+         }
+
+         // Check for a format precision specification.
+         if (*p == '.') {
+            p++;
+            if (*p == '*') {
+               // Precision specified as "*" -- get from argument list.
+               p++;
+               precision_specified = true;
+               prec = va_arg(ap, int);
+            } else {
+               // Parse digits (if any) as precision specification.
+               if (*p >= '0' && *p <= '9') precision_specified = true;
+               while (*p >= '0' && *p <= '9') prec = prec * 10 + *p++ - '0';
+            }
+         }
+
+         // Check type of format % escape.
+         switch (*p) {
+         case 'c':
+            // Character (%c) escape.  (Ignores precision.)
+            {
+               char c = (char) va_arg(ap, int);
+               if (left_justify) append(c);
+               if (width_specified) {
+                  while (width-- > 1) append(' ');
+               }
+               if (!left_justify) append(c);
+            }
+            break;
+         case 'd':
+            // Numeric (%d) escape.  (Ignores precision.)
+            {
+               String num(va_arg(ap, int));
+               if (left_justify) append(num);
+               if (width_specified && width > num.length()) {
+                  width -= num.length();
+                  if (zero_padding && !left_justify) {
+                     while (width-- > 0) append('0');
+                  } else {
+                     while (width-- > 0) append(' ');
+                  }
+               }
+               if (!left_justify) append(num);
+            }
+            break;
+         case 's':
+            // String (%s) escape.  (Uses precision to limit string length.)
+            {
+               char *s = va_arg(ap, char *);
+               unsigned int n = strlen(s);
+               if (precision_specified && prec < int(strlen(s))) n = prec;
+               String tmp(s, n);
+               if (left_justify) append(tmp);
+               if (width_specified && width > tmp.length()) {
+                  width -= tmp.length();
+                  while (width-- > 0) append(' ');
+               }
+               if (!left_justify) append(tmp);
+            }
+            break;
+         default:
+            // Unknown %escape.  Format as error message.
+            append("<ERROR: unknown escape %");
+            append(*p);
+            append(">");
+            break;
+         }
+      }
+   }
+
+   // Free old string.
+   delete [] old;
+
+   // Return formatted string.
+   return *this;
+}
+
+// Handle sprintf-style formatting.  (This is a simplified implementation.)
+String &String::sprintf(const char *format, ...)
+{
+   va_list ap;
+
+   // Call String::vsprintf() to do the real work.
+   va_start(ap, format);
+   vsprintf(format, ap);
+   va_end(ap);
+
+   // Return formatted string.
    return *this;
 }

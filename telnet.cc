@@ -135,13 +135,13 @@ void Telnet::output(char *buf, int len) // queue output data (with length)
 
 void Telnet::print(char *format, ...) // formatted write
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   output(buf);
+   output(~msg);
 }
 
 void Telnet::echo(int byte)	// echo output byte
@@ -161,14 +161,14 @@ void Telnet::echo(char *buf, int len) // echo output data (with length)
 
 void Telnet::echo_print(char *format, ...) // formatted echo
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
 
    if (Echo == TelnetEnabled && DoEcho && !undrawn) {
       va_start(ap, format);
-      (void) vsprintf(buf, format, ap);
+      msg.vsprintf(format, ap);
       va_end(ap);
-      output(buf);
+      output(~msg);
    }
 }
 
@@ -847,20 +847,11 @@ void Telnet::accept_input()	// Accept input line.
       echo(Newline);
    }
 
-   // *** QUICK & DIRTY SECURITY FIX: (for vsprintf() overflows)
-   boolean too_long = false;
-   if (free - data > 5000) too_long = true;
-
    point = free = data;		// Wipe input line. (data intact)
    mark = 0;			// Wipe mark.
    prompt = "";			// Wipe prompt.
 
-   // *** QUICK & DIRTY SECURITY FIX: (for vsprintf() overflows)
-   if (too_long) {
-      output("Input line IGNORED because it exceeds 5000 characters!\n");
-   } else {
-      session->Input(data);	// Call state-specific input line processor.
-   }
+   session->Input(data);	// Call state-specific input line processor.
 
    if ((end - data) > InputSize) { // Drop buffer back to normal size.
       delete [] data;

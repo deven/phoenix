@@ -199,33 +199,33 @@ void Session::Input(char *line)	// Process an input line.
 
 void Session::print(char *format, ...) // formatted write
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
-   output(buf);
+   output(~msg);
 }
 
 void Session::announce(char *format, ...) // formatted output to all sessions
 {
-   char buf[BufSize];
+   String msg;
    va_list ap;
 
    va_start(ap, format);
-   (void) vsprintf(buf, format, ap);
+   msg.vsprintf(format, ap);
    va_end(ap);
 
    ListIter<Session> session(sessions);
    while (session++) {
-      session->output(buf);
+      session->output(~msg);
       session->EnqueueOutput();
    }
 
    session = inits;
    while (session++) {
-      session->output(buf);
+      session->output(~msg);
       session->EnqueueOutput();
    }
 }
@@ -1293,11 +1293,8 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
       if (sessions.Count() - who.Count() == 1) {
 	 msg = "(There is 1 other person signed on.)\n";
       } else if (sessions.Count() > who.Count()) {
-	 char buf[64];
-
-	 sprintf(buf, "(There are %d other people signed on.)\n",
-		 sessions.Count() - who.Count());
-	 msg = buf;
+	 msg.sprintf("(There are %d other people signed on.)\n",
+		     sessions.Count() - who.Count());
       }
    }
 
@@ -1311,7 +1308,6 @@ void Session::DoWho(char *args)	// Do /who command.
    Timestamp now;
    int idle, days, hours, minutes;
    int i, extend = 0;
-   char buf[32];
 
    // Handle arguments.
    if (GetWhoSet(args, who, errors, msg)) return;
@@ -1321,19 +1317,16 @@ void Session::DoWho(char *args)	// Do /who command.
    while (session++) {
       days = (now - session->message_time) / 86400;
       if (!days) continue;
-      sprintf(buf, "%d", days);
-      i = strlen(buf);
+      tmp = days;
+      i = tmp.length();
       if (!session->telnet || (now - session->login_time) >= 31536000) i++;
       if (i > extend) extend = i;
    }
-   sprintf(buf, "%%%ddd", extend);
 
    // Output /who header.
-   output("\n Name                              On Since");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  Idle  Away\n ----                              --------");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  ----  ----\n");
+   print("\n Name                              On Since%*s  Idle  Away\n ----"
+	 "                              --------%*s  ----  ----\n", extend, "",
+	 extend, "");
 
    while (session++) {
       if (session->telnet) {
@@ -1369,18 +1362,14 @@ void Session::DoWho(char *args)	// Do /who command.
 	 days = hours / 24;
 	 hours -= days * 24;
 	 if (days) {
-	    print(buf, days);
-	    print("%02d:%02d  ", hours, minutes);
+	    print("%*dd%02d:%02d  ", extend, days, hours, minutes);
 	 } else if (hours) {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print(" %2d:%02d  ", hours, minutes);
+	    print("%*d:%02d  ", extend + 3, hours, minutes);
 	 } else {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print("    %2d  ", minutes);
+	    print("%*d  ", extend + 6, minutes);
 	 }
       } else {
-	 for (i = 0; i < extend; i++) output(Space);
-	 output("        ");
+	 print("%*s", extend + 8, "");
       }
       switch(session->away) {
       case Here:
@@ -1423,7 +1412,6 @@ void Session::DoWhy(char *args)	// Do /why command.
    Timestamp now;
    int idle, days, hours, minutes;
    int i, extend = 0;
-   char buf[32];
 
    if (priv < 50) {
       output("Why not?\n");
@@ -1438,20 +1426,16 @@ void Session::DoWhy(char *args)	// Do /why command.
    while (session++) {
       days = (now - session->message_time) / 86400;
       if (!days) continue;
-      sprintf(buf, "%d", days);
-      i = strlen(buf);
+      tmp = days;
+      i = tmp.length();
       if ((now - session->login_time) >= 31536000) i++;
       if (i > extend) extend = i;
    }
-   sprintf(buf, "%%%ddd", extend);
 
    // Output /why header.
-   output("\n Name                              On Since");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  Idle  Away  User      FD  Priv\n");
-   output(" ----                              --------");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  ----  ----  ----      --  ----\n");
+   print("\n Name                              On Since%*s  Idle  Away  User"
+	 "      FD  Priv\n ----                              --------%*s"
+	 "  ----  ----  ----      --  ----\n", extend, "", extend, "");
 
    while (session++) {
       if (session->telnet) {
@@ -1479,18 +1463,14 @@ void Session::DoWhy(char *args)	// Do /why command.
 	 days = hours / 24;
 	 hours -= days * 24;
 	 if (days) {
-	    print(buf, days);
-	    print("%02d:%02d  ", hours, minutes);
+	    print("%*dd%02d:%02d  ", extend, days, hours, minutes);
 	 } else if (hours) {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print(" %2d:%02d  ", hours, minutes);
+	    print("%*d:%02d  ", extend + 3, hours, minutes);
 	 } else {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print("    %2d  ", minutes);
+	    print("%*d  ", extend + 6, minutes);
 	 }
       } else {
-	 for (i = 0; i < extend; i++) output(Space);
-	 output("        ");
+	 print("%*s", extend + 8, "");
       }
       switch(session->away) {
       case Here:
@@ -1589,10 +1569,10 @@ void Session::DoIdle(char *args) // Do /idle command.
 void Session::DoWhat(char *args) // Do /what command.
 {
    Pointer<Sendlist> sendlist(new Sendlist(*this, args, true, false, true));
+   String tmp;
    Timestamp now;
    int idle, days, hours, minutes;
    int i, extend = 0;
-   char buf[32];
 
    // Check if any discussions exist.
    if (!discussions.Count()) {
@@ -1616,22 +1596,20 @@ void Session::DoWhat(char *args) // Do /what command.
    while (discussion++) {
       days = (now - discussion->message_time) / 86400;
       if (!days) continue;
-      sprintf(buf, "%d", days);
-      i = strlen(buf);
+      tmp = days;
+      i = tmp.length();
       if (i > extend) extend = i;
    }
-   sprintf(buf, "%%%ddd", extend);
 
    // Output /what header.
-   output("\n Name           Users");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  Idle  Title\n ----           -----");
-   for (i = 0; i < extend; i++) output(Space);
-   output("  ----  -----\n");
+   print("\n Name            Users%*s  Idle  Title\n ----            -----%*s"
+	 "  ----  -----\n", extend, "", extend, "");
 
    while (discussion++) {
       output(Space);
-      print("%-15.15s%3d%c ", ~discussion->name, discussion->members.Count(),
+      print("%-15.15s%c%3d%c ", ~discussion->name,
+	    discussion->name.length() > 15 ? '+' : ' ',
+	    discussion->members.Count(),
 	    discussion->members.In(this) ? '*' : Space);
       idle = (now - discussion->message_time) / 60;
       if (idle) {
@@ -1640,25 +1618,20 @@ void Session::DoWhat(char *args) // Do /what command.
 	 days = hours / 24;
 	 hours -= days * 24;
 	 if (days) {
-	    print(buf, days);
-	    print("%02d:%02d  ", hours, minutes);
+	    print("%*dd%02d:%02d  ", extend, days, hours, minutes);
 	 } else if (hours) {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print(" %2d:%02d  ", hours, minutes);
+	    print("%*d:%02d  ", extend + 3, hours, minutes);
 	 } else {
-	    for (i = 0; i < extend; i++) output(Space);
-	    print("    %2d  ", minutes);
+	    print("%*d  ", extend + 6, minutes);
 	 }
       } else {
-	 for (i = 0; i < extend; i++) output(Space);
-	 output("        ");
+	 print("%*s", extend + 8, "");
       }
       if (discussion->Permitted(this)) {
 	 if (discussion->title.length() > 50) {
-	    printf("%-49.49s+\n", ~discussion->title);
+	    print("%-48.48s+\n", ~discussion->title);
 	 } else {
-	    output(~discussion->title);
-	    output(Newline);
+	    print("%s\n", ~discussion->title);
 	 }
       } else {
 	 output("<Private>\n");

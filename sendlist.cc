@@ -51,7 +51,6 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
    List<StringObj> nonmatches;
    char *start;
    char *separator;
-   char buf[64];
 
    if (typed == sendlist) return *this;	// Return if sendlist unchanged.
 
@@ -87,11 +86,9 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
 	    if (multi) {
 	       while (session++) sessions.Add((Session *) session);
 	    } else {
-	       errors.append('"');
-	       errors.append(tmp);
-	       sprintf(buf, "\" matches %d name%s: ", sessionmatches.Count(),
-		       sessionmatches.Count() == 1 ? "" : "s");
-	       errors.append(buf);
+	       errors.sprintf("%s\"%s\" matches %d name%s: ", ~errors, ~tmp,
+			      sessionmatches.Count(),
+			      sessionmatches.Count() == 1 ? "" : "s");
 	       errors.append(session++->name);
 	       while (session++) {
 		  errors.append(", ");
@@ -111,13 +108,11 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
 	       while (discussion++) discussions.Add((Discussion *) discussion);
 	    } else {
 	       if (!sessionmatches.Count()) {
-		  errors.append('"');
-		  errors.append(tmp);
-		  errors.append("\" matches ");
+	          errors.sprintf("%s\"%s\" matches ", ~errors, ~tmp);
 	       }
-	       sprintf(buf, "%d discussion%s: ", discussionmatches.Count(),
-		       discussionmatches.Count() == 1 ? "" : "s");
-	       errors.append(buf);
+	       errors.sprintf("%s%d discussion%s: ", ~errors,
+			      discussionmatches.Count(),
+			      discussionmatches.Count() == 1 ? "" : "s");
 	       errors.append(discussion++->name);
 	       while (discussion++) {
 		  errors.append(", ");
