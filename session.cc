@@ -1038,11 +1038,11 @@ void Session::SendPrivate(char *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
-   if (!Shutdown || sessions.Count()) return;
+   if (Telnet::Count() || inits.Count() || sessions.Count()) return;
    if (Shutdown > 2) {
       log("All connections closed, restarting.");
       RestartServer();
-   } else {
+   } else if (Shutdown) {
       log("All connections closed, shutting down.");
       ShutdownServer();
    }
