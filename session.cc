@@ -141,6 +141,7 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet = t;
    telnet->session = this;
+   old->session = 0;
    telnet->LoginSequenceFinished();
    log("Transfer: %s (%s) from fd %d to fd %d.", ~name, ~user->user, old->fd,
        t->fd);
