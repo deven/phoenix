@@ -42,6 +42,7 @@ public:
    }
    void Attach(Pointer<Telnet> &telnet);
    void Enqueue(Pointer<Telnet> &telnet,Pointer<Output> &out);
+   void Unenqueue(Pointer<Output> &out);
    void Dequeue();
    boolean SendNext(Pointer<Telnet> &telnet);
 };
