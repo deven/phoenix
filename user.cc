@@ -70,8 +70,10 @@ void User::UpdateAll()		// Update all user entries from password file.
       fclose(pw);
    }
 
+#ifdef GUEST_ACCESS
    // Create the "guest" account.
    Update("guest", 0, 0, 0, 0);
+#endif
 }
 
 boolean User::FindReserved(char *name, User *&user)

@@ -12,6 +12,10 @@ AC_ARG_ENABLE(port,
    AC_DEFINE_UNQUOTED(PORT, $enableval, [Define TCP port number to listen on.  (TELNET protocol default is 23.)]),
    AC_DEFINE(PORT, 9999, [Define TCP port number to listen on.  (TELNET protocol default is 23.)])
 )
+AC_ARG_ENABLE(port,
+   [  --disable-guest         disable guest access], [],
+   AC_DEFINE(GUEST_ACCESS, 1, [Define to enable guest access.])
+)
 
 # Checks for programs.
 AC_PROG_CXX
