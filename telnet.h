@@ -63,7 +63,9 @@ public:
    OutputBuffer Command;	// pending command output
    InputFuncPtr InputFunc;	// function pointer for input processor
    unsigned char state;		// input state (0/\r/IAC/WILL/WONT/DO/DONT)
-   char undrawn;		// input line undrawn for output?
+   char SignalPublic;		// Signal for public messages? (boolean)
+   char SignalPrivate;		// Signal for private messages? (boolean)
+   char undrawn;		// input line undrawn for output? (boolean)
    char blocked;		// output blocked? (boolean)
    char closing;		// connection closing? (boolean)
    char do_echo;		// should server be echoing? (boolean)

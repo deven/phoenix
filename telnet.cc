@@ -196,12 +196,13 @@ void Telnet::PrintMessage(MessageType type,char *from,char *reply_to,char *to,
    strncpy(session->reply_sendlist,reply_to,SendlistLen);
    session->reply_sendlist[SendlistLen - 1] = 0;
    UndrawInput();
-   output(Bell);
    switch (type) {
    case Public:
+      if (SignalPublic) output(Bell);
       print("\n -> From %s to everyone: [%s]\n - ",from,date(0,11,5));
       break;
    case Private:
+      if (SignalPrivate) output(Bell);
       print("\n >> Private message from %s: [%s]\n - ",from,date(0,11,5));
       break;
    }
@@ -276,6 +277,8 @@ Telnet::Telnet(int lfd)		// Telnet constructor.
    mark = NULL;			// No mark set initially.
    prompt = NULL;		// No prompt initially.
    prompt_len = 0;		// Length of prompt
+   SignalPublic = true;		// Default public signal on. (for now)
+   SignalPrivate = true;	// Default private signal on.
    undrawn = false;		// Input line not undrawn.
    lines = 0;			// No pending input lines.
    InputFunc = 0;		// No input function.
