@@ -24,6 +24,7 @@ private:
    List<Type> l;
 public:
    int Count() { return l.Count(); }
+   void Reset() { l.Reset(); }
    int In(Pointer<Type> &ptr);
    void Add(Pointer<Type> &ptr);
    void Remove(Pointer<Type> &ptr);
