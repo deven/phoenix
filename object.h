@@ -28,7 +28,7 @@ private:
    int RefCnt;			// Reference count.
 public:
    Object(): RefCnt(0) { }
-   ~Object() { if (RefCnt) abort(); }
+   virtual ~Object() { if (RefCnt) abort(); }
    int References() { return RefCnt; }
    void NewReference() { RefCnt++; }
    void DeleteReference() { if (--RefCnt == 0) delete this; }
