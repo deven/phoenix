@@ -1546,20 +1546,50 @@ void Session::DoSignal(char *args) // Do /signal command.
 void Session::DoSend(char *args) // Do /send command.
 {
    Pointer<Sendlist> sendlist;
+   String slist;
+   char *p;
 
-   if (!*args) {			// Display current sendlist.
+   if (!*args) {		// Display current sendlist.
       if (default_sendlist) {
 	 output("You are sending to ");
       } else {
 	 output("Your default sendlist is turned off.\n");
 	 return;
       }
-   } else if (match(args,"off")) {
+   } else if (!strcasecmp(args,"off")) { // Turn sendlist off.
       default_sendlist = NULL;
       output("Your default sendlist has been turned off.\n");
       return;
-   } else {
-      sendlist = new Sendlist(*this,args);
+   } else {			// Set new sendlist.
+      for (p = args; *p; p++) {
+	 switch (*p) {
+	 case Backslash:
+	    if (*++p) slist.append(*p);
+	    break;
+	 case Quote:
+	    while (*p) {
+	       if (*p == Quote) {
+		  break;
+	       } else if (*p == Backslash) {
+		  if (*++p) slist.append(*p);
+	       } else {
+		  slist.append(*p);
+	       }
+	       p++;
+	    }
+	    break;
+	 case Underscore:
+	    slist.append(UnquotedUnderscore);
+	    break;
+	 case Comma:
+	    slist.append(Separator);
+	    break;
+	 default:
+	    slist.append(*p);
+	    break;
+	 }
+      }
+      sendlist = new Sendlist(*this,slist);
       if (sendlist->errors) {
 	 output("\a\a");
 	 output(~sendlist->errors);
@@ -2250,7 +2280,7 @@ void Session::DoMessage(char *line) // Do message send.
    }
 
    // Use default sendlist if indicated.
-   if (match(send,"default")) {
+   if (!strcasecmp(send,"default")) {
       if (default_sendlist) {
 	 sendlist = default_sendlist;
       } else {
