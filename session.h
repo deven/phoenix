@@ -41,6 +41,7 @@ public:
    void DoBye();		// Do /bye command.
    void DoWho();		// Do /who command.
    void DoDate();		// Do /date command.
+   void DoSignal(char *p);	// Do /signal command.
    void SendEveryone(char *msg);
    void SendByFD(int fd,char *sendlist,int explicit,char *msg);
    void SendPrivate(char *sendlist,int explicit,char *msg);

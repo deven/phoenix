@@ -191,6 +191,46 @@ void Session::DoDate()		// Do /date command.
    telnet->print("%s\n",date(0,0,0));	// Print current date and time.
 }
 
+void Session::DoSignal(char *p)	// Do /signal command.
+{
+   while (*p && isspace(*p)) p++;
+   if (!strncasecmp(p,"on",2)) {
+      telnet->SignalPublic = true;
+      telnet->SignalPrivate = true;
+      telnet->output("All signals are now on.\n");
+   } else if (!strncasecmp(p,"off",3)) {
+      telnet->SignalPublic = false;
+      telnet->SignalPrivate = false;
+      telnet->output("All signals are now off.\n");
+   } else if (!strncasecmp(p,"public",6)) {
+      p += 6;
+      while (*p && isspace(*p)) p++;
+      if (!strncasecmp(p,"on",2)) {
+	 telnet->SignalPublic = true;
+	 telnet->output("Signals for public messages are now on.\n");
+      } else if (!strncasecmp(p,"off",3)) {
+	 telnet->SignalPublic = false;
+	 telnet->output("Signals for public messages are now off.\n");
+      } else {
+	 telnet->output("/signal public syntax error!\n");
+      }
+   } else if (!strncasecmp(p,"private",7)) {
+      p += 7;
+      while (*p && isspace(*p)) p++;
+      if (!strncasecmp(p,"on",2)) {
+	 telnet->SignalPrivate = true;
+	 telnet->output("Signals for private messages are now on.\n");
+      } else if (!strncasecmp(p,"off",3)) {
+	 telnet->SignalPrivate = false;
+	 telnet->output("Signals for private messages are now off.\n");
+      } else {
+	 telnet->output("/signal private syntax error!\n");
+      }
+   } else {
+      telnet->output("/signal syntax error!\n");
+   }
+}
+
 void Session::notify(char *format,...) // formatted write to all sessions
 {
    char buf[BufSize];

@@ -466,43 +466,7 @@ void process_input(Telnet *telnet,char *line)
       } else if (!strcasecmp(line,"/date")) {
 	 telnet->session->DoDate();
       } else if (!strncasecmp(line,"/signal",7)) {
-	 char *p = line + 7;
-	 while (*p && isspace(*p)) p++;
-	 if (!strncasecmp(p,"on",2)) {
-	    telnet->SignalPublic = true;
-	    telnet->SignalPrivate = true;
-	    telnet->output("All signals are now on.\n");
-	 } else if (!strncasecmp(p,"off",3)) {
-	    telnet->SignalPublic = false;
-	    telnet->SignalPrivate = false;
-	    telnet->output("All signals are now off.\n");
-	 } else if (!strncasecmp(p,"public",6)) {
-	    p += 6;
-	    while (*p && isspace(*p)) p++;
-	    if (!strncasecmp(p,"on",2)) {
-	       telnet->SignalPublic = true;
-	       telnet->output("Signals for public messages are now on.\n");
-	    } else if (!strncasecmp(p,"off",3)) {
-	       telnet->SignalPublic = false;
-	       telnet->output("Signals for public messages are now off.\n");
-	    } else {
-	       telnet->output("/signal public syntax error!\n");
-	    }
-	 } else if (!strncasecmp(p,"private",7)) {
-	    p += 7;
-	    while (*p && isspace(*p)) p++;
-	    if (!strncasecmp(p,"on",2)) {
-	       telnet->SignalPrivate = true;
-	       telnet->output("Signals for private messages are now on.\n");
-	    } else if (!strncasecmp(p,"off",3)) {
-	       telnet->SignalPrivate = false;
-	       telnet->output("Signals for private messages are now off.\n");
-	    } else {
-	       telnet->output("/signal private syntax error!\n");
-	    }
-	 } else {
-	    telnet->output("/signal syntax error!\n");
-	 }
+	 telnet->session->DoSignal(line + 7);
       } else if (!strncasecmp(line,"/send",5)) {
 	 char *p = line + 5;
 	 while (*p && isspace(*p)) p++;
