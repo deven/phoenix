@@ -159,6 +159,10 @@ public:
       if (!buf) return;		// return if no data
       while (*buf) Output.out(*((unsigned char *) buf++));
    }
+   void output(const char *buf) { // queue output data
+      if (!buf) return;		// return if no data
+      while (*buf) Output.out(*((unsigned char *) buf++));
+   }
    void print(char *format, ...); // formatted output
    static void announce(char *format, ...); // formatted output to all sessions
 
