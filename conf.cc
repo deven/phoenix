@@ -223,22 +223,22 @@ char *message_start(char *line,char *sendlist,int len,boolean &explicit)
    return line + (*line == Space);
 }
 
-int match_name(char *name,char *sendlist)
+int match_name(char *name,char *sendlist) // returns position of match or 0.
 {
-   char *p, *q;
+   char *start,*p,*q;
 
-   if (!*name || !*sendlist) return 0;
-   for (p = name, q = sendlist; *p && *q; p++, q++) {
-      // Let an unquoted underscore match a space or an underscore.
-      if (*q == char(UnquotedUnderscore) &&
-	  (*p == Space || *p == Underscore)) continue;
-      if ((isupper(*p) ? tolower(*p) : *p) !=
-	  (isupper(*q) ? tolower(*q) : *q)) {
-	 // Mis-match, ignoring case. Recurse for middle matches.
-	 return match_name(name+1,sendlist);
+   if (!name || !sendlist || !*name || !*sendlist) return 0;
+   for (start = name; *start; start++) {
+      for (p = start, q = sendlist; *p && *q; p++, q++) {
+	 // Let an unquoted underscore match a space or an underscore.
+	 if (*q == char(UnquotedUnderscore) &&
+	     (*p == Space || *p == Underscore)) continue;
+	 if ((isupper(*p) ? tolower(*p) : *p) !=
+	     (isupper(*q) ? tolower(*q) : *q)) break;
       }
+      if (!*q) return (start - name) + 1;
    }
-   return !*q;
+   return 0;
 }
 
 void quit(int sig)		// received SIGQUIT or SIGTERM
