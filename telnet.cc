@@ -258,6 +258,8 @@ void Telnet::PrintMessage(OutputType type,time_t time,Name *from,Sendlist *to,
 	 }
       }
       output(Colon);
+   default:
+      break;
    }
 
    // Print timestamp. (make optional? ***)
