@@ -107,7 +107,7 @@ void open_log()
 }
 
 /* VARARGS1 */
-void log(format,va_alist)	/* log message */
+void Log(format,va_alist)	/* log message */
 char *format;
 va_dcl
 {
@@ -807,7 +807,7 @@ void name(struct telnet *telnet,char *line)
    notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
 	    date(time(&telnet->session->login_time),11,5));
    telnet->session->message_time = telnet->session->login_time;
-   log("Enter: %s (%s) on fd %d.",telnet->session->name,
+   Log("Enter: %s (%s) on fd %d.",telnet->session->name,
        telnet->session->user->user,telnet->fd);
 
    /* Set normal input routine. */
@@ -824,9 +824,9 @@ void process_input(struct telnet *telnet,char *line)
       }
       if (!strncmp(line,"!down",5)) {
 	 if (!strcmp(line,"!down !")) {
-	    log("Immediate shutdown requested by %s (%s).",
+	    Log("Immediate shutdown requested by %s (%s).",
 		telnet->session->name,telnet->session->user->user);
-	    log("Final shutdown warning.");
+	    Log("Final shutdown warning.");
 	    announce("*** %s has shut down conf! ***\n",telnet->session->name);
 	    announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
 		     7,7,7,7);
@@ -836,7 +836,7 @@ void process_input(struct telnet *telnet,char *line)
 	    if (Shutdown) {
 	       Shutdown = 0;
 	       alarm(0);
-	       log("Shutdown cancelled by %s (%s).",telnet->session->name,
+	       Log("Shutdown cancelled by %s (%s).",telnet->session->name,
 		   telnet->session->user->user);
 	       announce("*** %s has cancelled the server shutdown. ***\n",
 			telnet->session->name);
@@ -847,7 +847,7 @@ void process_input(struct telnet *telnet,char *line)
 	    int i;
 
 	    if (sscanf(line+5,"%d",&i) != 1) i = 30;
-	    log("Shutdown requested by %s (%s) in %d seconds.",
+	    Log("Shutdown requested by %s (%s) in %d seconds.",
 		telnet->session->name,telnet->session->user->user,i);
 	    announce("*** %s has shut down conf! ***\n",telnet->session->name);
 	    announce("%c%c>>> This server will shutdown in %d seconds... "
@@ -1152,7 +1152,7 @@ void new_connection(int lfd)	/* accept a new connection */
    /* Log calling host and port. */
    saddrlen = sizeof(saddr);
    if (!getpeername(telnet->fd,(struct sockaddr *) &saddr,&saddrlen)) {
-      log("Accepted connection on fd %d from %s port %d.",telnet->fd,
+      Log("Accepted connection on fd %d from %s port %d.",telnet->fd,
 	  inet_ntoa(saddr.sin_addr),saddr.sin_port);
    } else {
       warn("getpeername");
@@ -1269,7 +1269,7 @@ void close_connection(struct telnet *telnet)
    /* Notify and log exit if session found. */
    if (found) {
       notify("*** %s has left conf! [%s] ***\n",session->name,date(0,11,5));
-      log("Exit: %s (%s) on fd %d.",session->name,session->user->user,
+      Log("Exit: %s (%s) on fd %d.",session->name,session->user->user,
 	  telnet->fd);
    }
 
@@ -1405,7 +1405,7 @@ void input_ready(struct telnet *telnet) /* telnet stream can input data */
 	       put_command(telnet,COMMAND_SHUTDOWN);
 
 	       /* Initiate shutdown. */
-	       log("Shutdown requested by new server in 30 seconds.");
+	       Log("Shutdown requested by new server in 30 seconds.");
 	       announce("%c%c>>> A new server is starting.  This server "
 			"will shutdown in 30 seconds... <<<\n%c%c",7,7,7,7);
 	       alarm(30);
@@ -1774,7 +1774,7 @@ void output_ready(struct telnet *telnet) /* telnet stream can output data */
 
 void quit(int sig)		/* received SIGQUIT or SIGTERM */
 {
-   log("Shutdown requested by signal in 30 seconds.");
+   Log("Shutdown requested by signal in 30 seconds.");
    announce("%c%c>>> This server will shutdown in 30 seconds... <<<\n%c%c",
 	    7,7,7,7);
    alarm(30);
@@ -1788,18 +1788,18 @@ void alrm(int sig)		/* received SIGALRM */
    /* Ignore unless shutting down. */
    if (Shutdown) {
       if (Shutdown == 1) {
-	 log("Final shutdown warning.");
+	 Log("Final shutdown warning.");
 	 announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
 		  7,7,7,7);
 	 alarm(5);
 	 Shutdown++;;
       } else {
-	 log("Closing connections.");
+	 Log("Closing connections.");
 	 /* /// close listening socket */
 	 for (telnet = connections; telnet; telnet = telnet->next) {
 	    close(telnet->fd);
 	 }
-	 log("Server down.");
+	 Log("Server down.");
 	 if (logfile) fclose(logfile);
 	 exit(0);
       }
@@ -1839,7 +1839,7 @@ void main(int argc,char **argv) /* main program */
 	 signal(SIGQUIT,quit);
 	 signal(SIGTERM,quit);
 	 signal(SIGALRM,alrm);
-	 log("Server started, running on port %d. (pid %d)",PORT,getpid());
+	 Log("Server started, running on port %d. (pid %d)",PORT,getpid());
 	 break;
       case -1:
 	 error("fork");
@@ -1855,8 +1855,8 @@ void main(int argc,char **argv) /* main program */
    while(1) {
       /* Exit if shutting down and no users are left. */
       if (Shutdown && !connections) {
-	 log("All connections closed, shutting down.");
-	 log("Server down.");
+	 Log("All connections closed, shutting down.");
+	 Log("Server down.");
 	 if (logfile) fclose(logfile);
 	 exit(0);
       }

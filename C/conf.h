@@ -155,6 +155,7 @@ struct user {
    /* /// default blurb? */
 };
 
+void Log();
 void warn();
 void error();
 void *alloc(int len);
