@@ -1,44 +1,497 @@
-*** Use Telnet TIMING-MARK option as ACK for /detach.  Send once with initial
-*** options (first) to verify response.
+*** PROBLEM:  anonymous signons with duplicate and reserved names!!!
 
-*** announce(), link session immediately, make sessions have state different
-*** before signon or have "inactive" and "active" sessions, drop connections
-*** with sessions during login, make sure telnet pointer is valid when input
-*** processing routines are called.  make nuke() session-level as well as
-*** announce().
+Possibly have here/away/busy/gone set "transient" blurbs, and /blurb set
+"persistent" blurbs.  here/away/busy/gone without arguments would revert
+to last persistent blurb.  Maybe allow /finger or some other command show
+both transient AND persistent blurbs...
 
-*** fix name_obj whenever name or blurb changes, wipe session pointers in
-*** name objects when session is destroyed.
+When persistent object database is done, possible allow commands to make
+current session state permanent, like "/save blurb" or such?
 
-*** handle accept() errors (fd==-1) more cleanly than a "range error".
+Should transferring a session reset idle time?  Probably not.  (But it does!)
+Should detaching really reset idle?  Not sure...
 
-*** for all reference-counted objects, make sure to decrement & delete when
-*** replacing a pointer with another.  (use operator = and stuff to handle
-*** reference-counted objects safely?)
+*** (18:06) Chaos! All members of perl are now moderators ***
+
+Allow some mechanism via which the server can request a specific prompt from
+the client to the user -- either a one-shot or a repeating prompt.  For a
+repeating prompt, maybe include when to stop prompting, e.g. "." line.  Also
+specify whether input is blanked.  For blanked input, the client should NOT
+display it on the screen, even if it was being redrawn; redraw as blank, AND
+remove from scrollback/input history/kill ring/etc.  Maybe a repeating prompt
+should be a hint, and only lines which have another prompt request come back
+KEEP the prompt; it might have to be erased ex post facto.  Actually, maybe
+repeating prompts aren't worth the trouble.  Some prompts might be considered
+special prompts (e.g. initial login/password/name/blurb prompts) and be tagged
+with predefined prompt tags so the client could specially process them if it
+chooses to do so, e.g. auto-login.
+*** Does the standard telnet linemode allow for protocol-specified prompts?
+
+How to handle asynchronous output received while prompting?  block?  output?
+prompt needs to be redrawn if output.  If multiple prompts, (e.g. info set)
+can output be redrawing before _sequence_ of prompted lines, or maybe saved
+until later?
+
+Perhaps the client should have two forms of prompting -- one-line prompts, and
+buffer prompts; buffer prompts might be in a different window or something,
+the mechanism for marking the end of the buffer could be client-local, any
+asynchronous output would be printed (or saved by the client) but not print
+in the middle of the buffer input, buffer prompting would be up to the client,
+maybe with a suggested prompt from the server, which the client could ignore.
+The server could specify maximum rows and columns for the buffer, maybe both
+soft (suggested) and hard (enforced) limits on each, similar for character
+sets.  Some buffers might actually be binary data, depending on what type of
+data the server requests.  The server might also recommend that the client
+ask the user for a filename to satisfy a buffer request, possibly with either
+a suggested filename, or an automatic filename that wouldn't prompt the user
+(this might have security implications; maybe some should be automatic like a
+startup file and all others confirmed by the user; this would be within the
+client's discretion how to handle any given buffer request.)  The server
+could either block waiting on a buffer, or offer a buffer ID and return to
+normal mode, allowing to send the buffer (with ID) at its convenience.  Have
+to watch out that such buffer tags can't stay outstanding forever; probably
+have either a timeout or wipe them when the connection clears.  Also, allow
+client to CANCEL a pending buffer request.  If client doesn't handle buffer
+management, use server-based one-shot prompting as a fallback.
+
+  In client & server both, allow client to send TIMING-MARK sequence, server
+responds at appropriate time.  e.g. client sends /who command and TIMING-MARK,
+server sends all /who output and THEN sends the TIMING-MARK reply.  Client
+keep redrawing input until the TIMING-MARK reply, even if return was typed;
+it would just redraw multiple input lines.  Then, when the reply comes, the
+next "sent" input line (if any) is placed into its place in the client's I/O
+buffers/scrollback and is no longer redrawn.  if 5 lines are send from the
+client, they can all be sent at once, each with a TIMING-MARK.
+  Example from lily: /info set -- each line has a * prompt.  Suppose user does
+/info set and all the lines of the info and the trailing . all in a single
+xterm paste operation.  On lily with the lily client, all the user's lines
+are printed at once, then * * * * * * across the screen as the prompts come
+back from the server.  Obviously this is less than ideal.  With TIMING-MARK
+events used, the /info set would be followed by TIMING-MARK, then the first
+info line, then TIMING-MARK, etc.  All this input would appear on the screen
+immediately, and all of it would be sent immediately, with a TIMING-MARK after
+every line sent.  In the server reply, a TIMING-MARK reply would come at the
+end of each prompt.  As the server response came back, the client would redraw
+ALL of the input lines pending, shifting into the middle of a line if need be,
+and as soon as a TIMING-MARK came back, that would mark the location of the
+start of the next input line -- info lines would be redrawn after the *, then
+the TIMING-MARK would fix the location of the first input line, on the line
+with the first prompt.  Then the next prompt and TIMING-MARK would come in,
+filling in the prompt on the second line, etc.  In this fashion, all the lines
+could be sent at once and yet be in exactly the right place on the screen and
+in scrollback.
+  ACTUALLY, the TIMING-MARK should probably be sent BEFORE the input, instead
+of after (or both?) -- that way a *** notification couldn't come between /who
+and the /who output, for example.  Would another one be useful after, or would
+that be redundant?  Probably redundant.  Perhaps the best approach is for the
+client to send TIMING-MARK before the line of data; the server sets a flag.
+When the server gets the newline, it sends the TIMING-MARK reply and then the
+response to the input.  That way, if any asynchronous output is generated as
+the input line is being sent, it won't have to be blocked.  After would be
+bad because we really want the reply TIMING-MARK just BEFORE the synchronous
+output as a marker, and the server can't KNOW if a TIMING-MARK will follow
+the newline.
+  If the server receives IAC DO TIMING-MARK, set a flag.  If the flag was set
+already, then instead return IAC WONT TIMING-MARK immediately.  When a newline
+is received, check the flag -- if set, send IAC WILL TIMING-MARK and then do
+the processing of the input line.  Client should keep redrawing input until
+the IAC WILL/WONT TIMING-MARK comes back, then fix ONE input line and continue
+to redraw any remaining input lines.
+
+"trolling" flag? :-)
+
+Add more info to /howmany command?  e.g. idle/active/etc  maximums?
+
+full-screen -- when reviewing log, if message arrives, create split window at
+bottom, switchable to it, let it grow to up to half screen.
+
+Allow sending to discussion _except_ specific people or discussions?
+
+Show discussion quits on /bye?
+
+Show multi-discussion notifications.
+
+Destroy discussions when empty unless special.
+
+"/here" alone act as "/here off"?  have "/here same"?  configurable default?
+
+*** discussions show people not signed on
+
+For /detach, always switch to "gone" unless here/away/busy/gone keyword
+specified.  (same or brb as keywords?)  allow blurb w/detach
+
+pronouns?
+
+finger-type info -- real name, web page, email, etc.
+
+/notify, /info, /group, /finger, server banner w/admin address, crash recovery
+
+guest questionnaire
+
+/submit
+
+/review
+
+better attach review, no beeps, filter, session list
+
+*** event queue -- have shutdown/cancel use event queue instead of alarm().
+
+*** use identd (port 113) server:
+    request of the form: <port-on-identd-server-host>, <port-on-client> [6789]
+    response: <echoed ports> : <response-type> : <additional-info>
+    e.g. 2351, 6789 : USER-ID : UNIX : deven
+    e.g. 2351, 6789 : ERROR : NO-USER
+    [ignore whitespace]
+    [use event queue timeout on server response]
+    Have a response event in event queue?  make action event queue or set?
+
+*** use accept() 3rd arg instead of getpeername()
+
+fix hang after /det (use final option negotiation different from TIMING-MARK?)
+*** Use shutdown()
+
+Optimize character input in telnet.cc -- if a group of characters comes in,
+only queue the block of characters to output buffer, not each one.  Replace
+switch statement with array lookup of handling functions so text can be
+inserted before calling the function if necessary.
+
+Make new Keymap class and include Escape and CSI maps with it.
+
+make new classes for terminals (use termcap) and for editing functionality.
+
+split Session class into smaller classes?  how?  command-mode classes?  maybe
+a chain of active modes, possibly prioritized?  e.g. privileged command parser,
+standard command parser, login parser/prompter, etc.
+
+Do direct DNS lookup?  What RFC?  (1034/1035 I think.)  tcp or udp?  (both?)
+
+Fix for very long names, /who wraps as if blurb.
+
+Use unsigned for idle?  check for overflow on /setidle.
+
+Add GDBM support, have an Associative class for it, allowing both internal hash
+tables and external (GDBM) hash tables a la perl, use String type for key/data!
+Maybe even overload [] to act like {} perl associative array reference...
+Have [] dereference to Element object which knows the reference internally,
+then have conversions Element <-> String cause actual hash table lookup/store
+and (possibly) GDBM read/write.  Make sure Element <-> Element copies, using
+operator=, so foo["bar"]=foo["baz"] will work.  Also have numeric->String so
+foo[1] will be the same as foo["1"].  Have Element.operator=(String) maybe too.
+
+*** Update client editing to match server!
+
+Add some sort of lily bridge.  Possibly add /lily command to connect to lily
+server as user, use special character (such as ">" or pseudo-user "lily" for
+input and output prefixing, configurable)
+
+Add a "/sync" command to see if messages were actually *received* or not.
+Allow a username argument(s), and if not sent, pause if recipient attached,
+unless "sync" user decides to abort.  (this probably can't work for public's)
+
+For discussion-matching efficiency, maintain list of joined discussions for
+each session.
+
+Deal with saving edited text somehow when tossing to get history lines.
+
+Have minibuffer?  [after current input line if non-empty, don't erase]
+
+M-ESC -> "Eval:"?  M-x commands?  command mode?
+
+Fix trim(line) on messages.  Need to keep leading spaces.
+
+Allow login & password both at the login: prompt (ideally blank password)
+Better, use ...'s for password echo.
+
+spruce up ; and : processing -- fix smiley processing!
+
+/also, /oops
+
+fix sending to Name object (with last or default sendlist or other?) when
+associated session is gone.
+
+fix problems with Name objects not aligning with Sessions after a /rename.
+
+announcements
+
+Allow true idle-time (keystroke level) timer on /signal. (reminder too?)
+
+Allow !permit or !appoint or such to allow privileged discussion override.
+
+Maybe add discussion moderator privilege level?  Creator = 50, others = 10 by
+default, /appoint can only create a lower-level moderator, allow privilege
+level to be specified, privilege level 1 can't appoint modertors.  Or, allow
+up to equal level created, level 0 can't create new ones, default to (level-1).
+Alternatively, record who appointed a moderator, only an "ancestor" could then
+unappoint.
+
+Let name/blurb use an extra column when there's a date in the "On Since".
+(But not one with a year!)
+
+Have output routines handle timestamps differently if not on the same day.
+
+/notify status on => *** You are "away", with blurb [shower]. ***
+
+Let final ] and + share column in /who, etc.
+
+Have Set class maintain a "universe" of objects and use bitmasks?
+
+Have ~name match only against reserved names?
+
+Have import and export procedures for object database for easy hand editing.
+Maybe allow << to work on String or File objects as well as Datum objects?
+
+Add receive blurb limit.
+
+Change /setidle to /set idle, maybe have getword() treat = like ,?
+(or have getword() accept alternate termination characters in parameters)
+
+have match_name() take "exact" parameter to return boolean, match whitespace
+and _'s uniformly, middle and ends.
+
+disallow leading and trailing spaces in sendables, treat consecutive spaces
+as one for matching purposes.  Allow leading and trailing _'s, but treat like
+spaces for matching purposes.  ("___foo___bar___" == "_foo  bar_" == "foo bar"
+== "foo_ bar_" == "__foo             bar", BUT "foo bar" != "foobar")
+
+fix rename -> permissions
+
+have permanent discussions.
+
+/notify,/signal,/alias,/ignore?
+
+PAGING.
+
+inbox/771,772
+
+Add OutputStream to user.h
+
+full-screen idea -- when reviewing log, if message arrives, create a split
+window at the bottom, switchable to it, let it grow to up to half screen.
+
+===============================================================================
+Add persistent objects.  Have Object contain a database file & logical
+address.  Use blocks for data storage, addressing to multiples of 16 bytes,
+first word of block & 0xfffffff0 == address of next block (link) in entry,
+first word & 0x0f == encoded block size -- 0=16, 1=32, 2=64, 3=128, 4=256,
+5=512, 6=1024, 7=2048, 8=4096, 9=8192, 10=16384, 11=32768, 12=65536,
+13=131072, 14=262144, 15=524288.  [maybe use 8 instead of 16?]  [maybe use
+mixed scheme, some scaling, some multiplying?]
+
+Have root object for each database file, returned when opened.  Overload <<
+operator for outputting parts of objects to database entry, including for
+Pointer class, saving logical database address.  When object is to be
+written to database, call << on object, which may recurse for subobjects.
+
+When Object is swapped to disk, replace Object with StubObject?  Or, maybe
+objects can be swapped to disk, decrementing refcounts, letting Objects
+expire?  Or, have Pointer class hold logical address?  Need some way to
+release memory by swapping old objects to disk...
+
+Possibly implement Btrees in objects saved?  [inefficient, but integrated.]
+-------------------------------------------------------------------------------
+Registry Information: class ID, description, version (major/minor), class name,
+   code version, $Id$, compatibility version (major/minor or major only?).
+
+Have a Token class.
+
+Session(Token &key) calls OpenStream(ID,key)
+
+class Storable: public Object
+-------------------------------------------------------------------------------
+class Database: public Object {
+public:
+   Pointer<String> name;
+   int fd;
+   DBEntry header;
+
+   Database(char *db): name(db) {
+      fd = open(db,O_RDWR);
+      header = Open(0);
+   }
+   ~Database() {
+      // Do what?
+   }
+   DBEntry Open(long addr) {
+      return DBEntry(*this,addr);
+   }
+};
+
+class DBEntry: public Object {
+private:
+   long addr;
+public:
+   // ...
+};
+-------------------------------------------------------------------------------
+Add Handle class?
+-------------------------------------------------------------------------------
+block - 1st word - & ~0x0f = logical address (link)
+                   &  0x0f = size/16
+                             0x01 = 16
+                             0x02 = 32,etc.
+                             0x00 = extended size
+                                    => next word (2 bytes)
+                                       = size/16 - 16
+                                         0x0000 = 256
+                                         0x0001 = 282
+                                         0xfff0 = 1048576
+===============================================================================
+
+add time limits for "away" states.
+
+*** make output streams persistent, and sessions.  (Pending stream should not
+*** be persistent, only Output stream in Session.) [flag on constructor?]
+
+"group" class?  privilege required for general group sending like "all" or
+"everyone"?
+
+session.h -- make *sendlist of type Pointer<Sendlist>. [Sendlist?]
+[should reply be sendlist or name?  reply to sender or sender and other
+recipients?]
+
+name.h -- name,user,blurb [wipe session on signoff, restore on name/user match]
+
+List class -- add RemoveUnused() for Name list in session
+
+*** save session information so state can be reset on restart?
+
+*** permissions
+
+*** watches -- List<Name> watch; //extend for what to watch for?
+[have a concept of "friends" that get more attention?]
+
+*** list commands, list commands w/multiple sendlists
+
+*** input history
+
+/alias
+
+any operators worth using in general?  <<? [watch for "out << Newline" --
+needs to output '\n', not 10, need "out << endl" too, probably, and also
+"out << format("%...",...)"]
+
+use <<, >> operators for logfile, other files, telnet connection, buffer, etc.
+have all outputting classes be derived from some base output class?
+
+implement notifications and messages as events, include event queue in session
+for past events while detached, have global or per-session future events in
+another event queue to allow for future message sending...  No bell for any
+messages played back from being detached.
+
+/msg command for multiline sends. (ideally allowing multiline edit)
+Allow multiline message sends, info file entry, etc. using "." to terminate
+input?  Postpone notifications/messages in event queue a la detach for the
+duration, but still ring bell.  Maybe allow emacs-style editing between lines
+or such?  possibly create a second screen window?
+
+Add "/mode line" and "/mode char" commands to have server initiate change.
+Ideally have "/mode auto" (default?) which switches to/from line mode as
+network speed varies...  (measure round-trip time of TIMING-MARKs?)
+
+add blurb notification (not double notify for /here [blurb]?)
+
+Implement /oops and /also (have /also extend last sendlist)
+
+/reply command to set automatic reply while away/busy/gone.
+(also "reply" keyword on /away et al, but still take blurb, prompt for reply.)
+["Automatic reply from ...", send only once.]
+
+add /last command to show last message sent to someone.  (if multiple, replay
+the set of last messages sent to those people) [dunno about discussions]
+/last alone should replay the last message sent.  Should /last also *set* the
+last message so the /also and /oops work relative to it?
+
+multiple reserved names
+
+save email address in User
+
+sending to user
+
+save detached sessions
+
+add "zombie" session list for killed sessions that have detached output?
+
+restart migration
+
+!force
+
+When printing a message, if the destination name doesn't match the current
+name, show the original destination name.  If the timestamp is old, print
+longer format.
+
+handle name [blurb] at Name: prompt.
+
+/who & /idle keywords: here, away, idle (>5?), unidle (<=5?), idle < #,
+idle > #, idle <= #, idle >= #, active (here/unidle), inactive (away/idle)
+
+history
+
+info files
+
+Allow /date command adjust server time relative to system time...
+
+/help args
+
+make two output streams in session, one for all output (no clear screen) and
+another for pending output to be sent (including reviews of the other output)
+
+make output stream(s) in discussions.
+
+Review input line with output.
+
+fix margin handling
+
+No bells during output review!
+
+Add past output queue, when input line is entered, queue input line as output,
+in pending queue if nonempty (means the line is undrawn and not being echoed)
+or in past output queue if pending queue is empty (means line has been echoed
+and therefore does not need to be resent as output; echoing newline is enough).
+
+-------------------------------------------------------------------------------
+allow infinite blurbs and truncate when necessary?  Could have "Name [blurb]+"
+form when truncated; a /who-type command matching one name or given a "blurb"
+("blurbs"?) option would show complete blurbs, perhaps broken across lines...
+
+example:
+
+/who
+
+ Name                              On Since   Idle  User
+ ----                              --------   ----  ----
+~Rob [ This is an example of an ]+ detached 1d14:33 rob
++[extremely long blurb.  A blurb so incredibly long that it could get quite ]+
++[annoying after a while...  in fact, a blurb this long is downright obnoxio]+
++[us, if you think about it. ]
+ Deven                              Jan  5       8  deven
+-------------------------------------------------------------------------------
+
+Have server fork & exec new server, pass connections & sessions...
 
 Have trailing spaces trimmed from output.
 
+Add String class.
+
 Make height & width variable terminal characteristics.
 
-Have Sendlist class have list of sessions and list of discussions.
-
-Possible to check if kernel buffers have drained?  a la TCSA_DRAIN in fcntl()?
+/away when idle 15
 
 Move static Telnet::announce() to non-static Session::announce().
 
-Fix idle time formatting (spacing), make On Since show date (means multiday
-idle can take advantage of smaller On Since, also.)
+add array class for fdtable to use?
 
 maybe have some sort of InitSession object?  A different Session object for
 Session protocol?  Make announcements Session-based?
 
-/alias
+/at, /every, /signal at, /signal every
+
+implement !force. (output as text to forced session)
 
 fd_set scanning optimization (portable & non-portable) [32/8/1 bit]
 
 definitely make terminal-handling class, maybe use termcap
 
-any operators worth using in general?  <<?
+Allow a who default instead of here,active... (allow separate /idle one?)
 
 maybe save some sort of "persona" structure or something so multiple string
 copies of a name don't have to be saved, but the session doesn't either, or
@@ -50,23 +503,9 @@ all parties.  (all have reattached)
 
 put in hash functions, symbol tables/variables for each user/ session, etc?
 
-create "sendlist" class.  for things like "all" or "away" or /who, keywords
-or class extensions?  "group" class?  privilege required for general group
-sending like "all" or "everyone"?
-
 improve editing support (kill-ring)
 
-here/away support, have /reply command to set automatic reply while away.
-(also "reply" keyword on /away but still take blurb, prompt for reply.)
-
 abstract terminal handling
-
-event queue
-
-implement notifications and messages as events, include event queue in session
-for past events while detached, have global or per-session future events in
-another event queue to allow for future message sending...  No bell for any
-messages played back from being detached.
 
 add general code to interpret time values, as relative offsets or absolute.
 
@@ -74,32 +513,20 @@ timed messages -- delayed send, timeouts
 
 add /leave command.  Force disconnect unless /leave cancel is done.
 
-have shutdown/cancel use event queue instead of alarm().
-
 allow for minimum-privilege level required for entry.
 
 allow changed privileges with a !command
 
-expand ; and : immediately
-
-Allow multiline message sends, info file entry, etc. using "." to terminate
-input?  Postpone notifications/messages in event queue a la detach for the
-duration, but still ring bell.  Maybe allow emacs-style editing between lines
-or such?  possibly create a second screen window?
-
 log !commands?
 
-support tcp w/o telnet by not blocking on options and assuming no telnet unless/until reply received.
+support tcp w/o telnet by not blocking on options and assuming no telnet
+unless/until reply received.
 
 no go aheads unless sga *refused*  no block at least
 
 check options against 0 or 3,could be 1 or 2!!
 
-session -> add redraw -> telnet
-
-real command parser
-
-Where does "(-: message" go?  should mirrored smileys not be special-cased?
+real command parser (allow /idle=<nn> as well as /idle =<nn>)
 
 improve account handling
 
@@ -110,8 +537,6 @@ add /notify
 allow sending to users not signed on (send email notifications?)
 
 add /invite command (email/talk/?)
-
-save session information so state can be reset on restart?
 
 output to files merged with Telnet I/O?
 
@@ -145,3 +570,160 @@ Public vs. private multiple reserved names?
 
 user/pseudo-oriented permissions/notifications, permanent & temporary interest
 levels, etc. (i.e. mark friends, etc.)
+
+Have parent process with pipe as database manager, child as conferencing
+server?  both with connections
+
+Clover gateway?  Email/News/IRC/FTP/other?
+
+Have some sort of /boot or /eject command to boot a user who is unwanted.
+Require someone to second the motion, then ask for votes from all users.
+Given a yes vote by a 1/2 or 2/3 majority given a quorom of votes cast,
+eject the user for some period of time.  (should quorom be based on active
+users or all?)
+
+more generalized parsing/tokenizing?  (like a compiler)
+
+use handles to some objects?  (to allow swapping a la Mac)
+
+persistent object storage
+
+!restart to restart server.  (fork, pass data over pipe, restart seamlessly)
+
+have macro processor
+
+/talk user@host <-> messages! [otalk/ntalk]
+
+Add Meta-<digits> for repeat values, make ^U as repeat configurable.
+
+Overload operator new in class Object so auto objects can be created?
+
+===============================================================================
+If the following patch is applied to object.h, all derived classes need to
+declare their Pointer class as a friend.  For example:
+
+class Session: public Object {
+friend class Pointer<Session>;
+...
+};
+-------------------------------------------------------------------------------
+This patch is against object.h 1.3:
+-------------------------------------------------------------------------------
+24c24
+< private:
+---
+> protected:
+29,31d28
+<    int References() { return RefCnt; }
+<    void NewReference() { RefCnt++; }
+<    void DeleteReference() { if (--RefCnt == 0) delete this; }
+40,43c37,40
+<    Pointer(Pointer &p): ptr(p.ptr) { if (ptr) ptr->NewReference(); }
+<    Pointer(Type *p): ptr(p) { if (ptr) ptr->NewReference(); }
+<    Pointer(Type &p): ptr(&p) { if (ptr) ptr->NewReference(); }
+<    ~Pointer() { if (ptr) ptr->DeleteReference(); }
+---
+>    Pointer(Pointer &p): ptr(p.ptr) { if (ptr) ptr->RefCnt++; }
+>    Pointer(Type *p): ptr(p) { if (ptr) ptr->RefCnt++; }
+>    Pointer(Type &p): ptr(&p) { if (ptr) ptr->RefCnt++; }
+>    ~Pointer() { if (ptr && --ptr->RefCnt == 0) delete ptr; }
+45,46c42,43
+<       if (p.ptr) p.ptr->NewReference();
+<       if (ptr) ptr->DeleteReference();
+---
+>       if (p.ptr) p.ptr->RefCnt++;
+>       if (ptr && --ptr->RefCnt == 0) delete ptr;
+51,52c48,49
+<       if (p) p->NewReference();
+<       if (ptr) ptr->DeleteReference();
+---
+>       if (p) p->RefCnt++;
+>       if (ptr && --ptr->RefCnt == 0) delete ptr;
+58c55
+<       if (ptr) ptr->DeleteReference();
+---
+>       if (ptr && --ptr->RefCnt == 0) delete ptr;
+===============================================================================
+
+===============================================================================
+Use allocation pools for each class.  (or at least some)
+[Derived classes must use their own pool if the parent class uses a pool.]
+-------------------------------------------------------------------------------
+#include <sys/types.h>
+#include "object.h"
+
+template <class Type>
+class Pool {
+private:
+   void *blocks;			// List of allocated blocks.
+   void *avail;				// List of available objects.
+
+   Pool(Pool &);			// copy protection
+   void operator =(Pool &);		// copy protection
+   void grow();				// Allocate a new block of objects.
+public:
+   Pool(): blocks(0),avail(0) { }	// constructor
+   ~Pool() {				// destructor
+      while (blocks) {
+         char *p = (char *) blocks;
+         blocks = *((void **) p);
+         delete p;
+      }
+   }
+
+   void *alloc(size_t size) {		// Allocate an available object.
+      if (!avail) grow();
+      void *p = avail;
+      avail = *((void **) p);
+      return p;
+   }
+   void free(void *obj) {		// Free (make available) an object.
+      *((void **) obj) = avail;
+      avail = obj;
+   }
+};
+
+template <class Type>
+void Pool<Type>::grow()			// Allocate a new block of objects.
+{
+   const int vsize = sizeof(void *);
+   const int size = sizeof(Type) < vsize ? vsize : sizeof(Type);
+   const int overhead = 12;
+   const int bsize = (((size + overhead - 1) / 8192) + 1) * 8192 - overhead;
+   const int elements = (bsize - vsize) / size;
+
+   char *block = new char[bsize];
+   char *p = block + vsize;
+   char *end = p + (elements - 1) * size;
+
+   *((void **) block) = blocks;
+   blocks = block;
+
+   avail = (void *) p;
+   while (p < end) {
+      *((void **) p) = (void *) (p + size);
+      p += size;
+   }
+   *((void **) end) = 0;
+}
+
+class Foo: public Object {
+friend class Pointer<Foo>;
+private:
+   static Pool<Foo> pool;
+public:
+   Pointer<Foo> next;
+   void *operator new(size_t size) { return pool.alloc(size); }
+   void operator delete(void *p) { pool.free(p); }
+   Foo(Pointer<Foo> &foo): next(foo) { }
+};
+
+Pool<Foo> Foo::pool;
+
+main()
+{
+   Pointer<Foo> foo;
+
+   for (unsigned long i = 0; i < 100000; i++) foo = new Foo(foo);
+}
+===============================================================================
