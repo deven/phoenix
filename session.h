@@ -27,7 +27,7 @@ class Session: public Object {
    static List<Session> sessions; // List of signed-on sessions.
    static List<Discussion> discussions; // List of active discussions.
 public:
-   static Assoc defaults;	// default session-level system variables
+   static Hash defaults;	// default session-level system variables
 
    Pointer<User> user;		// user this session belongs to
    Pointer<Telnet> telnet;	// telnet connection for this session
@@ -35,8 +35,8 @@ public:
    Pointer<Line> lines;		// unprocessed input lines
    OutputBuffer Output;		// temporary output buffer
    OutputStream Pending;	// pending output stream
-   Assoc user_vars;		// session-level user variables
-   Assoc sys_vars;		// session-level system variables
+   Hash user_vars;		// session-level user variables
+   Hash sys_vars;		// session-level system variables
    Timestamp login_time;	// time logged in
    Timestamp message_time;	// time last message sent (for idle time)
    AwayState away;		// here/away/busy/gone state
