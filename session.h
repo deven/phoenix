@@ -134,6 +134,7 @@ public:
    void PrintDiscussions(Set<Discussion> &discussions);
    void SessionMatches(char *name, Set<Session> &matches);
    void DiscussionMatches(char *name, Set<Discussion> &matches);
+   void PrintReservedNames();
    void Login(char *line);
    void Password(char *line);
    boolean CheckNameAvailability(char *name, boolean double_check,

@@ -36,17 +36,17 @@ public:
    List<Session> sessions;	// sessions for this user
    String user;			// account name
    String password;		// password for this account (during login)
-   String reserved;		// reserved user name (pseudo)
+   List<StringObj> reserved;	// reserved user names (pseudos)
    String blurb;		// default blurb
    int priv;			// privilege level
 
-   User(char *login, char *pass, char *name, char *bl, int p): user(login),
-   password(pass), reserved(name), blurb(bl), priv(p) { users.AddTail(this); }
+   User(char *login, char *pass, char *names, char *bl, int p);
    ~User() { users.Remove(this); }
+   void SetReserved(char *names);
    static User *GetUser(char *login);
    static void Update(char *login, char *pass, char *name, char *defblurb,
 		      int p);
    static void UpdateAll();
-   boolean FindReserved(char *name, User *&user);
+   char *FindReserved(char *name, User *&user);
    void AddSession(Session *s) { sessions.AddTail(s); }
 };
