@@ -117,4 +117,6 @@ char *message_start(char *line,char *sendlist,int len,boolean &explicit);
 int match_name(char *name,char *sendlist);
 void quit(int);
 void alrm(int);
+void RestartServer();
+void ShutdownServer();
 int main(int argc,char **argv);
