@@ -85,6 +85,7 @@ public:
 
 class Message: public OutputObj {
 private:
+   friend class Session;
    Pointer<Name> from;
    Pointer<Sendlist> to;
    String text;
