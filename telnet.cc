@@ -912,7 +912,6 @@ void Telnet::InputReady()	// telnet stream can input data
 {
    char buf[BufSize];
    Block *block;
-   char *p;
    register char *from,*from_end;
    register int n;
 
