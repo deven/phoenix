@@ -1,6 +1,11 @@
 $Id: NEWS,v 1.6 2002/11/21 05:03:43 deven Exp $
 
-November 20, 2002: Version 1.0.0.beta.6
+November 22, 2002: Version 1.0.0.beta.7
+
+ * This release applies GCC-specific compiler options only to GCC compilers,
+   and also increases the number of connections supported under Cygwin to 256.
+
+November 21, 2002: Version 1.0.0.beta.6
 
  * This release integrates autoconf/automake so "./configure; make" can be
    used to build Gangplank.  Configure options exist to disable guest access
