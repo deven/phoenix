@@ -4,7 +4,7 @@
 //
 // Conferencing system server -- General header file.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
 // Revision 1.5  1993/12/31 08:12:37  deven

@@ -4,7 +4,7 @@
 //
 // Listen class interface.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: listen.h,v $
 // Revision 1.2  1993/12/11 23:55:16  deven

@@ -4,7 +4,7 @@
 //
 // FD class interface.
 //
-// Copyright 1993 by Deven T. Corzine.  All rights reserved.
+// Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fd.h,v $
 // Revision 1.4  1993/12/21 15:21:07  deven
