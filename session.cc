@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.8 2003/02/17 06:57:53 deven Exp $
+// $Id: session.cc,v 1.9 2003/02/17 08:06:13 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.9  2003/02/17 08:06:13  deven
+// Added MaxLoginAttempts and removed "Login incorrect" for invalid logins.
+//
 // Revision 1.8  2003/02/17 06:57:53  deven
 // Forgot to fix the comparison when reducing the display of discussion titles!
 //

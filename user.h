@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.1 2001/11/30 23:53:32 deven Exp $
+// $Id: user.h,v 1.2 2003/02/17 07:24:42 deven Exp $
 //
 // User class interface.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: user.h,v $
+// Revision 1.2  2003/02/17 07:24:42  deven
+// Added BufSize constant, increased size to 1024 bytes.
+//
 // Revision 1.1  2001/11/30 23:53:32  deven
 // Initial revision
 //
