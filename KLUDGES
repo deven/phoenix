@@ -1,5 +1,12 @@
 $Id: KLUDGES,v 1.1 2001/11/30 23:53:32 deven Exp $
 
+The Object class arbitrarily sets the reference count to -1000 when deleting
+itself, to avoid recursive destruction of objects due to temporary references.
+This is an arbitrary number and a bit of a kludge, but doesn't carry the space
+or performance costs of storing a separate flag or checking a sentinel value.
+This could only cause a problem if 1000 simultaneous temporary references are
+created during the destruction of an object, which is extremely unlikely.
+
 Most of the C++ modules are compiled as a single "most.cc" module via #include
 directives.  This is actually faster than compiling all the modules separately
 and the executable size is smaller because GCC doesn't include redundant debug
