@@ -54,19 +54,16 @@
 
 #include "conf.h"
 
-Pointer<Session> Session::sessions = NULL;
+List<Session> Session::sessions;
 
 Session::Session(Pointer<Telnet> &t)
 {
    telnet = t;			// Save Telnet pointer.
-   next = NULL;			// No next session.
-   user_next = NULL;		// No next session for user.
    InputFunc = NULL;		// No input function.
    lines = NULL;		// No pending input lines.
    name_only[0] = 0;		// No name.
    name[0] = 0;			// No name/blurb.
    blurb[0] = 0;		// No blurb.
-   name_obj = NULL;		// No name object.
    SignalPublic = true;		// Default public signal on. (for now)
    SignalPrivate = true;	// Default private signal on.
    SignedOn = false;		// No signed on yet.
@@ -85,31 +82,19 @@ Session::~Session()
 
 void Session::Close(boolean drain = true) // Close session.
 {
-   // Unlink session from list, remember if found.
-   boolean found = false;
-   if (sessions == this) {
-      sessions = next;
-      found = true;
-   } else {
-      Pointer<Session> s(sessions);
-      while (s && s->next != this) s = s->next;
-      if (s && s->next == this) {
-	 s->next = next;
-	 found = true;
-      }
-   }
+   ListIter<Session> session(sessions);
+   while (session++) if (session == this) session.Remove();
 
-   if (SignedOn) NotifyExit();	// Notify and log exit if session found.
-
+   if (SignedOn) NotifyExit();	// Notify and log exit if signed on.
    SignedOn = false;
 
-   if (telnet) {
+   if (telnet) {		// Close connection if attached.
       Pointer<Telnet> t(telnet);
       telnet = NULL;
-      t->Close(drain);		// Close connection.
+      t->Close(drain);
    }
 
-   user = NULL;
+   user = NULL;			// Disassociate from user.
 }
 
 void Session::Attach(Pointer<Telnet> &t) // Attach session to connection.
@@ -193,14 +178,15 @@ void Session::print(char *format,...) // formatted write
 
 void Session::announce(char *format,...) // formatted output to all sessions
 {
-   Pointer<Session> session;
    char buf[BufSize];
    va_list ap;
 
    va_start(ap,format);
    (void) vsprintf(buf,format,ap);
    va_end(ap);
-   for (session = sessions; session; session = session->next) {
+
+   ListIter<Session> session(sessions);
+   while (session++) {
       session->output(buf);
       session->EnqueueOutput();
    }
@@ -208,19 +194,20 @@ void Session::announce(char *format,...) // formatted output to all sessions
 
 Pointer<Session> Session::FindSession(char *sendlist, Set<Session> &matches)
 {
-   Pointer<Session> lead,match,session;
-   int pos,count = 0;
-
    if (!strcasecmp(sendlist,"me")) return this;
-   for (session = sessions; session; session = session->next) {
+
+   int pos,count = 0;
+   Pointer<Session> lead,match;
+   ListIter<Session> session(sessions);
+   while (session++) {
       if (!strcasecmp(session->name_only,sendlist)) return session;
       if (pos = match_name(session->name_only,sendlist)) {
 	 if (pos == 1) {
 	    count++;
 	    lead = session;
 	 }
-	 matches.Add(session);
 	 match = session;
+	 matches.Add(match);
       }
    }
    if (count == 1) return lead;
@@ -321,8 +308,8 @@ void Session::Name(char *line)
       strncpy(name_only,line,NameLen); // Save user's name.
       name_only[NameLen - 1] = 0;
    }
-   Pointer<Session> session;
-   for (session = sessions; session; session = session->next) {
+   ListIter<Session> session(sessions);
+   while (session++) {
       if (!strcasecmp(session->name_only,name_only)) {
 	 if (!strcmp(session->user->user,user->user) && !session->telnet) {
 	    telnet->output("Re-attaching to detached session...\n");
@@ -429,8 +416,7 @@ void Session::NotifyEntry()	// Notify other users of entry and log.
 {
    log("Enter: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
    EnqueueOthers(new EntryNotify(name_obj,message_time = time(&login_time)));
-   next = sessions;		// Link session into global list.
-   sessions = this;
+   sessions.AddTail(this);	// Add session to global list.
    // Link new session into user list. ***
 }
 
@@ -578,14 +564,13 @@ void Session::DoNuke(char *args) // Do !nuke command.
       }
 
       if (matches.Count()) {
-	 SetIter<Session> iter(matches);
-	 boolean first = true;
+	 SetIter<Session> session(matches);
 
 	 print("\a\a\"%s\" matches %d names: ",args,matches.Count());
-	 while (iter++) {
-	    if (!first) output(", ");
-	    first = false;
-	    output(iter->name_only);
+	 output(session++->name_only);
+	 while (session++) {
+	    output(", ");
+	    output(session->name_only);
 	 }
 	 output(". (nobody nuked)\n");
       } else {
@@ -617,7 +602,7 @@ void Session::DoWho()		// Do /who command.
    int now = time(NULL);
 
    // Check if anyone is signed on at all.
-   if (!sessions) {
+   if (!sessions.Count()) {
       output("Nobody is signed on.\n");
       return;
    }
@@ -628,8 +613,8 @@ void Session::DoWho()		// Do /who command.
 	  " ----                              --------   ----  ----\n");
 
    // Output data about each user.
-   Pointer<Session> session;
-   for (session = sessions; session; session = session->next) {
+   ListIter<Session> session(sessions);
+   while (session++) {
       if (session->telnet) {
 	 output(Space);
       } else {
@@ -677,14 +662,13 @@ void Session::DoIdle()		// Do /idle command.
    int col = 0;
 
    // Check if anyone is signed on at all.
-   if (!sessions) {
+   if (!sessions.Count()) {
       output("Nobody is signed on.\n");
       return;
    }
 
    // Output /idle header.
-   if (sessions && !sessions->next) {
-      // get LISTED user count better. ***
+   if (sessions.Count() == 1) { // get LISTED user count better. ***
       output("\n Name                              Idle\n ----              "
 	     "                ----\n");
    } else {
@@ -694,8 +678,8 @@ void Session::DoIdle()		// Do /idle command.
    }
 
    // Output data about each user.
-   Pointer<Session> session;
-   for (session = sessions; session; session = session->next) {
+   ListIter<Session> session(sessions);
+   while (session++) {
       if (session->telnet) {
 	 output(Space);
       } else {
@@ -915,12 +899,13 @@ void Session::DoMessage(char *line) // Do message send.
 void Session::SendEveryone(char *msg)
 {
    int sent = 0;
-   Pointer<Session> session;
    last_message = new Message(PublicMessage,name_obj,NULL,msg);
-   for (session = sessions; session; session = session->next) {
-      if (session == this) continue;
-      session->Enqueue((Message *) last_message);
-      sent++;
+   ListIter<Session> session(sessions);
+   while (session++) {
+      if (session != this) {
+	 session->Enqueue((Message *) last_message);
+	 sent++;
+      }
    }
 
    switch (sent) {
@@ -958,13 +943,13 @@ void Session::SendPrivate(char *sendlist,char *msg)
       last_message = new Message(PrivateMessage,name_obj,session,msg);
 
       if (matches.Count()) {
-	 SetIter<Session> iter(matches);
+	 SetIter<Session> session(matches);
 
 	 print("\a\a\"%s\" matches %d names: ",sendlist,matches.Count());
-	 output(iter++->name_only);
-	 while (iter++) {
+	 output(session++->name_only);
+	 while (session++) {
 	    output(", ");
-	    output(iter->name_only);
+	    output(session->name_only);
 	 }
 	 output(". (message not sent)\n");
       } else {
@@ -975,7 +960,7 @@ void Session::SendPrivate(char *sendlist,char *msg)
 
 void Session::CheckShutdown()   // Exit if shutting down and no users are left.
 {
-   if (!Shutdown || sessions) return;
+   if (!Shutdown || sessions.Count()) return;
    if (Shutdown > 2) {
       log("All connections closed, restarting.");
       RestartServer();
