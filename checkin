@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $Id$
+#
+# Conferencing system server -- RCS checkin script.
+#
+# Copyright 1994 by Deven T. Corzine.  All rights reserved.
+#
+# $Log$
+
+for x in $*; do
+   if [ -f $x ]; then
+      if rcsdiff $x >/dev/null 2>&1; then
+         echo "$x is current."
+      else
+         y="`ls -l $x`"
+         (ls -l $x; rcsdiff -c $x) 2>&1 | less
+         echo -n "Continue with checkin? [yes] "
+         read z
+         case "$z" in [Nn]*) continue;; [Qq]*) exit 0;; *) ;; esac
+         rcs -l $x
+         ci $x
+         co $x
+         chmod 644 $x
+         (echo "$y"; ls -l $x; cat $x) 2>&1 | less
+      fi
+   else
+      echo "$x: No such file or directory" 1>&2
+   fi
+done
