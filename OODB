@@ -1,10 +1,193 @@
+Transaction manager should operate on a message-passing basis.  When a commit
+request is received, make sure the log file reflects the newly committed
+transaction, but do NOT sync the disk immediately.  Instead, HOLD the commit
+transaction in a "committed" list until the entire request queue has been
+exhausted.  When the request queue is empty, and IF there are committed
+transactions being held, THEN sync the log file to disk, and THEN return the
+commit requests as completed.  Write requests and abort requests don't need
+to be held pending a disk sync.
+
+Ideally, apply some sort of compression (and possibly optional encryption) to
+log file.  Compression preferably should NOT be across the entire logfile; it
+would be dangerous for recovery with a damaged logfile.  Individual operations
+or possibly entire transactions can be compressed independently with the gzip
+(zlib?) library or similar.
+
+One option: for each active transaction, maintain log info in a memory buffer.
+On commit, apply SHA (Secure Hash Algorithm) one-way hash to transaction as an
+extended checksum, then compress transaction with appended hash value.  Append
+compressed transaction to log file, then hold commit request until disk sync
+when queue is emptied.  Of course, DON'T sync the disk if no commit operation
+is on hold.
+
+As for recovery strategy, probably use a NO-UNDO/REDO strategy with the system
+of transaction compression suggested above.  Updates to the actual database
+would not be made until after commit and disk sync of logfile.  (Commit request
+could be safely returned after logfile is written without waiting on updates of
+the actual database records; the updates could be reconstructed from the log.)
+-------------------------------------------------------------------------------
+Maybe use an extension flag on 32-bit (16-bit?) identifiers; high bit would
+mean to use 64 bits (well, 63 bits) if necessary.
+-------------------------------------------------------------------------------
+Need some method for _global_ server identification...
+
+     ... domain name?
+          What if the server moves?  What about aliases?  What if a single host
+          should run multiple servers?
+
+     ... arbitrary 32/64-bit identifier?
+          Too centralized -- an administrative bottleneck.
+
+     ... 8/16/32-bit entensible chain?
+          An identifier number could be specified as a chain of numbers of
+          whichever basic size; dotted-decimal could be used for printable
+          representation.  Allows for domain-like decentralized authority and
+          management, but the hierarchy would be fairly arbitrary indeed.
+
+     ... IP address and TCP/UDP port?
+          Simple and necessarily unique, allows for multiple servers.  Still,
+          somewhat arbitrary, and necessarily moves if server does.
+
+There may just need to be a way to _change_ a server identifier if it moves...
+(Perhaps a timestamp should be associated with object creation, in case one
+server is moved and a new server later uses the address of the first server.)
+-------------------------------------------------------------------------------
+Should some sort of version number be part of the server identifier?
+
+Should cross-check against class registry information for crossover ideas.
+
+Make sure there is a single clear canonical form for identifier.
+
+Internal references to the same server ("self" references) should use ID #0,
+while the actual canonical identifier of the server itself is stored elsewhere
+in the database master information, to be used in communication with other
+servers.  Internal references to other (remote) servers should use the object
+ID number of the entry in the "known servers" table, part of the DB registry.
+
+Should server identifiers actually be database identifiers?  One server could
+conceivably manage multiple databases...  On the other hand, multiple databases
+might significantly complexicate the code...
+-------------------------------------------------------------------------------
+Objects should be assumed to be owned by the local server unless marked as
+duplicates of remote objects.  Duplicate objects would contain the originating
+server (in internal form), remote object identifier, possibly remote type
+identifier (maybe only for polymorphic types) and duplicate information from
+the original remote object.  Several types of duplicate objects probably need
+to be distinguished and handled differently: cached objects, copied objects,
+mirrored objects (frequency of updates?), backup objects, etc.
+
+References to remote objects would contain the remote server and object/type
+identifiers, but no duplication of the actual object contents.  However, maybe
+an "index" reference might include copies of certain key fields in the master
+object for index use, but leaving out remaining fields.  Allowing a local table
+with a mixture of index references and full duplicates could be very useful.
+
+Mirrored objects could either be done with polling from the mirroring or with
+notifications from the master server owning the mirrored object.  While using
+notifications is probably preferable, how would distribution take place?  Use
+a Usenet-like model?  Hierarchical?  (Maybe based on server numbers?)  How to
+guarantee every server is notified reliably?  What about isolated servers and
+restarting servers?
+
+How to handle _modification_ of remote objects?  With a request to the master
+server owning that object?  What if the server is down or unreachable?
+-------------------------------------------------------------------------------
+Consider the possibility (probability!) that server network will NOT be fully
+interconnected, sooner or later.  Requests and updates would then have to flow
+through other servers, implying some sort of routing between servers.  Flood
+updates (a la Usenet) could have uses also.
+
+Alternatively, use UDP packets between servers, which WOULD (in theory) allow
+for fully-interconnected servers.  In practice, routing in the real world
+isn't always quite sane; perhaps UDP forwarding could be done when necessary.
+Use ACKs _and_ NAKs instead of TCP approach.  3-way synchronization might be
+necessary for transaction processing, routing, or other situations a la TCP
+connection establishment.
+
+Consider situations of servers behind firewalls, and the possibility that they
+can only use UDP or only TCP, possibly on specific ports.
+
+Server could maintain inter-server routing tables -- entries would only be
+present in the server routing table if a particular server was NOT directly
+reachable.  If contact with a server is lost, query other servers to see if
+they have a route.  Other servers should verify their route before confirming
+it.  A route probe would be an inter-server transaction, and the _request_
+should be immediately acknowledged, but the transaction would be outstanding
+until the reachability was determined and a response generated.
+
+Forwarded packets should be marked as such, and if a server receives both
+forwarded and non-forwarded packets from another server, it should send the
+sending server a control packet, both directly and through the forwarding
+server, informing the server that the direct packet was received.  Remember,
+one-way routing problems exist in the real world; a direct packet may be
+received, but a direct reply may be lost even so.  When forwarding packets,
+only ONE gateway server should be used as a forwarding resource (preferably
+with single-hop acknowledgements to keep retransmits at a minimum) but ALSO
+send the direct packet, in case it gets through.
+
+Maybe the control request should be a full-scale inter-server transaction, or
+maybe just an unreliable packet "hint" in response.  Perhaps it should be only
+sent after a certain number of packets in a row are doubly-received (or all in
+a particular time frame)...
+
+A hop count metric should be used for routing determinations; ideally, use an
+IP-level hop count if possible, or a server count if not.  Maybe some external
+utility such as "ping" or "traceroute" could be used to determine an IP-level
+hop count.  Maybe use round-trip time instead of hop count or in addition.
+Maybe probe for routes through 3 servers at random, and use whichever comes
+back first.  (and keep trying more servers if no responses.)
+
+Some sort of transaction system is necessary; one that can operate both for
+internal database use to avoid physical database corruption and one that can
+operate in an inter-server transaction mode for either database updates or any
+other form of interaction between servers.  These two uses (inter-server and
+internal) need not necessarily use the same transaction system; they might be
+completely independent and distinct systems.  In fact, it might make sense to
+integrate the inter-server transaction system into the reliable-transport code
+if inter-server communication is done using UDP instead of TCP.
+-------------------------------------------------------------------------------
+Have object type identifiers stored in registry, but in most cases a static
+type will be the case, so the type identifier need not be stored in the actual
+object itself; it may be inferred by the defined structure of the object.  Only
+polymorphic types (use type ID #0) would need to include the type identifier in
+the actual object.
+-------------------------------------------------------------------------------
+Issue -- should object identifiers be global or per-type?  (global within a
+         single server, not within a network of servers)
+
+Issue -- Should object identifiers ever be recycled?  Under what circumstances?
+
+Issue -- Should _temporary_ objects be allowed?  (obviously, with recycled IDs)
+         If so, should temporary objects be sharable between servers?
+-------------------------------------------------------------------------------
 Maybe have 64-bit unique permanent identifiers and 32-bit temporary identifier
 handles?  never recycle 64-bit id's, may recycle 32-bit id's, assign dynamic,
 negotiate over network with other parts of db...
 -------------------------------------------------------------------------------
+How does a server recover from database corruption?  Transaction journalling
+and backups?  Recover objects from mirrors?  Discard corrupted data?  Mixture
+of the above depending on value of data?  How to handle resource shortages?
+-------------------------------------------------------------------------------
+How to deal with security?  Internal and physical database security and data
+integrity, possible encryption (of some data), network security (against packet
+sniffing), inter-server security (issues of spoofing and untrusted servers),
+web of trust issues between servers/users, possibility of clients interacting
+with server database network, user security, user privacy, host security
+against dangerous requests which might allow a host breakin, possibility of PGP
+or other system, concerns about ITAR export restrictions for cryptography, etc.
+
+...maybe have macros/language?  security?
+
+OS security - have OS store lists of "security keys" which would allow either
+special file/execute permissions (a la MTS pkey's) or be able to _restrict_
+either specific executables, or all unauthorized, etc.  possibly also be able
+to permit/restrict _system calls_ in a similar fashion...  Possibly even some
+arguments to syscalls; e.g. be able to depermit a program/process/user from
+even _opening_ the /etc/passwd file, etc.
+-------------------------------------------------------------------------------
 Individual Object:
 
-[all ints are big-endian]
+[all ints are big-endian on disk or over network]
 
 ulong? -- length of this object. (could use registry, but more robust this way)
 ulong -- local registry ID for object class. (0 = null object)
@@ -43,7 +226,8 @@ pointer through each Pointer object referencing the object, or something.
 If a Pointer object still stores an object ID when the object is not in
 memory, it would be necessary to deal with those too.  Ugh, keep it offline!
 
-Make sure EVERYTHING is network-byte-order.
+Make sure EVERYTHING is network-byte-order on disk or over network.  (Native
+endian form is acceptable for internal use ONLY.)
 
 Need to consider object access permissions somehow.  Possibly have object
 methods and have a send() method to forward a request to another object?
@@ -51,7 +235,6 @@ That's hard to do in C++.  Maybe maintain an authentication list of object
 "keys" that could unlock other objects?  Also troublesome.  Realistically,
 there's no true protection against direct C++ code, would need a different
 language for real inter-object protection.  Ignore the issue for now?
-
 -------------------------------------------------------------------------------
 Database internal structure -- variable-length records, which may be data
 or indexing information, each record having a length count (longword) and a
