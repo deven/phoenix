@@ -252,6 +252,44 @@ String &String::operator =(unsigned long n)
    return *this;
 }
 
+String &String::assign(const char *s, size_t n)
+{
+   if (n <= len + extra) {
+      extra += len - n;
+   } else {
+      delete [] str;
+      extra = extra ? Extra : 0;
+      str = new char[n + extra + 1];
+   }
+   len = n;
+   if (s) {
+      strncpy(str, s, len);
+      str[len] = 0;
+   } else {
+      for (size_t i = 0; i <= len; i++) str[i] = 0;
+   }
+   return *this;
+}
+
+String &String::assign(char *s, size_t n)
+{
+   if (n <= len + extra) {
+      extra += len - n;
+   } else {
+      delete [] str;
+      extra = extra ? Extra : 0;
+      str = new char[n + extra + 1];
+   }
+   len = n;
+   if (s) {
+      strncpy(str, s, len);
+      str[len] = 0;
+   } else {
+      for (size_t i = 0; i <= len; i++) str[i] = 0;
+   }
+   return *this;
+}
+
 String &String::append(const String &s)
 {
    if (s.len) {
@@ -294,6 +332,25 @@ String &String::append(const char *s)
 {
    if (s && *s) {
       size_t n = strlen(s);
+      if (n <= extra) {
+	 extra -= n;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + n + extra + 1];
+	 strncpy(str, tmp, len);
+	 delete [] tmp;
+      }
+      strncpy(str + len, s, n);
+      len += n;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::append(const char *s, size_t n)
+{
+   if (s && n > 0) {
       if (n <= extra) {
 	 extra -= n;
       } else {
@@ -374,6 +431,28 @@ String &String::prepend(const char *s)
 {
    if (s && *s) {
       size_t n = strlen(s);
+      if (n <= extra) {
+	 extra -= n;
+	 char *p = str + len - 1;
+	 char *q = p + n;
+	 while (p >= str) *q-- = *p--;
+      } else {
+	 char *tmp = str;
+	 extra = Extra;
+	 str = new char[len + n + extra + 1];
+	 strncpy(str + n, tmp, len);
+	 delete [] tmp;
+      }
+      strncpy(str, s, n);
+      len += n;
+      str[len] = 0;
+   }
+   return *this;
+}
+
+String &String::prepend(const char *s, size_t n)
+{
+   if (s && n > 0) {
       if (n <= extra) {
 	 extra -= n;
 	 char *p = str + len - 1;

@@ -72,15 +72,21 @@ public:
    String &operator =(unsigned int n);
    String &operator =(long n);
    String &operator =(unsigned long n);
+   String &assign(const char *s, size_t n);
+   String &assign(char *s, size_t n);
    String &append(const String &s);
    String &append(String &s);
    String &append(const char *s);
    String &append(char *s) { return append((const char *) s); }
+   String &append(const char *s, size_t n);
+   String &append(char *s, size_t n) { return append((const char *) s, n); }
    String &append(char c);
    String &prepend(const String &s);
    String &prepend(String &s);
    String &prepend(const char *s);
    String &prepend(char *s) { return prepend((const char *) s); }
+   String &prepend(const char *s, size_t n);
+   String &prepend(char *s, size_t n) { return prepend((const char *) s, n); }
    String &prepend(char c);
    String &vsprintf(const char *format, va_list ap);
    String &sprintf(const char *format, ...);
