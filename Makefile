@@ -14,20 +14,20 @@
 # Initial revision
 #
 
-CC = gcc -bsd
-CFLAGS = -g
+CC = gcc
 EXEC = conf
 HDRS = conf.h
-SRCS = conf.c
-OBJS = $(SRCS:.c=.o)
+SRCS = conf.cc
+OBJS = $(SRCS:.cc=.o)
 
 all: conf restart
 
 $(EXEC): $(OBJS)
 	/bin/rm -f $(EXEC)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
 
 $(OBJS): $(HDRS)
+	$(CC) $(CFLAGS) -c $(SRCS)
 
 restart.o: conf.h
 
