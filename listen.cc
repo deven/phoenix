@@ -46,7 +46,7 @@ boolean Listen::PortBusy(int port)
    saddr.sin_family = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port = htons((u_short) port);
-   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) return 0;
+   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) return 0;
    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
       close(fd);
       return 0;
@@ -78,7 +78,7 @@ Listen::Listen(int port)	// Listen on a port.
    saddr.sin_family = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port = htons((u_short) port);
-   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
       error("Listen::Listen(): socket()");
    }
    if (fcntl(fd, F_SETFD, 0) == -1) error("Listen::Listen(): fcntl()");
