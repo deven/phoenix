@@ -1,5 +1,5 @@
 /*
- * $Id: conf.c,v 1.7 1993/12/21 19:52:17 deven Exp $
+ * $Id: conf.c,v 1.8 1996/03/06 06:28:38 deven Exp $
  *
  * Conferencing system server.
  *
@@ -10,6 +10,10 @@
  * Development began on November 30, 1992.
  *
  * $Log: conf.c,v $
+ * Revision 1.8  1996/03/06 06:28:38  deven
+ * Renamed "shutdown" variable to "Shutdown".  Added argc check.  Removed calls
+ * to sigigore(), replaced with signal().
+ *
  * Revision 1.7  1993/12/21 19:52:17  deven
  * Modified to use external encrypted password file.
  *
