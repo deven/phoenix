@@ -72,9 +72,7 @@ void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
 }
 
 Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
-   if (fd < 0 || fd >= used) {
-      error("FDTable::Closed(fd = %d): range error! [0-%d]",fd,used - 1);
-   }
+   if (fd < 0 || fd >= used) return NULL;
    Pointer<FD> FD = array[fd];
    array[fd] = NULL;
    if (fd == used - 1) {	// Fix highest used index if necessary.
@@ -89,7 +87,8 @@ Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
 }
 
 void FDTable::Close(int fd) {	// Close fd, deleting FD object.
-   Closed(fd)->Closed();
+   Pointer<FD> FD(Closed(fd));
+   if (!FD.Null()) FD->Closed();
 }
 
 void FDTable::Select()		// Select across all ready connections.
