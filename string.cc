@@ -436,6 +436,12 @@ String &String::vsprintf(const char *format, va_list ap)
          int width = 0;
          int prec = 0;
 
+         // Temporary values.
+         String tmp;
+         char *s;
+         char c;
+         int n;
+
          // Check if format specifies left-justified output.
          if (*p == '-') {
             left_justify = true;
@@ -474,45 +480,39 @@ String &String::vsprintf(const char *format, va_list ap)
          switch (*p) {
          case 'c':
             // Character (%c) escape.  (Ignores precision.)
-            {
-               char c = (char) va_arg(ap, int);
-               if (left_justify) append(c);
-               if (width_specified) {
-                  while (width-- > 1) append(' ');
-               }
-               if (!left_justify) append(c);
+            c = (char) va_arg(ap, int);
+            if (left_justify) append(c);
+            if (width_specified) {
+               while (width-- > 1) append(' ');
             }
+            if (!left_justify) append(c);
             break;
          case 'd':
             // Numeric (%d) escape.  (Ignores precision.)
-            {
-               String num(va_arg(ap, int));
-               if (left_justify) append(num);
-               if (width_specified && width > num.length()) {
-                  width -= num.length();
-                  if (zero_padding && !left_justify) {
-                     while (width-- > 0) append('0');
-                  } else {
-                     while (width-- > 0) append(' ');
-                  }
+            tmp = va_arg(ap, int);
+            if (left_justify) append(tmp);
+            if (width_specified && width > tmp.length()) {
+               width -= tmp.length();
+               if (zero_padding && !left_justify) {
+                  while (width-- > 0) append('0');
+               } else {
+                  while (width-- > 0) append(' ');
                }
-               if (!left_justify) append(num);
             }
+            if (!left_justify) append(tmp);
             break;
          case 's':
             // String (%s) escape.  (Uses precision to limit string length.)
-            {
-               char *s = va_arg(ap, char *);
-               unsigned int n = strlen(s);
-               if (precision_specified && prec < int(strlen(s))) n = prec;
-               String tmp(s, n);
-               if (left_justify) append(tmp);
-               if (width_specified && width > tmp.length()) {
-                  width -= tmp.length();
-                  while (width-- > 0) append(' ');
-               }
-               if (!left_justify) append(tmp);
+            s = va_arg(ap, char *);
+            n = strlen(s);
+            if (precision_specified && prec < int(strlen(s))) n = prec;
+            tmp = String(s, n);
+            if (left_justify) append(tmp);
+            if (width_specified && width > tmp.length()) {
+               width -= tmp.length();
+               while (width-- > 0) append(' ');
             }
+            if (!left_justify) append(tmp);
             break;
          default:
             // Unknown %escape.  Format as error message.
