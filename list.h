@@ -230,8 +230,8 @@ public:
       ptr = last = 0;
       return *this;
    }
-   Type *operator ->() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
-   operator Type *() { NodeType *p = ptr; return p ? p->obj : (Type *) 0; }
+   Type *operator ->() { return ptr ? (Type *) ptr->obj : (Type *) 0; }
+   operator Type *() { return ptr ? (Type *) ptr->obj : (Type *) 0; }
    Type *operator --();
    Type *operator --(int) { return --(*this); }
    Type *operator ++();
