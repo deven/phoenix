@@ -59,6 +59,7 @@ enum Char {			// Character codes.
    CSI = 155, UnquotedUnderscore = 128
 };
 
+// Declarations for system functions.
 extern "C" char *strerror(int err);
 extern "C" char *inet_ntoa(struct in_addr in);
 
