@@ -107,6 +107,8 @@ void Session::Attach(Pointer<Telnet> t) // Attach session to telnet connection.
       log("Attach: %s (%s) on fd %d.",name_only,user->user,telnet->fd);
       EnqueueOthers(new AttachNotify(name_obj));
       Pending.Attach(telnet);
+      output("*** End of reviewed output. ***\n");
+      EnqueueOutput();
    }
 }
 
