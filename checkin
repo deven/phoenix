@@ -1,12 +1,15 @@
 #!/bin/sh
 #
-# $Id: checkin,v 1.5 1996/02/19 22:46:27 deven Exp $
+# $Id: checkin,v 1.6 1996/05/29 04:36:08 deven Exp $
 #
 # Conferencing system server -- RCS checkin script.
 #
 # Copyright 1994 by Deven T. Corzine.  All rights reserved.
 #
 # $Log: checkin,v $
+# Revision 1.6  1996/05/29 04:36:08  deven
+# Modified to run rcstouch script after checking out a missing file.
+#
 # Revision 1.5  1996/02/19 22:46:27  deven
 # Modified to check out first if nonexistent, and to use relative chmod.
 #
