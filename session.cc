@@ -593,12 +593,7 @@ void Session::SetIdle(char *args) // Set idle time.
    idle = (now - message_time) / 60;
 
    while (*args && isspace(*args)) args++;
-   if (!strncmp(args,"max",3)) {
-      message_time = login_time;
-   } else if (!isdigit(*args)) {
-      DoUnidle();
-      return;
-   } else {
+   if (isdigit(*args)) {
       for (num = 0; *args && isdigit(*args); args++) {
 	 num *= 10;
 	 num += *args - '0';
@@ -625,11 +620,18 @@ void Session::SetIdle(char *args) // Set idle time.
 	 while (*args && isspace(*args)) args++;
       }
       minutes = num;
-      message_time = now - ((days * 24 + hours) * 60 + minutes) * 60;
+      num = now - ((days * 24 + hours) * 60 + minutes) * 60;
+   } else {
+      output("Syntax error in time specification.  Format: <d>d<hh>:<mm>\n");
+      return;
    }
 
-   flag = boolean(message_time < login_time || message_time > now);
-   if (flag) message_time = login_time;
+   if (num < login_time) {
+      output("Sorry, you can't be idle longer than you've been signed on.\n");
+      return;
+   } else {
+      message_time = num;
+   }
 
    if (idle && idle != (now - message_time) / 60) {
       output("[You were idle for");
@@ -637,12 +639,8 @@ void Session::SetIdle(char *args) // Set idle time.
       output(".]\n");
    }
 
-   if (flag) {
-      output("Sorry, you can't be idle longer than you've been signed on.\n");
-   }
-
    if (idle == (now - message_time) / 60) {
-      output("You are still idle for");
+      output("Your idle time is still");
       PrintTimeLong(idle);
       output(".\n");
    } else if (idle = (now - message_time) / 60) {
@@ -650,7 +648,8 @@ void Session::SetIdle(char *args) // Set idle time.
       PrintTimeLong(idle);
       output(".\n");
    } else {
-      output("You are still unidle.\n");
+      output("Your idle time has been reset.\n");
+      message_time = now;
    }
 }
 
