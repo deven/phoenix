@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.2 2001/12/12 05:45:28 deven Exp $
+// $Id: telnet.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
 //
 // Telnet class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: telnet.cc,v $
+// Revision 1.3  2002/07/28 05:46:09  deven
+// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
+//
 // Revision 1.2  2001/12/12 05:45:28  deven
 // Modified to assign null string instead of null pointer to wipe prompt.
 //

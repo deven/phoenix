@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.2 2001/12/12 05:52:53 deven Exp $
+// $Id: gangplank.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
 //
 // Main program.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: gangplank.cc,v $
+// Revision 1.3  2002/07/28 05:46:09  deven
+// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
+//
 // Revision 1.2  2001/12/12 05:52:53  deven
 // Modified to use strerror() instead of sys_nerr and sys_errlist.
 //

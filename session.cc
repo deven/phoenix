@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.2 2001/12/12 05:15:49 deven Exp $
+// $Id: session.cc,v 1.3 2002/07/28 05:46:09 deven Exp $
 //
 // Session class implementation.
 //
@@ -19,6 +19,9 @@
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log: session.cc,v $
+// Revision 1.3  2002/07/28 05:46:09  deven
+// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
+//
 // Revision 1.2  2001/12/12 05:15:49  deven
 // Fixed pointer initializations to be more portable.  Added missing break
 // statements in a switch statement.

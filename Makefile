@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile,v 1.2 2001/12/12 06:00:37 deven Exp $
+# $Id: Makefile,v 1.3 2002/07/10 03:57:27 deven Exp $
 #
 # Makefile for building the Gangplank server executable.
 #
@@ -19,6 +19,9 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 # $Log: Makefile,v $
+# Revision 1.3  2002/07/10 03:57:27  deven
+# Removed targets related to "checkin" script (not included in distribution).
+#
 # Revision 1.2  2001/12/12 06:00:37  deven
 # Portability fixes for Linux, BSD, Solaris and GCC 3.  Modified to build
 # and install utility programs as well as server executable.
