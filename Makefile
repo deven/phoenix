@@ -41,12 +41,13 @@ LDFLAGS =
 
 CC = gcc
 EXEC = conf
-HDRS = conf.h other.h general.h object.h list.h set.h line.h block.h \
+HDRS = conf.h other.h general.h object.h string.h list.h set.h line.h block.h \
 	outbuf.h name.h output.h outstr.h session.h user.h fd.h listen.h \
 	telnet.h fdtable.h
-SRCS = conf.cc output.cc outstr.cc session.cc user.cc listen.cc telnet.cc \
-	fdtable.cc
-OBJS = conf.o output.o outstr.o session.o user.o listen.o telnet.o fdtable.o
+SRCS = conf.cc fdtable.cc listen.cc output.cc outstr.cc session.cc string.cc \
+	telnet.cc user.cc
+OBJS = conf.o fdtable.o listen.o output.o outstr.o session.o string.o \
+	telnet.o user.o
 
 all: $(EXEC) restart
 
