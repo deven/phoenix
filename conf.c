@@ -1275,10 +1275,10 @@ void undraw_line(struct telnet *telnet) /* Erase input line from screen. */
 	 lines = (telnet->input.free - telnet->input.data) / 80;
 	 if (lines) {
 	    /* Move cursor up and erase line. */
-	    print(telnet,"\r\033[%dA\033[J",lines);
+	    print(telnet,"\033[0m\r\033[%dA\033[J",lines);
 	 } else {
 	    /* Erase line. */
-	    output(telnet,"\r\033[J");
+	    output(telnet,"\033[0m\r\033[J");
 	 }
       }
    }
