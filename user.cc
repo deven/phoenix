@@ -67,8 +67,7 @@ void User::UpdateAll()		// Update all user entries from password file.
       fclose(pw);
    }
 
-   // Make sure both my account and the guest account always exist!
-   Update("deven", "vpUcUStUJRv5s", "Deven", 0, 100);
+   // Create the "guest" account.
    Update("guest", 0, 0, 0, 0);
 }
 
