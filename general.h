@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: general.h,v 1.5 1993/12/31 08:12:37 deven Exp $
+// $Id: general.h,v 1.6 1994/01/02 11:38:41 deven Exp $
 //
 // Conferencing system server -- General header file.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: general.h,v $
+// Revision 1.6  1994/01/02 11:38:41  deven
+// Updated copyright notice, added crash() function, removed others.
+//
 // Revision 1.5  1993/12/31 08:12:37  deven
 // Added symbolic name for Tilde character.
 //

@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.h,v 1.4 1993/12/21 15:24:21 deven Exp $
+// $Id: fdtable.h,v 1.5 1994/01/02 11:32:52 deven Exp $
 //
 // FDTable class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: fdtable.h,v $
+// Revision 1.5  1994/01/02 11:32:52  deven
+// Updated copyright notice, modified to use smart pointers.
+//
 // Revision 1.4  1993/12/21 15:24:21  deven
 // Modified declaration for nuke().
 //
