@@ -530,7 +530,7 @@ void Session::Login(char *line)
    if (user->password) {
       // Warn if echo can't be turned off.
       if (!telnet->Echo) {
-	 telnet->output("\n\aSorry, password WILL echo.\n\n");
+	 telnet->output("\n\aSorry, password probably WILL echo.\n\n");
       } else if (telnet->Echo != TelnetEnabled) {
 	 telnet->output("\nWarning: password may echo.\n\n");
       }
