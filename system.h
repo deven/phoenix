@@ -40,4 +40,5 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include <crypt.h>
