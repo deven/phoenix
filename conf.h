@@ -30,6 +30,7 @@
 #include "block.h"
 #include "outbuf.h"
 #include "name.h"
+#include "sendlist.h"
 #include "output.h"
 #include "outstr.h"
 #include "session.h"
