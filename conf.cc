@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: conf.cc,v 1.7 1994/01/02 11:30:23 deven Exp $
+// $Id: conf.cc,v 1.8 1994/01/09 05:17:33 deven Exp $
 //
 // Conferencing system server -- Main program.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: conf.cc,v $
+// Revision 1.8  1994/01/09 05:17:33  deven
+// Removed state machine from message_start().
+//
 // Revision 1.7  1994/01/02 11:30:23  deven
 // Updated copyright notice, added crash() function, changed Telnet::announce()
 // to Session::announce(), removed several dead variables.
