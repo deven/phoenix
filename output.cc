@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: output.cc,v 1.8 1994/05/13 04:28:29 deven Exp $
+// $Id: output.cc,v 1.9 1994/06/27 05:28:24 deven Exp $
 //
 // Output and derived classes, implementations.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: output.cc,v $
+// Revision 1.9  1994/06/27 05:28:24  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.8  1994/05/13 04:28:29  deven
 // Changed (char *) casts to unary operator -() instead.
 //

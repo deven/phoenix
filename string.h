@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: string.h,v 1.4 1994/05/13 04:25:24 deven Exp $
+// $Id: string.h,v 1.5 1994/06/27 05:26:37 deven Exp $
 //
 // String class interface.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: string.h,v $
+// Revision 1.5  1994/06/27 05:26:37  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.4  1994/05/13 04:25:24  deven
 // Added unary operator -() to return (char *) or (const char *) to avoid
 // having to cast manually.

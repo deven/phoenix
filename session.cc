@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.25 1994/06/27 01:12:11 deven Exp $
+// $Id: session.cc,v 1.26 1994/06/27 05:29:04 deven Exp $
 //
 // Session class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: session.cc,v $
+// Revision 1.26  1994/06/27 05:29:04  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.25  1994/06/27 01:12:11  deven
 // Fixed "/blurb off" bug.
 //

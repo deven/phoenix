@@ -1,12 +1,15 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.2 1994/05/13 04:27:33 deven Exp $
+// $Id: discussion.cc,v 1.3 1994/06/27 05:27:40 deven Exp $
 //
 // Discussion class implementation.
 //
 // Copyright 1994 by Deven T. Corzine.  All rights reserved.
 //
 // $Log: discussion.cc,v $
+// Revision 1.3  1994/06/27 05:27:40  deven
+// Changed unary minus to unary tilde on strings.
+//
 // Revision 1.2  1994/05/13 04:27:33  deven
 // Changed (char *) casts to unary operator -() instead.
 //
