@@ -90,7 +90,7 @@ void RestartEvent::RestartServer()
    log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
-   execl(SERVER_PATH, SERVER_PATH, 0);
+   execl(SERVER_PATH, SERVER_PATH, (const char *) 0);
    error(SERVER_PATH);
 }
 
