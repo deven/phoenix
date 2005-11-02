@@ -2,9 +2,10 @@ $Id: PORTING,v 1.5 2003/02/18 05:47:42 deven Exp $
 
 Gangplank has been known to build and run on the following platforms:
 
- * Linux (i386) - Red Hat 6.x, 7.x; Debian 2.2
+ * Linux (i386) - Red Hat 6.x, 7.x; Debian 2.2; Fedore Core 1
  * FreeBSD 4.x, 5.x (i386)
  * NetBSD 1.6 (i386)
+ * OpenBSD 3.2 (i386)
  * Macintosh OS X (Darwin)
  * Solaris 8 (SPARC)
  * SunOS 4.1.4
@@ -16,3 +17,10 @@ Gangplank is known to compile with GCC versions from 2.95 through 3.1, using
 the "gcc" driver.  (Although Gangplank is written in C++, it does not use the
 standard C++ library.)  Gangplank has also been tested with the Sun compiler
 under Solaris.
+
+All of these have been tested with some version of the Gangplank code, and
+any problems found have been corrected in newer releases.  However, newer
+releases have not generally been re-tested against every previously-tested
+platform, so new bugs could be present on some platforms.  Whenever possible,
+all compiler warnings have been fixed, so hopefully it still builds cleanly
+on each of the tested platforms, but no promises!
