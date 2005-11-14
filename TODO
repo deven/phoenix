@@ -1,29 +1,243 @@
 $Id: TODO,v 1.2 2002/09/10 04:49:48 deven Exp $
 
-Install Bugzilla at bugzilla.gangplank.org, start tracking there instead.
+[pre-1.0.0]
 
-Create mailing lists for users, administrators, developers, and announcements.
+Avoid adding duplicate lines to input history.  (Check against last line.)
+Possibly avoid adding <space><return>?  (But only Session knows not to!)
+
+Write a sendlist parsing function, call from DoSend() and message_start() in
+session.cc...  (For that matter, get rid of message_start()!)
+
+Raw TCP connections don't disconnect on login timeout.  (hang on TIMING-MARK)
+[#33?]
+
+Rename server executable to "gangplankd"?  (To prepare for a client...)
+
+Possibly add a VERSIONS document, listing the CVS versions for a release?
+
+Regenerate configure.scan?  Seems to be different; update configure.ac?
+
+It would be nice to be able to promote an active guest session into a user
+session when the account is created.
+
+Strip leading and trailing spaces from names!  Consider " " vs "_" a conflict.
+Allow leading/trailing "_" chars, but strip them for conflict checking; maybe
+make a utility routine to check names for conflicts?)
+
+Fix /date command to show timezone, allow user to set a custom timezone?
+
+Should leading ! be treated as a meta-character for non-admin sessions?
+
+Auto-generated sendlist for a name with a leading / or ! is not quoted!
+
+Implement "/set priv" command?  (to lower privilege level, or maybe even raise
+it by prompting for a username/passwd?)
+
+Tie discussions to sessions/users instead of names?
+
+Add privileged discussion overrides. [#24]
+
+Add --help and --version command-line options.  Add better options processing,
+decide whether to use -word, --word or both.
+
+Add a config file before 1.0.0?  (Server name, admin email, banner message,
+port number, etc.)
+Add a length limit on names!  (1024? 50-100?)  Check in /rename too!  Same
+for discussion names and titles!
+Add /set banner and /display banner, and /news...
+Should be able to configure a site-specific banner.  (Use %v or such for
+version?  Could this be integrated with a vsprintf() replacement?)
+
+Add DoDisplay("uptime") with DoHowMany("") in Session::EnteredBlurb()?
+
+Add a /set command to enable linemode in the telnet client.
+
+Update history notes -- link to lilyCore history pages?
+
+Allow a variable to control timestamp location, for those who prefer it at
+the front of the line.
+
+Review old Phoenix TODO list for relevant tasks.
+
+Use getservbyname(), pass default port as string, to allow symbolic ports.
+
+Add a -inittab option for foreground operation?
 
 Use getrlimit(), setrlimit() and sysconf() in addition to getdtablesize().
 
-Add support for poll(), possible Linux's poll2() and NetBSD's kqueue, in
+*** Add time limits for "away" states.
+
+Fix TCP detection to require a minimum time delay before giving up on telnet.
+After this timeout, perhaps give a prompt for TCP users?
+
+Destroy discussions when empty unless special?  Maybe an idle timeout?
+
+*** use accept() 3rd arg instead of getpeername()
+
+Allow system variables (e.g. uptime) to be abbreviated?
+
+Telnet::PrintMessage still has an "everyone" send -- is this used?
+
+If a client is doing local echo, does ;/: expansion happen invisibly?
+
+Have here/away/busy/gone set "transient" blurbs that mask "persistent" blurbs
+set by /blurb; here/away/busy/gone without arguments would revert to the last
+persistent blurb.  (Maybe allow /finger or some other command show both
+transient AND persistent blurbs?)
+Possible: *** User [persistent, maybe] is now "gone". [transient, if any] ***
+
+fix sending to Name object (with last or default sendlist or other?) when
+associated session is gone.
+
+fix problems with Name objects not aligning with Sessions after a /rename.
+
+[maybe-1.0.0]
+
+Fix discussion permissions not to operate by name.  (How to handle guests?
+[#26])
+
+/kick to boot someone from a discussion without depermitting them?
+
+/invite to ensure someone is permitted to a discussion and send an invitation?
+
+Have ~name match only against reserved names?
+
+Change event queue to use a Btree or similar instead of linear search?  (Are
+there other linear searches?)
+
+"/here" alone act as "/here off"?  have "/here same"?  configurable default?
+
+For /detach, always switch to "gone" unless here/away/busy/gone keyword
+specified.  (same or brb as keywords?)  allow blurb w/detach
+
+TAB sendlist completion & cycling.
+
+Add some option to implicitly copy message to self?  If so, erase input line?
+Maybe reformat all messages automatically?  (<-, << headers)
+
+Make more generalized parser and keyword matching?  (needs to be tunable)
+
+When printing a message, if the destination name doesn't match the current
+name, show the original destination name.
+
+Instead of dequoting sendlist items in message_start(), do it elsewhere, and
+call from DoWho(), etc.  Maybe do dequoting in Sendlist::set()?
+
+Modify "busy" state to discourage others sending to busy people.  Does this
+need a /confirm command or something else?  Also, discourage sending while
+state is "gone"...
+
+Modify String class to do [] operator as substrings?  Can it be done as lvalue?
+
+Should input editing use String class?  Maybe make a Buffer class or extend
+the String class to serve the purpose?  (Maybe allow String or Buffer objects
+to store text in multiple allocated blocks of memory, but presented logically
+as a contiguous region?) [#9?]
+
+Cleanup response messages from SendMessage() for /oops and /also.  Fix /also
+(and /oops?) to resend messages with bogus sendlists. [#46]
+
+Add /help language (aliases /help spanish, /help french, etc.) to document
+Latin-1 compose sequences.
+
+guest questionnaire
+
+Allow /set date to adjust server time relative to system time...
+
+Implement /group.
+
+Add blank line before input line/after incoming messages?  (But not during
+login sequence!)
+
+Use ident protocol for a default name?  Default to "Guest #1", etc?  Maybe
+loop once (with a longer description of the name) and use a default for the
+second "Enter name:" prompt?
+
+If a table-driven state machine is used in telnet.cc, could login timeouts be
+reset on every keystroke during login without impacting the performance after
+login?
+
+Fix smiley processing with a state machine in the input editing?  (Would a
+table-driven state machine help here?)
+
+Maybe add a "/display" option to show memory & CPU usage?  (Maybe have the
+output queues track their own size?  (data + overhead)  What about overlap?)
+
+Use ENVIRON telnet option and USER environment variable for login: default?
+
+Remove warnings about binary mode negotiations.  Make this and other status
+information about the TELNET protocol available in /display somewhere.
+
+Find replacements for RFC 1123 and any other TELNET-related RFC, fix any
+deficiencies.  In particular, implement the "Synch" functionality required
+by RFC 854 and section 3.2.4 of RFC 1123.
+
+Auto-wrap /help text based on terminal size.  Word-wrap input lines?  (Make
+generalized word-wrapping code!)
+
+Should all Strings be Objects?  Get rid of StringObj perhaps?
+
+Update old Phoenix client to make an official Gangplank C or C++ client, with
+full Emacs-style line editing?
+
+Port or reimplement C client as a Java applet for use as a web client?
+
+*** Update client editing to match server!
+
+Implement a web client -- HTML/Javascript with an HTML-only fallback mode?
+
+Add support for poll(), possibly Linux's poll2() and NetBSD's kqueue, in
 addition to select().
+
+Possibly port to Visual C++ if it doesn't work out of the box?
+
+Extract help text into separate file(s).
+
+Improve command-line options, support help, kill, stats (/howmany), etc.
+
+[post-1.0.0]
+
+Allow login & password both at the login: prompt (ideally blank password)
+Better, use ...'s for password echo.
+
+announcements
+
+Add String::substr()?  (Reference a la Perl or new String object?  Reference
+is interest, but possibly confusing, and probably tricky to implement, with
+difficulties for variable-length replacements.  Maybe add a String::replace()
+method with substr() arguments, plus a replacement argument?)
+
+Add other string operations like index? (strchr or strstr?)  Regex operations?
+
+Add Unicode support?  Use RFC 2066 (TELNET CHARSET option) to specify UTF-8
+(RFC 2279), maybe use environment variables as an option for telnet clients
+that don't support the CHARSET option?  Allow /set also.  Possibly autodetect
+Latin-1 vs. UTF-8 on input?  Store all internal strings in UTF-8?
+
+Implement telnet encryption options?  (Can SASL be used with TELNET?)
+
+Spell-checking on the fly?  (Probably best done in a client.)  ispell -a?
 
 Possibly add native Winsock support to avoid Cygwin dependencies, using either
 asynchronous I/O or (preferably) I/O completion ports under NT, if available.
 
-Possibly port to Visual C++ if it doesn't work out of the box?
-
-Start using autoconf (and automake?) to avoid manual configuration.
-
-Help automate basics like admin account setup, guest access, port number, etc.
-
-Review old Phoenix TODO list for relevant tasks.
-
-Extract help text into separate files.
-
 Write new command parser, move command implementations from Session class into
 individual command implementation classes.
+
+Optimize character input in telnet.cc -- if a group of characters comes in,
+only queue the block of characters to output buffer, not each one.  Replace
+switch statement with array lookup of handling functions so text can be
+inserted before calling the function if necessary.
+
+Make new Keymap class and include Escape and CSI maps with it.
+
+make new classes for terminals (use termcap) and for editing functionality.
+
+split Session class into smaller classes?  how?  command-mode classes?  maybe
+a chain of active modes, possibly prioritized?  e.g. privileged command parser,
+standard command parser, login parser/prompter, etc.
+
+Do direct DNS lookup?  What RFC?  (1034/1035 I think.)  tcp or udp?  (both?)
 
 Create new classes for input editing and terminal handling, instead of having
 the Telnet class deal with these things directly.
