@@ -48,34 +48,37 @@ char *Timestamp::date(int start, int len) // Get part of date string.
 
 char *Timestamp::stamp()	// Return short timestamp string.
 {
+   static char buf[MaxFormattedLength + 1];
+   String buffer;
    Timestamp now;
-   static String buf;
 
    // Check for different year or future timestamp.
-   buf = now.date(20, 4);
-   if (time > now || buf != date(20, 4)) {
+   buffer = now.date(20, 4);
+   if (time > now || buffer != date(20, 4)) {
       // Different year or future timestamp, return "Mmm dd yyyy hh:mm" format.
-      buf = date(4, 7);
-      buf.append(date(20, 4));
-      buf.append(date(10, 6));
-      return ~buf;
+      buffer = date(4, 7);
+      buffer.append(date(20, 4));
+      buffer.append(date(10, 6));
+      strcpy(buf, ~buffer);
+      return buf;
    }
 
    // Check for different week.
    Timestamp lastweek = now - 604800;
-   buf = lastweek.date(4, 6);
-   if (time < lastweek && buf != date(4, 6)) {
+   buffer = lastweek.date(4, 6);
+   if (time < lastweek && buffer != date(4, 6)) {
       // Same year, not in past week, return "Mmm dd hh:mm" format.
       return date(4, 12);
    }
 
    // Check for different day.
-   buf = now.date(4, 6);
-   if (buf != date(4, 6)) {
+   buffer = now.date(4, 6);
+   if (buffer != date(4, 6)) {
       // Different day, within past week, return "Ddd hh:mm" format.
-      buf = date(0, 4);
-      buf.append(date(11, 5));
-      return ~buf;
+      buffer = date(0, 4);
+      buffer.append(date(11, 5));
+      strcpy(buf, ~buffer);
+      return buf;
    }
 
    // Same day, return "hh:mm" format.
