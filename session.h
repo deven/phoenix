@@ -84,7 +84,7 @@ public:
    void Attach(Telnet *t);
    void Detach(Telnet *t, boolean intentional);
    void SaveInputLine(char *line);
-   void Session::SetInputFunction(InputFuncPtr input, char *prompt = 0);
+   void SetInputFunction(InputFuncPtr input, char *prompt = 0);
    void InitInputFunction();
    void Input(char *line);
 
