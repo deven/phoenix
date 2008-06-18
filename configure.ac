@@ -86,6 +86,12 @@ if test "$GCC" = yes; then
     CFLAGS="$CFLAGS -fno-rtti"
     CXXFLAGS="$CXXFLAGS -fno-rtti"
   fi
+
+  # Add "-fno-threadsafe-statics" option to disable RTTI, if supported.
+  if test "$ac_cv_cxx_threadsafe-statics" = yes; then
+    CFLAGS="$CFLAGS -fno-threadsafe-statics"
+    CXXFLAGS="$CXXFLAGS -fno-threadsafe-statics"
+  fi
 fi
 
 # Apply Cygwin-specific options only if running under Cygwin.
