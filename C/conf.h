@@ -147,10 +147,10 @@ struct session {
 struct user {
    struct session *session;     /* session(s) for this user */
    int  priv;                   /* privilege level */
-   /* /// change! vvv  */
+   /* XXX change! vvv  */
    char user[32];               /* account name */
    char passwd[32];             /* password for this account (during login) */
-   /* /// change! ^^^ */
+   /* XXX change! ^^^ */
    char reserved_name[NAMELEN]; /* reserved user name (pseudo) */
 };
 

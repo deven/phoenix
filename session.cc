@@ -677,11 +677,11 @@ void Session::EnteredBlurb(char *line)
 
 void Session::ProcessInput(char *line)
 {
-   // Make ! normal for average users?  normal if not a valid command? ***
+   // XXX Make ! normal for average users?  normal if not a valid command?
    if (*line == '!') {
       trim(line);
-      // add !priv command? ***
-      // do individual privilege levels for each !command? ***
+      // XXX add !priv command?
+      // XXX do individual privilege levels for each !command?
       if (priv < 50) {
          output("Sorry, all !commands are privileged.\n");
          return;
@@ -987,7 +987,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
    if (!(drain = boolean(*args != '!'))) args++;
 
    if ((session = FindSession(args, matches))) {
-      // Nuke target session.  // Should require confirmation! ***
+      // Nuke target session.  // XXX Should require confirmation!
       if (drain) {
          print("\"%s\" has been nuked.\n", ~session->name);
       } else {
@@ -1162,7 +1162,7 @@ void Session::DoDisplay(char *args) // Do /display command.
 
 void Session::DoClear(char *)   // Do /clear command.
 {
-   output("\033[H\033[J");      // ANSI! ***
+   output("\033[H\033[J");      // XXX ANSI!
 }
 
 void Session::DoDetach(char *)  // Do /detach command.

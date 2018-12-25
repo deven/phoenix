@@ -96,11 +96,11 @@ public:
    static const int LoginTimeoutTime = 60;  // login timeout (seconds)
    static const int BufSize        = 32768; // size of input buffer
    static const int InputSize      = 1024;  // default size of input line buffer
-   static const int default_width  = 80;  // Hardcoded default screen width ***
-   static const int minimum_width  = 10;  // Hardcoded minimum screen width ***
-   static const int default_height = 24;  // Hardcoded default screen height ***
-   static const int HistoryMax     = 200; // Save last 200 input lines.  ***
-   static const int KillRingMax    = 1;   // Save last kill. ***
+   static const int default_width  = 80;  // XXX Hardcoded default screen width
+   static const int minimum_width  = 10;  // XXX Hardcoded minimum screen width
+   static const int default_height = 24;  // XXX Hardcoded default screen height
+   static const int HistoryMax     = 200; // XXX Save last 200 input lines.
+   static const int KillRingMax    = 1;   // XXX Save last kill.
    int              width;         // current screen width
    int              height;        // current screen height
    int              NAWS_width;    // NAWS negotiated screen width

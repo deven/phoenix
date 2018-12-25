@@ -72,7 +72,7 @@ int    nfds;                         /* number of file descriptors available */
 fd_set readfds;                      /* read fdset for select() */
 fd_set writefds;                     /* write fdset for select() */
 
-/* /// have to use non-blocking code instead? */
+/* XXX have to use non-blocking code instead? */
 FILE *logfile;                       /* log file */
 
 char *date(time_t clock, int start, int len) /* get part of date string */
@@ -749,7 +749,7 @@ void password(struct telnet *telnet, char *line)
       /* Set login input routine. */
       set_input_function(telnet, login);
    } else {
-      /* /// stuff */
+      /* XXX stuff */
       print(telnet, "\nYour default name is \"%s\".\n", telnet->session->name);
 
       /* Enable echoing. */
@@ -782,7 +782,7 @@ void name(struct telnet *telnet, char *line)
    telnet->session->next = sessions;
    sessions              = telnet->session;
 
-   /* /// Link new session into user list. */
+   /* XXX Link new session into user list. */
 
    /* Announce entry. */
    notify("*** %s has entered conf! [%s] ***\n", telnet->session->name,
@@ -798,7 +798,7 @@ void name(struct telnet *telnet, char *line)
 void process_input(struct telnet *telnet, char *line)
 {
    if (*line == '!') {
-      /* /// add !priv command? do individual privilege levels? */
+      /* XXX add !priv command? do individual privilege levels? */
       if (telnet->session->user->priv < 50) {
          output(telnet, "Sorry, all !commands are privileged.\n");
          return;
@@ -1287,7 +1287,7 @@ void undraw_line(struct telnet *telnet) /* Erase input line from screen. */
    if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
       if (!telnet->undrawn && telnet->input.free > telnet->input.data) {
          telnet->undrawn = 1;
-         /* /// hardcoded screenwidth */
+         /* XXX hardcoded screenwidth */
          lines = (telnet->input.free - telnet->input.data) / 80;
          if (lines) {
             /* Move cursor up and erase line. */
@@ -1305,7 +1305,7 @@ void redraw_line(struct telnet *telnet) /* Erase input line from screen. */
    if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
       if (telnet->undrawn && telnet->input.free > telnet->input.data) {
          telnet->undrawn = 0;
-         /* /// This may be past allocation!!! */
+         /* XXX This may be past allocation!!! */
          *telnet->input.free = 0;
          output(telnet, telnet->input.data);
       }
@@ -1776,7 +1776,7 @@ void alrm(int sig)              /* received SIGALRM */
          Shutdown++;;
       } else {
          Log("Closing connections.");
-         /* /// close listening socket */
+         /* XXX close listening socket */
          for (telnet = connections; telnet; telnet = telnet->next) {
             close(telnet->fd);
          }
