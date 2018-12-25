@@ -59,11 +59,11 @@ void User::SetReserved(char *names)
    if (names) {
       char *name = names;
       for (char *p = name; *p; p++) {
-	 if (*p == ',') {
-	    reserved.AddTail(new StringObj(name, p - name));
-	    reserved.Last()->trim();
-	    name = p + 1;
-	 }
+         if (*p == ',') {
+            reserved.AddTail(new StringObj(name, p - name));
+            reserved.Last()->trim();
+            name = p + 1;
+         }
       }
       reserved.AddTail(new StringObj(name));
       reserved.Last()->trim();
@@ -87,7 +87,7 @@ void User::Update(char *login, char *pass, char *names, char *defblurb, int p)
    u->priv = p;
 }
 
-void User::UpdateAll()		// Update all user entries from password file.
+void User::UpdateAll()          // Update all user entries from password file.
 {
    static time_t last = 0;
    struct stat st;
@@ -101,14 +101,14 @@ void User::UpdateAll()		// Update all user entries from password file.
    FILE *pw = fopen("passwd", "r");
    if (pw) {
       while (fgets(buf, BufSize, pw)) {
-	 if (buf[0] == '#') continue;
-	 p = username = buf;
-	 password = names = priv = 0;
-	 while (*p) if (*p == ':') { *p++ = 0; password = p; break; } else p++;
-	 while (*p) if (*p == ':') { *p++ = 0; names = p; break; } else p++;
-	 while (*p) if (*p == ':') { *p++ = 0; priv = p; break; } else p++;
-	 if (!priv) continue;
-	 Update(username, password, names, 0, priv ? atoi(priv) : 0);
+         if (buf[0] == '#') continue;
+         p = username = buf;
+         password = names = priv = 0;
+         while (*p) if (*p == ':') { *p++ = 0; password = p; break; } else p++;
+         while (*p) if (*p == ':') { *p++ = 0; names = p; break; } else p++;
+         while (*p) if (*p == ':') { *p++ = 0; priv = p; break; } else p++;
+         if (!priv) continue;
+         Update(username, password, names, 0, priv ? atoi(priv) : 0);
       }
       fclose(pw);
    }
@@ -121,15 +121,15 @@ void User::UpdateAll()		// Update all user entries from password file.
 
 char *User::FindReserved(char *name, User *&user)
 {
-   UpdateAll();			// Update user accounts.
+   UpdateAll();                 // Update user accounts.
 
    ListIter<User> u(users);
    while (u++) {
       ListIter<StringObj> reserved(u->reserved);
       while (reserved++) {
-	 if (!strcasecmp(~*reserved, name)) {
+         if (!strcasecmp(~*reserved, name)) {
             user = u;
-	    return ~*reserved;
+            return ~*reserved;
          }
       }
    }

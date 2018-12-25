@@ -41,15 +41,15 @@ enum EventType {
 class Event: public Object {
 friend class EventQueue;
 protected:
-   EventType type;		// Event type.
-   Timestamp time;		// Time event is scheduled for.
+   EventType type;              // Event type.
+   Timestamp time;              // Time event is scheduled for.
 public:
    Event(time_t when, EventType t): type(t), time(when) { } // Absolute time.
-   Event(EventType t, time_t when): type(t) {		    // Relative time.
+   Event(EventType t, time_t when): type(t) {               // Relative time.
       Timestamp now;
       time = now + when;
    }
-   virtual ~Event() { }		// destructor
+   virtual ~Event() { }         // destructor
    virtual boolean Execute() { abort(); return false; } // Execute event, return true to reschedule.
    EventType Type() { return type; }
    time_t Time() { return time; }

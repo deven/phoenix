@@ -328,13 +328,13 @@ String &String::append(const String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-	 extra -= s.len;
+         extra -= s.len;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + s.len + extra + 1];
-	 strncpy(str, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + s.len + extra + 1];
+         strncpy(str, tmp, len);
+         delete [] tmp;
       }
       strncpy(str + len, s.str, s.len);
       len += s.len;
@@ -347,13 +347,13 @@ String &String::append(String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-	 extra -= s.len;
+         extra -= s.len;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + s.len + extra + 1];
-	 strncpy(str, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + s.len + extra + 1];
+         strncpy(str, tmp, len);
+         delete [] tmp;
       }
       strncpy(str + len, s.str, s.len);
       len += s.len;
@@ -367,13 +367,13 @@ String &String::append(const char *s)
    if (s && *s) {
       size_t n = strlen(s);
       if (n <= extra) {
-	 extra -= n;
+         extra -= n;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + n + extra + 1];
-	 strncpy(str, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + n + extra + 1];
+         strncpy(str, tmp, len);
+         delete [] tmp;
       }
       strncpy(str + len, s, n);
       len += n;
@@ -386,13 +386,13 @@ String &String::append(const char *s, size_t n)
 {
    if (s && n > 0) {
       if (n <= extra) {
-	 extra -= n;
+         extra -= n;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + n + extra + 1];
-	 strncpy(str, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + n + extra + 1];
+         strncpy(str, tmp, len);
+         delete [] tmp;
       }
       strncpy(str + len, s, n);
       len += n;
@@ -421,16 +421,16 @@ String &String::prepend(const String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-	 extra -= s.len;
-	 char *p = str + len - 1;
-	 char *q = p + s.len;
-	 while (p >= str) *q-- = *p--;
+         extra -= s.len;
+         char *p = str + len - 1;
+         char *q = p + s.len;
+         while (p >= str) *q-- = *p--;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + s.len + extra + 1];
-	 strncpy(str + s.len, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + s.len + extra + 1];
+         strncpy(str + s.len, tmp, len);
+         delete [] tmp;
       }
       strncpy(str, s.str, s.len);
       len += s.len;
@@ -443,16 +443,16 @@ String &String::prepend(String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-	 extra -= s.len;
-	 char *p = str + len - 1;
-	 char *q = p + s.len;
-	 while (p >= str) *q-- = *p--;
+         extra -= s.len;
+         char *p = str + len - 1;
+         char *q = p + s.len;
+         while (p >= str) *q-- = *p--;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + s.len + extra + 1];
-	 strncpy(str + s.len, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + s.len + extra + 1];
+         strncpy(str + s.len, tmp, len);
+         delete [] tmp;
       }
       strncpy(str, s.str, s.len);
       len += s.len;
@@ -466,16 +466,16 @@ String &String::prepend(const char *s)
    if (s && *s) {
       size_t n = strlen(s);
       if (n <= extra) {
-	 extra -= n;
-	 char *p = str + len - 1;
-	 char *q = p + n;
-	 while (p >= str) *q-- = *p--;
+         extra -= n;
+         char *p = str + len - 1;
+         char *q = p + n;
+         while (p >= str) *q-- = *p--;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + n + extra + 1];
-	 strncpy(str + n, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + n + extra + 1];
+         strncpy(str + n, tmp, len);
+         delete [] tmp;
       }
       strncpy(str, s, n);
       len += n;
@@ -488,16 +488,16 @@ String &String::prepend(const char *s, size_t n)
 {
    if (s && n > 0) {
       if (n <= extra) {
-	 extra -= n;
-	 char *p = str + len - 1;
-	 char *q = p + n;
-	 while (p >= str) *q-- = *p--;
+         extra -= n;
+         char *p = str + len - 1;
+         char *q = p + n;
+         while (p >= str) *q-- = *p--;
       } else {
-	 char *tmp = str;
-	 extra = Extra;
-	 str = new char[len + n + extra + 1];
-	 strncpy(str + n, tmp, len);
-	 delete [] tmp;
+         char *tmp = str;
+         extra = Extra;
+         str = new char[len + n + extra + 1];
+         strncpy(str + n, tmp, len);
+         delete [] tmp;
       }
       strncpy(str, s, n);
       len += n;

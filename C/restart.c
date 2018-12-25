@@ -22,13 +22,13 @@
 
 #include "conf.h"
 
-int check_for_server(int port)	/* check for running server */
+int check_for_server(int port)  /* check for running server */
 {
-   struct sockaddr_in saddr;	/* socket address */
-   struct hostent *hp;		/* host entry */
-   char hostname[32];		/* hostname */
-   int fd;			/* listening socket fd */
-   int option = 1;		/* option to set for setsockopt() */
+   struct sockaddr_in saddr;    /* socket address */
+   struct hostent *hp;          /* host entry */
+   char hostname[32];           /* hostname */
+   int fd;                      /* listening socket fd */
+   int option = 1;              /* option to set for setsockopt() */
 
    /* Initialize listening socket. */
    memset(&saddr,0,sizeof(saddr));

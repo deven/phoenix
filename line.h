@@ -28,16 +28,16 @@
 
 class Line: public Object {
 public:
-   String line;			// input line
-   Pointer<Line> next;		// next input line
-   Line(char *p): line(p) {	// constructor
+   String line;                 // input line
+   Pointer<Line> next;          // next input line
+   Line(char *p): line(p) {     // constructor
       next = 0;
    }
-   void Append(Line *p) {	// Add new line at end of list.
+   void Append(Line *p) {       // Add new line at end of list.
       if (next) {
-	 next->Append(p);
+         next->Append(p);
       } else {
-	 next = p;
+         next = p;
       }
    }
 };
