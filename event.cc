@@ -39,8 +39,8 @@ void ShutdownEvent::ShutdownWarning(char *by, time_t when)
 {
    final = false;
    log("Shutdown requested by %s in %d seconds.", by, when);
-   Session::announce("\a>>> This server will shutdown in %d seconds... <<<"
-                     "\n\a", when);
+   Session::announce("\a>>> This server will shutdown in %d seconds... <<<\n\a",
+                     when);
 }
 
 void ShutdownEvent::FinalWarning()

@@ -33,12 +33,13 @@ class HashEntry: public Object {
 friend class Hash;
 friend class HashIter;
 private:
-   Pointer<HashEntry> next;     // Next entry on hash chain.
-   String key;                  // Key for hash entry.
-   String value;                // Value for hash entry.
+   Pointer<HashEntry> next;             // Next entry on hash chain.
+   String key;                          // Key for hash entry.
+   String value;                        // Value for hash entry.
+
    HashEntry(char *k, char *v): key(k), value(v) { }
 public:
-   String Key() { return key; }
+   String Key()   { return key; }
    String Value() { return value; }
    HashEntry &operator =(HashEntry &entry) {
       value = entry.value;
@@ -52,11 +53,11 @@ public:
       value = v;
       return *this;
    }
-   operator String() { return value; }
-   operator const char *() const { return value; }
-   operator char *() { return value; }
+   operator String()              { return value; }
+   operator const char *() const  { return value; }
+   operator char *()              { return value; }
    const char *operator ~() const { return ~value; }
-   char *operator ~() { return ~value; }
+   char *operator ~()             { return ~value; }
 };
 
 class Hash {
@@ -69,20 +70,21 @@ private:
    int HashFunction(char *key);
 public:
    Hash(): count(0) { }
-   int Count() { return count; }
-   void Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
-   boolean Known(String &key) { return Known(~key); }
-   boolean Known(char *key);
-   void Store(String &key, String &value) { Store(~key, ~value); }
-   void Store(String &key, char *value) { Store(~key, value); }
-   void Store(char *key, String &value) { Store(key, ~value); }
-   void Store(char *key, char *value);
-   void Delete(String &key) { Delete(~key); }
-   void Delete(char *key);
-   String Fetch(String &key) { return Fetch(~key); }
-   String Fetch(char *key);
+
+   int        Count() { return count; }
+   void       Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
+   boolean    Known      (String &key)                { return Known(~key); }
+   boolean    Known      (char *key);
+   void       Store      (String &key, String &value) { Store(~key, ~value); }
+   void       Store      (String &key, char *value)   { Store(~key,  value); }
+   void       Store      (char *key, String &value)   { Store(key,  ~value); }
+   void       Store      (char *key, char *value);
+   void       Delete     (String &key)                { Delete(~key); }
+   void       Delete     (char *key);
+   String     Fetch      (String &key)                { return Fetch(~key); }
+   String     Fetch      (char *key);
    HashEntry &operator [](char *key);
-   HashEntry &operator [](String &key) { return (*this)[~key]; }
+   HashEntry &operator [](String &key)                { return (*this)[~key]; }
 };
 
 class HashIter {
@@ -91,24 +93,25 @@ private:
    Pointer<HashEntry> entry;
    int bucket;
 public:
-   HashIter(): bucket(0) { }
+   HashIter():                   bucket(0) { }
    HashIter(Hash &a): array(&a), bucket(0) { }
-   HashIter(Hash *a): array(a), bucket(0) { }
+   HashIter(Hash *a): array(a),  bucket(0) { }
+
    HashIter &operator =(Hash &a) {
-      array = &a;
-      entry = 0;
+      array  = &a;
+      entry  = 0;
       bucket = 0;
       return *this;
    }
    HashIter &operator =(Hash *a) {
-      array = a;
-      entry = 0;
+      array  = a;
+      entry  = 0;
       bucket = 0;
       return *this;
    }
    HashEntry *operator ++();
    HashEntry *operator ++(int) { return ++(*this); }
-   operator HashEntry *() { return entry; }
-   operator HashEntry &() { return *entry; }
-   char *operator ~() { return ~(entry->value); }
+   operator HashEntry *()      { return entry; }
+   operator HashEntry &()      { return *entry; }
+   char *operator ~()          { return ~(entry->value); }
 };

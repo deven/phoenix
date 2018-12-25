@@ -32,21 +32,23 @@
 // Types of FD subclasses.
 enum FDType { UnknownFD, ListenFD, TelnetFD };
 
-class FD: public Object {       // File descriptor.
+class FD: public Object {                      // File descriptor.
 protected:
-   static FDTable fdtable;      // File descriptor table.
+   static FDTable fdtable;                     // File descriptor table.
 public:
    FDType type;
-   int fd;
+   int    fd;
+
+   virtual ~FD() { }
+
    static void CloseAll() { fdtable.CloseAll(); }
    static void Select(struct timeval *timeout) {
       fdtable.Select(timeout);
    }
-   virtual void InputReady() { abort(); }
+   virtual void InputReady()  { abort(); }
    virtual void OutputReady() { abort(); }
-   virtual void Closed() { abort(); }
-   virtual ~FD() { }
-   void NonBlocking() {         // Place fd in non-blocking mode.
+   virtual void Closed()      { abort(); }
+   void NonBlocking() {                        // Place fd in non-blocking mode.
       int flags;
 
       if ((flags = fcntl(fd, F_GETFL)) < 0) {
@@ -57,16 +59,16 @@ public:
          error("FD::NonBlocking(): fcntl(F_SETFL)");
       }
    }
-   void ReadSelect() {          // Select fd for reading.
+   void ReadSelect() {                         // Select fd for reading.
       if (fd != -1) fdtable.ReadSelect(fd);
    }
-   void NoReadSelect() {        // Do not select fd for reading.
+   void NoReadSelect() {                       // Do not select fd for reading.
       if (fd != -1) fdtable.NoReadSelect(fd);
    }
-   void WriteSelect() {         // Select fd for writing.
+   void WriteSelect() {                        // Select fd for writing.
       if (fd != -1) fdtable.WriteSelect(fd);
    }
-   void NoWriteSelect() {       // Do not select fd for writing.
+   void NoWriteSelect() {                      // Do not select fd for writing.
       if (fd != -1) fdtable.NoWriteSelect(fd);
    }
 };

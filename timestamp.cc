@@ -65,7 +65,7 @@ char *Timestamp::stamp()        // Return short timestamp string.
 
    // Check for different week.
    Timestamp lastweek = now - 604800;
-   buffer = lastweek.date(4, 6);
+   buffer             = lastweek.date(4, 6);
    if (time < lastweek && buffer != date(4, 6)) {
       // Same year, not in past week, return "Mmm dd hh:mm" format.
       return date(4, 12);

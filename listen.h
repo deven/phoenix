@@ -32,9 +32,11 @@
 class Listen: public FD {
 public:
    static boolean PortBusy(int port); // Check if a listening port is busy.
-   static void Open(int port);  // Open a listening port.
-   Listen(int port);            // constructor
-   ~Listen();                   // destructor
+   static void    Open    (int port); // Open a listening port.
+
+   Listen(int port);                  // constructor
+   ~Listen();                         // destructor
+
    void InputReady();
    void OutputReady() { abort(); }
    void Closed();

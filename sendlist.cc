@@ -50,18 +50,18 @@ Sendlist::Sendlist(Session &session, char *sendlist, boolean multi,
 Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
                         boolean do_sessions, boolean do_discussions)
 {
-   Session *session = 0;
-   Discussion *discussion = 0;
-   Set<Session> sessionmatches;
+   Session        *session    = 0;
+   Discussion     *discussion = 0;
+   Set<Session>    sessionmatches;
    Set<Discussion> discussionmatches;
    List<StringObj> nonmatches;
-   char *start;
-   char *separator;
+   char           *start;
+   char           *separator;
 
    if (typed == sendlist) return *this; // Return if sendlist unchanged.
 
    errors = "";                 // Otherwise, reinitialize.
-   typed = sendlist;
+   typed  = sendlist;
    sessions.Reset();
    discussions.Reset();
 
@@ -137,7 +137,7 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
       }
       if (separator) {
          *separator = Separator;
-         start = separator + 1;
+         start      = separator + 1;
       }
    } while (separator);
 

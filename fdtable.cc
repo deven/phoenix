@@ -44,10 +44,11 @@
 #include "gangplank.h"
 
 FDTable FD::fdtable;            // File descriptor table.
-fd_set FDTable::readfds;        // read fdset for select()
-fd_set FDTable::writefds;       // write fdset for select()
+fd_set  FDTable::readfds;       // read fdset for select()
+fd_set  FDTable::writefds;      // write fdset for select()
 
-FDTable::FDTable() {            // constructor
+FDTable::FDTable()              // constructor
+{
    FD_ZERO(&readfds);
    FD_ZERO(&writefds);
    used = 0;
@@ -57,12 +58,14 @@ FDTable::FDTable() {            // constructor
    for (int i = 0; i < size; i++) array[i] = 0;
 }
 
-FDTable::~FDTable() {           // destructor
+FDTable::~FDTable()             // destructor
+{
    for (int i = 0; i < used; i++) array[i] = 0;
    delete [] array;
 }
 
-void FDTable::OpenListen(int port) { // Open a listening port.
+void FDTable::OpenListen(int port)   // Open a listening port.
+{
    Pointer<Listen> l(new Listen(port));
    if (l->fd == -1) return;
    if (l->fd >= used) used = l->fd + 1;
@@ -70,18 +73,20 @@ void FDTable::OpenListen(int port) { // Open a listening port.
    l->ReadSelect();
 }
 
-void FDTable::OpenTelnet(int lfd) { // Open a telnet connection.
+void FDTable::OpenTelnet(int lfd)   // Open a telnet connection.
+{
    Pointer<Telnet> t(new Telnet(lfd));
    if (t->fd == -1) return;
    if (t->fd >= used) used = t->fd + 1;
    array[t->fd] = ((FD *) t);
 }
 
-Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
+Pointer<FD> FDTable::Closed(int fd)   // Close fd, return pointer to FD object.
+{
    if (fd < 0 || fd >= used) return Pointer<FD>(0);
    Pointer<FD> FD(array[fd]);
    array[fd] = 0;
-   if (fd == used - 1) {        // Fix highest used index if necessary.
+   if (fd == used - 1) {              // Fix highest used index if necessary.
       while (used > 0) {
          if (array[--used]) {
             used++;
@@ -92,12 +97,14 @@ Pointer<FD> FDTable::Closed(int fd) { // Close fd, return pointer to FD object.
    return FD;
 }
 
-void FDTable::Close(int fd) {   // Close fd, deleting FD object.
+void FDTable::Close(int fd)     // Close fd, deleting FD object.
+{
    Pointer<FD> FD(Closed(fd));
    if (FD) FD->Closed();
 }
 
-void FDTable::CloseAll() {      // Close all fds.
+void FDTable::CloseAll()        // Close all fds.
+{
    for (int i = 0; i < used; i++) Close(i);
    used = 0;
 }
@@ -105,9 +112,9 @@ void FDTable::CloseAll() {      // Close all fds.
 // Select across all ready connections, with specified timeout.
 void FDTable::Select(struct timeval *timeout)
 {
-   fd_set rfds = readfds;
-   fd_set wfds = writefds;
-   int found = select(used, &rfds, &wfds, 0, timeout);
+   fd_set rfds  = readfds;
+   fd_set wfds  = writefds;
+   int    found = select(used, &rfds, &wfds, 0, timeout);
 
    if (found < 0) {
       if (errno == EINTR) return;
@@ -127,10 +134,12 @@ void FDTable::Select(struct timeval *timeout)
    }
 }
 
-void FDTable::InputReady(int fd) { // Input is ready on file descriptor fd.
+void FDTable::InputReady(int fd)    // Input is ready on file descriptor fd.
+{
    if (array[fd]) array[fd]->InputReady();
 }
 
-void FDTable::OutputReady(int fd) { // Output is ready on file descriptor fd.
+void FDTable::OutputReady(int fd)   // Output is ready on file descriptor fd.
+{
    if (array[fd]) array[fd]->OutputReady();
 }

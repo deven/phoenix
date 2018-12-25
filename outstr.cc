@@ -37,7 +37,7 @@ void OutputStreamObject::output(Telnet *telnet)
 
 void OutputStream::Attach(Telnet *telnet) // Review detached output.
 {
-   sent = 0;
+   sent         = 0;
    Acknowledged = Sent = 0;
    if (telnet && telnet->acknowledge) while (SendNext(telnet)) ;
 }
@@ -48,7 +48,7 @@ void OutputStream::Enqueue(Telnet *telnet, OutputObj *out)
    if (!out) return;
    if (tail) {
       tail->next = new OutputStreamObject(out);
-      tail = tail->next;
+      tail       = tail->next;
    } else {
       head = tail = new OutputStreamObject(out);
    }
@@ -80,7 +80,7 @@ void OutputStream::Dequeue()    // Dequeue all acknowledged output.
          delete out;
       }
       if (!head) {
-         sent = tail = 0;
+         sent         = tail = 0;
          Acknowledged = Sent = 0;
       }
    }
