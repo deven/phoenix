@@ -37,9 +37,9 @@
 
 boolean Listen::PortBusy(int port)
 {
-   struct sockaddr_in saddr;	/* socket address */
-   int fd;			/* listening socket fd */
-   int option = 1;		/* option to set for setsockopt() */
+   struct sockaddr_in saddr;    /* socket address */
+   int fd;                      /* listening socket fd */
+   int option = 1;              /* option to set for setsockopt() */
 
    /* Initialize listening socket. */
    memset(&saddr, 0, sizeof(saddr));
@@ -64,14 +64,14 @@ void Listen::Open(int port)
    fdtable.OpenListen(port);
 }
 
-Listen::Listen(int port)	// Listen on a port.
+Listen::Listen(int port)        // Listen on a port.
 {
-   const int Backlog = 8;	// backlog on socket (for listen())
-   struct sockaddr_in saddr;	// socket address
-   int tries = 0;		// number of tries so far
-   int option = 1;		// option to set for setsockopt()
+   const int Backlog = 8;       // backlog on socket (for listen())
+   struct sockaddr_in saddr;    // socket address
+   int tries = 0;               // number of tries so far
+   int option = 1;              // option to set for setsockopt()
 
-   type = ListenFD;		// Identify as a Listen FD.***
+   type = ListenFD;             // Identify as a Listen FD.***
 
    // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));
@@ -90,29 +90,29 @@ Listen::Listen(int port)	// Listen on a port.
    // Try to bind to the port.  Try real hard.
    while (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
       if (errno == EADDRINUSE) {
-	 if (!tries++) fprintf(stderr, "Waiting for port %d.\n", port);
-	 sleep(1);
+         if (!tries++) fprintf(stderr, "Waiting for port %d.\n", port);
+         sleep(1);
       } else {
-	 error("Listen::Listen(): bind(port = %d)", port);
+         error("Listen::Listen(): bind(port = %d)", port);
       }
    }
 
    if (listen(fd, Backlog)) error("Listen::Listen(): listen()");
 }
 
-Listen::~Listen()		// Listen destructor.
+Listen::~Listen()               // Listen destructor.
 {
    Closed();
 }
 
-void Listen::Closed()		// Connection is closed.
+void Listen::Closed()           // Connection is closed.
 {
-   if (fd == -1) return;	// Skip the rest if already closed.
-   fdtable.Closed(fd);		// Remove from FDTable.
-   close(fd);			// Close connection.
-   NoReadSelect();		// Don't select closed connection at all!
+   if (fd == -1) return;        // Skip the rest if already closed.
+   fdtable.Closed(fd);          // Remove from FDTable.
+   close(fd);                   // Close connection.
+   NoReadSelect();              // Don't select closed connection at all!
    NoWriteSelect();
-   fd = -1;			// Connection is closed.
+   fd = -1;                     // Connection is closed.
 }
 
 void Listen::InputReady()

@@ -38,7 +38,7 @@
 #endif
 
 /* Telnet commands. */
-#define COMMAND_SHUTDOWN 24	/* Not a real telnet command! */
+#define COMMAND_SHUTDOWN 24     /* Not a real telnet command! */
 #define TELNET_SUBNEGIOTIATION_END 240
 #define TELNET_NOP 241
 #define TELNET_DATA_MARK 242
@@ -69,36 +69,36 @@
 #define ON 1
 #define OFF 0
 
-typedef void (*func_ptr)();	/* function pointer type */
+typedef void (*func_ptr)();     /* function pointer type */
 
 /* Input buffer consisting of a single buffer, resized as needed. */
 
 struct InputBuffer {
-   char *data;			/* start of input data */
-   char *free;			/* start of free area of allocated block */
-   char *end;			/* end of allocated block (+1) */
+   char *data;                  /* start of input data */
+   char *free;                  /* start of free area of allocated block */
+   char *end;                   /* end of allocated block (+1) */
 };
 
 /* Single input lines waiting to be processed. */
 struct Line {
-   char *line;			/* input line */
-   struct Line *next;		/* next input line */
+   char *line;                  /* input line */
+   struct Line *next;           /* next input line */
 };
 
 /* Output buffer consisting of linked list of output blocks. */
 
 struct OutputBuffer {
-   struct block *head;		/* first data block */
-   struct block *tail;		/* last data block */
+   struct block *head;          /* first data block */
+   struct block *tail;          /* last data block */
 };
 
 /* Block in a data buffer, allocated with data immediately following. */
 
 struct block {
-   char *data;			/* start of data (not of allocated block) */
-   char *free;			/* start of free area */
-   char *end;			/* end of allocated block (+1) */
-   struct block *next;		/* next block in data buffer */
+   char *data;                  /* start of data (not of allocated block) */
+   char *free;                  /* start of free area */
+   char *end;                   /* end of allocated block (+1) */
+   struct block *next;          /* next block in data buffer */
    /* data follows contiguously */
 };
 
@@ -108,50 +108,50 @@ struct block {
 
 /* Data about a particular telnet connection. */
 struct telnet {
-   struct telnet *next;		/* next telnet connection (global) */
-   int fd;			/* file descriptor for TCP connection */
-   struct session *session;	/* back-pointer to session structure */
-   struct InputBuffer input;	/* pending input */
-   struct Line *lines;		/* unprocessed input lines */
-   struct OutputBuffer output;	/* pending data output */
-   struct OutputBuffer command;	/* pending command output */
-   func_ptr input_function;	/* function pointer for input processor */
-   unsigned char state;		/* input state (0/\r/IAC/WILL/WONT/DO/DONT) */
-   char undrawn;		/* input line undrawn for output? */
-   char blocked;		/* output blocked? (boolean) */
-   char closing;		/* connection closing? (boolean) */
-   char do_echo;		/* should server be echoing? (boolean) */
-   char echo;			/* telnet ECHO option (local) */
-   char LSGA;			/* telnet SUPPRESS-GO-AHEAD option (local) */
-   char RSGA;			/* telnet SUPPRESS-GO-AHEAD option (remote) */
-   func_ptr echo_callback;	/* ECHO callback (local) */
-   func_ptr LSGA_callback;	/* SUPPRESS-GO-AHEAD callback (local) */
-   func_ptr RSGA_callback;	/* SUPPRESS-GO-AHEAD callback (remote) */
+   struct telnet *next;         /* next telnet connection (global) */
+   int fd;                      /* file descriptor for TCP connection */
+   struct session *session;     /* back-pointer to session structure */
+   struct InputBuffer input;    /* pending input */
+   struct Line *lines;          /* unprocessed input lines */
+   struct OutputBuffer output;  /* pending data output */
+   struct OutputBuffer command; /* pending command output */
+   func_ptr input_function;     /* function pointer for input processor */
+   unsigned char state;         /* input state (0/\r/IAC/WILL/WONT/DO/DONT) */
+   char undrawn;                /* input line undrawn for output? */
+   char blocked;                /* output blocked? (boolean) */
+   char closing;                /* connection closing? (boolean) */
+   char do_echo;                /* should server be echoing? (boolean) */
+   char echo;                   /* telnet ECHO option (local) */
+   char LSGA;                   /* telnet SUPPRESS-GO-AHEAD option (local) */
+   char RSGA;                   /* telnet SUPPRESS-GO-AHEAD option (remote) */
+   func_ptr echo_callback;      /* ECHO callback (local) */
+   func_ptr LSGA_callback;      /* SUPPRESS-GO-AHEAD callback (local) */
+   func_ptr RSGA_callback;      /* SUPPRESS-GO-AHEAD callback (remote) */
 };
 
 /* Data about a particular session. */
 struct session {
-   struct session *next;	/* next session (global) */
-   struct session *user_next;	/* next session (user) */
-   struct user *user;		/* user this session belongs to */
-   struct telnet *telnet;	/* telnet connection for this session */
-   char name_only[NAMELEN];	/* current user name (pseudo) without blurb */
-   char name[NAMELEN];		/* current user name (pseudo) with blurb */
-   char default_sendlist[32];	/* current default sendlist */
-   char last_sendlist[32];	/* last explicit sendlist */
-   time_t login_time;		/* time logged in */
-   time_t message_time;		/* time signed on */
+   struct session *next;        /* next session (global) */
+   struct session *user_next;   /* next session (user) */
+   struct user *user;           /* user this session belongs to */
+   struct telnet *telnet;       /* telnet connection for this session */
+   char name_only[NAMELEN];     /* current user name (pseudo) without blurb */
+   char name[NAMELEN];          /* current user name (pseudo) with blurb */
+   char default_sendlist[32];   /* current default sendlist */
+   char last_sendlist[32];      /* last explicit sendlist */
+   time_t login_time;           /* time logged in */
+   time_t message_time;         /* time signed on */
 };
 
 /* Data about a particular user. */
 struct user {
-   struct session *session;	/* session(s) for this user */
-   int priv;			/* privilege level */
+   struct session *session;     /* session(s) for this user */
+   int priv;                    /* privilege level */
    /* /// change! vvv  */
-   char user[32];		/* account name */
-   char passwd[32];		/* password for this account (during login) */
+   char user[32];               /* account name */
+   char passwd[32];             /* password for this account (during login) */
    /* /// change! ^^^ */
-   char reserved_name[NAMELEN];	/* reserved user name (pseudo) */
+   char reserved_name[NAMELEN]; /* reserved user name (pseudo) */
 };
 
 void Log(char *format,...);
@@ -193,12 +193,12 @@ void quit(int);
 void alrm(int);
 int main(int argc,char **argv);
 
-extern int errno;		/* error number */
+extern int errno;               /* error number */
 
 extern struct telnet *connections; /* telnet connections */
 
-extern int Shutdown;		/* shutdown flag */
+extern int Shutdown;            /* shutdown flag */
 
-extern int nfds;		/* number of file descriptors available */
-extern fd_set readfds;		/* read fdset for select() */
-extern fd_set writefds;		/* write fdset for select() */
+extern int nfds;                /* number of file descriptors available */
+extern fd_set readfds;          /* read fdset for select() */
+extern fd_set writefds;         /* write fdset for select() */

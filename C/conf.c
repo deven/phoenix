@@ -60,36 +60,36 @@
 
 #include "conf.h"
 
-static char buf[BUFSIZE];	/* temporary buffer */
+static char buf[BUFSIZE];       /* temporary buffer */
 
-static char inbuf[BUFSIZE];	/* input buffer */
+static char inbuf[BUFSIZE];     /* input buffer */
 
-struct telnet *connections;	/* telnet connections */
+struct telnet *connections;     /* telnet connections */
 
-struct session *sessions;	/* active sessions */
+struct session *sessions;       /* active sessions */
 
 static struct block *free_blocks; /* free blocks */
 
-int Shutdown;			/* shutdown flag */
+int Shutdown;                   /* shutdown flag */
 
-int nfds;			/* number of file descriptors available */
-fd_set readfds;			/* read fdset for select() */
-fd_set writefds;		/* write fdset for select() */
+int nfds;                       /* number of file descriptors available */
+fd_set readfds;                 /* read fdset for select() */
+fd_set writefds;                /* write fdset for select() */
 
 /* /// have to use non-blocking code instead? */
-FILE *logfile;			/* log file */
+FILE *logfile;                  /* log file */
 
 char *date(time_t clock,int start,int len) /* get part of date string */
 {
    static char buf[32];
 
-   if (!clock) time(&clock);	/* get time if not passed */
-   strcpy(buf,ctime(&clock));	/* make a copy of date string */
-   buf[24] = 0;			/* ditch the newline */
+   if (!clock) time(&clock);    /* get time if not passed */
+   strcpy(buf,ctime(&clock));   /* make a copy of date string */
+   buf[24] = 0;                 /* ditch the newline */
    if (len > 0 && len < 24) {
-      buf[start + len] = 0;	/* truncate further if requested */
+      buf[start + len] = 0;     /* truncate further if requested */
    }
-   return buf + start;		/* return (sub)string */
+   return buf + start;          /* return (sub)string */
 }
 
 void open_log()
@@ -100,7 +100,7 @@ void open_log()
    time(&t);
    if (!(tm = localtime(&t))) error("localtime");
    sprintf(buf,"logs/%02d%02d%02d-%02d%02d",tm->tm_year,tm->tm_mon + 1,
-	   tm->tm_mday,tm->tm_hour,tm->tm_min);
+           tm->tm_mday,tm->tm_hour,tm->tm_min);
    if (!(logfile = fopen(buf,"a"))) error(buf);
    setlinebuf(logfile);
    unlink("log");
@@ -108,7 +108,7 @@ void open_log()
    fprintf(stderr,"Logging on \"%s\".\n",buf);
 }
 
-void Log(char *format,...)	/* log message */
+void Log(char *format,...)      /* log message */
 {
    va_list ap;
 
@@ -119,7 +119,7 @@ void Log(char *format,...)	/* log message */
    (void) fprintf(logfile,"[%s] %s\n",date(0,4,15),buf);
 }
 
-void warn(char *format,...)	/* print error message */
+void warn(char *format,...)     /* print error message */
 {
    va_list ap;
 
@@ -130,7 +130,7 @@ void warn(char *format,...)	/* print error message */
    (void) fprintf(logfile,"[%s] %s: %s\n",date(0,4,15),buf,strerror(errno));
 }
 
-void error(char *format,...)	/* print error message and exit */
+void error(char *format,...)    /* print error message and exit */
 {
    va_list ap;
 
@@ -143,7 +143,7 @@ void error(char *format,...)	/* print error message and exit */
    exit(1);
 }
 
-void *alloc(int len)		/* allocate memory, abort on failure */
+void *alloc(int len)            /* allocate memory, abort on failure */
 {
    void *p;
 
@@ -151,22 +151,22 @@ void *alloc(int len)		/* allocate memory, abort on failure */
    if (!p) {
       /* Send error message to telnet clients? */
       write(2,"Out of memory!\n",15);
-      abort();			/* should dump core */
-      exit(1);			/* just in case */
+      abort();                  /* should dump core */
+      exit(1);                  /* just in case */
    }
    return p;
 }
 
-struct block *alloc_block(void)	/* allocate output block */
+struct block *alloc_block(void) /* allocate output block */
 {
    struct block *block;
 
-   if (free_blocks) {		/* return free block if any */
+   if (free_blocks) {           /* return free block if any */
       block = free_blocks;
       free_blocks = block->next;
       block->data = block->free = ((char *) block) + sizeof(struct block);
       block->next = NULL;
-   } else {			/* otherwise, allocate new one */
+   } else {                     /* otherwise, allocate new one */
       block = alloc(sizeof(struct block) + BLOCKSIZE);
       block->data = block->free = ((char *) block) + sizeof(struct block);
       block->end = block->data + BLOCKSIZE;
@@ -226,64 +226,64 @@ void output(struct telnet *telnet,char *buf) /* queue output data */
    char *first;
    struct block *block;
 
-   if (!telnet) return;		/* return if no connection passed */
+   if (!telnet) return;         /* return if no connection passed */
    if (buf && *buf) {
-      first = NULL;		/* data was passed to output */
+      first = NULL;             /* data was passed to output */
    } else {
-      first = buf = "";		/* no data, queue a single null byte */
+      first = buf = "";         /* no data, queue a single null byte */
    }
-   block = telnet->output.tail;	/* get last block in buffer */
-   if (!block) {		/* allocate new block if empty buffer */
+   block = telnet->output.tail; /* get last block in buffer */
+   if (!block) {                /* allocate new block if empty buffer */
       telnet->output.head = telnet->output.tail = block = alloc_block();
       if (!telnet->blocked) FD_SET(telnet->fd,&writefds);
    }
    while (first || *buf) {
       if (block->free < block->end) {
-	 free = block->free;
-	 end = block->end;
-	 if (first) {
-	    *free++ = *first;
-	    first = NULL;
-	 }
-	 while (*buf && free < end) {
-	    switch (*((unsigned char *) buf)) {
-	    case TELNET_IAC:	/* command escape: double it */
-	       *free++ = *buf;
-	       if (free < end) {
-		  *free++ = *buf++;
-	       } else {
-		  first = buf++;
-	       }
-	       break;
-	    case '\r':		/* carriage return: send "\r\0" */
-	       *free++ = *buf;
-	       if (free < end) {
-		  *free++ = 0;
-	       } else {
-		  first = buf;
-		  *first = 0;
-	       }
-	       buf++;
-	       break;
-	    case '\n':		/* newline: send "\r\n" */
-	       *free++ = '\r';
-	       if (free < end) {
-		  *free++ = *buf++;
-	       } else {
-		  first = buf++;
-	       }
-	       break;
-	    default:		/* normal character: copy */
-	       *free++ = *buf++;
-	       break;
-	    }
-	 }
-	 block->free = free;
+         free = block->free;
+         end = block->end;
+         if (first) {
+            *free++ = *first;
+            first = NULL;
+         }
+         while (*buf && free < end) {
+            switch (*((unsigned char *) buf)) {
+            case TELNET_IAC:    /* command escape: double it */
+               *free++ = *buf;
+               if (free < end) {
+                  *free++ = *buf++;
+               } else {
+                  first = buf++;
+               }
+               break;
+            case '\r':          /* carriage return: send "\r\0" */
+               *free++ = *buf;
+               if (free < end) {
+                  *free++ = 0;
+               } else {
+                  first = buf;
+                  *first = 0;
+               }
+               buf++;
+               break;
+            case '\n':          /* newline: send "\r\n" */
+               *free++ = '\r';
+               if (free < end) {
+                  *free++ = *buf++;
+               } else {
+                  first = buf++;
+               }
+               break;
+            default:            /* normal character: copy */
+               *free++ = *buf++;
+               break;
+            }
+         }
+         block->free = free;
       }
       if (first || *buf) {
-	 block = alloc_block();
-	 telnet->output.tail->next = block;
-	 telnet->output.tail = block;
+         block = alloc_block();
+         telnet->output.tail->next = block;
+         telnet->output.tail = block;
       }
    }
 }
@@ -307,13 +307,13 @@ void announce(char *format,...) /* formatted write to all connections */
    (void) vsprintf(buf,format,ap);
    va_end(ap);
    for (telnet = connections; telnet; telnet = telnet->next) {
-      undraw_line(telnet);	/* undraw input line */
+      undraw_line(telnet);      /* undraw input line */
       output(telnet,buf);
-      redraw_line(telnet);	/* redraw input line */
+      redraw_line(telnet);      /* redraw input line */
    }
 }
 
-void notify(char *format,...)	/* formatted write to all sessions */
+void notify(char *format,...)   /* formatted write to all sessions */
 {
    va_list ap;
    struct session *session;
@@ -332,10 +332,10 @@ void put_command(struct telnet *telnet, int cmd)
 {
    struct block *block;
 
-   if (!telnet) return;		/* return if no connection passed */
+   if (!telnet) return;         /* return if no connection passed */
    FD_SET(telnet->fd,&writefds); /* always write for telnet commands */
    block = telnet->command.tail; /* get last block in buffer */
-   if (!block) {		/* allocate new block if empty buffer */
+   if (!block) {                /* allocate new block if empty buffer */
       telnet->command.head = telnet->command.tail = block = alloc_block();
    } else if (block->free >= block->end) { /* or if last block full */
       telnet->command.tail->next = block = alloc_block();
@@ -362,16 +362,16 @@ char *message_start(char *line,char *sendlist,int len,int *explicit)
 
       /* Just special-case a few smileys... */
       if (!strcmp(line,":-)") || !strcmp(line,":-(") || !strcmp(line,":-P") ||
-	  !strcmp(line,";-)") || !strcmp(line,":_)") || !strcmp(line,":_(") ||
-	  !strcmp(line,":)") || !strcmp(line,":(") || !strcmp(line,":P") ||
-	  !strcmp(line,";)") || !strcmp(line,"(-:") || !strcmp(line,")-:") ||
-	  !strcmp(line,"(-;") || !strcmp(line,"(_:") || !strcmp(line,")_:") ||
-	  !strcmp(line,"(:") || !strcmp(line,"):") || !strcmp(line,"(;")) {
-	 *p = state;
-	 strcpy(sendlist,"default");
-	 return line;
+          !strcmp(line,";-)") || !strcmp(line,":_)") || !strcmp(line,":_(") ||
+          !strcmp(line,":)") || !strcmp(line,":(") || !strcmp(line,":P") ||
+          !strcmp(line,";)") || !strcmp(line,"(-:") || !strcmp(line,")-:") ||
+          !strcmp(line,"(-;") || !strcmp(line,"(_:") || !strcmp(line,")_:") ||
+          !strcmp(line,"(:") || !strcmp(line,"):") || !strcmp(line,"(;")) {
+         *p = state;
+         strcpy(sendlist,"default");
+         return line;
       } else {
-	 *p = state;
+         *p = state;
       }
    }
 
@@ -382,45 +382,45 @@ char *message_start(char *line,char *sendlist,int len,int *explicit)
    for (p = line; *p && i < len; p++) {
       switch (state) {
       case 0:
-	 switch (*p) {
-	 case ' ':
-	 case '\t':
-	    strcpy(sendlist,"default");
-	    return line + (*line == ' ');
-	 case ':':
-	 case ';':
-	    sendlist[i] = 0;
-	    if (*++p == ' ') p++;
-	    *explicit = 1;
-	    return p;
-	 case '\\':
-	    state = '\\';
-	    break;
-	 case '"':
-	    state = '"';
-	    break;
-	 case '_':
-	    sendlist[i++] = UNQUOTED_UNDERSCORE;
-	    break;
-	 default:
-	    sendlist[i++] = *p;
-	    break;
-	 }
-	 break;
+         switch (*p) {
+         case ' ':
+         case '\t':
+            strcpy(sendlist,"default");
+            return line + (*line == ' ');
+         case ':':
+         case ';':
+            sendlist[i] = 0;
+            if (*++p == ' ') p++;
+            *explicit = 1;
+            return p;
+         case '\\':
+            state = '\\';
+            break;
+         case '"':
+            state = '"';
+            break;
+         case '_':
+            sendlist[i++] = UNQUOTED_UNDERSCORE;
+            break;
+         default:
+            sendlist[i++] = *p;
+            break;
+         }
+         break;
       case '\\':
-	 sendlist[i++] = *p;
-	 state = 0;
-	 break;
+         sendlist[i++] = *p;
+         state = 0;
+         break;
       case '"':
-	 while (*p && i < len) {
-	    if (*p == '"') {
-	       state = 0;
-	       break;
-	    } else {
-	       sendlist[i++] = *p++;
-	    }
-	 }
-	 break;
+         while (*p && i < len) {
+            if (*p == '"') {
+               state = 0;
+               break;
+            } else {
+               sendlist[i++] = *p++;
+            }
+         }
+         break;
       }
    }
    strcpy(sendlist,"default");
@@ -437,9 +437,9 @@ int match_name(char *name,char *sendlist)
       if (*q == UNQUOTED_UNDERSCORE && (*p == ' ' || *p == '_')) continue;
 
       if ((isupper(*p) ? tolower(*p) : *p) !=
-	  (isupper(*q) ? tolower(*q) : *q)) {
-	 /* Mis-match, ignoring case. Recurse for middle matches. */
-	 return match_name(name+1,sendlist);
+          (isupper(*q) ? tolower(*q) : *q)) {
+         /* Mis-match, ignoring case. Recurse for middle matches. */
+         return match_name(name+1,sendlist);
       }
    }
    return !*q;
@@ -492,14 +492,14 @@ void RSGA(struct telnet *telnet, func_ptr callback, int state)
 
 void request_shutdown(int port) /* connect to port, request server shutdown */
 {
-   struct sockaddr_in saddr;	/* socket address */
-   struct hostent *hp;		/* host entry */
-   char hostname[32];		/* hostname */
-   int fd;			/* listening socket fd */
-   unsigned char c;		/* character for simple I/O */
-   unsigned char state;		/* state for processing input */
-   fd_set fds,fds2;		/* fd_set for select() and copy */
-   struct timeval tv,tv2;	/* timeval for select() timeout and copy */
+   struct sockaddr_in saddr;    /* socket address */
+   struct hostent *hp;          /* host entry */
+   char hostname[32];           /* hostname */
+   int fd;                      /* listening socket fd */
+   unsigned char c;             /* character for simple I/O */
+   unsigned char state;         /* state for processing input */
+   fd_set fds,fds2;             /* fd_set for select() and copy */
+   struct timeval tv,tv2;       /* timeval for select() timeout and copy */
 
    /* Connect to requested port. */
    memset(&saddr,0,sizeof(saddr));
@@ -541,41 +541,41 @@ void request_shutdown(int port) /* connect to port, request server shutdown */
 
    /* Try to get acknowledgement, but don't wait forever. */
    for (fds = fds2, tv = tv2; select(fd+1,&fds,NULL,NULL,&tv) == 1 &&
-	read(fd,&c,1) == 1; fds = fds2, tv = tv2) {
+        read(fd,&c,1) == 1; fds = fds2, tv = tv2) {
       switch (state) {
       case TELNET_IAC:
-	 switch (c) {
-	 case COMMAND_SHUTDOWN:
-	    fprintf(stderr,"Shutdown request acknowledged.\n");
-	    close(fd);
-	    return;
-	 case TELNET_WILL:
-	 case TELNET_WONT:
-	 case TELNET_DO:
-	 case TELNET_DONT:
-	    state = c;
-	    break;
-	 default:
-	    fprintf(stderr,"Shutdown request not acknowledged.\n");
-	    close(fd);
-	    return;
-	 }
-	 break;
+         switch (c) {
+         case COMMAND_SHUTDOWN:
+            fprintf(stderr,"Shutdown request acknowledged.\n");
+            close(fd);
+            return;
+         case TELNET_WILL:
+         case TELNET_WONT:
+         case TELNET_DO:
+         case TELNET_DONT:
+            state = c;
+            break;
+         default:
+            fprintf(stderr,"Shutdown request not acknowledged.\n");
+            close(fd);
+            return;
+         }
+         break;
       case TELNET_WILL:
       case TELNET_WONT:
       case TELNET_DO:
       case TELNET_DONT:
-	 state = 0;
-	 break;
+         state = 0;
+         break;
       default:
-	 if (c == TELNET_IAC) {
-	    state = c;
-	 } else {
-	    fprintf(stderr,"Shutdown request not acknowledged.\n");
-	    close(fd);
-	    return;
-	 }
-	 break;
+         if (c == TELNET_IAC) {
+            state = c;
+         } else {
+            fprintf(stderr,"Shutdown request not acknowledged.\n");
+            close(fd);
+            return;
+         }
+         break;
       }
    }
    fprintf(stderr,"Shutdown request not acknowledged.\n");
@@ -585,10 +585,10 @@ void request_shutdown(int port) /* connect to port, request server shutdown */
 
 int listen_on(int port, int backlog) /* listen on a port, return socket fd */
 {
-   struct sockaddr_in saddr;	/* socket address */
-   int fd;			/* listening socket fd */
-   int tries = 0;		/* number of tries so far */
-   int option = 1;		/* option to set for setsockopt() */
+   struct sockaddr_in saddr;    /* socket address */
+   int fd;                      /* listening socket fd */
+   int tries = 0;               /* number of tries so far */
+   int option = 1;              /* option to set for setsockopt() */
 
    /* Initialize listening socket. */
    memset(&saddr,0,sizeof(saddr));
@@ -603,26 +603,26 @@ int listen_on(int port, int backlog) /* listen on a port, return socket fd */
    /* Try to bind to the port.  Try real hard. */
    while (1) {
       if (bind(fd,(struct sockaddr *) &saddr,sizeof(saddr))) {
-	 if (errno == EADDRINUSE) {
-	    switch (tries++) {
-	    case 0:
-	       /* First time failed.  Try to shut down a running server. */
-	       request_shutdown(port);
-	       break;
-	    case 1:
-	       /* From now on, just wait.  Announce it. */
-	       fprintf(stderr,"Waiting for port %d.\n",port);
-	       break;
-	    default:
-	       /* Still waiting. */
-	       sleep(1);
-	       break;
-	    }
-	 } else {
-	    error("bind");
-	 }
+         if (errno == EADDRINUSE) {
+            switch (tries++) {
+            case 0:
+               /* First time failed.  Try to shut down a running server. */
+               request_shutdown(port);
+               break;
+            case 1:
+               /* From now on, just wait.  Announce it. */
+               fprintf(stderr,"Waiting for port %d.\n",port);
+               break;
+            default:
+               /* Still waiting. */
+               sleep(1);
+               break;
+            }
+         } else {
+            error("bind");
+         }
       } else {
-	 break;
+         break;
       }
    }
    if (listen(fd,backlog)) error("listen");
@@ -647,7 +647,7 @@ void welcome(struct telnet *telnet)
    if (!telnet->LSGA && !telnet->RSGA) {
       /* Sigh.  Couldn't suppress Go Aheads.  Inform the user. */
       output(telnet,"Sorry, unable to suppress Go Aheads.  Must operate in "
-	     "half-duplex mode.\n\n");
+             "half-duplex mode.\n\n");
    }
 
    /* Warn if about to shut down! */
@@ -689,29 +689,29 @@ void login(struct telnet *telnet,char *line)
       char buf[256],*username,*password,*name,*priv,*p;
       FILE *pw = fopen("passwd","r");
       if (pw) {
-	 while (fgets(buf,256,pw)) {
-	    if (buf[0] == '#') continue;
-	    p = username = buf;
-	    password = name = priv = 0;
-	    while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
-	    while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
-	    while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
-	    if (!priv) continue;
-	    if (!strcasecmp(line,username)) {
-	       found = 1;
-	       strcpy(telnet->session->user->user,username);
-	       strcpy(telnet->session->user->passwd,password);
-	       strcpy(telnet->session->name,name);
-	       telnet->session->user->priv = atoi(priv);
-	       break;
-	    }
-	 }
+         while (fgets(buf,256,pw)) {
+            if (buf[0] == '#') continue;
+            p = username = buf;
+            password = name = priv = 0;
+            while (*p) if (*p==':') {*p++=0;password = p;break;} else p++;
+            while (*p) if (*p==':') {*p++=0;name = p;break;} else p++;
+            while (*p) if (*p==':') {*p++=0;priv = p;break;} else p++;
+            if (!priv) continue;
+            if (!strcasecmp(line,username)) {
+               found = 1;
+               strcpy(telnet->session->user->user,username);
+               strcpy(telnet->session->user->passwd,password);
+               strcpy(telnet->session->name,name);
+               telnet->session->user->priv = atoi(priv);
+               break;
+            }
+         }
       }
       fclose(pw);
       if (!found) {
-	 output(telnet,"Login incorrect.\n");
-	 output(telnet,"login: ");
-	 return;
+         output(telnet,"Login incorrect.\n");
+         output(telnet,"login: ");
+         return;
       }
    }
 
@@ -765,9 +765,9 @@ void name(struct telnet *telnet,char *line)
    if (!*line) {
       /* blank line */
       if (!strcmp(telnet->session->user->user,"guest")) {
-	 /* Prompt for name. */
-	 output(telnet,"\nEnter name: ");
-	 return;
+         /* Prompt for name. */
+         output(telnet,"\nEnter name: ");
+         return;
       }
    } else {
       /* Save user's name. */
@@ -783,7 +783,7 @@ void name(struct telnet *telnet,char *line)
 
    /* Announce entry. */
    notify("*** %s has entered conf! [%s] ***\n",telnet->session->name,
-	    date(time(&telnet->session->login_time),11,5));
+            date(time(&telnet->session->login_time),11,5));
    telnet->session->message_time = telnet->session->login_time;
    Log("Enter: %s (%s) on fd %d.",telnet->session->name,
        telnet->session->user->user,telnet->fd);
@@ -801,149 +801,149 @@ void process_input(struct telnet *telnet,char *line)
          return;
       }
       if (!strncmp(line,"!down",5)) {
-	 if (!strcmp(line,"!down !")) {
-	    Log("Immediate shutdown requested by %s (%s).",
-		telnet->session->name,telnet->session->user->user);
-	    Log("Final shutdown warning.");
-	    announce("*** %s has shut down conf! ***\n",telnet->session->name);
-	    announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
-		     7,7,7,7);
-	    alarm(5);
-	    Shutdown = 2;
-	 } else if (!strcmp(line,"!down cancel")) {
-	    if (Shutdown) {
-	       Shutdown = 0;
-	       alarm(0);
-	       Log("Shutdown cancelled by %s (%s).",telnet->session->name,
-		   telnet->session->user->user);
-	       announce("*** %s has cancelled the server shutdown. ***\n",
-			telnet->session->name);
-	    } else {
-	       output(telnet,"The server was not about to shut down.\n");
-	    }
-	 } else {
-	    int i;
+         if (!strcmp(line,"!down !")) {
+            Log("Immediate shutdown requested by %s (%s).",
+                telnet->session->name,telnet->session->user->user);
+            Log("Final shutdown warning.");
+            announce("*** %s has shut down conf! ***\n",telnet->session->name);
+            announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
+                     7,7,7,7);
+            alarm(5);
+            Shutdown = 2;
+         } else if (!strcmp(line,"!down cancel")) {
+            if (Shutdown) {
+               Shutdown = 0;
+               alarm(0);
+               Log("Shutdown cancelled by %s (%s).",telnet->session->name,
+                   telnet->session->user->user);
+               announce("*** %s has cancelled the server shutdown. ***\n",
+                        telnet->session->name);
+            } else {
+               output(telnet,"The server was not about to shut down.\n");
+            }
+         } else {
+            int i;
 
-	    if (sscanf(line+5,"%d",&i) != 1) i = 30;
-	    Log("Shutdown requested by %s (%s) in %d seconds.",
-		telnet->session->name,telnet->session->user->user,i);
-	    announce("*** %s has shut down conf! ***\n",telnet->session->name);
-	    announce("%c%c>>> This server will shutdown in %d seconds... "
-		     "<<<\n%c%c",7,7,i,7,7);
-	    alarm(i);
-	    Shutdown = 1;
-	 }
+            if (sscanf(line+5,"%d",&i) != 1) i = 30;
+            Log("Shutdown requested by %s (%s) in %d seconds.",
+                telnet->session->name,telnet->session->user->user,i);
+            announce("*** %s has shut down conf! ***\n",telnet->session->name);
+            announce("%c%c>>> This server will shutdown in %d seconds... "
+                     "<<<\n%c%c",7,7,i,7,7);
+            alarm(i);
+            Shutdown = 1;
+         }
       } else if (!strncmp(line,"!nuke ",6)) {
-	 int i;
+         int i;
 
-	 if (sscanf(line+6,"%d",&i) == 1) {
-	    struct telnet *t;
+         if (sscanf(line+6,"%d",&i) == 1) {
+            struct telnet *t;
 
-	    for (t = connections; t; t = t->next) {
-	       if (t->fd == i || t->fd == -i) break;
-	    }
-	    if (t) {
-	       /* Found user, nuke 'em. */
-	       print(telnet,"User \"%s\" (%s) on fd %d has been nuked.\n",
-		     t->session->name,t->session->user->user,t->fd);
+            for (t = connections; t; t = t->next) {
+               if (t->fd == i || t->fd == -i) break;
+            }
+            if (t) {
+               /* Found user, nuke 'em. */
+               print(telnet,"User \"%s\" (%s) on fd %d has been nuked.\n",
+                     t->session->name,t->session->user->user,t->fd);
 
-	       if (t->output.head && i > 0) {
-		  /* Queued output, try to send it first. */
-		  t->blocked = 0;
-		  t->closing = 1;
+               if (t->output.head && i > 0) {
+                  /* Queued output, try to send it first. */
+                  t->blocked = 0;
+                  t->closing = 1;
 
-		  /* Don't read any more from connection. */
-		  FD_CLR(t->fd,&readfds);
+                  /* Don't read any more from connection. */
+                  FD_CLR(t->fd,&readfds);
 
-		  /* Do write to connection. */
-		  FD_SET(t->fd,&writefds);
-	       } else {
-		  /* No queued output or told to close immediately. */
-		  close_connection(t);
-	       }
-	    } else {
-	       print(telnet,"There is no user on fd %d.\n",i);
-	    }
-	 } else {
-	    print(telnet,"Bad fd #: \"%s\"\n",line+6);
-	 }
+                  /* Do write to connection. */
+                  FD_SET(t->fd,&writefds);
+               } else {
+                  /* No queued output or told to close immediately. */
+                  close_connection(t);
+               }
+            } else {
+               print(telnet,"There is no user on fd %d.\n",i);
+            }
+         } else {
+            print(telnet,"Bad fd #: \"%s\"\n",line+6);
+         }
       } else {
-	 /* Unknown !command. */
-	 output(telnet,"Unknown !command.\n");
+         /* Unknown !command. */
+         output(telnet,"Unknown !command.\n");
       }
    } else if (*line == '/') {
       if (!strncmp(line,"/bye",4)) {
-	 /* Exit conf. */
-	 if (telnet->output.head) {
-	    /* Queued output, try to send it first. */
-	    telnet->blocked = 0;
-	    telnet->closing = 1;
+         /* Exit conf. */
+         if (telnet->output.head) {
+            /* Queued output, try to send it first. */
+            telnet->blocked = 0;
+            telnet->closing = 1;
 
-	    /* Don't read any more from connection. */
-	    FD_CLR(telnet->fd,&readfds);
+            /* Don't read any more from connection. */
+            FD_CLR(telnet->fd,&readfds);
 
-	    /* Do write to connection. */
-	    FD_SET(telnet->fd,&writefds);
-	 } else {
-	    /* No queued output, close immediately. */
-	    close_connection(telnet);
-	 }
+            /* Do write to connection. */
+            FD_SET(telnet->fd,&writefds);
+         } else {
+            /* No queued output, close immediately. */
+            close_connection(telnet);
+         }
       } else if (!strncmp(line,"/who",4)) {
-	 /* /who list. */
-	 who_cmd(telnet);
+         /* /who list. */
+         who_cmd(telnet);
       } else if (!strcmp(line,"/date")) {
-	 /* Print current date and time. */
+         /* Print current date and time. */
          print(telnet,"%s\n",date(0,0,0));
       } else if (!strncmp(line,"/send",5)) {
-	 char *p;
+         char *p;
 
-	 p = line + 5;
-	 while (*p && isspace(*p)) p++;
-	 if (!*p) {
-	    /* Display current sendlist. */
-	    if (!telnet->session->default_sendlist[0]) {
-	       print(telnet,"Your default sendlist is turned off.\n");
-	    } else if (!strcmp(telnet->session->default_sendlist,"everyone")) {
-	       print(telnet,"You are sending to everyone.\n");
-	    } else {
-	       print(telnet,"Your default sendlist is set to \"%s\".\n",
-		     telnet->session->default_sendlist);
-	    }
-	 } else if (!strcmp(p,"off")) {
-	    telnet->session->default_sendlist[0] = 0;
-	    print(telnet,"Your default sendlist has been turned off.\n");
-	 } else if (!strcmp(p,"everyone")) {
-	    strcpy(telnet->session->default_sendlist,p);
-	    print(telnet,"You are now sending to everyone.\n");
-	 } else {
-	    strncpy(telnet->session->default_sendlist,p,31);
-	    telnet->session->default_sendlist[31] = 0;
-	    print(telnet,"Your default sendlist is now set to \"%s\".\n",
-		  telnet->session->default_sendlist);
-	 }
+         p = line + 5;
+         while (*p && isspace(*p)) p++;
+         if (!*p) {
+            /* Display current sendlist. */
+            if (!telnet->session->default_sendlist[0]) {
+               print(telnet,"Your default sendlist is turned off.\n");
+            } else if (!strcmp(telnet->session->default_sendlist,"everyone")) {
+               print(telnet,"You are sending to everyone.\n");
+            } else {
+               print(telnet,"Your default sendlist is set to \"%s\".\n",
+                     telnet->session->default_sendlist);
+            }
+         } else if (!strcmp(p,"off")) {
+            telnet->session->default_sendlist[0] = 0;
+            print(telnet,"Your default sendlist has been turned off.\n");
+         } else if (!strcmp(p,"everyone")) {
+            strcpy(telnet->session->default_sendlist,p);
+            print(telnet,"You are now sending to everyone.\n");
+         } else {
+            strncpy(telnet->session->default_sendlist,p,31);
+            telnet->session->default_sendlist[31] = 0;
+            print(telnet,"Your default sendlist is now set to \"%s\".\n",
+                  telnet->session->default_sendlist);
+         }
       } else if (!strncmp(line,"/help",5)) {
-	 /* help?  ha! */
-	 output(telnet,"Help?  Help?!?  This program isn't done, you know.\n");
-	 output(telnet,"\nOnly known commands:\n\n");
-	 output(telnet,"/bye -- leave conf\n");
-	 output(telnet,"/date -- display current date and time\n");
-	 output(telnet,"/send -- specify default sendlist\n");
-	 output(telnet,"/who -- gives trivial list of who is connected\n");
-	 output(telnet,"/help -- gives this dumb message\n\n");
-	 output(telnet,"No other /commands are implemented yet.\n\n");
-	 output(telnet,"There are two ways to specify a user to send a "
-		"private message.  You can use\n");
-	 output(telnet,"either a '#' and the fd number for the user, (as "
-		"listed by /who) or an\n");
-	 output(telnet,"substring of the user's name. (case-insensitive)  "
-		"Follow either form with\n");
-	 output(telnet,"a semicolon or colon and the message. (e.g. "
-		"\"#4;hi\", \"dev;hi\", ...)\n\n");
-	 output(telnet,"Any other line not beginning with a slash is "
-		"simply sent to everyone.\n\n");
+         /* help?  ha! */
+         output(telnet,"Help?  Help?!?  This program isn't done, you know.\n");
+         output(telnet,"\nOnly known commands:\n\n");
+         output(telnet,"/bye -- leave conf\n");
+         output(telnet,"/date -- display current date and time\n");
+         output(telnet,"/send -- specify default sendlist\n");
+         output(telnet,"/who -- gives trivial list of who is connected\n");
+         output(telnet,"/help -- gives this dumb message\n\n");
+         output(telnet,"No other /commands are implemented yet.\n\n");
+         output(telnet,"There are two ways to specify a user to send a "
+                "private message.  You can use\n");
+         output(telnet,"either a '#' and the fd number for the user, (as "
+                "listed by /who) or an\n");
+         output(telnet,"substring of the user's name. (case-insensitive)  "
+                "Follow either form with\n");
+         output(telnet,"a semicolon or colon and the message. (e.g. "
+                "\"#4;hi\", \"dev;hi\", ...)\n\n");
+         output(telnet,"Any other line not beginning with a slash is "
+                "simply sent to everyone.\n\n");
       } else {
-	 /* Unknown /command. */
-	 output(telnet,"Unknown /command.  Type /help for help.\n");
+         /* Unknown /command. */
+         output(telnet,"Unknown /command.  Type /help for help.\n");
       }
    } else if (!strcmp(line," ")) {
       int idle;
@@ -964,120 +964,120 @@ void process_input(struct telnet *telnet,char *line)
       if (!*sendlist) strcpy(sendlist,telnet->session->last_sendlist);
 
       if (!*sendlist) {
-	 print(telnet,"%c%cYou have no previous sendlist. (message not "
-	       "sent)\n",7,7);
-	 return;
+         print(telnet,"%c%cYou have no previous sendlist. (message not "
+               "sent)\n",7,7);
+         return;
       }
 
       if (!strcmp(sendlist,"default")) {
-	 if (*telnet->session->default_sendlist) {
-	    strcpy(sendlist,telnet->session->default_sendlist);
-	 } else {
-	    print(telnet,"%c%cYou have no default sendlist. (message not "
-		  "sent)\n",7,7);
-	    return;
-	 }
+         if (*telnet->session->default_sendlist) {
+            strcpy(sendlist,telnet->session->default_sendlist);
+         } else {
+            print(telnet,"%c%cYou have no default sendlist. (message not "
+                  "sent)\n",7,7);
+            return;
+         }
       }
 
       if (sscanf(sendlist,"#%d%c",&i,&c) == 1) {
-	 /* Send private message by fd #. */
-	 struct session *s;
-	 struct telnet *t;
+         /* Send private message by fd #. */
+         struct session *s;
+         struct telnet *t;
 
-	 /* Save last sendlist if explicit. */
-	 if (explicit && *sendlist) {
-	    strcpy(telnet->session->last_sendlist,sendlist);
-	 }
+         /* Save last sendlist if explicit. */
+         if (explicit && *sendlist) {
+            strcpy(telnet->session->last_sendlist,sendlist);
+         }
 
-	 t = NULL;
-	 for (s = sessions; s; s = s->next) {
-	    if (s->telnet->fd == i) {
-	       t = s->telnet;
-	       break;
-	    }
-	 }
+         t = NULL;
+         for (s = sessions; s; s = s->next) {
+            if (s->telnet->fd == i) {
+               t = s->telnet;
+               break;
+            }
+         }
 
-	 if (t) {
-	    /* Found user, send message. */
-	    time(&telnet->session->message_time); /* reset idle tme */
-	    print(telnet,"(message sent to %s.)\n",t->session->name);
-	    undraw_line(t); /* undraw input line */
-	    print(t,"%c\n >> Private message from %s: [%s]\n - %s\n",7,
-		  telnet->session->name,date(0,11,5),p);
-	    redraw_line(t); /* redraw input line */
-	 } else {
-	    /* Not found. */
-	    print(telnet,"%c%cThere is no user on fd #%d. (message not "
-		  "sent)\n",7,7,i);
-	 }
+         if (t) {
+            /* Found user, send message. */
+            time(&telnet->session->message_time); /* reset idle tme */
+            print(telnet,"(message sent to %s.)\n",t->session->name);
+            undraw_line(t); /* undraw input line */
+            print(t,"%c\n >> Private message from %s: [%s]\n - %s\n",7,
+                  telnet->session->name,date(0,11,5),p);
+            redraw_line(t); /* redraw input line */
+         } else {
+            /* Not found. */
+            print(telnet,"%c%cThere is no user on fd #%d. (message not "
+                  "sent)\n",7,7,i);
+         }
       } else if (!strcmp(sendlist,"everyone")) {
-	 /* Send message to everyone. */
-	 struct telnet *t,*dest;
-	 int sent;
+         /* Send message to everyone. */
+         struct telnet *t,*dest;
+         int sent;
 
-	 time(&telnet->session->message_time); /* reset idle tme */
+         time(&telnet->session->message_time); /* reset idle tme */
 
-	 sent = 0;
-	 for (dest = connections; dest; dest = dest->next) {
-	    if (dest != telnet) {
-	       sent++;
-	       undraw_line(dest); /* undraw input line */
-	       print(dest,"%c\n -> From %s to everyone: [%s]\n - %s\n",7,
-		     telnet->session->name,date(0,11,5),p);
-	       redraw_line(dest); /* redraw input line */
-	    }
-	 }
+         sent = 0;
+         for (dest = connections; dest; dest = dest->next) {
+            if (dest != telnet) {
+               sent++;
+               undraw_line(dest); /* undraw input line */
+               print(dest,"%c\n -> From %s to everyone: [%s]\n - %s\n",7,
+                     telnet->session->name,date(0,11,5),p);
+               redraw_line(dest); /* redraw input line */
+            }
+         }
 
-	 if (sent) {
-	    output(telnet,"(message sent to everyone.)\n");
-	 } else {
-	    print(telnet,"%c%cThere is no one else here! (message not "
-		   "sent)\n",7,7);
-	 }
+         if (sent) {
+            output(telnet,"(message sent to everyone.)\n");
+         } else {
+            print(telnet,"%c%cThere is no one else here! (message not "
+                   "sent)\n",7,7);
+         }
       } else {
-	 /* Send private message by partial name match. */
-	 struct telnet *t,*dest;
+         /* Send private message by partial name match. */
+         struct telnet *t,*dest;
 
-	 /* Save last sendlist if explicit. */
-	 if (explicit && *sendlist) {
-	    strcpy(telnet->session->last_sendlist,sendlist);
-	 }
+         /* Save last sendlist if explicit. */
+         if (explicit && *sendlist) {
+            strcpy(telnet->session->last_sendlist,sendlist);
+         }
 
-	 dest = NULL;
-	 if (!strcmp(sendlist,"me")) {
-	    dest = telnet;
-	 } else {
-	    for (t = connections; t; t = t->next) {
-	       if (match_name(t->session->name,sendlist)) {
-		  if (dest) {
-		     print(telnet,"\"%s\" matches more than one name, "
-			   "including \"%s\" and \"%s\". (message not "
-			   "sent)\n",sendlist,dest->session->name,
-			   t->session->name);
-		     dest = NULL;
-		     break;
-		  } else {
-		     dest = t;
-		  }
-	       }
-	    }
-	 }
+         dest = NULL;
+         if (!strcmp(sendlist,"me")) {
+            dest = telnet;
+         } else {
+            for (t = connections; t; t = t->next) {
+               if (match_name(t->session->name,sendlist)) {
+                  if (dest) {
+                     print(telnet,"\"%s\" matches more than one name, "
+                           "including \"%s\" and \"%s\". (message not "
+                           "sent)\n",sendlist,dest->session->name,
+                           t->session->name);
+                     dest = NULL;
+                     break;
+                  } else {
+                     dest = t;
+                  }
+               }
+            }
+         }
 
-	 if (dest) {
-	    /* Found user, send message. */
-	    time(&telnet->session->message_time); /* reset idle tme */
-	    print(telnet,"(message sent to %s.)\n",dest->session->name);
-	    undraw_line(dest); /* undraw input line */
-	    print(dest,"%c\n >> Private message from %s: [%s]\n - %s\n",7,
-		  telnet->session->name,date(0,11,5),p);
-	    redraw_line(dest); /* redraw input line */
-	 } else {
-	    if (!t) {
-	       /* Multiple-match message wasn't sent, so there's no match. */
-	       print(telnet,"%c%cNo names matched \"%s\". (message not "
-		     "sent)\n",7,7,sendlist);
-	    }
-	 }
+         if (dest) {
+            /* Found user, send message. */
+            time(&telnet->session->message_time); /* reset idle tme */
+            print(telnet,"(message sent to %s.)\n",dest->session->name);
+            undraw_line(dest); /* undraw input line */
+            print(dest,"%c\n >> Private message from %s: [%s]\n - %s\n",7,
+                  telnet->session->name,date(0,11,5),p);
+            redraw_line(dest); /* redraw input line */
+         } else {
+            if (!t) {
+               /* Multiple-match message wasn't sent, so there's no match. */
+               print(telnet,"%c%cNo names matched \"%s\". (message not "
+                     "sent)\n",7,7,sendlist);
+            }
+         }
       }
    }
 }
@@ -1096,25 +1096,25 @@ void who_cmd(struct telnet *telnet)
    for (t = connections; t; t = t->next) {
       idle = (time(NULL) - t->session->message_time) / 60;
       if (idle) {
-	 print(telnet," %-32s  %8s  %4d  %-8s  %2d\n",t->session->name,
-	       date(t->session->login_time,11,8),idle,t->session->user->user,
-	       t->fd);
+         print(telnet," %-32s  %8s  %4d  %-8s  %2d\n",t->session->name,
+               date(t->session->login_time,11,8),idle,t->session->user->user,
+               t->fd);
       } else {
-	 print(telnet," %-32s  %8s        %-8s  %2d\n",t->session->name,
-	       date(t->session->login_time,11,8),t->session->user->user,
-	       t->fd);
+         print(telnet," %-32s  %8s        %-8s  %2d\n",t->session->name,
+               date(t->session->login_time,11,8),t->session->user->user,
+               t->fd);
       }
    }
 }
 
-void new_connection(int lfd)	/* accept a new connection */
+void new_connection(int lfd)    /* accept a new connection */
 {
-   struct telnet *telnet;	/* new telnet data structure */
-   struct session *session;	/* new session data structure */
-   struct user *user;		/* new user data structure */
-   struct sockaddr_in saddr;	/* for getpeername() */
-   int saddrlen;		/* for getpeername() */
-   int flags;			/* file status flags from fcntl() */
+   struct telnet *telnet;       /* new telnet data structure */
+   struct session *session;     /* new session data structure */
+   struct user *user;           /* new user data structure */
+   struct sockaddr_in saddr;    /* for getpeername() */
+   int saddrlen;                /* for getpeername() */
+   int flags;                   /* file status flags from fcntl() */
 
    telnet = alloc(sizeof(struct telnet));
 
@@ -1131,7 +1131,7 @@ void new_connection(int lfd)	/* accept a new connection */
    saddrlen = sizeof(saddr);
    if (!getpeername(telnet->fd,(struct sockaddr *) &saddr,&saddrlen)) {
       Log("Accepted connection on fd %d from %s port %d.",telnet->fd,
-	  inet_ntoa(saddr.sin_addr),saddr.sin_port);
+          inet_ntoa(saddr.sin_addr),saddr.sin_port);
    } else {
       warn("getpeername");
    }
@@ -1139,7 +1139,7 @@ void new_connection(int lfd)	/* accept a new connection */
    /* Place in non-blocking mode. */
    flags = fcntl(telnet->fd,F_GETFL); /* get flags */
    if (flags < 0) error("fcntl(F_GETFL)");
-   flags |= O_NONBLOCK;		/* set non-blocking mode */
+   flags |= O_NONBLOCK;         /* set non-blocking mode */
    flags = fcntl(telnet->fd,F_SETFL,flags); /* set new flags */
    if (flags == -1) error("fcntl(F_SETFL)");
 
@@ -1162,14 +1162,14 @@ void new_connection(int lfd)	/* accept a new connection */
    /* No input function. */
    telnet->input_function = NULL;
 
-   telnet->state = 0;		/* telnet input state = 0 (data) */
-   telnet->undrawn = 0;		/* line not undrawn for output */
-   telnet->blocked = 0;		/* output not blocked */
-   telnet->closing = 0;		/* conection not closing */
-   telnet->do_echo = 1;		/* Do echoing, if ECHO option enabled. */
-   telnet->echo = 0;		/* ECHO option off (local) */
-   telnet->LSGA = 0;		/* SUPPRESS-GO-AHEAD option off (local) */
-   telnet->RSGA = 0;		/* SUPPRESS-GO-AHEAD option off (remote) */
+   telnet->state = 0;           /* telnet input state = 0 (data) */
+   telnet->undrawn = 0;         /* line not undrawn for output */
+   telnet->blocked = 0;         /* output not blocked */
+   telnet->closing = 0;         /* conection not closing */
+   telnet->do_echo = 1;         /* Do echoing, if ECHO option enabled. */
+   telnet->echo = 0;            /* ECHO option off (local) */
+   telnet->LSGA = 0;            /* SUPPRESS-GO-AHEAD option off (local) */
+   telnet->RSGA = 0;            /* SUPPRESS-GO-AHEAD option off (remote) */
    telnet->echo_callback = NULL; /* no ECHO callback (local)*/
    telnet->LSGA_callback = NULL; /* no SUPPRESS-GO-AHEAD callback (local) */
    telnet->RSGA_callback = NULL; /* no SUPPRESS-GO-AHEAD callback (remote) */
@@ -1193,7 +1193,7 @@ void new_connection(int lfd)	/* accept a new connection */
 
    user->session = session;
 
-   user->priv = 10;		/* default user privilege level */
+   user->priv = 10;             /* default user privilege level */
 
    strcpy(user->user,"[nobody]");
    user->passwd[0] = 0;
@@ -1239,8 +1239,8 @@ void close_connection(struct telnet *telnet)
       s = sessions;
       while (s && s->next != session) s = s->next;
       if (s->next == session) {
-	 s->next = session->next;
-	 found++;
+         s->next = session->next;
+         found++;
       }
    }
 
@@ -1248,13 +1248,13 @@ void close_connection(struct telnet *telnet)
    if (found) {
       notify("*** %s has left conf! [%s] ***\n",session->name,date(0,11,5));
       Log("Exit: %s (%s) on fd %d.",session->name,session->user->user,
-	  telnet->fd);
+          telnet->fd);
    }
 
-   close(telnet->fd);		/* Close the connection. */
-   free_user(session->user);	/* Free user structure. */
-   free(session);		/* Free session structure. */
-   free(telnet->input.data);	/* Free input line buffer. */
+   close(telnet->fd);           /* Close the connection. */
+   free_user(session->user);    /* Free user structure. */
+   free(session);               /* Free session structure. */
+   free(telnet->input.data);    /* Free input line buffer. */
 
    /* Free blocks in command output queue. */
    while (telnet->command.head) {
@@ -1283,16 +1283,16 @@ void undraw_line(struct telnet *telnet) /* Erase input line from screen. */
 
    if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
       if (!telnet->undrawn && telnet->input.free > telnet->input.data) {
-	 telnet->undrawn = 1;
-	 /* /// hardcoded screenwidth */
-	 lines = (telnet->input.free - telnet->input.data) / 80;
-	 if (lines) {
-	    /* Move cursor up and erase line. */
-	    print(telnet,"\033[0m\r\033[%dA\033[J",lines);
-	 } else {
-	    /* Erase line. */
-	    output(telnet,"\033[0m\r\033[J");
-	 }
+         telnet->undrawn = 1;
+         /* /// hardcoded screenwidth */
+         lines = (telnet->input.free - telnet->input.data) / 80;
+         if (lines) {
+            /* Move cursor up and erase line. */
+            print(telnet,"\033[0m\r\033[%dA\033[J",lines);
+         } else {
+            /* Erase line. */
+            output(telnet,"\033[0m\r\033[J");
+         }
       }
    }
 }
@@ -1301,10 +1301,10 @@ void redraw_line(struct telnet *telnet) /* Erase input line from screen. */
 {
    if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
       if (telnet->undrawn && telnet->input.free > telnet->input.data) {
-	 telnet->undrawn = 0;
-	 /* /// This may be past allocation!!! */
-	 *telnet->input.free = 0;
-	 output(telnet,telnet->input.data);
+         telnet->undrawn = 0;
+         /* /// This may be past allocation!!! */
+         *telnet->input.free = 0;
+         output(telnet,telnet->input.data);
       }
    }
 }
@@ -1313,7 +1313,7 @@ void erase_character(struct telnet *telnet) /* Erase last input character. */
 {
    if (telnet->input.free > telnet->input.data) {
       if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
-	 output(telnet,"\010 \010"); /* Echo backspace, space, backspace. */
+         output(telnet,"\010 \010"); /* Echo backspace, space, backspace. */
       }
       telnet->input.free--;
    }
@@ -1321,9 +1321,9 @@ void erase_character(struct telnet *telnet) /* Erase last input character. */
 
 void erase_line(struct telnet *telnet) /* Erase input line. */
 {
-   undraw_line(telnet);		/* Erase input line from screen. */
+   undraw_line(telnet);         /* Erase input line from screen. */
    telnet->input.free = telnet->input.data; /* Actually erase the input. */
-   telnet->undrawn = 0;		/* Clear the undrawn flag. */
+   telnet->undrawn = 0;         /* Clear the undrawn flag. */
 }
 
 void input_ready(struct telnet *telnet) /* telnet stream can input data */
@@ -1339,11 +1339,11 @@ void input_ready(struct telnet *telnet) /* telnet stream can input data */
       switch (errno) {
       case EINTR:
       case EWOULDBLOCK:
-	 break;
+         break;
       default:
-	 warn("Connection %d",telnet->fd);
-	 close_connection(telnet);
-	 break;
+         warn("Connection %d",telnet->fd);
+         close_connection(telnet);
+         break;
       }
       break;
    case 0:
@@ -1355,307 +1355,307 @@ void input_ready(struct telnet *telnet) /* telnet stream can input data */
       to = telnet->input.free;
       to_end = telnet->input.end;
       while (from < from_end) {
-	 /* Make sure there's room for more in the buffer. */
-	 if (to >= to_end) {
-	    n = (telnet->input.end - telnet->input.data) * 2;
-	    to = (char *) realloc(telnet->input.data,n);
-	    if (!to) {
-	       write(2,"Out of memory!\n",15);
-	       abort();		/* should dump core */
-	       exit(1);		/* just in case */
-	    }
-	    telnet->input.free = to + (telnet->input.free -
-				       telnet->input.data);
-	    telnet->input.end = to + n;
-	    telnet->input.data = to;
-	    to = telnet->input.free;
-	    to_end = telnet->input.end;
-	 }
-	 n = *((unsigned char *) from);
-	 switch (telnet->state) {
-	 case TELNET_IAC:
-	    switch (n) {
-	    case COMMAND_SHUTDOWN:
-	       /* Shutdown request.  Not a real telnet command. */
+         /* Make sure there's room for more in the buffer. */
+         if (to >= to_end) {
+            n = (telnet->input.end - telnet->input.data) * 2;
+            to = (char *) realloc(telnet->input.data,n);
+            if (!to) {
+               write(2,"Out of memory!\n",15);
+               abort();         /* should dump core */
+               exit(1);         /* just in case */
+            }
+            telnet->input.free = to + (telnet->input.free -
+                                       telnet->input.data);
+            telnet->input.end = to + n;
+            telnet->input.data = to;
+            to = telnet->input.free;
+            to_end = telnet->input.end;
+         }
+         n = *((unsigned char *) from);
+         switch (telnet->state) {
+         case TELNET_IAC:
+            switch (n) {
+            case COMMAND_SHUTDOWN:
+               /* Shutdown request.  Not a real telnet command. */
 
-	       /* Acknowledge request. */
-	       put_command(telnet,TELNET_IAC);
-	       put_command(telnet,COMMAND_SHUTDOWN);
+               /* Acknowledge request. */
+               put_command(telnet,TELNET_IAC);
+               put_command(telnet,COMMAND_SHUTDOWN);
 
-	       /* Initiate shutdown. */
-	       Log("Shutdown requested by new server in 30 seconds.");
-	       announce("%c%c>>> A new server is starting.  This server "
-			"will shutdown in 30 seconds... <<<\n%c%c",7,7,7,7);
-	       alarm(30);
-	       Shutdown = 1;
-	       break;
-	    case TELNET_ABORT_OUTPUT:
-	       /* Abort all output data. */
-	       while (telnet->output.head) {
-		  block = telnet->output.head;
-		  telnet->output.head = block->next;
-		  free_block(block);
-	       }
-	       telnet->output.tail = NULL;
-	       telnet->state = 0;
-	       break;
-	    case TELNET_ARE_YOU_THERE:
-	       /* Are we here?  Yes!  Queue confirmation to command queue, */
-	       /* to be output as soon as possible.  (Does NOT wait on a */
-	       /* Go Ahead if output is blocked!) */
-	       for (p = "\r\n[Yes]\r\n"; *p; p++) {
-		  put_command(telnet,*p);
-	       }
-	       telnet->state = 0;
-	       break;
-	    case TELNET_ERASE_CHARACTER:
-	       /* Erase last input character. */
-	       erase_character(telnet);
-	       telnet->state = 0;
-	       break;
-	    case TELNET_ERASE_LINE:
-	       /* Erase current input line. */
-	       erase_line(telnet);
-	       telnet->state = 0;
-	       break;
-	    case TELNET_GO_AHEAD:
-	       /* Unblock output. */
-	       if (telnet->output.head) {
-		  FD_SET(telnet->fd,&writefds);
-	       }
-	       telnet->blocked = 0;
-	       telnet->state = 0;
-	       break;
-	    case TELNET_WILL:
-	    case TELNET_WONT:
-	    case TELNET_DO:
-	    case TELNET_DONT:
-	       /* Options negotiation.  Remember which type. */
-	       telnet->state = n;
-	       break;
-	    case TELNET_IAC:
-	       /* Escaped (doubled) TELNET_IAC is data. */
-	       *((unsigned char *) to++) = TELNET_IAC;
-	       telnet->state = 0;
-	       break;
-	    default:
-	       /* Ignore any other telnet command. */
-	       telnet->state = 0;
-	       break;
-	    }
-	    break;
-	 case TELNET_WILL:
-	 case TELNET_WONT:
-	    /* Negotiate remote option. */
-	    switch (n) {
-	    case TELNET_SUPPRESS_GO_AHEAD:
-	       if (telnet->state == TELNET_WILL) {
-		  telnet->RSGA |= TELNET_WILL_WONT;
-		  if (!(telnet->RSGA & TELNET_DO_DONT)) {
-		     /* Turn on SUPPRESS-GO-AHEAD option. */
-		     telnet->RSGA |= TELNET_DO_DONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_DO);
-		     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
+               /* Initiate shutdown. */
+               Log("Shutdown requested by new server in 30 seconds.");
+               announce("%c%c>>> A new server is starting.  This server "
+                        "will shutdown in 30 seconds... <<<\n%c%c",7,7,7,7);
+               alarm(30);
+               Shutdown = 1;
+               break;
+            case TELNET_ABORT_OUTPUT:
+               /* Abort all output data. */
+               while (telnet->output.head) {
+                  block = telnet->output.head;
+                  telnet->output.head = block->next;
+                  free_block(block);
+               }
+               telnet->output.tail = NULL;
+               telnet->state = 0;
+               break;
+            case TELNET_ARE_YOU_THERE:
+               /* Are we here?  Yes!  Queue confirmation to command queue, */
+               /* to be output as soon as possible.  (Does NOT wait on a */
+               /* Go Ahead if output is blocked!) */
+               for (p = "\r\n[Yes]\r\n"; *p; p++) {
+                  put_command(telnet,*p);
+               }
+               telnet->state = 0;
+               break;
+            case TELNET_ERASE_CHARACTER:
+               /* Erase last input character. */
+               erase_character(telnet);
+               telnet->state = 0;
+               break;
+            case TELNET_ERASE_LINE:
+               /* Erase current input line. */
+               erase_line(telnet);
+               telnet->state = 0;
+               break;
+            case TELNET_GO_AHEAD:
+               /* Unblock output. */
+               if (telnet->output.head) {
+                  FD_SET(telnet->fd,&writefds);
+               }
+               telnet->blocked = 0;
+               telnet->state = 0;
+               break;
+            case TELNET_WILL:
+            case TELNET_WONT:
+            case TELNET_DO:
+            case TELNET_DONT:
+               /* Options negotiation.  Remember which type. */
+               telnet->state = n;
+               break;
+            case TELNET_IAC:
+               /* Escaped (doubled) TELNET_IAC is data. */
+               *((unsigned char *) to++) = TELNET_IAC;
+               telnet->state = 0;
+               break;
+            default:
+               /* Ignore any other telnet command. */
+               telnet->state = 0;
+               break;
+            }
+            break;
+         case TELNET_WILL:
+         case TELNET_WONT:
+            /* Negotiate remote option. */
+            switch (n) {
+            case TELNET_SUPPRESS_GO_AHEAD:
+               if (telnet->state == TELNET_WILL) {
+                  telnet->RSGA |= TELNET_WILL_WONT;
+                  if (!(telnet->RSGA & TELNET_DO_DONT)) {
+                     /* Turn on SUPPRESS-GO-AHEAD option. */
+                     telnet->RSGA |= TELNET_DO_DONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_DO);
+                     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
 
-		     /* Me, too! */
-		     if (!telnet->LSGA) LSGA(telnet,telnet->LSGA_callback,ON);
+                     /* Me, too! */
+                     if (!telnet->LSGA) LSGA(telnet,telnet->LSGA_callback,ON);
 
-		     /* Unblock output. */
-		     if (telnet->output.head) {
-			FD_SET(telnet->fd,&writefds);
-		     }
-		     telnet->blocked = 0;
-		  }
-	       } else {
-		  telnet->RSGA &= ~TELNET_WILL_WONT;
-		  if (telnet->RSGA & TELNET_DO_DONT) {
-		     /* Turn off SUPPRESS-GO-AHEAD option. */
-		     telnet->RSGA &= ~TELNET_DO_DONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_DONT);
-		     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
-		  }
-	       }
-	       if (telnet->RSGA_callback) {
-		  telnet->RSGA_callback(telnet);
-		  telnet->RSGA_callback = NULL;
-	       }
-	       break;
-	    default:
-	       /* Don't know this option, refuse it. */
-	       if (telnet->state == TELNET_WILL) {
-		  put_command(telnet,TELNET_IAC);
-		  put_command(telnet,TELNET_DONT);
-		  put_command(telnet,n);
-	       }
-	       break;
-	    }
-	    telnet->state = 0;
-	    break;
-	 case TELNET_DO:
-	 case TELNET_DONT:
-	    /* Negotiate local option. */
-	    switch (n) {
-	    case TELNET_ECHO:
-	       if (telnet->state == TELNET_DO) {
-		  telnet->echo |= TELNET_DO_DONT;
-		  if (!(telnet->echo & TELNET_WILL_WONT)) {
-		     /* Turn on ECHO option. */
-		     telnet->echo |= TELNET_WILL_WONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_WILL);
-		     put_command(telnet,TELNET_ECHO);
-		  }
-	       } else {
-		  telnet->echo &= ~TELNET_DO_DONT;
-		  if (telnet->echo & TELNET_WILL_WONT) {
-		     /* Turn off ECHO option. */
-		     telnet->echo &= ~TELNET_WILL_WONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_WONT);
-		     put_command(telnet,TELNET_ECHO);
-		  }
-	       }
-	       if (telnet->echo_callback) {
-		  telnet->echo_callback(telnet);
-		  telnet->echo_callback = NULL;
-	       }
-	       break;
-	    case TELNET_SUPPRESS_GO_AHEAD:
-	       if (telnet->state == TELNET_DO) {
-		  telnet->LSGA |= TELNET_DO_DONT;
-		  if (!(telnet->LSGA & TELNET_WILL_WONT)) {
-		     /* Turn on SUPPRESS-GO-AHEAD option. */
-		     telnet->LSGA |= TELNET_WILL_WONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_WILL);
-		     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
+                     /* Unblock output. */
+                     if (telnet->output.head) {
+                        FD_SET(telnet->fd,&writefds);
+                     }
+                     telnet->blocked = 0;
+                  }
+               } else {
+                  telnet->RSGA &= ~TELNET_WILL_WONT;
+                  if (telnet->RSGA & TELNET_DO_DONT) {
+                     /* Turn off SUPPRESS-GO-AHEAD option. */
+                     telnet->RSGA &= ~TELNET_DO_DONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_DONT);
+                     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
+                  }
+               }
+               if (telnet->RSGA_callback) {
+                  telnet->RSGA_callback(telnet);
+                  telnet->RSGA_callback = NULL;
+               }
+               break;
+            default:
+               /* Don't know this option, refuse it. */
+               if (telnet->state == TELNET_WILL) {
+                  put_command(telnet,TELNET_IAC);
+                  put_command(telnet,TELNET_DONT);
+                  put_command(telnet,n);
+               }
+               break;
+            }
+            telnet->state = 0;
+            break;
+         case TELNET_DO:
+         case TELNET_DONT:
+            /* Negotiate local option. */
+            switch (n) {
+            case TELNET_ECHO:
+               if (telnet->state == TELNET_DO) {
+                  telnet->echo |= TELNET_DO_DONT;
+                  if (!(telnet->echo & TELNET_WILL_WONT)) {
+                     /* Turn on ECHO option. */
+                     telnet->echo |= TELNET_WILL_WONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_WILL);
+                     put_command(telnet,TELNET_ECHO);
+                  }
+               } else {
+                  telnet->echo &= ~TELNET_DO_DONT;
+                  if (telnet->echo & TELNET_WILL_WONT) {
+                     /* Turn off ECHO option. */
+                     telnet->echo &= ~TELNET_WILL_WONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_WONT);
+                     put_command(telnet,TELNET_ECHO);
+                  }
+               }
+               if (telnet->echo_callback) {
+                  telnet->echo_callback(telnet);
+                  telnet->echo_callback = NULL;
+               }
+               break;
+            case TELNET_SUPPRESS_GO_AHEAD:
+               if (telnet->state == TELNET_DO) {
+                  telnet->LSGA |= TELNET_DO_DONT;
+                  if (!(telnet->LSGA & TELNET_WILL_WONT)) {
+                     /* Turn on SUPPRESS-GO-AHEAD option. */
+                     telnet->LSGA |= TELNET_WILL_WONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_WILL);
+                     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
 
-		     /* You can too. */
-		     if (!telnet->RSGA) RSGA(telnet,telnet->RSGA_callback,ON);
+                     /* You can too. */
+                     if (!telnet->RSGA) RSGA(telnet,telnet->RSGA_callback,ON);
 
-		     /* Unblock output. */
-		     if (telnet->output.head) {
-			FD_SET(telnet->fd,&writefds);
-		     }
-		     telnet->blocked = 0;
-		  }
-	       } else {
-		  telnet->LSGA &= ~TELNET_DO_DONT;
-		  if (telnet->LSGA & TELNET_WILL_WONT) {
-		     /* Turn off SUPPRESS-GO-AHEAD option. */
-		     telnet->LSGA &= ~TELNET_WILL_WONT;
-		     put_command(telnet,TELNET_IAC);
-		     put_command(telnet,TELNET_WONT);
-		     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
-		  }
-	       }
-	       if (telnet->LSGA_callback) {
-		  telnet->LSGA_callback(telnet);
-		  telnet->LSGA_callback = NULL;
-	       }
-	       break;
-	    default:
-	       /* Don't know this option, refuse it. */
-	       if (telnet->state == TELNET_DO) {
-		  put_command(telnet,TELNET_IAC);
-		  put_command(telnet,TELNET_WONT);
-		  put_command(telnet,n);
-	       }
-	       break;
-	    }
-	    telnet->state = 0;
-	    break;
-	 case '\r':
-	    /* Throw away next character. */
-	    telnet->state = 0;
-	    break;
-	 default:		/* Normal data. */
-	    telnet->state = 0;
-	    while (!telnet->state && from < from_end && to < to_end) {
-	       switch (*((unsigned char *) from)) {
-	       case TELNET_IAC:
-		  telnet->state = TELNET_IAC;
-		  from++;
-		  break;
-	       case 8:		/* Backspace */
-	       case 127:	/* Delete */
-		  /* Erase last input character. */
-		  telnet->input.free = to;
-		  erase_character(telnet);
-		  to = telnet->input.free;
-		  from++;
-		  break;
-	       case 21:		/* Control-U */
-		  /* Erase current input line. */
-		  telnet->input.free = to;
-		  erase_line(telnet);
-		  to = telnet->input.free;
-		  from++;
-		  break;
-	       case '\r':	/* Carriage Return */
-		  telnet->state = '\r';
-		  /* FALL THROUGH */
-	       case '\n':	/* Newline (Linefeed) */
-		  /* Got newline.  Process input line. */
-		  telnet->input.free = to;
-		  *to = 0;
+                     /* Unblock output. */
+                     if (telnet->output.head) {
+                        FD_SET(telnet->fd,&writefds);
+                     }
+                     telnet->blocked = 0;
+                  }
+               } else {
+                  telnet->LSGA &= ~TELNET_DO_DONT;
+                  if (telnet->LSGA & TELNET_WILL_WONT) {
+                     /* Turn off SUPPRESS-GO-AHEAD option. */
+                     telnet->LSGA &= ~TELNET_WILL_WONT;
+                     put_command(telnet,TELNET_IAC);
+                     put_command(telnet,TELNET_WONT);
+                     put_command(telnet,TELNET_SUPPRESS_GO_AHEAD);
+                  }
+               }
+               if (telnet->LSGA_callback) {
+                  telnet->LSGA_callback(telnet);
+                  telnet->LSGA_callback = NULL;
+               }
+               break;
+            default:
+               /* Don't know this option, refuse it. */
+               if (telnet->state == TELNET_DO) {
+                  put_command(telnet,TELNET_IAC);
+                  put_command(telnet,TELNET_WONT);
+                  put_command(telnet,n);
+               }
+               break;
+            }
+            telnet->state = 0;
+            break;
+         case '\r':
+            /* Throw away next character. */
+            telnet->state = 0;
+            break;
+         default:               /* Normal data. */
+            telnet->state = 0;
+            while (!telnet->state && from < from_end && to < to_end) {
+               switch (*((unsigned char *) from)) {
+               case TELNET_IAC:
+                  telnet->state = TELNET_IAC;
+                  from++;
+                  break;
+               case 8:          /* Backspace */
+               case 127:        /* Delete */
+                  /* Erase last input character. */
+                  telnet->input.free = to;
+                  erase_character(telnet);
+                  to = telnet->input.free;
+                  from++;
+                  break;
+               case 21:         /* Control-U */
+                  /* Erase current input line. */
+                  telnet->input.free = to;
+                  erase_line(telnet);
+                  to = telnet->input.free;
+                  from++;
+                  break;
+               case '\r':       /* Carriage Return */
+                  telnet->state = '\r';
+                  /* FALL THROUGH */
+               case '\n':       /* Newline (Linefeed) */
+                  /* Got newline.  Process input line. */
+                  telnet->input.free = to;
+                  *to = 0;
 
-		  /* If either side has Go Aheads suppressed, then the */
-		  /* hell with it, unblock the damn output. */
-		  if (telnet->LSGA || telnet->RSGA) {
-		     /* Unblock output. */
-		     if (telnet->output.head) {
-			FD_SET(telnet->fd,&writefds);
-		     }
-		     telnet->blocked = 0;
-		  }
+                  /* If either side has Go Aheads suppressed, then the */
+                  /* hell with it, unblock the damn output. */
+                  if (telnet->LSGA || telnet->RSGA) {
+                     /* Unblock output. */
+                     if (telnet->output.head) {
+                        FD_SET(telnet->fd,&writefds);
+                     }
+                     telnet->blocked = 0;
+                  }
 
-		  /* Echo newline if necessary. */
-		  if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
-		     output(telnet,"\n");
-		  }
+                  /* Echo newline if necessary. */
+                  if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
+                     output(telnet,"\n");
+                  }
 
-		  /* Pre-erase line. */
-		  telnet->input.free = telnet->input.data;
+                  /* Pre-erase line. */
+                  telnet->input.free = telnet->input.data;
 
-		  /* Call user and state-specific input line processor. */
-		  if (telnet->input_function) {
-		     telnet->input_function(telnet,telnet->input.data);
-		  } else {
-		     save_input_line(telnet,telnet->input.data);
-		  }
+                  /* Call user and state-specific input line processor. */
+                  if (telnet->input_function) {
+                     telnet->input_function(telnet,telnet->input.data);
+                  } else {
+                     save_input_line(telnet,telnet->input.data);
+                  }
 
-		  if ((telnet->input.end - telnet->input.data) > INPUTSIZE) {
-		     /* Drop buffer back to normal size. (assume success!) */
-		     to = (char *) realloc(telnet->input.data,INPUTSIZE);
-		     telnet->input.data = telnet->input.free = to;
-		     telnet->input.end = to + INPUTSIZE;
-		     to = telnet->input.free;
-		     to_end = telnet->input.end;
-		  } else {
-		     /* Erase line. */
-		     telnet->input.free = to = telnet->input.data;
-		  }
-		  from++;
-		  break;
-	       default:
-		  /* Echo character if necessary. */
-		  if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
-		     print(telnet,"%c",*from);
-		  }
+                  if ((telnet->input.end - telnet->input.data) > INPUTSIZE) {
+                     /* Drop buffer back to normal size. (assume success!) */
+                     to = (char *) realloc(telnet->input.data,INPUTSIZE);
+                     telnet->input.data = telnet->input.free = to;
+                     telnet->input.end = to + INPUTSIZE;
+                     to = telnet->input.free;
+                     to_end = telnet->input.end;
+                  } else {
+                     /* Erase line. */
+                     telnet->input.free = to = telnet->input.data;
+                  }
+                  from++;
+                  break;
+               default:
+                  /* Echo character if necessary. */
+                  if (telnet->echo == TELNET_ENABLED && telnet->do_echo) {
+                     print(telnet,"%c",*from);
+                  }
 
-		  *to++ = *from++; /* Copy user data character. */
-		  break;
-	       }
-	    }
-	    from--;		/* It's about to be incremented. */
-	    break;
-	 }
-	 from++;		/* Next input character. */
+                  *to++ = *from++; /* Copy user data character. */
+                  break;
+               }
+            }
+            from--;             /* It's about to be incremented. */
+            break;
+         }
+         from++;                /* Next input character. */
       }
-      telnet->input.free = to;	/* Save new free pointer. */
+      telnet->input.free = to;  /* Save new free pointer. */
       break;
    }
 }
@@ -1671,27 +1671,27 @@ void output_ready(struct telnet *telnet) /* telnet stream can output data */
       n = write(telnet->fd,block->data,block->free - block->data);
       switch (n) {
       case -1:
-	 switch (errno) {
-	 case EINTR:
-	 case EWOULDBLOCK:
-	    return;
-	 default:
-	    warn("Connection %d",telnet->fd);
-	    close_connection(telnet);
-	    break;
-	 }
-	 break;
+         switch (errno) {
+         case EINTR:
+         case EWOULDBLOCK:
+            return;
+         default:
+            warn("Connection %d",telnet->fd);
+            close_connection(telnet);
+            break;
+         }
+         break;
       default:
-	 block->data += n;
-	 if (block->data >= block->free) {
-	    if (block->next) {
-	       telnet->command.head = block->next;
-	    } else {
-	       telnet->command.head = telnet->command.tail = NULL;
-	    }
-	    free_block(block);
-	 }
-	 break;
+         block->data += n;
+         if (block->data >= block->free) {
+            if (block->next) {
+               telnet->command.head = block->next;
+            } else {
+               telnet->command.head = telnet->command.tail = NULL;
+            }
+            free_block(block);
+         }
+         break;
       }
    }
 
@@ -1707,27 +1707,27 @@ void output_ready(struct telnet *telnet) /* telnet stream can output data */
       n = write(telnet->fd,block->data,block->free - block->data);
       switch (n) {
       case -1:
-	 switch (errno) {
-	 case EINTR:
-	 case EWOULDBLOCK:
-	    return;
-	 default:
-	    warn("Connection %d",telnet->fd);
-	    close_connection(telnet);
-	    break;
-	 }
-	 break;
+         switch (errno) {
+         case EINTR:
+         case EWOULDBLOCK:
+            return;
+         default:
+            warn("Connection %d",telnet->fd);
+            close_connection(telnet);
+            break;
+         }
+         break;
       default:
-	 block->data += n;
-	 if (block->data >= block->free) {
-	    if (block->next) {
-	       telnet->output.head = block->next;
-	    } else {
-	       telnet->output.head = telnet->output.tail = NULL;
-	    }
-	    free_block(block);
-	 }
-	 break;
+         block->data += n;
+         if (block->data >= block->free) {
+            if (block->next) {
+               telnet->output.head = block->next;
+            } else {
+               telnet->output.head = telnet->output.tail = NULL;
+            }
+            free_block(block);
+         }
+         break;
       }
    }
 
@@ -1750,49 +1750,49 @@ void output_ready(struct telnet *telnet) /* telnet stream can output data */
    }
 }
 
-void quit(int sig)		/* received SIGQUIT or SIGTERM */
+void quit(int sig)              /* received SIGQUIT or SIGTERM */
 {
    Log("Shutdown requested by signal in 30 seconds.");
    announce("%c%c>>> This server will shutdown in 30 seconds... <<<\n%c%c",
-	    7,7,7,7);
+            7,7,7,7);
    alarm(30);
    Shutdown = 1;
 }
 
-void alrm(int sig)		/* received SIGALRM */
+void alrm(int sig)              /* received SIGALRM */
 {
    struct telnet *telnet;
 
    /* Ignore unless shutting down. */
    if (Shutdown) {
       if (Shutdown == 1) {
-	 Log("Final shutdown warning.");
-	 announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
-		  7,7,7,7);
-	 alarm(5);
-	 Shutdown++;;
+         Log("Final shutdown warning.");
+         announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
+                  7,7,7,7);
+         alarm(5);
+         Shutdown++;;
       } else {
-	 Log("Closing connections.");
-	 /* /// close listening socket */
-	 for (telnet = connections; telnet; telnet = telnet->next) {
-	    close(telnet->fd);
-	 }
-	 Log("Server down.");
-	 if (logfile) fclose(logfile);
-	 exit(0);
+         Log("Closing connections.");
+         /* /// close listening socket */
+         for (telnet = connections; telnet; telnet = telnet->next) {
+            close(telnet->fd);
+         }
+         Log("Server down.");
+         if (logfile) fclose(logfile);
+         exit(0);
       }
    }
 }
 
 int main(int argc,char **argv) /* main program */
 {
-   struct telnet *telnet;	/* telnet struct pointer */
-   fd_set rfds;			/* copy of readfds to pass to select() */
-   fd_set wfds;			/* copy of writefds to pass to select() */
-   int found;			/* number of file descriptors found */
-   int lfd;			/* listening file descriptor */
-   int pid;			/* server process number */
-   int errors;			/* number of consecutive select() errors */
+   struct telnet *telnet;       /* telnet struct pointer */
+   fd_set rfds;                 /* copy of readfds to pass to select() */
+   fd_set wfds;                 /* copy of writefds to pass to select() */
+   int found;                   /* number of file descriptors found */
+   int lfd;                     /* listening file descriptor */
+   int pid;                     /* server process number */
+   int errors;                  /* number of consecutive select() errors */
 
    errors = 0;
    Shutdown = 0;
@@ -1811,32 +1811,32 @@ int main(int argc,char **argv) /* main program */
    if (argc > 1 && strcmp(argv[1],"-debug")) {
       switch (pid = fork()) {
       case 0:
-	 setpgrp();
-	 signal(SIGHUP,SIG_IGN);
-	 signal(SIGINT,SIG_IGN);
-	 signal(SIGQUIT,quit);
-	 signal(SIGTERM,quit);
-	 signal(SIGALRM,alrm);
-	 Log("Server started, running on port %d. (pid %d)",PORT,getpid());
-	 break;
+         setpgrp();
+         signal(SIGHUP,SIG_IGN);
+         signal(SIGINT,SIG_IGN);
+         signal(SIGQUIT,quit);
+         signal(SIGTERM,quit);
+         signal(SIGALRM,alrm);
+         Log("Server started, running on port %d. (pid %d)",PORT,getpid());
+         break;
       case -1:
-	 error("fork");
-	 break;
+         error("fork");
+         break;
       default:
-	 fprintf(stderr,"Server started, running on port %d. (pid %d)\n",
-		 PORT,pid);
-	 exit(0);
-	 break;
+         fprintf(stderr,"Server started, running on port %d. (pid %d)\n",
+                 PORT,pid);
+         exit(0);
+         break;
       }
    }
 
    while(1) {
       /* Exit if shutting down and no users are left. */
       if (Shutdown && !connections) {
-	 Log("All connections closed, shutting down.");
-	 Log("Server down.");
-	 if (logfile) fclose(logfile);
-	 exit(0);
+         Log("All connections closed, shutting down.");
+         Log("Server down.");
+         if (logfile) fclose(logfile);
+         exit(0);
       }
 
       /* Select across all ready connections. */
@@ -1846,31 +1846,31 @@ int main(int argc,char **argv) /* main program */
 
       /* If select fails, warn or up to 30 seconds before aborting. */
       if (found == -1) {
-	 if (errno == EINTR) continue;
-	 if (++errors >= 30) error("select");
-	 warn("select");
-	 sleep(1);
-	 continue;
+         if (errno == EINTR) continue;
+         if (++errors >= 30) error("select");
+         warn("select");
+         sleep(1);
+         continue;
       } else {
-	 errors = 0;
+         errors = 0;
       }
 
       /* Check for a new connection to accept. */
       if (FD_ISSET(lfd,&rfds)) {
-	 new_connection(lfd);
-	 found--;
+         new_connection(lfd);
+         found--;
       }
 
       /* Check for I/O ready on connections. */
       for (telnet = connections; found && telnet; telnet = telnet->next) {
-	 if (FD_ISSET(telnet->fd,&rfds)) {
-	    input_ready(telnet);
-	    found--;
-	 }
-	 if (FD_ISSET(telnet->fd,&wfds)) {
-	    output_ready(telnet);
-	    found--;
-	 }
+         if (FD_ISSET(telnet->fd,&rfds)) {
+            input_ready(telnet);
+            found--;
+         }
+         if (FD_ISSET(telnet->fd,&wfds)) {
+            output_ready(telnet);
+            found--;
+         }
       }
    }
 }

@@ -43,13 +43,13 @@ enum OutputClass { UnknownClass, TextClass, MessageClass, NotificationClass };
 
 class OutputObj: public Object {
 public:
-   OutputType Type;		// Output type.
-   OutputClass Class;		// Output class.
-   Timestamp time;		// Timestamp.
+   OutputType Type;             // Output type.
+   OutputClass Class;           // Output class.
+   Timestamp time;              // Timestamp.
 
    OutputObj(OutputType t, OutputClass c, time_t when = 0): Type(t), Class(c),
    time(when) { }
-   virtual ~OutputObj() { }	// destructor
+   virtual ~OutputObj() { }     // destructor
    virtual void output(Telnet *telnet) { abort(); }
 };
 
@@ -229,7 +229,7 @@ private:
    Pointer<Name> removed;
 public:
    DepermitNotify(Discussion *d, Session *s, boolean flag, Session *who,
-		  time_t when = 0);
+                  time_t when = 0);
    void output(Telnet *telnet);
 };
 

@@ -68,9 +68,9 @@ void Hash::Store(char *key, char *value)
    count++;
    while (entry->next) {
       if (entry->key == key) {
-	 entry->next = entry->next->next;
-	 count--;
-	 return;
+         entry->next = entry->next->next;
+         count--;
+         return;
       }
       entry = entry->next;
    }
@@ -85,12 +85,12 @@ void Hash::Delete(char *key)
       count--;
    } else {
       while (entry->next) {
-	 if (entry->key == key) {
-	    entry->next = entry->next->next;
-	    count--;
-	    return;
-	 }
-	 entry = entry->next;
+         if (entry->key == key) {
+            entry->next = entry->next->next;
+            count--;
+            return;
+         }
+         entry = entry->next;
       }
    }
 }
@@ -139,13 +139,13 @@ HashEntry *HashIter::operator ++() {
    if (entry) {
       if (entry = entry->next) return entry;
       while (++bucket < Hash::Size) {
-	 if (entry = array->bucket[bucket]) return entry;
+         if (entry = array->bucket[bucket]) return entry;
       }
       bucket = 0;
    } else {
       bucket = 0;
       while (++bucket < Hash::Size) {
-	 if (entry = array->bucket[bucket]) return entry;
+         if (entry = array->bucket[bucket]) return entry;
       }
       bucket = 0;
    }

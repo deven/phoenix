@@ -54,12 +54,12 @@ struct timeval *EventQueue::Execute()
       Timestamp now;
 
       if (event->time <= now) {
-	 event = (Event *) queue.Dequeue();
-	 if (event->Execute()) Enqueue(event);
+         event = (Event *) queue.Dequeue();
+         if (event->Execute()) Enqueue(event);
       } else {
-	 tv.tv_sec = event->time - now;
-	 tv.tv_usec = 0;
-	 return &tv;
+         tv.tv_sec = event->time - now;
+         tv.tv_usec = 0;
+         return &tv;
       }
    }
 

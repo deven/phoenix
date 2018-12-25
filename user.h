@@ -33,22 +33,22 @@
 //
 
 class User: public Object {
-   static List<User> users;	// List of users in system.
+   static List<User> users;     // List of users in system.
 public:
    static const int BufSize = 1024; // size of password input buffer
-   List<Session> sessions;	// sessions for this user
-   String user;			// account name
-   String password;		// password for this account (during login)
-   List<StringObj> reserved;	// reserved user names (pseudos)
-   String blurb;		// default blurb
-   int priv;			// privilege level
+   List<Session> sessions;      // sessions for this user
+   String user;                 // account name
+   String password;             // password for this account (during login)
+   List<StringObj> reserved;    // reserved user names (pseudos)
+   String blurb;                // default blurb
+   int priv;                    // privilege level
 
    User(char *login, char *pass, char *names, char *bl, int p);
    ~User() { users.Remove(this); }
    void SetReserved(char *names);
    static User *GetUser(char *login);
    static void Update(char *login, char *pass, char *name, char *defblurb,
-		      int p);
+                      int p);
    static void UpdateAll();
    char *FindReserved(char *name, User *&user);
    void AddSession(Session *s) { sessions.AddTail(s); }

@@ -41,7 +41,7 @@
 
 class Object {
 private:
-   int RefCnt;			// Reference count.
+   int RefCnt;                  // Reference count.
 public:
    Object(): RefCnt(0) { }
    virtual ~Object() { if (RefCnt > 0) abort(); }

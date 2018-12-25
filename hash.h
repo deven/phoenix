@@ -33,9 +33,9 @@ class HashEntry: public Object {
 friend class Hash;
 friend class HashIter;
 private:
-   Pointer<HashEntry> next;	// Next entry on hash chain.
-   String key;			// Key for hash entry.
-   String value;		// Value for hash entry.
+   Pointer<HashEntry> next;     // Next entry on hash chain.
+   String key;                  // Key for hash entry.
+   String value;                // Value for hash entry.
    HashEntry(char *k, char *v): key(k), value(v) { }
 public:
    String Key() { return key; }

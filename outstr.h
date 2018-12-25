@@ -38,25 +38,25 @@ private:
 
 class OutputStream {
 public:
-   OutputStreamObject *head;	// first output object
-   OutputStreamObject *sent;	// next output object to send
-   OutputStreamObject *tail;	// last output object
-   int Acknowledged;		// count of acknowledged objects in queue
-   int Sent;			// count of sent objects in queue
-   OutputStream() {		// constructor
+   OutputStreamObject *head;    // first output object
+   OutputStreamObject *sent;    // next output object to send
+   OutputStreamObject *tail;    // last output object
+   int Acknowledged;            // count of acknowledged objects in queue
+   int Sent;                    // count of sent objects in queue
+   OutputStream() {             // constructor
       head = sent = tail = 0;
       Acknowledged = Sent = 0;
    }
-   ~OutputStream() {		// destructor
-      while (head) {		// Free any remaining output in queue.
-	 OutputStreamObject *out = head;
-	 head = out->next;
-	 delete out;
+   ~OutputStream() {            // destructor
+      while (head) {            // Free any remaining output in queue.
+         OutputStreamObject *out = head;
+         head = out->next;
+         delete out;
       }
       sent = tail = 0;
       Acknowledged = Sent = 0;
    }
-   void Acknowledge() {		// Acknowledge a block of output.
+   void Acknowledge() {         // Acknowledge a block of output.
       if (Acknowledged < Sent) Acknowledged++;
    }
    void Attach(Telnet *telnet);

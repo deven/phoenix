@@ -42,13 +42,13 @@
 #include "gangplank.h"
 
 Sendlist::Sendlist(Session &session, char *sendlist, boolean multi,
-		   boolean do_sessions, boolean do_discussions)
+                   boolean do_sessions, boolean do_discussions)
 {
    set(session, sendlist, multi, do_sessions, do_discussions);
 }
 
 Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
-			boolean do_sessions, boolean do_discussions)
+                        boolean do_sessions, boolean do_discussions)
 {
    Session *session = 0;
    Discussion *discussion = 0;
@@ -58,86 +58,86 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
    char *start;
    char *separator;
 
-   if (typed == sendlist) return *this;	// Return if sendlist unchanged.
+   if (typed == sendlist) return *this; // Return if sendlist unchanged.
 
-   errors = "";			// Otherwise, reinitialize.
+   errors = "";                 // Otherwise, reinitialize.
    typed = sendlist;
    sessions.Reset();
    discussions.Reset();
 
-   if (!sendlist) return *this;	// Return if new sendlist is empty.
+   if (!sendlist) return *this; // Return if new sendlist is empty.
 
    start = sendlist;
-   do {				// Loop for each sendlist component.
+   do {                         // Loop for each sendlist component.
       sessionmatches.Reset();
       discussionmatches.Reset();
       separator = strchr(start, Separator);
       if (separator) *separator = 0;
       if (sender.FindSendable(start, session, sessionmatches, discussion,
-			      discussionmatches, boolean(!multi), false,
-			      boolean(do_sessions), boolean(do_discussions))) {
-	 if (session) sessions.Add(session);
-	 if (discussion) discussions.Add(discussion);
+                              discussionmatches, boolean(!multi), false,
+                              boolean(do_sessions), boolean(do_discussions))) {
+         if (session) sessions.Add(session);
+         if (discussion) discussions.Add(discussion);
       } else {
-	 String tmp(start);
-	 for (char *p = tmp; *p; p++) {
-	    if (*((unsigned char *) p) == UnquotedUnderscore) {
-	       *p = Underscore;
-	    }
-	 }
-
-	 if (sessionmatches.Count()) {
-	    SetIter<Session> session(sessionmatches);
-
-	    if (multi) {
-	       while (session++) sessions.Add((Session *) session);
-	    } else {
-	       errors.sprintf("%s\"%s\" matches %d name%s: ", ~errors, ~tmp,
-			      sessionmatches.Count(),
-			      sessionmatches.Count() == 1 ? "" : "s");
-	       errors.append(session++->name);
-	       while (session++) {
-		  errors.append(", ");
-		  errors.append(session->name);
-	       }
-	       if (discussionmatches.Count()) {
-		  errors.append("; ");
-	       } else {
-		  errors.append(".\n");
-	       }
-	    }
-	 }
-	 if (discussionmatches.Count()) {
-	    SetIter<Discussion> discussion(discussionmatches);
-
-	    if (multi) {
-	       while (discussion++) discussions.Add((Discussion *) discussion);
-	    } else {
-	       if (!sessionmatches.Count()) {
-	          errors.sprintf("%s\"%s\" matches ", ~errors, ~tmp);
-	       }
-	       errors.sprintf("%s%d discussion%s: ", ~errors,
-			      discussionmatches.Count(),
-			      discussionmatches.Count() == 1 ? "" : "s");
-	       errors.append(discussion++->name);
-	       while (discussion++) {
-		  errors.append(", ");
-		  errors.append(discussion->name);
-	       }
-	       errors.append(".\n");
-	    }
-	 }
-	 if (!sessionmatches.Count() && !discussionmatches.Count()) {
-	    ListIter<StringObj> nonmatch(nonmatches);
-	    while (nonmatch++) {
-	       if (tmp == *nonmatch) break;
+         String tmp(start);
+         for (char *p = tmp; *p; p++) {
+            if (*((unsigned char *) p) == UnquotedUnderscore) {
+               *p = Underscore;
             }
-	    if (!nonmatch) nonmatches.AddTail(new StringObj(tmp));
-	 }
+         }
+
+         if (sessionmatches.Count()) {
+            SetIter<Session> session(sessionmatches);
+
+            if (multi) {
+               while (session++) sessions.Add((Session *) session);
+            } else {
+               errors.sprintf("%s\"%s\" matches %d name%s: ", ~errors, ~tmp,
+                              sessionmatches.Count(),
+                              sessionmatches.Count() == 1 ? "" : "s");
+               errors.append(session++->name);
+               while (session++) {
+                  errors.append(", ");
+                  errors.append(session->name);
+               }
+               if (discussionmatches.Count()) {
+                  errors.append("; ");
+               } else {
+                  errors.append(".\n");
+               }
+            }
+         }
+         if (discussionmatches.Count()) {
+            SetIter<Discussion> discussion(discussionmatches);
+
+            if (multi) {
+               while (discussion++) discussions.Add((Discussion *) discussion);
+            } else {
+               if (!sessionmatches.Count()) {
+                  errors.sprintf("%s\"%s\" matches ", ~errors, ~tmp);
+               }
+               errors.sprintf("%s%d discussion%s: ", ~errors,
+                              discussionmatches.Count(),
+                              discussionmatches.Count() == 1 ? "" : "s");
+               errors.append(discussion++->name);
+               while (discussion++) {
+                  errors.append(", ");
+                  errors.append(discussion->name);
+               }
+               errors.append(".\n");
+            }
+         }
+         if (!sessionmatches.Count() && !discussionmatches.Count()) {
+            ListIter<StringObj> nonmatch(nonmatches);
+            while (nonmatch++) {
+               if (tmp == *nonmatch) break;
+            }
+            if (!nonmatch) nonmatches.AddTail(new StringObj(tmp));
+         }
       }
       if (separator) {
-	 *separator = Separator;
-	 start = separator + 1;
+         *separator = Separator;
+         start = separator + 1;
       }
    } while (separator);
 
@@ -148,12 +148,12 @@ Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
       errors.append("No names matched \"");
       errors.append(*++nonmatch);
       while (--left > 1 && nonmatch++) {
-	 errors.append("\", \"");
-	 errors.append(*nonmatch);
+         errors.append("\", \"");
+         errors.append(*nonmatch);
       }
       if (left) {
-	 errors.append("\" or \"");
-	 errors.append(*++nonmatch);
+         errors.append("\" or \"");
+         errors.append(*++nonmatch);
       }
       errors.append("\".\n");
    }

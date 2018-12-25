@@ -37,9 +37,9 @@ class ListNode: public Object {
 friend class List<Type>;
 friend class ListIter<Type>;
 private:
-   Pointer<ListNode> next;	// Next node.
-   Pointer<ListNode> prev;	// Previous node.
-   Pointer<Type> obj;		// Object this node refers to.
+   Pointer<ListNode> next;      // Next node.
+   Pointer<ListNode> prev;      // Previous node.
+   Pointer<Type> obj;           // Object this node refers to.
    ListNode(Type *ptr): obj(ptr) { }
 };
 
@@ -148,13 +148,13 @@ int List<Type>::PriorityEnqueue(Type *ptr, int (*compare)(Type *, Type *)) {
 
    for (scan = head->next, pos = 2; scan; scan = scan->next, pos++) {
       if (compare(ptr, scan->obj) < 0) {
-	 NodeType *node = new NodeType(ptr);
+         NodeType *node = new NodeType(ptr);
 
-	 node->prev = scan->prev;
-	 node->next = scan;
-	 node->prev->next = node;
-	 node->next->prev = node;
-	 return pos;
+         node->prev = scan->prev;
+         node->next = scan;
+         node->prev->next = node;
+         node->next->prev = node;
+         return pos;
       }
    }
 
@@ -179,32 +179,32 @@ void List<Type>::Remove(Type *obj) {
 
    while (node) {
       while (node && node->obj == obj) {
-	 count--;
-	 if (node == head) {
-	    head = node->next;
-	    if (head) {
-	       head->prev = 0;
-	    } else {
-	       tail = 0;
-	    }
-	    node->next = node->prev = 0;
-	    node = head;
-	 } else if (node == tail) {
-	    tail = node->prev;
-	    if (tail) {
-	       tail->next = 0;
-	    } else {
-	       head = 0;
-	    }
-	    node->next = node->prev = 0;
-	    node = tail;
-	 } else {
-	    Pointer<NodeType> ptr(node->prev);
-	    node->prev->next = node->next;
-	    node->next->prev = node->prev;
-	    node->next = node->prev = 0;
-	    node = ptr;
-	 }
+         count--;
+         if (node == head) {
+            head = node->next;
+            if (head) {
+               head->prev = 0;
+            } else {
+               tail = 0;
+            }
+            node->next = node->prev = 0;
+            node = head;
+         } else if (node == tail) {
+            tail = node->prev;
+            if (tail) {
+               tail->next = 0;
+            } else {
+               head = 0;
+            }
+            node->next = node->prev = 0;
+            node = tail;
+         } else {
+            Pointer<NodeType> ptr(node->prev);
+            node->prev->next = node->next;
+            node->next->prev = node->prev;
+            node->next = node->prev = 0;
+            node = ptr;
+         }
       }
       if (node) node = node->next;
    }

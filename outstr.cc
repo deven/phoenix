@@ -29,7 +29,7 @@
 #include "gangplank.h"
 
 void OutputStreamObject::output(Telnet *telnet)
-{				// Output object.
+{                               // Output object.
    if (!Output) return;
    Output->output(telnet);
    telnet->TimingMark();
@@ -68,20 +68,20 @@ void OutputStream::Unenqueue(OutputObj *out)
    }
 }
 
-void OutputStream::Dequeue()	// Dequeue all acknowledged output.
+void OutputStream::Dequeue()    // Dequeue all acknowledged output.
 {
    OutputStreamObject *out;
 
    if (Acknowledged) {
       while (Acknowledged && Sent && (out = head)) {
-	 Acknowledged--;
-	 Sent--;
-	 head = out->next;
-	 delete out;
+         Acknowledged--;
+         Sent--;
+         head = out->next;
+         delete out;
       }
       if (!head) {
-	 sent = tail = 0;
-	 Acknowledged = Sent = 0;
+         sent = tail = 0;
+         Acknowledged = Sent = 0;
       }
    }
 }

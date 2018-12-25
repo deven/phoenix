@@ -41,40 +41,40 @@
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
 class Session: public Object {
-   static List<Session> inits;	// List of sessions initializing.
+   static List<Session> inits;  // List of sessions initializing.
    static List<Session> sessions; // List of signed-on sessions.
    static List<Discussion> discussions; // List of active discussions.
 public:
    static const int MaxLoginAttempts = 3; // maximum login attempts allowed
-   static Hash defaults;	// default session-level system variables
+   static Hash defaults;        // default session-level system variables
 
-   Pointer<User> user;		// user this session belongs to
-   Pointer<Telnet> telnet;	// telnet connection for this session
-   InputFuncPtr InputFunc;	// function pointer for input processor
-   Pointer<Line> lines;		// unprocessed input lines
-   OutputBuffer Output;		// temporary output buffer
-   OutputStream Pending;	// pending output stream
-   Hash user_vars;		// session-level user variables
-   Hash sys_vars;		// session-level system variables
-   Timestamp login_time;	// time logged in
-   Timestamp message_time;	// time last message sent (for idle time)
-   AwayState away;		// here/away/busy/gone state
-   char SignalPublic;		// Signal for public messages? (boolean)
-   char SignalPrivate;		// Signal for private messages? (boolean)
-   char SignedOn;		// Session signed on? (boolean)
-   char closing;		// Session closing? (boolean)
-   int attempts;		// login attempts
-   int priv;			// current privilege level
-   String name;			// current user name (pseudo)
-   String blurb;		// current user blurb
-   Pointer<Name> name_obj;	// current name object
+   Pointer<User> user;          // user this session belongs to
+   Pointer<Telnet> telnet;      // telnet connection for this session
+   InputFuncPtr InputFunc;      // function pointer for input processor
+   Pointer<Line> lines;         // unprocessed input lines
+   OutputBuffer Output;         // temporary output buffer
+   OutputStream Pending;        // pending output stream
+   Hash user_vars;              // session-level user variables
+   Hash sys_vars;               // session-level system variables
+   Timestamp login_time;        // time logged in
+   Timestamp message_time;      // time last message sent (for idle time)
+   AwayState away;              // here/away/busy/gone state
+   char SignalPublic;           // Signal for public messages? (boolean)
+   char SignalPrivate;          // Signal for private messages? (boolean)
+   char SignedOn;               // Session signed on? (boolean)
+   char closing;                // Session closing? (boolean)
+   int attempts;                // login attempts
+   int priv;                    // current privilege level
+   String name;                 // current user name (pseudo)
+   String blurb;                // current user blurb
+   Pointer<Name> name_obj;      // current name object
    Pointer<Message> last_message; // last message sent
    Pointer<Sendlist> default_sendlist; // current default sendlist
    Pointer<Sendlist> last_sendlist;    // last explicit sendlist
 // Pointer<Sendlist> reply_sendlist;   // reply sendlist for last sender
-   String last_explicit;	// last explicit sendlist typed
-   String reply_sendlist;	// last explicit sendlist typed
-   String oops_text;		// /oops message text
+   String last_explicit;        // last explicit sendlist typed
+   String reply_sendlist;       // last explicit sendlist typed
+   String oops_text;            // /oops message text
 
    void init_defaults();
    Session(Telnet *t);
@@ -91,21 +91,21 @@ public:
    static void RemoveDiscussion(Discussion *discussion) {
       discussions.Remove(discussion);
    }
-   void output(int byte) {	// queue output byte
+   void output(int byte) {      // queue output byte
       Output.out(byte);
    }
-   void output(char *buf) {	// queue output data
-      if (!buf) return;		// return if no data
+   void output(char *buf) {     // queue output data
+      if (!buf) return;         // return if no data
       while (*buf) Output.out(*((unsigned char *) buf++));
    }
    void output(const char *buf) { // queue output data
-      if (!buf) return;		// return if no data
+      if (!buf) return;         // return if no data
       while (*buf) Output.out(*((unsigned char *) buf++));
    }
    void print(char *format, ...); // formatted output
    static void announce(char *format, ...); // formatted output to all sessions
 
-   void EnqueueOutput(void) {	// Enqueue output buffer.
+   void EnqueueOutput(void) {   // Enqueue output buffer.
       char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet, new Text(buf));
    }
@@ -125,14 +125,14 @@ public:
    }
 
    boolean FindSendable(char *sendlist, Session *&session,
-			Set<Session> &sessionmatches, Discussion *&discussion,
-			Set<Discussion> &discussionmatches,
-			boolean member = false, boolean exact = false,
-			boolean do_sessions = true,
-			boolean do_discussions = true);
+                        Set<Session> &sessionmatches, Discussion *&discussion,
+                        Set<Discussion> &discussionmatches,
+                        boolean member = false, boolean exact = false,
+                        boolean do_sessions = true,
+                        boolean do_discussions = true);
    Session *FindSession(char *sendlist, Set<Session> &matches);
    Discussion *FindDiscussion(char *sendlist, Set<Discussion> &matches,
-				      boolean member = false);
+                                      boolean member = false);
    void PrintSessions(Set<Session> &sessions);
    void PrintDiscussions(Set<Discussion> &discussions);
    void SessionMatches(char *name, Set<Session> &matches);
@@ -141,56 +141,56 @@ public:
    void Login(char *line);
    void Password(char *line);
    boolean CheckNameAvailability(char *name, boolean double_check,
-				 boolean transferring);
+                                 boolean transferring);
    void EnteredName(char *line);
    void TransferSession(char *line);
    void EnteredBlurb(char *line);
    void ProcessInput(char *line);
    void ListItem(boolean &flag, String &last, char *str);
    boolean GetWhoSet(char *args, Set<Session> &who, String &errors,
-		     String &msg);
-   void NotifyEntry();		// Notify other users of entry and log.
-   void NotifyExit();		// Notify other users of exit and log.
+                     String &msg);
+   void NotifyEntry();          // Notify other users of entry and log.
+   void NotifyExit();           // Notify other users of exit and log.
    void PrintTimeLong(int minutes); // Print time value, long format.
-   int ResetIdle(int min = 10);	// Reset and return idle time, maybe report.
-   void SetIdle(char *args);	// Set idle time.
+   int ResetIdle(int min = 10); // Reset and return idle time, maybe report.
+   void SetIdle(char *args);    // Set idle time.
    void SetBlurb(char *newblurb); // Set a new blurb.
-   void DoRestart(char *args);	// Do !restart command.
-   void DoDown(char *args);	// Do !down command.
-   void DoNuke(char *args);	// Do !nuke command.
-   void DoBye(char *args);	// Do /bye command.
-   void DoSet(char *args);	// Do /set command.
-   void DoDisplay(char *args);	// Do /display command.
-   void DoClear(char *args);	// Do /clear command.
-   void DoDetach(char *args);	// Do /detach command.
-   void DoHowMany(char *args);	// Do /howmany command.
-   void DoWho(char *args);	// Do /who command.
-   void DoIdle(char *args);	// Do /idle command.
-   void DoDate(char *args);	// Do /date command.
-   void DoSignal(char *args);	// Do /signal command.
-   void DoSend(char *args);	// Do /send command.
-   void DoWhy(char *args);	// Do /why command.
+   void DoRestart(char *args);  // Do !restart command.
+   void DoDown(char *args);     // Do !down command.
+   void DoNuke(char *args);     // Do !nuke command.
+   void DoBye(char *args);      // Do /bye command.
+   void DoSet(char *args);      // Do /set command.
+   void DoDisplay(char *args);  // Do /display command.
+   void DoClear(char *args);    // Do /clear command.
+   void DoDetach(char *args);   // Do /detach command.
+   void DoHowMany(char *args);  // Do /howmany command.
+   void DoWho(char *args);      // Do /who command.
+   void DoIdle(char *args);     // Do /idle command.
+   void DoDate(char *args);     // Do /date command.
+   void DoSignal(char *args);   // Do /signal command.
+   void DoSend(char *args);     // Do /send command.
+   void DoWhy(char *args);      // Do /why command.
    void DoBlurb(char *start, boolean entry = false); // Do /blurb command.
-   void DoHere(char *args);	// Do /here command.
-   void DoAway(char *args);	// Do /away command.
-   void DoBusy(char *args);	// Do /busy command.
-   void DoGone(char *args);	// Do /gone command.
-   void DoHelp(char *args);	// Do /help command.
-   void DoUnidle(char *args);	// Do /unidle idle time reset.
-   void DoCreate(char *args);	// Do /create command.
-   void DoDestroy(char *args);	// Do /destroy command.
-   void DoJoin(char *args);	// Do /join command.
-   void DoQuit(char *args);	// Do /quit command.
-   void DoWhat(char *args);	// Do /what command.
-   void DoPermit(char *args);	// Do /permit command.
-   void DoDepermit(char *args);	// Do /depermit command.
-   void DoAppoint(char *args);	// Do /appoint command.
+   void DoHere(char *args);     // Do /here command.
+   void DoAway(char *args);     // Do /away command.
+   void DoBusy(char *args);     // Do /busy command.
+   void DoGone(char *args);     // Do /gone command.
+   void DoHelp(char *args);     // Do /help command.
+   void DoUnidle(char *args);   // Do /unidle idle time reset.
+   void DoCreate(char *args);   // Do /create command.
+   void DoDestroy(char *args);  // Do /destroy command.
+   void DoJoin(char *args);     // Do /join command.
+   void DoQuit(char *args);     // Do /quit command.
+   void DoWhat(char *args);     // Do /what command.
+   void DoPermit(char *args);   // Do /permit command.
+   void DoDepermit(char *args); // Do /depermit command.
+   void DoAppoint(char *args);  // Do /appoint command.
    void DoUnappoint(char *args); // Do /unappoint command.
-   void DoRename(char *args);	 // Do /rename command.
-   void DoAlso(char *args);	 // Do /also command.
-   void DoOops(char *args);	 // Do /oops command.
-   void DoReset();		 // Do <space><return> idle time reset.
-   void DoMessage(char *line);	 // Do message send.
+   void DoRename(char *args);    // Do /rename command.
+   void DoAlso(char *args);      // Do /also command.
+   void DoOops(char *args);      // Do /oops command.
+   void DoReset();               // Do <space><return> idle time reset.
+   void DoMessage(char *line);   // Do message send.
    void SendMessage(Sendlist *sendlist, char *msg);
-   static void CheckShutdown();	// Exit if shutting down and no users are left.
+   static void CheckShutdown(); // Exit if shutting down and no users are left.
 };

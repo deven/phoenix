@@ -40,7 +40,7 @@ void ShutdownEvent::ShutdownWarning(char *by, time_t when)
    final = false;
    log("Shutdown requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will shutdown in %d seconds... <<<"
-		     "\n\a", when);
+                     "\n\a", when);
 }
 
 void ShutdownEvent::FinalWarning()
@@ -74,7 +74,7 @@ void RestartEvent::RestartWarning(char *by, time_t when)
    final = false;
    log("Restart requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will restart in %d seconds... <<<\n\a",
-		     when);
+                     when);
 }
 
 void RestartEvent::FinalWarning()

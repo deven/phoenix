@@ -19,11 +19,11 @@
 #include <errno.h>
 #include <signal.h>
 
-int listen_on(int port)		/* listen on socket */
+int listen_on(int port)         /* listen on socket */
 {
-   struct sockaddr_in saddr;	/* socket address */
-   int fd;			/* listening socket fd */
-   int option = 1;		/* option to set for setsockopt() */
+   struct sockaddr_in saddr;    /* socket address */
+   int fd;                      /* listening socket fd */
+   int option = 1;              /* option to set for setsockopt() */
 
    memset(&saddr,0,sizeof(saddr));
    saddr.sin_family = AF_INET;
@@ -38,7 +38,7 @@ int listen_on(int port)		/* listen on socket */
 
 void main(int argc,char **argv) /* main program */
 {
-   int lfd,tcp;			/* listen fd, tcp fd */
+   int lfd,tcp;                 /* listen fd, tcp fd */
    char *buf = "\n\
 Sorry, but the Phoenix server has been moved.  The new location is port 6789\n\
 on phoenix.ties.org (192.48.232.17).  From a Unix system, the command is:\n\n\
