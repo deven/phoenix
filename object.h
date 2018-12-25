@@ -1,74 +1,77 @@
 // -*- C++ -*-
 //
-// $Id: object.h,v 1.4 2003/02/18 05:08:56 deven Exp $
+// Phoenix conferencing system server.
 //
-// Object class interface and implementation, Pointer class interface.
+// Object base class and Pointer template class for smart pointers.
 //
-// Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
+// Copyright (c) 1992-2018 Deven T. Corzine
 //
-// This file is part of the Gangplank conferencing system.
-//
-// This file may be distributed under the terms of the Q Public License
-// as defined by Trolltech AS of Norway (except for Choice of Law) and as
-// appearing in the file LICENSE.QPL included in the packaging of this file.
-//
-// This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-// WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-//
-// Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
-// for more information or if any conditions of this licensing are unclear.
-//
-// $Log: object.h,v $
-// Revision 1.4  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.3  2002/07/28 05:36:43  deven
-// Removed destruction kludge in reference counting, at the cost of an extra
-// test for each new reference created.
-//
-// Revision 1.2  2001/12/12 05:56:12  deven
-// Made Object destructor virtual, just in case.  Modified DeleteReference()
-// to set a negative reference count to allow for some temporary pointers to
-// the object being destructed, without calling the destructors again in an
-// endless loop when such temporary pointers go out of scope.  Modified the
-// destructor sanity check to only check for a positive reference count, due
-// to the above modification.  Added Pointer constructor for int to allow
-// explicit construction of null pointers.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
+
+// Check if previously included.
+#ifndef _OBJECT_H
+#define _OBJECT_H 1
+
+// Include files.
+#include "boolean.h"
 
 class Object {
 private:
-   int RefCnt;                  // Reference count.
+   int RefCnt;                          // Reference count.
 public:
-   Object(): RefCnt(0) { }
-   virtual ~Object() { if (RefCnt > 0) abort(); }
-   int References() { return RefCnt; }
-   void NewReference() { if (RefCnt++ <= 0) RefCnt = -1; }
-   void DeleteReference() { if (--RefCnt == 0) delete this; }
+   Object(): RefCnt(0) { }              // Object constructor.
+   virtual ~Object() {                  // Object destructor.
+      if (RefCnt > 0) {                 // Check for outstanding references.
+         crash("Object destroyed with %d outstanding references!", RefCnt);
+      }
+      RefCnt = -1;                      // Flag object as destroyed.
+   }
+   int References() { return RefCnt; }  // Get reference count.
+   int NewReference() {                 // Note a new reference to object.
+      if (RefCnt >= 0) {
+         return ++RefCnt;               // Increment and return reference count.
+      } else {
+         return 0;                      // Return destroyed flag.
+      }
+   }
+   int DeleteReference() {              // Delete a reference to object.
+      if (--RefCnt == 0) {              // Decrement reference count.
+         RefCnt = -1;                   // Flag object to be destroyed.
+      }
+      return RefCnt;                    // Return reference count.
+   }
 };
 
 template <class Type>
 class Pointer {
 private:
    Type *ptr;
+   Pointer &SetPointer(Type *p) {
+      if (!(p && p->NewReference())) p = NULL;
+      if (ptr && !ptr->DeleteReference()) {
+         delete ptr;                    // No references left; delete object.
+      }
+      ptr = p;
+      return *this;
+   }
 public:
-   Pointer():                 ptr(0) { }
-   inline Pointer(Pointer &p);
-   inline Pointer(Type *p);
-   inline Pointer(Type &p);
-   inline Pointer(int n);
-   ~Pointer();
+   Pointer():                 ptr(NULL) { }
+   Pointer(const Pointer &p): ptr(NULL) { SetPointer(p.ptr); }
+   Pointer(Type *p):          ptr(NULL) { SetPointer(p); }
+   Pointer(Type &p):          ptr(NULL) { SetPointer(&p); }
+   Pointer(int n):            ptr(NULL) { if (n) abort(); }
+   ~Pointer()                           { SetPointer(NULL); }
 
-   inline Pointer &operator =(Pointer &p);
-   inline Pointer &operator =(Type *p);
-   inline Pointer &operator =(int n);
-   Type *operator ->()                  { return ptr; }
-   operator Type *()                    { return ptr; }
-   int operator ==(Pointer &p)          { return ptr == p.ptr; }
-   int operator !=(Pointer &p)          { return ptr != p.ptr; }
-   int operator ==(Type *p)             { return ptr == p; }
-   int operator !=(Type *p)             { return ptr != p; }
+   Pointer &operator =(Pointer &p) { return SetPointer(p.ptr); }
+   Pointer &operator =(Type *p)    { return SetPointer(p); }
+   Pointer &operator =(Type &p)    { return SetPointer(&p); }
+   Pointer &operator =(int n)      { if (n) abort(); return SetPointer(NULL); }
+   Type *operator ->()             { return ptr; }
+   operator Type *()               { return ptr; }
+   operator boolean()              { return ptr != NULL; }
+   boolean operator ==(Pointer &p) { return ptr == p.ptr; }
+   boolean operator !=(Pointer &p) { return ptr != p.ptr; }
+   boolean operator ==(Type *p)    { return ptr == p; }
+   boolean operator !=(Type *p)    { return ptr != p; }
 };
+
+#endif // object.h
