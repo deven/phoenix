@@ -25,7 +25,7 @@
 List<User> User::users;
 
 User::User(char *login, char *pass, char *names, char *bl, int p): user(login),
-password(pass), blurb(bl), priv(p)
+   password(pass), blurb(bl), priv(p)
 {
    SetReserved(names);
    users.AddTail(this);
@@ -62,7 +62,7 @@ void User::Update(char *login, char *pass, char *names, char *defblurb, int p)
    u->password = pass;
    u->SetReserved(names);
    u->blurb = defblurb;
-   u->priv = p;
+   u->priv  = p;
 }
 
 void User::UpdateAll()          // Update all user entries from password file.
@@ -80,8 +80,8 @@ void User::UpdateAll()          // Update all user entries from password file.
    if (pw) {
       while (fgets(buf, BufSize, pw)) {
          if (buf[0] == '#') continue;
-         p = username = buf;
-         password = names = priv = 0;
+         p        = username = buf;
+         password = names    = priv = 0;
          while (*p) if (*p == ':') { *p++ = 0; password = p; break; } else p++;
          while (*p) if (*p == ':') { *p++ = 0; names = p; break; } else p++;
          while (*p) if (*p == ':') { *p++ = 0; priv = p; break; } else p++;

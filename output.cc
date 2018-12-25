@@ -108,7 +108,7 @@ DestroyNotify::DestroyNotify(Discussion *d, Session *s, time_t when):
                              OutputObj(DestroyOutput, NotificationClass, when)
 {
    discussion = d;
-   name = s->name_obj;
+   name       = s->name_obj;
 }
 
 void DestroyNotify::output(Telnet *telnet)
@@ -121,7 +121,7 @@ JoinNotify::JoinNotify(Discussion *d, Session *s, time_t when):
                        OutputObj(JoinOutput, NotificationClass, when)
 {
    discussion = d;
-   name = s->name_obj;
+   name       = s->name_obj;
 }
 
 void JoinNotify::output(Telnet *telnet)
@@ -134,7 +134,7 @@ QuitNotify::QuitNotify(Discussion *d, Session *s, time_t when):
                        OutputObj(QuitOutput, NotificationClass, when)
 {
    discussion = d;
-   name = s->name_obj;
+   name       = s->name_obj;
 }
 
 void QuitNotify::output(Telnet *telnet)
@@ -147,7 +147,7 @@ PublicNotify::PublicNotify(Discussion *d, Session *s, time_t when):
                            OutputObj(PublicOutput, NotificationClass, when)
 {
    discussion = d;
-   name = s->name_obj;
+   name       = s->name_obj;
 }
 
 void PublicNotify::output(Telnet *telnet)
@@ -160,7 +160,7 @@ PrivateNotify::PrivateNotify(Discussion *d, Session *s, time_t when):
                              OutputObj(PrivateOutput, NotificationClass, when)
 {
    discussion = d;
-   name = s->name_obj;
+   name       = s->name_obj;
 }
 
 void PrivateNotify::output(Telnet *telnet)
@@ -173,8 +173,8 @@ PermitNotify::PermitNotify(Discussion *d, Session *s, boolean flag,
                            time_t when):
                            OutputObj(PermitOutput, NotificationClass, when)
 {
-   discussion = d;
-   name = s->name_obj;
+   discussion  = d;
+   name        = s->name_obj;
    is_explicit = flag;
 }
 
@@ -208,8 +208,8 @@ DepermitNotify::DepermitNotify(Discussion *d, Session *s, boolean flag,
                                OutputObj(DepermitOutput, NotificationClass,
                                when)
 {
-   discussion = d;
-   name = s->name_obj;
+   discussion  = d;
+   name        = s->name_obj;
    is_explicit = flag;
    if (who) removed = who->name_obj;
 }
@@ -262,8 +262,8 @@ AppointNotify::AppointNotify(Discussion *d, Session *s1, Session *s2,
                              OutputObj(AppointOutput, NotificationClass, when)
 {
    discussion = d;
-   appointer = s1->name_obj;
-   appointee = s2->name_obj;
+   appointer  = s1->name_obj;
+   appointee  = s2->name_obj;
 }
 
 void AppointNotify::output(Telnet *telnet)
@@ -285,7 +285,7 @@ UnappointNotify::UnappointNotify(Discussion *d, Session *s1, Session *s2,
                                  OutputObj(UnappointOutput, NotificationClass,
                                  when)
 {
-   discussion = d;
+   discussion  = d;
    unappointer = s1->name_obj;
    unappointee = s2->name_obj;
 }

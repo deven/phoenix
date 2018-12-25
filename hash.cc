@@ -31,15 +31,15 @@
 
 int Hash::HashFunction(char *key)
 {
-   unsigned long hash = 0;
-   unsigned char *ptr = (unsigned char *) key;
-   int len = strlen(key);
+   unsigned long  hash = 0;
+   unsigned char *ptr  = (unsigned char *) key;
+   int            len  = strlen(key);
 
    while (len--) {
       hash <<= 4;
-      hash += *ptr++;
-      hash ^= (hash & 0xf0000000) >> 24;
-      hash &= 0x0fffffff;
+      hash  += *ptr++;
+      hash  ^= (hash & 0xf0000000) >> 24;
+      hash  &= 0x0fffffff;
    }
    return hash % Size;
 }
@@ -47,8 +47,8 @@ int Hash::HashFunction(char *key)
 void Hash::Store(char *key, char *value)
 {
    HashEntry *entry = new HashEntry(key, value);
-   int hash = HashFunction(key);
-   entry->next = bucket[hash];
+   int        hash  = HashFunction(key);
+   entry->next  = bucket[hash];
    bucket[hash] = entry;
    count++;
    while (entry->next) {
@@ -63,7 +63,7 @@ void Hash::Store(char *key, char *value)
 
 void Hash::Delete(char *key)
 {
-   int hash = HashFunction(key);
+   int                hash = HashFunction(key);
    Pointer<HashEntry> entry(bucket[hash]);
    if (entry->key == key) {
       bucket[hash] = entry->next;
@@ -82,7 +82,7 @@ void Hash::Delete(char *key)
 
 boolean Hash::Known(char *key)
 {
-   int hash = HashFunction(key);
+   int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
@@ -94,7 +94,7 @@ boolean Hash::Known(char *key)
 
 String Hash::Fetch(char *key)
 {
-   int hash = HashFunction(key);
+   int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
@@ -106,15 +106,15 @@ String Hash::Fetch(char *key)
 
 HashEntry &Hash::operator [](char *key)
 {
-   int hash = HashFunction(key);
+   int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
 
    while (entry) {
       if (entry->key == key) return *entry;
       entry = entry->next;
    }
-   entry = new HashEntry(key, "");
-   entry->next = bucket[hash];
+   entry        = new HashEntry(key, "");
+   entry->next  = bucket[hash];
    bucket[hash] = entry;
    count++;
    return *entry;
