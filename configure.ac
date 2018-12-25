@@ -48,7 +48,7 @@ AC_CHECK_SOCKET_LIBS
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h crypt.h fcntl.h memory.h netdb.h netinet/in.h stdarg.h stddef.h stdlib.h string.h strings.h sys/ioctl.h sys/socket.h sys/time.h sys/wait.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h crypt.h fcntl.h memory.h netdb.h netinet/in.h stdarg.h stddef.h stdlib.h string.h strings.h sys/ioctl.h sys/select.h sys/socket.h sys/time.h sys/wait.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
