@@ -53,8 +53,7 @@ gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
 	system.h boolean.h object.h general.h constants.h functions.h \
 	string2.h list.h set.h hash.h timestamp.h line.h block.h outbuf.h \
 	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
-	discussion.h user.h fdtable.h fd.h listen.h telnet.h pointer.h \
-	globals.h
+	discussion.h user.h fdtable.h fd.h listen.h telnet.h globals.h
 
 EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING RELEASES \
 	TOUR bootstrap passwd

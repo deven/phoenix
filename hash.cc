@@ -42,7 +42,6 @@
 #include "string2.h"
 #include "general.h"
 #include "hash.h"
-#include "pointer.h"
 
 int Hash::HashFunction(char *key)
 {
