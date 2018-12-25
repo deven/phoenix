@@ -23,8 +23,8 @@
 #include "gangplank.h"
 
 Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
-   name = Name;
-   title = Title;
+   name   = Name;
+   title  = Title;
    Public = ispublic;
    if (s) {
       creator = s->name_obj;
@@ -109,9 +109,9 @@ void Discussion::Quit(Session *session) {
 
 void Discussion::Permit(Session *session, char *args) {
    Set<Session> matches;
-   Session *s;
-   char *user;
-   Name *n;
+   Session     *s;
+   char        *user;
+   Name        *n;
 
    if (IsCreator(session) || IsModerator(session)) {
       while ((user = getword(args, Comma))) {
@@ -133,14 +133,12 @@ void Discussion::Permit(Session *session, char *args) {
                                     "%s.\n", ~s->name, ~name);
                   } else if (Allowed(s)) {
                      session->print("%s is already explicitly permitted to "
-                                    "public discussion %s.\n", ~s->name,
-                                    ~name);
+                                    "public discussion %s.\n", ~s->name, ~name);
                   } else {
                      allowed.Add(s->name_obj);
                      s->Enqueue(new PermitNotify(this, session, false));
                      session->print("You have explicitly permitted %s to "
-                                    "public discussion %s.\n", ~s->name,
-                                    ~name);
+                                    "public discussion %s.\n", ~s->name, ~name);
                   }
                } else {
                   if ((n = Denied(s))) {
@@ -171,9 +169,9 @@ void Discussion::Permit(Session *session, char *args) {
 
 void Discussion::Depermit(Session *session, char *args) {
    Set<Session> matches;
-   Session *s;
-   char *user;
-   Name *n;
+   Session     *s;
+   char        *user;
+   Name        *n;
 
    if (IsCreator(session) || IsModerator(session)) {
       while ((user = getword(args, Comma))) {
@@ -204,8 +202,7 @@ void Discussion::Depermit(Session *session, char *args) {
                                        "%s from discussion %s.\n", ~s->name,
                                        ~name);
                      } else {
-                        s->Enqueue(new DepermitNotify(this, session, false,
-                                                      0));
+                        s->Enqueue(new DepermitNotify(this, session, false, 0));
                         session->print("You have depermitted %s from "
                                        "discussion %s.\n", ~s->name, ~name);
                      }
@@ -221,8 +218,7 @@ void Discussion::Depermit(Session *session, char *args) {
                                        "%s from discussion %s.\n", ~s->name,
                                        ~name);
                      } else {
-                        s->Enqueue(new DepermitNotify(this, session, false,
-                                                      0));
+                        s->Enqueue(new DepermitNotify(this, session, false, 0));
                         session->print("You have depermitted %s from "
                                        "discussion %s.\n", ~s->name, ~name);
                      }
@@ -250,8 +246,8 @@ void Discussion::Depermit(Session *session, char *args) {
 
 void Discussion::Appoint(Session *session, char *args) {
    Set<Session> matches;
-   Session *s;
-   char *user;
+   Session     *s;
+   char        *user;
 
    if (IsCreator(session) || IsModerator(session) || session->priv >= 50) {
       while ((user = getword(args, Comma))) {
@@ -276,9 +272,9 @@ void Discussion::Appoint(Session *session, char *args) {
 
 void Discussion::Unappoint(Session *session, char *args) {
    Set<Session> matches;
-   Session *s;
-   char *user;
-   Name *n;
+   Session     *s;
+   char        *user;
+   Name        *n;
 
    if (IsCreator(session) || IsModerator(session)) {
       while ((user = getword(args, Comma))) {
