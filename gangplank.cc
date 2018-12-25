@@ -90,8 +90,8 @@ EventQueue     events;            // Server event queue.
 
 Pointer<Event> Shutdown;          // Pointer to Shutdown event, if any.
 
-// have to use non-blocking code instead? ***
-FILE          *logfile = 0;       // log file ***
+// XXX have to use non-blocking code instead?
+FILE          *logfile = 0;       // XXX log file
 
 Timestamp      ServerStartTime;   // time server started
 int            ServerStartUptime; // system uptime when server started
@@ -116,7 +116,7 @@ void operator delete[](void *p)   // Provide a basic delete[] operator.
    free(p);
 }
 
-void OpenLog()                    // class Log? ***
+void OpenLog()                    // XXX class Log?
 {
    String     filename;
    Timestamp  t;
@@ -136,8 +136,8 @@ void OpenLog()                    // class Log? ***
    fprintf(stderr, "Logging on \"%s\".\n", ~filename);
 }
 
-// Use << operator instead of printf() formats? ***
-void log(char *format, ...)       // log message ***
+// XXX Use << operator instead of printf() formats?
+void log(char *format, ...)       // XXX log message
 {
    String    msg;
    va_list   ap;
@@ -150,7 +150,7 @@ void log(char *format, ...)       // log message ***
    (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void warn(char *format, ...)      // print error message ***
+void warn(char *format, ...)      // XXX print error message
 {
    String    msg;
    va_list   ap;
@@ -164,7 +164,7 @@ void warn(char *format, ...)      // print error message ***
    if (logfile) (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void error(char *format, ...)     // print error message and exit ***
+void error(char *format, ...)     // XXX print error message and exit
 {
    String    msg;
    va_list   ap;
@@ -182,7 +182,7 @@ void error(char *format, ...)     // print error message and exit ***
    exit(1);
 }
 
-void crash(char *format, ...)     // print error message and crash ***
+void crash(char *format, ...)     // XXX print error message and crash
 {
    String    msg;
    va_list   ap;

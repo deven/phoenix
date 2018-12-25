@@ -326,7 +326,7 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
       break;
    }
 
-   // Print timestamp. (make optional? ***)
+   // Print timestamp. (XXX make optional?)
    print(" [%s]\n - ", time.stamp());
 
    while (*start) {
@@ -627,7 +627,7 @@ void Telnet::UndrawInput()      // Erase input line from screen.
       if (!Start()) return;
       lines = StartLine();
    }
-   // ANSI! ***
+   // XXX ANSI!
    if (lines) {
       print("\r\033[%dA\033[J", lines); // Move cursor up and erase.
    } else {
@@ -648,7 +648,7 @@ void Telnet::RedrawInput()      // Redraw input line on screen.
       if (!AtEnd()) {           // Move cursor back to point.
          lines   = EndLine()   - PointLine();
          columns = EndColumn() - PointColumn();
-         // ANSI! ***
+         // XXX ANSI!
          if (lines) echo_print("\033[%dA", lines);
          if (columns > 0) {
             echo_print("\033[%dD", columns);
@@ -685,7 +685,7 @@ int Telnet::SetWidth(int n)     // Set terminal width.
 
 int Telnet::SetHeight(int n)    // Set terminal height.
 {
-   // Keep this one simple; height isn't currently used. ***
+   // XXX Keep this one simple; height isn't currently used.
    if (n == 0) {
       height = default_height;
    } else if (n > 0) {
@@ -726,13 +726,13 @@ void Telnet::InsertString(String &s) // Insert string at point.
       for (p = s; *p; p++) *point++ = *p;
       free += slen;
    }
-   // This kludge simply redraws the rest of the line! ***
+   // XXX This kludge simply redraws the rest of the line!
    echo(point - slen, (free - point) + slen);
    if (!EndColumn()) echo(" \010"); // Force line wrap.
    if (!AtEnd()) {              // Move cursor back to point.
       int lines = EndLine() - PointLine();
       int columns = EndColumn() - PointColumn();
-      // ANSI! ***
+      // XXX ANSI!
       if (lines) echo_print("\033[%dA", lines);
       if (columns > 0) {
          echo_print("\033[%dD", columns);
@@ -749,11 +749,11 @@ void Telnet::beginning_of_line() // Jump to beginning of line.
    if (Point()) {
       lines   = PointLine()   - StartLine();
       columns = PointColumn() - StartColumn();
-      if (lines) echo_print("\033[%dA", lines); // ANSI! ***
+      if (lines) echo_print("\033[%dA", lines); // XXX ANSI!
       if (columns > 0) {
-         echo_print("\033[%dD", columns); // ANSI! ***
+         echo_print("\033[%dD", columns); // XXX ANSI!
       } else if (columns < 0) {
-         echo_print("\033[%dC", -columns); // ANSI! ***
+         echo_print("\033[%dC", -columns); // XXX ANSI!
       }
    }
    point = data;
@@ -766,11 +766,11 @@ void Telnet::end_of_line()      // Jump to end of line.
    if (End() && !AtEnd()) {
       lines   = EndLine()   - PointLine();
       columns = EndColumn() - PointColumn();
-      if (lines) echo_print("\033[%dB", lines); // ANSI! ***
+      if (lines) echo_print("\033[%dB", lines); // XXX ANSI!
       if (columns > 0) {
-         echo_print("\033[%dC", columns); // ANSI! ***
+         echo_print("\033[%dC", columns); // XXX ANSI!
       } else if (columns < 0) {
-         echo_print("\033[%dD", -columns); // ANSI! ***
+         echo_print("\033[%dD", -columns); // XXX ANSI!
       }
    }
    point = free;
@@ -779,7 +779,7 @@ void Telnet::end_of_line()      // Jump to end of line.
 void Telnet::kill_line()        // Kill from point to end of line.
 {
    if (!AtEnd()) {
-      echo("\033[J"); // ANSI! ***
+      echo("\033[J"); // XXX ANSI!
 
       // Remove a previous kill if at maximum.
       if (KillRing.Count() >= KillRingMax) KillRing.RemHead();
@@ -921,16 +921,16 @@ void Telnet::insert_char(int ch) // Insert character at point.
          for (char *p = free++; p > point; p--) *p = p[-1];
          int   lines = EndLine() - PointLine();
          char *wrap  = point     - PointColumn();
-         echo("\033[@");        // Insert character. // ANSI! ***
+         echo("\033[@");        // Insert character. // XXX ANSI!
          while (lines-- > 0) {  // Handle line wrapping.
             // Go to the start of the next line and insert a character.
-            echo("\r\n\033[@"); // ANSI! ***
+            echo("\r\n\033[@"); // XXX ANSI!
             wrap += width;      // Find wrapped character.
             echo(wrap < free ? *wrap : Space); // Echo wrapped character.
          }
          if (EndLine() > PointLine()) { // Move cursor back to point.
             int columns = 1 - PointColumn();
-            // ANSI! ***
+            // XXX ANSI!
             echo_print("\033[%dA", EndLine() - PointLine());
             if (columns > 0) {
                echo_print("\033[%dD", columns);
@@ -956,7 +956,7 @@ void Telnet::forward_char()     // Move point forward one character.
    if (!AtEnd()) {
       point++;                  // Change point in buffer.
       if (PointColumn()) {      // Advance cursor on current line.
-         echo("\033[C");        // ANSI! ***
+         echo("\033[C");        // XXX ANSI!
       } else {                  // Move to start of next screen line.
          echo("\r\n");
       }
@@ -969,7 +969,7 @@ void Telnet::backward_char()    // Move point backward one character.
       if (PointColumn()) {      // Backspace on current screen line.
          echo(Backspace);
       } else {                  // Move to end of previous screen line.
-         echo_print("\033[A\033[%dC", width - 1); // ANSI! ***
+         echo_print("\033[A\033[%dC", width - 1); // XXX ANSI!
       }
       point--;                  // Change point in buffer.
    }
@@ -986,22 +986,22 @@ void Telnet::erase_char()       // Erase character before point.
 void Telnet::delete_char()      // Delete character at point.
 {
    if (End() && !AtEnd()) {
-      echo("\033[P");           // Delete character. // ANSI! ***
+      echo("\033[P");           // Delete character. // XXX ANSI!
       // Make room for the new character if necessary.
       if (!AtEnd()) {
          int   lines = EndLine() - PointLine();
          char *wrap  = point     - PointColumn();
          while (lines-- > 0) {  // Handle line wrapping.
             // Go to the end of the current line.
-            echo_print("\r\033[%dC", width - 1); // ANSI! ***
+            echo_print("\r\033[%dC", width - 1); // XXX ANSI!
             wrap += width;      // Find wrapped character.
             echo(wrap < free ? *wrap : Space); // Echo wrapped character.
             // Force line wrap and delete a character.
-            echo(" \010\033[P"); // ANSI! ***
+            echo(" \010\033[P"); // XXX ANSI!
          }
          if (EndLine() > PointLine()) { // Move cursor back to point.
             int columns = -PointColumn();
-            // ANSI! ***
+            // XXX ANSI!
             echo_print("\033[%dA", EndLine() - PointLine());
             if (columns > 0) {
                echo_print("\033[%dD", columns);
@@ -1463,7 +1463,7 @@ void Telnet::InputReady()       // telnet stream can input data
                break;
             case ControlL:
                UndrawInput();
-               output("\033[H\033[J");  // ANSI! ***
+               output("\033[H\033[J");  // XXX ANSI!
                RedrawInput();
                state = 0;
                break;

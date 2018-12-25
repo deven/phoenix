@@ -71,7 +71,7 @@ Listen::Listen(int port)           // Listen on a port.
    int                tries = 0;   // number of tries so far
    int                option = 1;  // option to set for setsockopt()
 
-   type = ListenFD;                // Identify as a Listen FD.***
+   type = ListenFD;                // XXX Identify as a Listen FD.
 
    // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));

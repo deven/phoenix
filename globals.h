@@ -28,7 +28,7 @@
 
 extern EventQueue events;           // Server event queue.
 
-extern FILE *logfile;               // log file ***
+extern FILE *logfile;               // XXX log file
 
 extern Pointer<Event> Shutdown;     // Pointer to Shutdown event, if any.
 
