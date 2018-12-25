@@ -89,7 +89,7 @@ String::String(const String &s)
    str = new char[len + 1];
    strncpy(str, s.str, len);
    str[len] = 0;
-   extra = 0;
+   extra    = 0;
 }
 
 String::String(String &s)
@@ -98,7 +98,7 @@ String::String(String &s)
    str = new char[len + 1];
    strncpy(str, s.str, len);
    str[len] = 0;
-   extra = 0;
+   extra    = 0;
 }
 
 String::String(const char *s)
@@ -108,7 +108,7 @@ String::String(const char *s)
    str = new char[len + 1];
    strncpy(str, s, len);
    str[len] = 0;
-   extra = 0;
+   extra    = 0;
 }
 
 String::String(char *s)
@@ -118,7 +118,7 @@ String::String(char *s)
    str = new char[len + 1];
    strncpy(str, s, len);
    str[len] = 0;
-   extra = 0;
+   extra    = 0;
 }
 
 String::String(const char *s, size_t n)
@@ -151,7 +151,7 @@ String::String(int n)
 {
    str = new char[NumberLength];
    ::sprintf(str, "%d", n);
-   len = strlen(str);
+   len   = strlen(str);
    extra = NumberLength - len - 1;
 }
 
@@ -159,7 +159,7 @@ String::String(unsigned int n)
 {
    str = new char[NumberLength];
    ::sprintf(str, "%ud", n);
-   len = strlen(str);
+   len   = strlen(str);
    extra = NumberLength - len - 1;
 }
 
@@ -167,7 +167,7 @@ String::String(long n)
 {
    str = new char[NumberLength];
    ::sprintf(str, "%ld", n);
-   len = strlen(str);
+   len   = strlen(str);
    extra = NumberLength - len - 1;
 }
 
@@ -175,7 +175,7 @@ String::String(unsigned long n)
 {
    str = new char[NumberLength];
    ::sprintf(str, "%lud", n);
-   len = strlen(str);
+   len   = strlen(str);
    extra = NumberLength - len - 1;
 }
 
@@ -186,7 +186,7 @@ String &String::operator =(const String &s)
    } else {
       delete [] str;
       extra = extra ? Extra : 0;
-      str = new char[s.len + extra + 1];
+      str   = new char[s.len + extra + 1];
    }
    len = s.len;
    strncpy(str, s.str, len);
@@ -201,7 +201,7 @@ String &String::operator =(String &s)
    } else {
       delete [] str;
       extra = extra ? Extra : 0;
-      str = new char[s.len + extra + 1];
+      str   = new char[s.len + extra + 1];
    }
    len = s.len;
    strncpy(str, s.str, len);
@@ -218,7 +218,7 @@ String &String::operator =(const char *s)
    } else {
       delete [] str;
       extra = extra ? Extra : 0;
-      str = new char[n + extra + 1];
+      str   = new char[n + extra + 1];
    }
    len = n;
    strncpy(str, s, len);
@@ -232,11 +232,11 @@ String &String::operator =(int n)
       extra += len;
    } else {
       delete [] str;
-      str = new char[NumberLength];
+      str   = new char[NumberLength];
       extra = NumberLength - 1;
    }
    ::sprintf(str, "%d", n);
-   len = strlen(str);
+   len    = strlen(str);
    extra -= len;
    return *this;
 }
@@ -247,11 +247,11 @@ String &String::operator =(unsigned int n)
       extra += len;
    } else {
       delete [] str;
-      str = new char[NumberLength];
+      str   = new char[NumberLength];
       extra = NumberLength - 1;
    }
    ::sprintf(str, "%ud", n);
-   len = strlen(str);
+   len    = strlen(str);
    extra -= len;
    return *this;
 }
@@ -262,11 +262,11 @@ String &String::operator =(long n)
       extra += len;
    } else {
       delete [] str;
-      str = new char[NumberLength];
+      str   = new char[NumberLength];
       extra = NumberLength - 1;
    }
    ::sprintf(str, "%ld", n);
-   len = strlen(str);
+   len    = strlen(str);
    extra -= len;
    return *this;
 }
@@ -277,11 +277,11 @@ String &String::operator =(unsigned long n)
       extra += len;
    } else {
       delete [] str;
-      str = new char[NumberLength];
+      str   = new char[NumberLength];
       extra = NumberLength - 1;
    }
    ::sprintf(str, "%lud", n);
-   len = strlen(str);
+   len    = strlen(str);
    extra -= len;
    return *this;
 }
@@ -293,7 +293,7 @@ String &String::assign(const char *s, size_t n)
    } else {
       delete [] str;
       extra = extra ? Extra : 0;
-      str = new char[n + extra + 1];
+      str   = new char[n + extra + 1];
    }
    len = n;
    if (s) {
@@ -312,7 +312,7 @@ String &String::assign(char *s, size_t n)
    } else {
       delete [] str;
       extra = extra ? Extra : 0;
-      str = new char[n + extra + 1];
+      str   = new char[n + extra + 1];
    }
    len = n;
    if (s) {
@@ -331,13 +331,13 @@ String &String::append(const String &s)
          extra -= s.len;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + s.len + extra + 1];
+         extra     = Extra;
+         str       = new char[len + s.len + extra + 1];
          strncpy(str, tmp, len);
          delete [] tmp;
       }
       strncpy(str + len, s.str, s.len);
-      len += s.len;
+      len     += s.len;
       str[len] = 0;
    }
    return *this;
@@ -350,13 +350,13 @@ String &String::append(String &s)
          extra -= s.len;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + s.len + extra + 1];
+         extra     = Extra;
+         str       = new char[len + s.len + extra + 1];
          strncpy(str, tmp, len);
          delete [] tmp;
       }
       strncpy(str + len, s.str, s.len);
-      len += s.len;
+      len     += s.len;
       str[len] = 0;
    }
    return *this;
@@ -370,13 +370,13 @@ String &String::append(const char *s)
          extra -= n;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + n + extra + 1];
+         extra     = Extra;
+         str       = new char[len + n + extra + 1];
          strncpy(str, tmp, len);
          delete [] tmp;
       }
       strncpy(str + len, s, n);
-      len += n;
+      len     += n;
       str[len] = 0;
    }
    return *this;
@@ -390,12 +390,12 @@ String &String::append(const char *s, size_t n)
       } else {
          char *tmp = str;
          extra = Extra;
-         str = new char[len + n + extra + 1];
+         str   = new char[len + n + extra + 1];
          strncpy(str, tmp, len);
          delete [] tmp;
       }
       strncpy(str + len, s, n);
-      len += n;
+      len     += n;
       str[len] = 0;
    }
    return *this;
@@ -408,12 +408,12 @@ String &String::append(char c)
    } else {
       char *tmp = str;
       extra = Extra;
-      str = new char[len + extra + 2];
+      str   = new char[len + extra + 2];
       strncpy(str, tmp, len);
       delete [] tmp;
    }
    str[len++] = c;
-   str[len] = 0;
+   str[len]   = 0;
    return *this;
 }
 
@@ -421,19 +421,19 @@ String &String::prepend(const String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-         extra -= s.len;
+         extra  -= s.len;
          char *p = str + len - 1;
          char *q = p + s.len;
          while (p >= str) *q-- = *p--;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + s.len + extra + 1];
+         extra     = Extra;
+         str       = new char[len + s.len + extra + 1];
          strncpy(str + s.len, tmp, len);
          delete [] tmp;
       }
       strncpy(str, s.str, s.len);
-      len += s.len;
+      len     += s.len;
       str[len] = 0;
    }
    return *this;
@@ -443,19 +443,19 @@ String &String::prepend(String &s)
 {
    if (s.len) {
       if (s.len <= extra) {
-         extra -= s.len;
+         extra  -= s.len;
          char *p = str + len - 1;
          char *q = p + s.len;
          while (p >= str) *q-- = *p--;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + s.len + extra + 1];
+         extra     = Extra;
+         str       = new char[len + s.len + extra + 1];
          strncpy(str + s.len, tmp, len);
          delete [] tmp;
       }
       strncpy(str, s.str, s.len);
-      len += s.len;
+      len     += s.len;
       str[len] = 0;
    }
    return *this;
@@ -466,19 +466,19 @@ String &String::prepend(const char *s)
    if (s && *s) {
       size_t n = strlen(s);
       if (n <= extra) {
-         extra -= n;
+         extra  -= n;
          char *p = str + len - 1;
          char *q = p + n;
          while (p >= str) *q-- = *p--;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + n + extra + 1];
+         extra     = Extra;
+         str       = new char[len + n + extra + 1];
          strncpy(str + n, tmp, len);
          delete [] tmp;
       }
       strncpy(str, s, n);
-      len += n;
+      len     += n;
       str[len] = 0;
    }
    return *this;
@@ -488,19 +488,19 @@ String &String::prepend(const char *s, size_t n)
 {
    if (s && n > 0) {
       if (n <= extra) {
-         extra -= n;
+         extra  -= n;
          char *p = str + len - 1;
          char *q = p + n;
          while (p >= str) *q-- = *p--;
       } else {
          char *tmp = str;
-         extra = Extra;
-         str = new char[len + n + extra + 1];
+         extra     = Extra;
+         str       = new char[len + n + extra + 1];
          strncpy(str + n, tmp, len);
          delete [] tmp;
       }
       strncpy(str, s, n);
-      len += n;
+      len     += n;
       str[len] = 0;
    }
    return *this;
@@ -515,12 +515,12 @@ String &String::prepend(char c)
       while (p >= str) *q-- = *p--;
    } else {
       char *tmp = str;
-      extra = Extra;
-      str = new char[len + extra + 2];
+      extra     = Extra;
+      str       = new char[len + extra + 2];
       strncpy(str + 1, tmp, len);
       delete [] tmp;
    }
-   *str = c;
+   *str       = c;
    str[++len] = 0;
    return *this;
 }
@@ -541,10 +541,10 @@ String &String::vsprintf(const char *format, va_list ap)
    char *old = str;
 
    // Allocate a new string as large as the format string, and then some.
-   len = strlen(format);
-   str = new char[len + Extra + 1];
-   extra = len + Extra;
-   len = 0;
+   len      = strlen(format);
+   str      = new char[len + Extra + 1];
+   extra    = len + Extra;
+   len      = 0;
    str[len] = 0;
 
    // Process the format string.
@@ -554,17 +554,17 @@ String &String::vsprintf(const char *format, va_list ap)
          append(*p);
       } else {
          // Initialize parameter defaults.
-         boolean left_justify = false;
-         boolean zero_padding = false;
-         boolean width_specified = false;
+         boolean left_justify        = false;
+         boolean zero_padding        = false;
+         boolean width_specified     = false;
          boolean precision_specified = false;
-         size_t width = 0;
-         size_t prec = 0;
+         size_t  width               = 0;
+         size_t  prec                = 0;
 
          // Temporary values.
          String tmp;
-         char *s;
-         char c;
+         char  *s;
+         char   c;
          size_t n;
 
          // Check if format specifies left-justified output.

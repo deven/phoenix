@@ -26,11 +26,11 @@
 // Initial revision
 //
 
-extern EventQueue events;       // Server event queue.
+extern EventQueue events;           // Server event queue.
 
-extern FILE *logfile;           // log file ***
+extern FILE *logfile;               // log file ***
 
-extern Pointer<Event> Shutdown; // Pointer to Shutdown event, if any.
+extern Pointer<Event> Shutdown;     // Pointer to Shutdown event, if any.
 
-extern Timestamp ServerStartTime; // time server started
-extern int ServerStartUptime;   // system uptime when server started
+extern Timestamp ServerStartTime;   // time server started
+extern int       ServerStartUptime; // system uptime when server started

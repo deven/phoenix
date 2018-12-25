@@ -74,9 +74,10 @@
 
 int Telnet::count = 0;
 
-void Telnet::LogCaller() {      // Log calling host and port.
+void Telnet::LogCaller()        // Log calling host and port.
+{
    struct sockaddr_in saddr;
-   socklen_t saddrlen = sizeof(saddr);
+   socklen_t          saddrlen = sizeof(saddr);
 
    if (!getpeername(fd, (struct sockaddr *) &saddr, &saddrlen)) {
       log("Accepted connection on fd %d from %s port %d.", fd,
@@ -154,7 +155,7 @@ void Telnet::output(char *buf, int len) // queue output data (with length)
 
 void Telnet::print(char *format, ...) // formatted write
 {
-   String msg;
+   String  msg;
    va_list ap;
 
    va_start(ap, format);
@@ -180,7 +181,7 @@ void Telnet::echo(char *buf, int len) // echo output data (with length)
 
 void Telnet::echo_print(char *format, ...) // formatted echo
 {
-   String msg;
+   String  msg;
    va_list ap;
 
    if (Echo == TelnetEnabled && DoEcho && !undrawn) {
@@ -234,8 +235,8 @@ void Telnet::TimingMark(void)   // Queue Telnet TIMING-MARK option in OUTPUT.
 void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
                           Sendlist *to, char *start)
 {
-   char *wrap, *p;
-   int col;
+   char   *wrap, *p;
+   int     col;
    boolean flag;
 
    if (!session) return;
@@ -330,9 +331,11 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
 
    while (*start) {
       wrap = 0;
+
       for (p = start, col = 0; *p && col < width - 4; p++, col++) {
          if (*p == Space) wrap = p;
       }
+
       if (!*p) {
          output(start, p - start);
          break;
@@ -472,37 +475,37 @@ void Telnet::set_NAWS(CallbackFuncPtr callback, int state)
 
 Telnet::Telnet(int lfd)         // Telnet constructor.
 {
-   SetWidth(0);                 // Set default terminal width.
-   SetHeight(0);                // Set default terminal height.
-   NAWS_width = 0;              // No NAWS subnegotiation yet.
-   NAWS_height = 0;             // No NAWS subnegotiation yet.
-   type = TelnetFD;             // Identify as a Telnet FD.
-   data = new char[InputSize];  // Allocate input line buffer.
-   end = data + InputSize;      // Save end of allocated block.
-   point = free = data;         // Mark input line as empty.
-   mark = 0;                    // No mark set initially.
-   history = History;           // Initialize history iterator.
-   Yank = KillRing;             // Initialize kill-ring iterator.
-   reply_to = 0;                // No last sender.
-   undrawn = false;             // Input line not undrawn.
-   state = 0;                   // telnet input state = 0 (data)
-   closing = false;             // conection not closing
-   CloseOnEOF = true;           // close on EOF
-   acknowledge = false;         // Assume no TIMING-MARK option until tested.
-   DoEcho = true;               // Do echoing, if ECHO option enabled.
-   Echo = 0;                    // ECHO option off (local)
-   LSGA = 0;                    // SUPPRESS-GO-AHEAD option off (local)
-   RSGA = 0;                    // SUPPRESS-GO-AHEAD option off (remote)
-   LBin = 0;                    // TRANSMIT-BINARY option off (local)
-   RBin = 0;                    // TRANSMIT-BINARY option off (remote)
-   NAWS = 0;                    // NAWS option off (remote)
-   Echo_callback = 0;           // no ECHO callback (local)
-   LSGA_callback = 0;           // no SUPPRESS-GO-AHEAD callback (local)
-   RSGA_callback = 0;           // no SUPPRESS-GO-AHEAD callback (remote)
-   LBin_callback = 0;           // no TRANSMIT-BINARY callback (local)
-   RBin_callback = 0;           // no TRANSMIT-BINARY callback (remote)
-   NAWS_callback = 0;           // no NAWS callback (remote)
-   sb_state = TelnetSB_Idle;    // telnet subnegotiation state = idle
+   SetWidth(0);                    // Set default terminal width.
+   SetHeight(0);                   // Set default terminal height.
+   NAWS_width    = 0;              // No NAWS subnegotiation yet.
+   NAWS_height   = 0;              // No NAWS subnegotiation yet.
+   type          = TelnetFD;       // Identify as a Telnet FD.
+   data          = new char[InputSize]; // Allocate input line buffer.
+   end           = data + InputSize;    // Save end of allocated block.
+   point         = free = data;    // Mark input line as empty.
+   mark          = 0;              // No mark set initially.
+   history       = History;        // Initialize history iterator.
+   Yank          = KillRing;       // Initialize kill-ring iterator.
+   reply_to      = 0;              // No last sender.
+   undrawn       = false;          // Input line not undrawn.
+   state         = 0;              // telnet input state = 0 (data)
+   closing       = false;          // conection not closing
+   CloseOnEOF    = true;           // close on EOF
+   acknowledge   = false;          // Assume no TIMING-MARK option until tested.
+   DoEcho        = true;           // Do echoing, if ECHO option enabled.
+   Echo          = 0;              // ECHO option off (local)
+   LSGA          = 0;              // SUPPRESS-GO-AHEAD option off (local)
+   RSGA          = 0;              // SUPPRESS-GO-AHEAD option off (remote)
+   LBin          = 0;              // TRANSMIT-BINARY option off (local)
+   RBin          = 0;              // TRANSMIT-BINARY option off (remote)
+   NAWS          = 0;              // NAWS option off (remote)
+   Echo_callback = 0;              // no ECHO callback (local)
+   LSGA_callback = 0;              // no SUPPRESS-GO-AHEAD callback (local)
+   RSGA_callback = 0;              // no SUPPRESS-GO-AHEAD callback (remote)
+   LBin_callback = 0;              // no TRANSMIT-BINARY callback (local)
+   RBin_callback = 0;              // no TRANSMIT-BINARY callback (remote)
+   NAWS_callback = 0;              // no NAWS callback (remote)
+   sb_state      = TelnetSB_Idle;  // telnet subnegotiation state = idle
 
    fd = accept(lfd, 0, 0);      // Accept TCP connection.
    if (fd == -1) return;        // Return if failed.
@@ -537,7 +540,8 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    print("\nWelcome to Gangplank! (%s)\n\n", VERSION);
 }
 
-void Telnet::Prompt(char *p) {  // Print and set new prompt.
+void Telnet::Prompt(char *p)    // Print and set new prompt.
+{
    if (session) session->EnqueueOutput();
    prompt = p;
    if (!undrawn) output(~prompt);
@@ -587,7 +591,7 @@ void Telnet::Closed()           // Connection is closed.
    NoReadSelect();              // Don't select closed connection at all!
    NoWriteSelect();
    Command.~OutputBuffer();     // Destroy command output buffer.
-   Output.~OutputBuffer();      // Destroy data output buffer.
+   Output .~OutputBuffer();     // Destroy data output buffer.
    count--;                     // Decrement connection count.
    fd = -1;                     // Connection is closed.
 }
@@ -642,7 +646,7 @@ void Telnet::RedrawInput()      // Redraw input line on screen.
       echo(data, End());
       if (!EndColumn()) echo(" \010"); // Force line wrap.
       if (!AtEnd()) {           // Move cursor back to point.
-         lines = EndLine() - PointLine();
+         lines   = EndLine()   - PointLine();
          columns = EndColumn() - PointColumn();
          // ANSI! ***
          if (lines) echo_print("\033[%dA", lines);
@@ -712,8 +716,8 @@ void Telnet::InsertString(String &s) // Insert string at point.
          }
       }
       point = tmp + (point - data) + slen;
-      free = tmp + (free - data) + slen;
-      end = tmp + n + slen;
+      free  = tmp + (free - data) + slen;
+      end   = tmp + n + slen;
       delete [] data;
       data = tmp;
    } else {
@@ -743,7 +747,7 @@ void Telnet::beginning_of_line() // Jump to beginning of line.
    int lines, columns;
 
    if (Point()) {
-      lines = PointLine() - StartLine();
+      lines   = PointLine()   - StartLine();
       columns = PointColumn() - StartColumn();
       if (lines) echo_print("\033[%dA", lines); // ANSI! ***
       if (columns > 0) {
@@ -760,7 +764,7 @@ void Telnet::end_of_line()      // Jump to end of line.
    int lines, columns;
 
    if (End() && !AtEnd()) {
-      lines = EndLine() - PointLine();
+      lines   = EndLine()   - PointLine();
       columns = EndColumn() - PointColumn();
       if (lines) echo_print("\033[%dB", lines); // ANSI! ***
       if (columns > 0) {
@@ -849,13 +853,14 @@ void Telnet::accept_input()     // Accept input line.
 
    // Check if initial option negotiations are pending.
    if (Echo_callback == &Telnet::Welcome &&
-      LSGA_callback == &Telnet::Welcome &&
-      RSGA_callback == &Telnet::Welcome &&
-      LBin_callback == &Telnet::Welcome &&
-      RBin_callback == &Telnet::Welcome) {
+       LSGA_callback == &Telnet::Welcome &&
+       RSGA_callback == &Telnet::Welcome &&
+       LBin_callback == &Telnet::Welcome &&
+       RBin_callback == &Telnet::Welcome
+   ) {
       // Assume this is a raw TCP connection.
-      LSGA = RSGA = LBin = RBin = TelnetEnabled;
-      Echo = NAWS = 0;
+      LSGA          = RSGA = LBin = RBin = TelnetEnabled;
+      Echo          = NAWS = 0;
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
          RBin_callback = NAWS_callback = 0;
       output("You don't appear to be running a telnet client.  Assuming raw "\
@@ -876,7 +881,6 @@ void Telnet::accept_input()     // Accept input line.
    }
 
    // Flush any pending output to connection.
-
    if (!acknowledge) {
       while (session->OutputNext(this)) session->AcknowledgeOutput();
    }
@@ -889,17 +893,17 @@ void Telnet::accept_input()     // Accept input line.
       echo(Newline);
    }
 
-   point = free = data;         // Wipe input line. (data intact)
-   mark = 0;                    // Wipe mark.
-   prompt = "";                 // Wipe prompt.
+   point  = free = data;         // Wipe input line. (data intact)
+   mark   = 0;                   // Wipe mark.
+   prompt = "";                  // Wipe prompt.
 
    session->Input(data);        // Call state-specific input line processor.
 
    if ((end - data) > InputSize) { // Drop buffer back to normal size.
       delete [] data;
       point = free = data = new char[InputSize];
-      end = data + InputSize;
-      mark = 0;
+      end   = data + InputSize;
+      mark  = 0;
    }
 }
 
@@ -915,8 +919,8 @@ void Telnet::insert_char(int ch) // Insert character at point.
          if (!PointColumn()) echo(" \010"); // Force line wrapping.
       } else {
          for (char *p = free++; p > point; p--) *p = p[-1];
-         int lines = EndLine() - PointLine();
-         char *wrap = point - PointColumn();
+         int   lines = EndLine() - PointLine();
+         char *wrap  = point     - PointColumn();
          echo("\033[@");        // Insert character. // ANSI! ***
          while (lines-- > 0) {  // Handle line wrapping.
             // Go to the start of the next line and insert a character.
@@ -985,8 +989,8 @@ void Telnet::delete_char()      // Delete character at point.
       echo("\033[P");           // Delete character. // ANSI! ***
       // Make room for the new character if necessary.
       if (!AtEnd()) {
-         int lines = EndLine() - PointLine();
-         char *wrap = point - PointColumn();
+         int   lines = EndLine() - PointLine();
+         char *wrap  = point     - PointColumn();
          while (lines-- > 0) {  // Handle line wrapping.
             // Go to the end of the current line.
             echo_print("\r\033[%dC", width - 1); // ANSI! ***
@@ -1017,8 +1021,8 @@ void Telnet::transpose_chars()  // Exchange two characters at point.
       output(Bell);
    } else {
       if (AtEnd()) backward_char();
-      char tmp = point[0];
-      point[0] = point[-1];
+      char tmp  = point[0];
+      point[0]  = point[-1];
       point[-1] = tmp;
       echo(Backspace);
       echo(point[-1]);
@@ -1105,10 +1109,10 @@ void Telnet::transpose_words()  // Exchange two words at point.
 
 void Telnet::InputReady()       // telnet stream can input data
 {
-   char buf[BufSize];
-   Block *block;
+   char           buf[BufSize];
+   Block         *block;
    register char *from, *from_end;
-   register int n;
+   register int   n;
 
    if (fd == -1) return;
    n = read(fd, buf, BufSize);
@@ -1144,18 +1148,18 @@ void Telnet::InputReady()       // telnet stream can input data
       Closed();
       return;
    default:
-      from = buf;
+      from     = buf;
       from_end = buf + n;
       while (from < from_end) {
          // Make sure there's room for more in the buffer.
          if (free >= end) {
-            n = end - data;
+            n         = end - data;
             char *tmp = new char[n + InputSize];
             strncpy(tmp, data, n);
             point = tmp + (point - data);
             if (mark) mark = tmp + (mark - data);
             free = tmp + n;
-            end = free + InputSize;
+            end  = free + InputSize;
             delete [] data;
             data = tmp;
          }
@@ -1166,12 +1170,12 @@ void Telnet::InputReady()       // telnet stream can input data
             case TelnetAbortOutput:
                // Abort all output data.
                while (Output.head) {
-                  block = Output.head;
+                  block       = Output.head;
                   Output.head = block->next;
                   delete block;
                }
                Output.tail = 0;
-               state = 0;
+               state       = 0;
                break;
             case TelnetAreYouThere:
                // Are we here?  Yes!  Queue confirmation to command queue,
@@ -1424,22 +1428,22 @@ void Telnet::InputReady()       // telnet stream can input data
             case TelnetSB_NAWS_WidthHigh:
                // Get high byte of terminal width.
                NAWS_width = n * 256;
-               sb_state = TelnetSB_NAWS_WidthLow;
+               sb_state   = TelnetSB_NAWS_WidthLow;
                break;
             case TelnetSB_NAWS_WidthLow:
                // Get low byte of terminal width.
                NAWS_width += n;
-               sb_state = TelnetSB_NAWS_HeightHigh;
+               sb_state    = TelnetSB_NAWS_HeightHigh;
                break;
             case TelnetSB_NAWS_HeightHigh:
                // Get high byte of terminal height.
                NAWS_height = n * 256;
-               sb_state = TelnetSB_NAWS_HeightLow;
+               sb_state    = TelnetSB_NAWS_HeightLow;
                break;
             case TelnetSB_NAWS_HeightLow:
                // Get low byte of terminal height.
                NAWS_height += n;
-               sb_state = TelnetSB_NAWS_Done;
+               sb_state     = TelnetSB_NAWS_Done;
                break;
             default:
                // Ignore subnegotiation data in other states.
@@ -2089,14 +2093,15 @@ void Telnet::InputReady()       // telnet stream can input data
 
 void Telnet::OutputReady()      // telnet stream can output data
 {
-   Block *block;
+   Block       *block;
    register int n;
 
    if (fd == -1) return;
+
    // Send command data, if any.
    while (Command.head) {
       block = Command.head;
-      n = write(fd, block->data, block->free - block->data);
+      n     = write(fd, block->data, block->free - block->data);
       switch (n) {
       case -1:
 #ifdef EWOULDBLOCK
@@ -2143,7 +2148,7 @@ void Telnet::OutputReady()      // telnet stream can output data
    while (Output.head) {
       while (Output.head) {
          block = Output.head;
-         n = write(fd, block->data, block->free - block->data);
+         n     = write(fd, block->data, block->free - block->data);
          switch (n) {
          case -1:
 #ifdef EWOULDBLOCK

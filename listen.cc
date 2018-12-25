@@ -37,15 +37,15 @@
 
 boolean Listen::PortBusy(int port)
 {
-   struct sockaddr_in saddr;    /* socket address */
-   int fd;                      /* listening socket fd */
-   int option = 1;              /* option to set for setsockopt() */
+   struct sockaddr_in saddr;      /* socket address */
+   int                fd;         /* listening socket fd */
+   int                option = 1; /* option to set for setsockopt() */
 
    /* Initialize listening socket. */
    memset(&saddr, 0, sizeof(saddr));
-   saddr.sin_family = AF_INET;
+   saddr.sin_family      = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
-   saddr.sin_port = htons((u_short) port);
+   saddr.sin_port        = htons((u_short) port);
    if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) return 0;
    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
       close(fd);
@@ -64,20 +64,20 @@ void Listen::Open(int port)
    fdtable.OpenListen(port);
 }
 
-Listen::Listen(int port)        // Listen on a port.
+Listen::Listen(int port)           // Listen on a port.
 {
-   const int Backlog = 8;       // backlog on socket (for listen())
-   struct sockaddr_in saddr;    // socket address
-   int tries = 0;               // number of tries so far
-   int option = 1;              // option to set for setsockopt()
+   const int          Backlog = 8; // backlog on socket (for listen())
+   struct sockaddr_in saddr;       // socket address
+   int                tries = 0;   // number of tries so far
+   int                option = 1;  // option to set for setsockopt()
 
-   type = ListenFD;             // Identify as a Listen FD.***
+   type = ListenFD;                // Identify as a Listen FD.***
 
    // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));
-   saddr.sin_family = AF_INET;
+   saddr.sin_family      = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
-   saddr.sin_port = htons((u_short) port);
+   saddr.sin_port        = htons((u_short) port);
    if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
       error("Listen::Listen(): socket()");
    }

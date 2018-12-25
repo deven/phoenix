@@ -30,7 +30,7 @@ class EventQueue {
 private:
    List<Event> queue;
 public:
-   int Enqueue(Event *event);
+   int  Enqueue(Event *event);
    void Dequeue(Event *event);
    void Requeue(Event *event) {
       Dequeue(event);

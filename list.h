@@ -37,9 +37,10 @@ class ListNode: public Object {
 friend class List<Type>;
 friend class ListIter<Type>;
 private:
-   Pointer<ListNode> next;      // Next node.
-   Pointer<ListNode> prev;      // Previous node.
-   Pointer<Type> obj;           // Object this node refers to.
+   Pointer<ListNode> next;              // Next node.
+   Pointer<ListNode> prev;              // Previous node.
+   Pointer<Type>     obj;               // Object this node refers to.
+
    ListNode(Type *ptr): obj(ptr) { }
 };
 
@@ -48,29 +49,31 @@ class List {
 friend class ListIter<Type>;
 private:
    typedef ListNode<Type> NodeType;
-   int count;
-   Pointer<NodeType> head;
-   Pointer<NodeType> tail;
+   int                    count;
+   Pointer<NodeType>      head;
+   Pointer<NodeType>      tail;
 public:
    List(): count(0) { }
    ~List() { while (Dequeue()) ; }
-   int Count() { return count; }
-   void Reset() { while (Dequeue()) ; }
-   boolean In(Type *ptr);
-   int AddHead(Type *ptr);
-   int AddTail(Type *ptr);
+
+   int      Count()   { return count; }
+   void     Reset()   { while (Dequeue()) ; }
+
+   boolean       In     (Type *ptr);
+   int           AddHead(Type *ptr);
+   int           AddTail(Type *ptr);
    Pointer<Type> RemHead();
    Pointer<Type> RemTail();
-   int PriorityEnqueue(Type *ptr, int (*compare)(Type *, Type *));
-   int Enqueue(Type *ptr) { return AddTail(ptr); }
-   Pointer<Type> Dequeue() { return RemHead(); }
-   int Push(Type *ptr) { return AddTail(ptr); }
-   Pointer<Type> Pop() { return RemTail(); }
-   Pointer<Type> Shift() { return RemHead(); }
-   int Unshift(Type *ptr) { return AddHead(ptr); }
-   Pointer<Type> First();
-   Pointer<Type> Last();
-   void Remove(Type *obj);
+   int           PriorityEnqueue(Type *ptr, int (*compare)(Type *, Type *));
+   int           Enqueue(Type *ptr) { return AddTail(ptr); }
+   Pointer<Type> Dequeue()          { return RemHead(); }
+   int           Push   (Type *ptr) { return AddTail(ptr); }
+   Pointer<Type> Pop    ()          { return RemTail(); }
+   Pointer<Type> Shift  ()          { return RemHead(); }
+   int           Unshift(Type *ptr) { return AddHead(ptr); }
+   Pointer<Type> First  ();
+   Pointer<Type> Last   ();
+   void          Remove (Type *obj);
 };
 
 template <class Type>
@@ -150,8 +153,8 @@ int List<Type>::PriorityEnqueue(Type *ptr, int (*compare)(Type *, Type *)) {
       if (compare(ptr, scan->obj) < 0) {
          NodeType *node = new NodeType(ptr);
 
-         node->prev = scan->prev;
-         node->next = scan;
+         node->prev       = scan->prev;
+         node->next       = scan;
          node->prev->next = node;
          node->next->prev = node;
          return pos;
@@ -188,7 +191,7 @@ void List<Type>::Remove(Type *obj) {
                tail = 0;
             }
             node->next = node->prev = 0;
-            node = head;
+            node       = head;
          } else if (node == tail) {
             tail = node->prev;
             if (tail) {
@@ -197,13 +200,13 @@ void List<Type>::Remove(Type *obj) {
                head = 0;
             }
             node->next = node->prev = 0;
-            node = tail;
+            node       = tail;
          } else {
             Pointer<NodeType> ptr(node->prev);
             node->prev->next = node->next;
             node->next->prev = node->prev;
             node->next = node->prev = 0;
-            node = ptr;
+            node       = ptr;
          }
       }
       if (node) node = node->next;
@@ -214,44 +217,47 @@ template <class Type>
 class ListIter {
 private:
    typedef ListNode<Type> NodeType;
-   Pointer<NodeType> ptr, last;
-   List<Type> *list;
+   Pointer<NodeType>      ptr, last;
+   List<Type>            *list;
 public:
-   ListIter() { }
+   ListIter()                        { }
    ListIter(List<Type> &l): list(&l) { }
-   ListIter(List<Type> *l): list(l) { }
+   ListIter(List<Type> *l): list(l)  { }
+
    ListIter &operator =(List<Type> &l) {
       list = &l;
-      ptr = last = 0;
+      ptr  = last = 0;
       return *this;
    }
    ListIter &operator =(List<Type> *l) {
       list = l;
-      ptr = last = 0;
+      ptr  = last = 0;
       return *this;
    }
+
    Type *operator ->() { return ptr ? (Type *) ptr->obj : (Type *) 0; }
-   operator Type *() { return ptr ? (Type *) ptr->obj : (Type *) 0; }
+   operator Type *()   { return ptr ? (Type *) ptr->obj : (Type *) 0; }
    Type *operator --();
    Type *operator --(int) { return --(*this); }
    Type *operator ++();
    Type *operator ++(int) { return ++(*this); }
+
    void Remove();
-   int InsertBefore(Type *obj);
-   int InsertAfter(Type *obj);
+   int  InsertBefore(Type *obj);
+   int  InsertAfter(Type *obj);
 };
 
 template <class Type>
 Type *ListIter<Type>::operator --() {
    last = ptr;
-   ptr = ptr ? ptr->prev : list->tail;
+   ptr  = ptr ? ptr->prev : list->tail;
    return *this;
 }
 
 template <class Type>
 Type *ListIter<Type>::operator ++() {
    last = ptr;
-   ptr = ptr ? ptr->next : list->head;
+   ptr  = ptr ? ptr->next : list->head;
    return *this;
 }
 
@@ -281,32 +287,32 @@ void ListIter<Type>::Remove() {
    list->count--;
    node->prev->next = node->next;
    node->next->prev = node->prev;
-   node->next = node->prev = 0;
+   node->next       = node->prev = 0;
    return;
 }
 
 template <class Type>
 int ListIter<Type>::InsertBefore(Type *obj) {
    if (!ptr || !ptr->prev) return list->AddHead(obj);
-   NodeType *node = new NodeType(obj);
-   last = ptr;
-   node->next = ptr;
-   node->prev = ptr->prev;
+   NodeType *node  = new NodeType(obj);
+   last            = ptr;
+   node->next      = ptr;
+   node->prev      = ptr->prev;
    ptr->prev->next = node;
-   ptr->prev = node;
-   ptr = node;
+   ptr->prev       = node;
+   ptr             = node;
    return ++list->count;
 }
 
 template <class Type>
 int ListIter<Type>::InsertAfter(Type *obj) {
    if (!ptr || !ptr->next) return list->AddTail(obj);
-   NodeType *node = new NodeType(obj);
-   last = ptr;
-   node->prev = ptr;
-   node->next = ptr->next;
+   NodeType *node  = new NodeType(obj);
+   last            = ptr;
+   node->prev      = ptr;
+   node->next      = ptr->next;
    ptr->next->prev = node;
-   ptr->next = node;
-   ptr = node;
+   ptr->next       = node;
+   ptr             = node;
    return ++list->count;
 }

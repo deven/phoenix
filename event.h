@@ -50,15 +50,14 @@ public:
       time = now + when;
    }
    virtual ~Event() { }         // destructor
-   virtual boolean Execute() { abort(); return false; } // Execute event, return true to reschedule.
-   EventType Type() { return type; }
-   time_t Time() { return time; }
-   void SetAbsTime(time_t when) {
-      time = when;
+
+   virtual boolean Execute() {  // Execute event, return true to reschedule.
+      abort(); return false;
    }
-   void SetRelTime(int when) {
-      Timestamp now;
-      time = now + when;
+   EventType Type()             { return type; }
+   time_t    Time()             { return time; }
+   void SetAbsTime(time_t when) { time = when; }
+   void SetRelTime(int when)    { Timestamp now; time = now + when;
    }
 };
 
@@ -67,9 +66,7 @@ private:
    boolean final;
 public:
    static const int FinalWarningTime = 3;
-   void ShutdownWarning(char *by, time_t when);
-   void FinalWarning();
-   void ShutdownServer();
+
    ShutdownEvent(char *by, time_t when): Event(Shutdown_Event, when) {
       ShutdownWarning(by, when);
    }
@@ -77,7 +74,11 @@ public:
       log("Immediate shutdown requested by %s.", by);
       FinalWarning();
    }
+
    boolean Execute();
+   void ShutdownWarning(char *by, time_t when);
+   void FinalWarning();
+   void ShutdownServer();
 };
 
 class RestartEvent: public Event {
@@ -85,9 +86,7 @@ private:
    boolean final;
 public:
    static const int FinalWarningTime = 3;
-   void RestartWarning(char *by, time_t when);
-   void FinalWarning();
-   void RestartServer();
+
    RestartEvent(char *by, time_t when): Event(Restart_Event, when) {
       RestartWarning(by, when);
    }
@@ -95,7 +94,11 @@ public:
       log("Immediate restart requested by %s.", by);
       FinalWarning();
    }
+
    boolean Execute();
+   void RestartWarning(char *by, time_t when);
+   void FinalWarning();
+   void RestartServer();
 };
 
 class LoginTimeoutEvent: public Event {
@@ -106,5 +109,6 @@ public:
       Event(Login_Timeout_Event, when) {
       telnet = t;
    }
+
    boolean Execute();
 };

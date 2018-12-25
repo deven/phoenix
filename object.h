@@ -55,19 +55,20 @@ class Pointer {
 private:
    Type *ptr;
 public:
-   Pointer(): ptr(0) { }
+   Pointer():                 ptr(0) { }
    inline Pointer(Pointer &p);
    inline Pointer(Type *p);
    inline Pointer(Type &p);
    inline Pointer(int n);
    ~Pointer();
+
    inline Pointer &operator =(Pointer &p);
    inline Pointer &operator =(Type *p);
    inline Pointer &operator =(int n);
-   Type *operator ->() { return ptr; }
-   operator Type *() { return ptr; }
-   int operator ==(Pointer &p) { return ptr == p.ptr; }
-   int operator !=(Pointer &p) { return ptr != p.ptr; }
-   int operator ==(Type *p) { return ptr == p; }
-   int operator !=(Type *p) { return ptr != p; }
+   Type *operator ->()                  { return ptr; }
+   operator Type *()                    { return ptr; }
+   int operator ==(Pointer &p)          { return ptr == p.ptr; }
+   int operator !=(Pointer &p)          { return ptr != p.ptr; }
+   int operator ==(Type *p)             { return ptr == p; }
+   int operator !=(Type *p)             { return ptr != p; }
 };

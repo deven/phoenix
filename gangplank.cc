@@ -70,7 +70,7 @@
 #include "gangplank.h"
 
 #ifndef HAVE_STRERROR
-extern int sys_nerr;
+extern int   sys_nerr;
 extern char *str_errlist[];
 
 char *strerror(int n)
@@ -86,45 +86,45 @@ char *strerror(int n)
 }
 #endif
 
-EventQueue events;              // Server event queue.
+EventQueue     events;            // Server event queue.
 
-Pointer<Event> Shutdown;        // Pointer to Shutdown event, if any.
+Pointer<Event> Shutdown;          // Pointer to Shutdown event, if any.
 
 // have to use non-blocking code instead? ***
-FILE *logfile = 0;              // log file ***
+FILE          *logfile = 0;       // log file ***
 
-Timestamp ServerStartTime;      // time server started
-int ServerStartUptime;          // system uptime when server started
+Timestamp      ServerStartTime;   // time server started
+int            ServerStartUptime; // system uptime when server started
 
-void *operator new(size_t s)    // Provide a basic new operator.
+void *operator new(size_t s)      // Provide a basic new operator.
 {
    return malloc(s);
 }
 
-void *operator new[](size_t s)  // Provide a basic new[] operator.
+void *operator new[](size_t s)    // Provide a basic new[] operator.
 {
    return malloc(s);
 }
 
-void operator delete(void *p)   // Provide a basic delete operator.
+void operator delete(void *p)     // Provide a basic delete operator.
 {
    free(p);
 }
 
-void operator delete[](void *p) // Provide a basic delete[] operator.
+void operator delete[](void *p)   // Provide a basic delete[] operator.
 {
    free(p);
 }
 
-void OpenLog()                  // class Log? ***
+void OpenLog()                    // class Log? ***
 {
-   String filename;
-   Timestamp t;
+   String     filename;
+   Timestamp  t;
    struct tm *tm;
 
    if (!(tm = t.localtime())) error("OpenLog(): localtime");
    filename.sprintf("logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
-           tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+                    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
    if (!(logfile = fopen(~filename, "a"))) error("OpenLog(): %s", ~filename);
 #ifdef SETVBUF_REVERSED
    setvbuf(logfile, _IOLBF, NULL, 0);
@@ -137,10 +137,10 @@ void OpenLog()                  // class Log? ***
 }
 
 // Use << operator instead of printf() formats? ***
-void log(char *format, ...)     // log message ***
+void log(char *format, ...)       // log message ***
 {
-   String msg;
-   va_list ap;
+   String    msg;
+   va_list   ap;
    Timestamp t;
 
    if (!logfile) return;
@@ -150,10 +150,10 @@ void log(char *format, ...)     // log message ***
    (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void warn(char *format, ...)    // print error message ***
+void warn(char *format, ...)      // print error message ***
 {
-   String msg;
-   va_list ap;
+   String    msg;
+   va_list   ap;
    Timestamp t;
 
    va_start(ap, format);
@@ -164,10 +164,10 @@ void warn(char *format, ...)    // print error message ***
    if (logfile) (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void error(char *format, ...)   // print error message and exit ***
+void error(char *format, ...)     // print error message and exit ***
 {
-   String msg;
-   va_list ap;
+   String    msg;
+   va_list   ap;
    Timestamp t;
 
    va_start(ap, format);
@@ -182,10 +182,10 @@ void error(char *format, ...)   // print error message and exit ***
    exit(1);
 }
 
-void crash(char *format, ...)   // print error message and crash ***
+void crash(char *format, ...)     // print error message and crash ***
 {
-   String msg;
-   va_list ap;
+   String    msg;
+   va_list   ap;
    Timestamp t;
 
    va_start(ap, format);
@@ -200,7 +200,7 @@ void crash(char *format, ...)   // print error message and crash ***
    exit(-1);
 }
 
-void quit(int sig)              // received SIGQUIT or SIGTERM
+void quit(int sig)                // received SIGQUIT or SIGTERM
 {
    if (Shutdown) {
       log("Additional shutdown signal %d received.", sig);
@@ -212,7 +212,7 @@ void quit(int sig)              // received SIGQUIT or SIGTERM
    }
 }
 
-int SystemUptime()              // Get system uptime, if available.
+int SystemUptime()                // Get system uptime, if available.
 {
    int uptime = 0;
    FILE *fp = fopen("/proc/uptime", "r");
@@ -224,7 +224,8 @@ int SystemUptime()              // Get system uptime, if available.
    return uptime;
 }
 
-void trim(char *&input) {
+void trim(char *&input)
+{
    while (*input && isspace(*input)) input++;
    char *p = input;
    while (*p) p++;
@@ -232,7 +233,8 @@ void trim(char *&input) {
    *p = 0;
 }
 
-char *getword(char *&input, char separator) {
+char *getword(char *&input, char separator)
+{
    while (*input && isspace(*input)) input++;
    char *p = input;
    while (*input && !isspace(*input) && *input != separator) input++;
@@ -259,13 +261,13 @@ char *match(char *&input, char *keyword, int min) {
    return input = p;
 }
 
-int main(int argc, char **argv) // main program
+int main(int argc, char **argv)   // main program
 {
-   int pid;                     // server process number
-   int port = 0;                // TCP port to use
-   int arg;                     // current argument
-   boolean cron = false;        // -cron option
-   boolean debug = false;       // -debug option
+   int     pid;                   // server process number
+   int     port  = 0;             // TCP port to use
+   int     arg;                   // current argument
+   boolean cron  = false;         // -cron option
+   boolean debug = false;         // -debug option
 
    // Check for command-line options.
    for (arg = 1; arg < argc && argv[arg]; arg++) {
@@ -289,7 +291,7 @@ int main(int argc, char **argv) // main program
    if (cron && Listen::PortBusy(port)) exit(0);
 
    // Mark server start with current time and system uptime if available.
-   ServerStartTime = 0;
+   ServerStartTime   = 0;
    ServerStartUptime = SystemUptime();
 
    // Change to LIBDIR (create if necessary).
@@ -309,8 +311,7 @@ int main(int argc, char **argv) // main program
    // Fork subprocess and exit parent.
    if (debug) {
       log("Started Gangplank server, version %s.", VERSION);
-      log("Listening for connections on TCP port %d. (pid %d)", port,
-          getpid());
+      log("Listening for connections on TCP port %d. (pid %d)", port, getpid());
    } else {
       switch (pid = fork()) {
       case 0:
@@ -346,8 +347,7 @@ int main(int argc, char **argv) // main program
       }
    }
 #else
-   log("Started Gangplank server, version %s. (pid %d)"), VERSION,
-       getpid());
+   log("Started Gangplank server, version %s. (pid %d)"), VERSION, getpid());
    log("Listening for connections on TCP port %d.", port);
 #endif
 
@@ -358,8 +358,8 @@ int main(int argc, char **argv) // main program
    sigignore(SIGPIPE);
    sigignore(SIGALRM);
 #else
-   signal(SIGHUP, SIG_IGN);
-   signal(SIGINT, SIG_IGN);
+   signal(SIGHUP,  SIG_IGN);
+   signal(SIGINT,  SIG_IGN);
    signal(SIGPIPE, SIG_IGN);
    signal(SIGALRM, SIG_IGN);
 #endif
