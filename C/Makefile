@@ -13,6 +13,8 @@
 
 CC = gcc -Wall -Werror
 CFLAGS = -g
+LDFLAGS =
+
 EXEC = conf
 HDRS = conf.h
 SRCS = conf.c
@@ -21,15 +23,14 @@ OBJS = $(SRCS:.c=.o)
 all: conf restart
 
 $(EXEC): $(OBJS)
-	/bin/rm -f $(EXEC)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
 
 $(OBJS): $(HDRS)
 
 restart.o: conf.h
 
 restart: restart.o
-	$(CC) $(CFLAGS) -o restart restart.o
+	$(CC) $(LDFLAGS) -o restart restart.o
 
 clean:
 	rm -f restart restart.o $(EXEC) $(OBJS) core *~
