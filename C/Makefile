@@ -32,5 +32,8 @@ restart.o: conf.h
 restart: restart.o
 	$(CC) $(LDFLAGS) -o restart restart.o
 
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
 clean:
 	rm -f restart restart.o $(EXEC) $(OBJS) core *~
