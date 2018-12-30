@@ -11,7 +11,7 @@
 #
 # $Log$
 
-CC = gcc -bsd
+CC = gcc -Wall -Werror
 CFLAGS = -g
 EXEC = conf
 HDRS = conf.h
