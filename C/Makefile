@@ -21,6 +21,10 @@ LDFLAGS =
 # ESIX:
 #CFLAGS = -DUSE_SIGIGNORE
 #LDFLAGS = -bsd
+#
+# Sun:
+#CFLAGS = -g -DNEED_STRERROR
+#LDFLAGS =
 
 EXEC = conf
 HDRS = conf.h
