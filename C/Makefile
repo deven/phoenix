@@ -15,6 +15,10 @@ CC = gcc -Wall -Werror
 CFLAGS = -g
 LDFLAGS =
 
+# ESIX:
+#CFLAGS = -DUSE_SIGIGNORE
+#LDFLAGS = -bsd
+
 EXEC = conf
 HDRS = conf.h
 SRCS = conf.c
