@@ -42,7 +42,9 @@
 // Initial revision
 //
 
+// Include files.
 #include "gangplank.h"
+#include "user.h"
 
 List<User> User::users;
 

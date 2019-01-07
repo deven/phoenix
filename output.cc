@@ -29,7 +29,11 @@
 // Initial revision
 //
 
+// Include files.
 #include "gangplank.h"
+#include "output.h"
+#include "session.h"
+#include "telnet.h"
 
 void Text::output(Telnet *telnet)
 {

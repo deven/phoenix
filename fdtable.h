@@ -30,6 +30,10 @@
 #ifndef _FDTABLE_H
 #define _FDTABLE_H 1
 
+// Include files.
+#include "gangplank.h"
+#include "object.h"
+
 // File descriptor table.
 class FDTable {                        // File Descriptor Table
 private:

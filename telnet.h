@@ -42,6 +42,13 @@
 #ifndef _TELNET_H
 #define _TELNET_H 1
 
+// Include files.
+#include "fd.h"
+#include "fdtable.h"
+#include "gangplank.h"
+#include "outbuf.h"
+#include "output.h"
+
 // Telnet commands.
 enum TelnetCommand {
    TelnetSubnegotiationEnd   = 240,

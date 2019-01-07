@@ -41,7 +41,17 @@
 // Initial revision
 //
 
+// Include files.
+#include "fdtable.h"
 #include "gangplank.h"
+#include "listen.h"
+#include "name.h"
+#include "outbuf.h"
+#include "output.h"
+#include "outstr.h"
+#include "session.h"
+#include "telnet.h"
+#include "user.h"
 
 FDTable FD::fdtable;            // File descriptor table.
 fd_set  FDTable::readfds;       // read fdset for select()
