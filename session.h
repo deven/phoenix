@@ -85,7 +85,7 @@ public:
    void Attach           (Telnet *t);
    void Detach           (Telnet *t, boolean intentional);
    void SaveInputLine    (char *line);
-   void SetInputFunction (InputFuncPtr input, char *prompt = 0);
+   void SetInputFunction (InputFuncPtr input, char *prompt = NULL);
    void InitInputFunction();
    void Input            (char *line);
 

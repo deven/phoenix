@@ -55,7 +55,7 @@ FDTable::FDTable()              // constructor
    size = getdtablesize();
    if (size > FD_SETSIZE) size = FD_SETSIZE;
    array = new Pointer<FD> [size];
-   for (int i = 0; i < size; i++) array[i] = 0;
+   for (int i = 0; i < size; i++) array[i] = NULL;
 }
 
 FDTable::~FDTable()             // destructor
@@ -83,9 +83,9 @@ void FDTable::OpenTelnet(int lfd)   // Open a telnet connection.
 
 Pointer<FD> FDTable::Closed(int fd)   // Close fd, return pointer to FD object.
 {
-   if (fd < 0 || fd >= used) return Pointer<FD>(0);
+   if (fd < 0 || fd >= used) return Pointer<FD>(NULL);
    Pointer<FD> FD(array[fd]);
-   array[fd] = 0;
+   array[fd] = NULL;
    if (fd == used - 1) {              // Fix highest used index if necessary.
       while (used > 0) {
          if (array[--used]) {
