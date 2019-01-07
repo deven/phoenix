@@ -29,6 +29,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _LISTEN_H
+#define _LISTEN_H 1
+
 class Listen: public FD {
 public:
    static boolean PortBusy(int port); // Check if a listening port is busy.
@@ -41,3 +45,5 @@ public:
    void OutputReady() { abort(); }
    void Closed();
 };
+
+#endif // listen.h

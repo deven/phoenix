@@ -38,6 +38,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _TELNET_H
+#define _TELNET_H 1
+
 // Telnet commands.
 enum TelnetCommand {
    TelnetSubnegotiationEnd   = 240,
@@ -222,3 +226,5 @@ public:
    void InputReady    ();
    void OutputReady   ();
 };
+
+#endif // telnet.h

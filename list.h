@@ -29,6 +29,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _LIST_H
+#define _LIST_H 1
+
 template <class Type> class List;
 template <class Type> class ListIter;
 
@@ -316,3 +320,5 @@ int ListIter<Type>::InsertAfter(Type *obj) {
    ptr             = node;
    return ++list->count;
 }
+
+#endif // list.h

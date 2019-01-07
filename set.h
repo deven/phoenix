@@ -26,6 +26,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _SET_H
+#define _SET_H 1
+
 template <class Type> class SetIter;
 
 template <class Type>
@@ -81,3 +85,5 @@ public:
    Type *operator ++(int)            { return ++iter; }
    void Remove()                     { iter.Remove(); }
 };
+
+#endif // set.h
