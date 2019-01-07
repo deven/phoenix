@@ -57,5 +57,5 @@ struct timeval *EventQueue::Execute()
       }
    }
 
-   return 0;
+   return NULL;
 }

@@ -29,7 +29,7 @@ public:
    char  block[BlockSize];            // actual data block
 
    Block() {                          // block constructor
-      next = 0;
+      next = NULL;
       data = free = block;
    }
 };
