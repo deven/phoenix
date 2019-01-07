@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _HASH_H
+#define _HASH_H 1
+
 class HashEntry: public Object {
 friend class Hash;
 friend class HashIter;
@@ -106,3 +110,5 @@ public:
    operator HashEntry &()      { return *entry; }
    char *operator ~()          { return ~(entry->value); }
 };
+
+#endif // hash.h

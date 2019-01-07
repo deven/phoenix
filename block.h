@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _BLOCK_H
+#define _BLOCK_H 1
+
 class Block {
 public:
    static const int BlockSize = 4096; // data size for block
@@ -33,3 +37,5 @@ public:
       data = free = block;
    }
 };
+
+#endif // block.h

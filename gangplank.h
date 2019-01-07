@@ -20,8 +20,9 @@
 //
 // $Log$
 
+// Check if previously included.
 #ifndef _GANGPLANK_H
-#define _GANGPLANK_H
+#define _GANGPLANK_H 1
 
 #include "config.h"
 #include "system.h"
@@ -53,4 +54,4 @@
 #include "telnet.h"
 #include "globals.h"
 
-#endif
+#endif // gangplank.h

@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _OUTSTR_H
+#define _OUTSTR_H 1
+
 class OutputStreamObject {
 friend class OutputStream;
 private:
@@ -62,3 +66,5 @@ public:
    void    Dequeue  ();
    boolean SendNext (Telnet *telnet);
 };
+
+#endif // outstr.h

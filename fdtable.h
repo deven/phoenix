@@ -20,6 +20,11 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _FDTABLE_H
+#define _FDTABLE_H 1
+
+// File descriptor table.
 class FDTable {                        // File Descriptor Table
 private:
    static fd_set readfds;              // read fdset for select()
@@ -52,3 +57,5 @@ public:
       FD_CLR(fd, &writefds);
    }
 };
+
+#endif // fdtable.h

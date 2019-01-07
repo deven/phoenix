@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _OUTPUT_H
+#define _OUTPUT_H 1
+
 // Types of Output subclasses.
 enum OutputType {
    UnknownOutput,  TextOutput,    PublicMessage,   PrivateMessage,
@@ -278,3 +282,5 @@ public:
 
    void output(Telnet *telnet);
 };
+
+#endif // output.h

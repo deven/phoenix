@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _SESSION_H
+#define _SESSION_H 1
+
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
 class Session: public Object {
@@ -178,3 +182,5 @@ public:
    void SendMessage  (Sendlist *sendlist, char *msg);
    static void CheckShutdown(); // Exit if shutting down and no users are left.
 };
+
+#endif // session.h

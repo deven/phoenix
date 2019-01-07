@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _SYSTEM_H
+#define _SYSTEM_H 1
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -102,3 +106,5 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+
+#endif // system.h

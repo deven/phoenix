@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _EVENTQUEUE_H
+#define _EVENTQUEUE_H 1
+
 class EventQueue {
 private:
    List<Event> queue;
@@ -32,3 +36,5 @@ public:
    }
    struct timeval *Execute();
 };
+
+#endif // eventqueue.h

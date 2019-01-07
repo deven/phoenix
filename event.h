@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _EVENT_H
+#define _EVENT_H 1
+
 // Types of Event subclasses.
 enum EventType {
    Unknown_Event, Shutdown_Event, Restart_Event, Login_Timeout_Event
@@ -99,3 +103,5 @@ public:
 
    boolean Execute();
 };
+
+#endif // event.h

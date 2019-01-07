@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _FD_H
+#define _FD_H 1
+
 // Types of FD subclasses.
 enum FDType { UnknownFD, ListenFD, TelnetFD };
 
@@ -63,3 +67,5 @@ public:
       if (fd != -1) fdtable.NoWriteSelect(fd);
    }
 };
+
+#endif // fd.h

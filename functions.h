@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _FUNCTIONS_H
+#define _FUNCTIONS_H 1
+
 #ifndef HAVE_STRERROR
 extern char *strerror(int errno);
 #endif
@@ -41,3 +45,5 @@ void  trim        (char *&input);
 char *getword     (char *&input, char separator = 0);
 char *match       (char *&input, char *keyword, int min = 0);
 int   main        (int argc, char **argv);
+
+#endif // functions.h
