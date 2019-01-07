@@ -20,7 +20,12 @@
 //
 // $Log$
 
+// Include files.
 #include "gangplank.h"
+#include "line.h"
+#include "session.h"
+#include "telnet.h"
+#include "user.h"
 
 List<Session>    Session::inits;
 List<Session>    Session::sessions;
