@@ -32,7 +32,7 @@ private:
    OutputStreamObject *next;
    Pointer<OutputObj>  Output;
 
-   OutputStreamObject(OutputObj *out): Output(out) { next = 0; }
+   OutputStreamObject(OutputObj *out): Output(out) { next = NULL; }
 
    void output(Telnet *telnet);
 };
@@ -46,7 +46,7 @@ public:
    int                 Sent;         // count of sent objects in queue
 
    OutputStream() {                  // constructor
-      head         = sent = tail = 0;
+      head         = sent = tail = NULL;
       Acknowledged = Sent = 0;
    }
    ~OutputStream() {                 // destructor
@@ -55,7 +55,7 @@ public:
          head                    = out->next;
          delete out;
       }
-      sent         = tail = 0;
+      sent         = tail = NULL;
       Acknowledged = Sent = 0;
    }
 

@@ -50,8 +50,8 @@ Sendlist::Sendlist(Session &session, char *sendlist, boolean multi,
 Sendlist &Sendlist::set(Session &sender, char *sendlist, boolean multi,
                         boolean do_sessions, boolean do_discussions)
 {
-   Session        *session    = 0;
-   Discussion     *discussion = 0;
+   Session        *session    = NULL;
+   Discussion     *discussion = NULL;
    Set<Session>    sessionmatches;
    Set<Discussion> discussionmatches;
    List<StringObj> nonmatches;

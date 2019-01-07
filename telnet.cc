@@ -330,7 +330,7 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
    print(" [%s]\n - ", time.stamp());
 
    while (*start) {
-      wrap = 0;
+      wrap = NULL;
 
       for (p = start, col = 0; *p && col < width - 4; p++, col++) {
          if (*p == Space) wrap = p;
@@ -483,10 +483,10 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    data          = new char[InputSize]; // Allocate input line buffer.
    end           = data + InputSize;    // Save end of allocated block.
    point         = free = data;    // Mark input line as empty.
-   mark          = 0;              // No mark set initially.
+   mark          = NULL;           // No mark set initially.
    history       = History;        // Initialize history iterator.
    Yank          = KillRing;       // Initialize kill-ring iterator.
-   reply_to      = 0;              // No last sender.
+   reply_to      = NULL;           // No last sender.
    undrawn       = false;          // Input line not undrawn.
    state         = 0;              // telnet input state = 0 (data)
    closing       = false;          // conection not closing
@@ -499,15 +499,15 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    LBin          = 0;              // TRANSMIT-BINARY option off (local)
    RBin          = 0;              // TRANSMIT-BINARY option off (remote)
    NAWS          = 0;              // NAWS option off (remote)
-   Echo_callback = 0;              // no ECHO callback (local)
-   LSGA_callback = 0;              // no SUPPRESS-GO-AHEAD callback (local)
-   RSGA_callback = 0;              // no SUPPRESS-GO-AHEAD callback (remote)
-   LBin_callback = 0;              // no TRANSMIT-BINARY callback (local)
-   RBin_callback = 0;              // no TRANSMIT-BINARY callback (remote)
-   NAWS_callback = 0;              // no NAWS callback (remote)
+   Echo_callback = NULL;           // no ECHO callback (local)
+   LSGA_callback = NULL;           // no SUPPRESS-GO-AHEAD callback (local)
+   RSGA_callback = NULL;           // no SUPPRESS-GO-AHEAD callback (remote)
+   LBin_callback = NULL;           // no TRANSMIT-BINARY callback (local)
+   RBin_callback = NULL;           // no TRANSMIT-BINARY callback (remote)
+   NAWS_callback = NULL;           // no NAWS callback (remote)
    sb_state      = TelnetSB_Idle;  // telnet subnegotiation state = idle
 
-   fd = accept(lfd, 0, 0);      // Accept TCP connection.
+   fd = accept(lfd, NULL, NULL);   // Accept TCP connection.
    if (fd == -1) return;        // Return if failed.
 
    count++;                     // Increment connection count.
@@ -534,7 +534,7 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    set_LBin(&Telnet::Welcome, true);
    set_RBin(&Telnet::Welcome, true);
    set_Echo(&Telnet::Welcome, true);
-   set_NAWS(0, true);
+   set_NAWS(NULL, true);
 
    // Send welcome banner.
    print("\nWelcome to Gangplank! (%s)\n\n", VERSION);
@@ -568,7 +568,7 @@ void Telnet::Close(boolean drain) // Close telnet connection.
 
       // Detach associated session.
       if (session) session->Detach(this, boolean(closing));
-      session = 0;
+      session = NULL;
    } else {                     // No output pending, close immediately.
       fdtable.Close(fd);
    }
@@ -578,11 +578,11 @@ void Telnet::Closed()           // Connection is closed.
 {
    // Detach associated session.
    if (session) session->Detach(this, boolean(closing));
-   session = 0;
+   session = NULL;
 
    // Free input line buffer.
    if (data) delete [] data;
-   data = 0;
+   data = NULL;
 
    if (fd == -1) return;        // Skip the rest if there's no connection.
 
@@ -862,7 +862,7 @@ void Telnet::accept_input()     // Accept input line.
       LSGA          = RSGA = LBin = RBin = TelnetEnabled;
       Echo          = NAWS = 0;
       Echo_callback = LSGA_callback = RSGA_callback = LBin_callback =
-         RBin_callback = NAWS_callback = 0;
+         RBin_callback = NAWS_callback = NULL;
       output("You don't appear to be running a telnet client.  Assuming raw "\
              "TCP connection.\n(Use C-x C-e to toggle remote echo if you "\
              "need it.)\n\n");
@@ -894,7 +894,7 @@ void Telnet::accept_input()     // Accept input line.
    }
 
    point  = free = data;         // Wipe input line. (data intact)
-   mark   = 0;                   // Wipe mark.
+   mark   = NULL;                // Wipe mark.
    prompt = "";                  // Wipe prompt.
 
    session->Input(data);        // Call state-specific input line processor.
@@ -903,7 +903,7 @@ void Telnet::accept_input()     // Accept input line.
       delete [] data;
       point = free = data = new char[InputSize];
       end   = data + InputSize;
-      mark  = 0;
+      mark  = NULL;
    }
 }
 
@@ -1174,7 +1174,7 @@ void Telnet::InputReady()       // telnet stream can input data
                   Output.head = block->next;
                   delete block;
                }
-               Output.tail = 0;
+               Output.tail = NULL;
                state       = 0;
                break;
             case TelnetAreYouThere:
@@ -1237,7 +1237,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (RBin_callback) {
                   (this->*RBin_callback)();
-                  RBin_callback = 0;
+                  RBin_callback = NULL;
                }
                break;
             case TelnetSuppressGoAhead:
@@ -1261,7 +1261,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (RSGA_callback) {
                   (this->*RSGA_callback)();
-                  RSGA_callback = 0;
+                  RSGA_callback = NULL;
                }
                break;
             case TelnetNAWS:
@@ -1282,7 +1282,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (NAWS_callback) {
                   (this->*NAWS_callback)();
-                  NAWS_callback = 0;
+                  NAWS_callback = NULL;
                }
                break;
             case TelnetTimingMark:
@@ -1322,7 +1322,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (LBin_callback) {
                   (this->*LBin_callback)();
-                  LBin_callback = 0;
+                  LBin_callback = NULL;
                }
                break;
             case TelnetEcho:
@@ -1343,7 +1343,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (Echo_callback) {
                   (this->*Echo_callback)();
-                  Echo_callback = 0;
+                  Echo_callback = NULL;
                }
                break;
             case TelnetSuppressGoAhead:
@@ -1367,7 +1367,7 @@ void Telnet::InputReady()       // telnet stream can input data
                }
                if (LSGA_callback) {
                   (this->*LSGA_callback)();
-                  LSGA_callback = 0;
+                  LSGA_callback = NULL;
                }
                break;
             default:
@@ -2136,7 +2136,7 @@ void Telnet::OutputReady()      // telnet stream can output data
             if (block->next) {
                Command.head = block->next;
             } else {
-               Command.head = Command.tail = 0;
+               Command.head = Command.tail = NULL;
             }
             delete block;
          }
@@ -2172,7 +2172,7 @@ void Telnet::OutputReady()      // telnet stream can output data
                if (block->next) {
                   Output.head = block->next;
                } else {
-                  Output.head = Output.tail = 0;
+                  Output.head = Output.tail = NULL;
                }
                delete block;
             }

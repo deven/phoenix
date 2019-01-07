@@ -35,7 +35,7 @@ public:
    Block *tail;                         // last data block
 
    OutputBuffer() {                     // constructor
-      head = tail = 0;
+      head = tail = NULL;
    }
    ~OutputBuffer() {                    // destructor
       Block *block;
@@ -45,7 +45,7 @@ public:
          head  = block->next;
          delete block;
       }
-      tail = 0;
+      tail = NULL;
    }
 
    char *GetData() {                    // Save buffer in string and erase.
@@ -56,7 +56,7 @@ public:
       for (block = head; block; block = block->next) {
          len += block->free - block->data;
       }
-      if (!len) return 0;
+      if (!len) return NULL;
       char *buf = new char[++len];
       for (p = buf; head; p += len) {
          block = head;
@@ -65,7 +65,7 @@ public:
          strncpy(p, block->data, len);
          delete block;
       }
-      tail = 0;
+      tail = NULL;
       *p   = 0;
       return buf;
    }

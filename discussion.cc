@@ -55,13 +55,13 @@ Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
 Name *Discussion::Allowed(Session *session) {
    SetIter<Name> name(allowed);
    while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
-   return 0;
+   return NULL;
 }
 
 Name *Discussion::Denied(Session *session) {
    SetIter<Name> name(denied);
    while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
-   return 0;
+   return NULL;
 }
 
 boolean Discussion::IsCreator(Session *session) {
@@ -71,7 +71,7 @@ boolean Discussion::IsCreator(Session *session) {
 Name *Discussion::IsModerator(Session *session) {
    SetIter<Name> name(moderators);
    while (name++) if (!strcasecmp(~name->name, ~session->name)) return name;
-   return 0;
+   return NULL;
 }
 
 boolean Discussion::Permitted(Session *session) {

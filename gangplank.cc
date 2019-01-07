@@ -91,7 +91,7 @@ EventQueue     events;            // Server event queue.
 Pointer<Event> Shutdown;          // Pointer to Shutdown event, if any.
 
 // XXX have to use non-blocking code instead?
-FILE          *logfile = 0;       // XXX log file
+FILE          *logfile = NULL;    // XXX log file
 
 Timestamp      ServerStartTime;   // time server started
 int            ServerStartUptime; // system uptime when server started
@@ -243,7 +243,7 @@ char *getword(char *&input, char separator)
       if (*input == separator) *input++ = 0;
       while (*input && isspace(*input)) *input++ = 0;
    }
-   return *p ? p : 0;
+   return *p ? p : NULL;
 }
 
 char *match(char *&input, char *keyword, int min) {
@@ -254,9 +254,9 @@ char *match(char *&input, char *keyword, int min) {
    for (i = 0; *q; p++, q++, i++) {
       if (isspace(*p) || !*p) break;
       if ((isupper(*p) ? tolower(*p) : *p) !=
-          (isupper(*q) ? tolower(*q) : *q)) return 0;
+          (isupper(*q) ? tolower(*q) : *q)) return NULL;
    }
-   if (*p && !isspace(*p) && !*q || i < min) return 0;
+   if (*p && !isspace(*p) && !*q || i < min) return NULL;
    while (isspace(*p)) p++;
    return input = p;
 }

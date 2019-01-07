@@ -101,8 +101,8 @@ Session::Session(Telnet *t)
 {
    if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
    telnet        = t;           // Save Telnet pointer.
-   InputFunc     = 0;           // No input function.
-   lines         = 0;           // No pending input lines.
+   InputFunc     = NULL;        // No input function.
+   lines         = NULL;        // No pending input lines.
    away          = Here;        // Default to "here".
    SignalPublic  = true;        // Default public signal on. (for now)
    SignalPrivate = true;        // Default private signal on.
@@ -135,12 +135,12 @@ void Session::Close(boolean drain) // Close session.
 
    if (telnet) {                // Close connection if attached.
       Pointer<Telnet> t(telnet);
-      telnet = 0;
+      telnet = NULL;
       t->Close(drain);
    }
 
    if (user) user->sessions.Remove(this); // Disassociate from user.
-   user = 0;
+   user = NULL;
 }
 
 void Session::Transfer(Telnet *t) // Transfer session to connection.
@@ -148,7 +148,7 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    Pointer<Telnet> old(telnet);
    telnet          = t;
    telnet->session = this;
-   old   ->session = 0;
+   old   ->session = NULL;
    telnet->LoginSequenceFinished();
    log("Transfer: %s (%s) from fd %d to fd %d.", ~name, ~user->user, old->fd,
        t->fd);
@@ -185,7 +185,7 @@ void Session::Detach(Telnet *t, boolean intentional) // Detach session from t.
                 t->fd);
          }
          EnqueueOthers(new DetachNotify(name_obj, intentional));
-         telnet = 0;
+         telnet = NULL;
       }
    } else {
       Close();
@@ -210,7 +210,7 @@ void Session::SetInputFunction(InputFuncPtr input, char *prompt)
    if (prompt) telnet->Prompt(prompt);
 
    // Process lines as long as we still have a defined input function.
-   while (InputFunc != 0 && lines) {
+   while (InputFunc != NULL && lines) {
       l     = lines;
       lines = l->next;
       (this->*InputFunc)(l->line);
@@ -293,13 +293,13 @@ boolean Session::FindSendable(char *sendlist, Session *&session,
                               boolean do_sessions, boolean do_discussions)
 {
    int                  pos, count     = 0;
-   Session             *sessionlead    = 0;
-   Discussion          *discussionlead = 0;
+   Session             *sessionlead    = NULL;
+   Discussion          *discussionlead = NULL;
    ListIter<Session>    s(sessions);
    ListIter<Discussion> d(discussions);
 
-   session    = 0;
-   discussion = 0;
+   session    = NULL;
+   discussion = NULL;
 
    if (do_sessions) {
       if (!strcasecmp(sendlist, "me")) {
@@ -365,7 +365,7 @@ Session *Session::FindSession(char *sendlist, Set<Session> &matches)
                     false, false, true, false)) {
       return session;
    }
-   return 0;
+   return NULL;
 }
 
 Discussion *Session::FindDiscussion(char *sendlist, Set<Discussion> &matches,
@@ -379,7 +379,7 @@ Discussion *Session::FindDiscussion(char *sendlist, Set<Discussion> &matches,
                     member, false, false, true)) {
       return discussion;
    }
-   return 0;
+   return NULL;
 }
 
 void Session::PrintSessions(Set<Session> &sessions)
@@ -525,7 +525,7 @@ void Session::Password(char *line)
       }
 
       SetInputFunction(&Session::Login, "login: "); // Login prompt.
-      user = 0;
+      user = NULL;
       return;
    }
 
@@ -564,7 +564,7 @@ boolean Session::CheckNameAvailability(char *name, boolean double_check,
                if (transferring) {
                   telnet->output("Transferring active session...\n");
                   session->Transfer(telnet);
-                  telnet = 0;
+                  telnet = NULL;
                   Close();
                } else {
                   telnet->print("You are%s attached elsewhere under that name."
@@ -576,7 +576,7 @@ boolean Session::CheckNameAvailability(char *name, boolean double_check,
             } else {
                telnet->output("Attaching to detached session...\n");
                session->Attach(telnet);
-               telnet = 0;
+               telnet = NULL;
                Close();
                return false;
             }
@@ -660,7 +660,7 @@ void Session::EnteredBlurb(char *line)
    if (!FindSendable("A", session, sessionmatches, discussion,
                      discussionmatches, false, true)) {
       // Silently create the discussion, with logging. (no creator)
-      discussion = new Discussion(0, "A", "General Discussion", true);
+      discussion = new Discussion(NULL, "A", "General Discussion", true);
       discussions.AddHead(discussion);
    }
 
@@ -924,7 +924,7 @@ void Session::DoRestart(char *args) // Do !restart command.
             break;              // Should never get here!
          }
          events.Dequeue(Shutdown);
-         Shutdown = 0;
+         Shutdown = NULL;
       } else {
          output("The server was not about to shut down.\n");
       }
@@ -965,7 +965,7 @@ void Session::DoDown(char *args) // Do !down command.
             break;              // Should never get here!
          }
          events.Dequeue(Shutdown);
-         Shutdown = 0;
+         Shutdown = NULL;
       } else {
          output("The server was not about to shut down.\n");
       }
@@ -996,7 +996,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
 
       if (session->telnet) {
          Pointer<Telnet> telnet(session->telnet);
-         session->telnet = 0;
+         session->telnet = NULL;
          log("%s (%s) on fd %d has been nuked by %s (%s).", ~session->name,
              ~session->user->user, telnet->fd, ~name, ~user->user);
          telnet->UndrawInput();
@@ -1287,7 +1287,7 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
    }
 
    Pointer<Sendlist> sendlist(new Sendlist(*this, send, true));
-   sendlist->Expand(who, 0);
+   sendlist->Expand(who, NULL);
 
    ListIter<Session> s(sessions);
    while (s++) {
@@ -1759,7 +1759,7 @@ void Session::DoSend(char *args) // Do /send command.
          return;
       }
    } else if (!strcasecmp(args, "off")) { // Turn sendlist off.
-      default_sendlist = 0;
+      default_sendlist = NULL;
       output("Your default sendlist has been turned off.\n");
       return;
    } else {                     // Set new sendlist.
@@ -1827,7 +1827,7 @@ void Session::DoBlurb(char *start, boolean entry)
       for (char *p = start; *p; p++) if (!isspace(*p)) end = p;
       if (end == start + 2 && !strncasecmp(start, "off", 3)) {
          if (entry || blurb) {
-            SetBlurb(0);
+            SetBlurb(NULL);
             if (!entry) output("Your blurb has been turned off.\n");
          } else {
             if (!entry) output("Your blurb was already turned off.\n");
@@ -1840,7 +1840,7 @@ void Session::DoBlurb(char *start, boolean entry)
          if (!entry) print("Your blurb has been set to%s.\n", ~blurb);
       }
    } else if (entry) {
-      SetBlurb(0);
+      SetBlurb(NULL);
    } else if (blurb) {
       print("Your blurb is currently set to%s.\n", ~blurb);
    } else {

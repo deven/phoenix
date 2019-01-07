@@ -74,7 +74,7 @@ User *User::GetUser(char *login)
 {
    ListIter<User> u(users);
    while (u++) if (!strcasecmp(~u->user, login)) return u;
-   return 0;
+   return NULL;
 }
 
 void User::Update(char *login, char *pass, char *names, char *defblurb, int p)
@@ -103,19 +103,19 @@ void User::UpdateAll()          // Update all user entries from password file.
       while (fgets(buf, BufSize, pw)) {
          if (buf[0] == '#') continue;
          p        = username = buf;
-         password = names    = priv = 0;
+         password = names    = priv = NULL;
          while (*p) if (*p == ':') { *p++ = 0; password = p; break; } else p++;
          while (*p) if (*p == ':') { *p++ = 0; names = p; break; } else p++;
          while (*p) if (*p == ':') { *p++ = 0; priv = p; break; } else p++;
          if (!priv) continue;
-         Update(username, password, names, 0, priv ? atoi(priv) : 0);
+         Update(username, password, names, NULL, priv ? atoi(priv) : 0);
       }
       fclose(pw);
    }
 
 #ifdef GUEST_ACCESS
    // Create the "guest" account.
-   Update("guest", 0, 0, 0, 0);
+   Update("guest", NULL, NULL, NULL, NULL);
 #endif
 }
 
@@ -133,6 +133,6 @@ char *User::FindReserved(char *name, User *&user)
          }
       }
    }
-   user = 0;
+   user = NULL;
    return NULL;
 }
