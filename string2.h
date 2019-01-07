@@ -52,6 +52,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _STRING2_H
+#define _STRING2_H 1
+
 class String {
 private:
    static const size_t Extra        = 128;
@@ -142,3 +146,5 @@ public:
    StringObj(const char *s, size_t n): Object(), String(s, n) { }
    StringObj(char *s, size_t n):       Object(), String(s, n) { }
 };
+
+#endif // string2.h

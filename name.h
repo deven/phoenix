@@ -26,6 +26,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _NAME_H
+#define _NAME_H 1
+
 class Name: public Object {
 public:
    Pointer<Session> session;    // Session this name refers to.
@@ -35,3 +39,5 @@ public:
 
    Name(Session *s, String &n, String &b): session(s), name(n), blurb(b) { }
 };
+
+#endif // name.h

@@ -26,6 +26,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _LINE_H
+#define _LINE_H 1
+
 class Line: public Object {
 public:
    String line;                 // input line
@@ -43,3 +47,5 @@ public:
       }
    }
 };
+
+#endif // line.h

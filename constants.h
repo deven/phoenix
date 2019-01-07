@@ -41,6 +41,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _CONSTANTS_H
+#define _CONSTANTS_H 1
+
 // Internal character constants.
 const unsigned char UnquotedUnderscore = 128, Separator = 129;
 
@@ -100,3 +104,5 @@ const unsigned char          NBSpace           = 160, InvertedExclamation = 161,
    u_grave            = 249, u_acute           = 250, u_circumflex        = 251,
    u_umlaut           = 252, y_acute           = 253, thorn_Icelandic     = 254,
    y_umlaut           = 255;
+
+#endif // constants.h

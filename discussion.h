@@ -26,6 +26,10 @@
 // Initial revision
 //
 
+// Check if previously included.
+#ifndef _DISCUSSION_H
+#define _DISCUSSION_H 1
+
 class Discussion: public Object {
 public:
    String        name;
@@ -56,3 +60,5 @@ public:
    void    Appoint    (Session *session, char *args);
    void    Unappoint  (Session *session, char *args);
 };
+
+#endif // discussion.h
