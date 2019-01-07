@@ -26,7 +26,11 @@
 // Initial revision
 //
 
+// Include files.
 #include "gangplank.h"
+#include "outstr.h"
+#include "session.h"
+#include "telnet.h"
 
 void OutputStreamObject::output(Telnet *telnet)
 {                               // Output object.

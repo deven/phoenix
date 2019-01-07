@@ -36,6 +36,10 @@
 #ifndef _USER_H
 #define _USER_H 1
 
+// Include files.
+#include "gangplank.h"
+#include "object.h"
+
 class User: public Object {
    static List<User> users;         // List of users in system.
 public:

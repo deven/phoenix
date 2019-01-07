@@ -30,6 +30,10 @@
 #ifndef _LINE_H
 #define _LINE_H 1
 
+// Include files.
+#include "gangplank.h"
+#include "object.h"
+
 class Line: public Object {
 public:
    String line;                 // input line

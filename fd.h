@@ -33,6 +33,11 @@
 #ifndef _FD_H
 #define _FD_H 1
 
+// Include files.
+#include "fdtable.h"
+#include "gangplank.h"
+#include "object.h"
+
 // Types of FD subclasses.
 enum FDType { UnknownFD, ListenFD, TelnetFD };
 

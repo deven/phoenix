@@ -33,6 +33,10 @@
 #ifndef _OUTBUF_H
 #define _OUTBUF_H 1
 
+// Include files.
+#include "block.h"
+#include "boolean.h"
+
 class OutputBuffer {
 public:
    Block *head;                         // first data block
