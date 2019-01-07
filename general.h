@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _GENERAL_H
+#define _GENERAL_H 1
+
 // Class declarations.
 class Block;
 class Discussion;
@@ -40,3 +44,5 @@ void *operator new     (size_t s);
 void *operator new[]   (size_t s);
 void  operator delete  (void *p);
 void  operator delete[](void *p);
+
+#endif // general.h

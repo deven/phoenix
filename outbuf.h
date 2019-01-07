@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _OUTBUF_H
+#define _OUTBUF_H 1
+
 class OutputBuffer {
 public:
    Block *head;                         // first data block
@@ -98,3 +102,5 @@ public:
       return select;
    }
 };
+
+#endif // outbuf.h

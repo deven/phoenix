@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _TIMESTAMP_H
+#define _TIMESTAMP_H 1
+
 class Timestamp {
 private:
    time_t time;
@@ -42,3 +46,5 @@ public:
    char *date(int start = 0, int len = 0);   // Get part of date string.
    char *stamp();                            // Return short timestamp string.
 };
+
+#endif // timestamp.h

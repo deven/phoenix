@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _SENDLIST_H
+#define _SENDLIST_H 1
+
 class Sendlist: public Object {
 public:
    String          errors;
@@ -34,3 +38,5 @@ public:
                  boolean do_sessions = true, boolean do_discussions = true);
    int Expand(Set<Session> &who, Session *sender);
 };
+
+#endif // sendlist.h

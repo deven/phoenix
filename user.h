@@ -20,6 +20,10 @@
 //
 // $Log$
 
+// Check if previously included.
+#ifndef _USER_H
+#define _USER_H 1
+
 class User: public Object {
    static List<User> users;         // List of users in system.
 public:
@@ -42,3 +46,5 @@ public:
    char        *FindReserved(char *name, User *&user);
    void         AddSession  (Session *s)   { sessions.AddTail(s); }
 };
+
+#endif // user.h
