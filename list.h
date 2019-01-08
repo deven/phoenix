@@ -42,7 +42,8 @@ private:
 
    ListNode(Type *ptr): obj(ptr) { }
 
-   operator Type *() { return obj; }
+   operator Type *()  { return obj; }
+   operator boolean() { return obj != NULL; }
 };
 
 template <class Type>
@@ -59,6 +60,7 @@ public:
 
    int      Count()   { return count; }
    void     Reset()   { while (Dequeue()) ; }
+   operator boolean() { return count != 0; }
 
    boolean       In     (Type *ptr);
    int           AddHead(Type *ptr);
@@ -238,6 +240,7 @@ public:
 
    Type *operator ->() { return ptr ? (Type *) ptr->obj : (Type *) NULL; }
    operator Type *()   { return ptr ? (Type *) ptr->obj : (Type *) NULL; }
+   operator boolean()  { return ptr != NULL; }
    Type *operator --();
    Type *operator --(int) { return --(*this); }
    Type *operator ++();
