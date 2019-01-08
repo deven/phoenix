@@ -41,6 +41,8 @@ private:
    Pointer<Type>     obj;               // Object this node refers to.
 
    ListNode(Type *ptr): obj(ptr) { }
+
+   operator Type *() { return obj; }
 };
 
 template <class Type>
