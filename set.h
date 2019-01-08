@@ -82,12 +82,14 @@ public:
    SetIter(Set<Type> &s): iter(s.l)  { }
    SetIter(Set<Type> *s): iter(s->l) { }
 
-   SetIter &operator =(Set<Type> &s) { iter = s.l; return *this; }
+   SetIter &operator =(Set<Type> &s) { iter = s.l;  return *this; }
    SetIter &operator =(Set<Type> *s) { iter = s->l; return *this; }
    Type *operator ->()               { return iter; }
    operator Type *()                 { return iter; }
+   Type *operator --()               { return --iter; }
    Type *operator ++()               { return ++iter; }
-   Type *operator ++(int)            { return ++iter; }
+   Type *operator --(int)            { return iter--; }
+   Type *operator ++(int)            { return iter++; }
    void Remove()                     { iter.Remove(); }
 };
 

@@ -251,9 +251,9 @@ public:
    operator Type *()   { return ptr ? (Type *) ptr->obj : (Type *) NULL; }
    operator boolean()  { return ptr != NULL; }
    Type *operator --();
-   Type *operator --(int) { return --(*this); }
    Type *operator ++();
-   Type *operator ++(int) { return ++(*this); }
+   Type *operator --(int);
+   Type *operator ++(int);
 
    void Remove();
    int  InsertBefore(Type *obj);
@@ -263,15 +263,29 @@ public:
 template <class Type>
 Type *ListIter<Type>::operator --() {
    last = ptr;
-   ptr  = ptr ? ptr->prev : list->tail;
-   return *this;
+   ptr  = ptr ? (NodeType *) ptr->prev : (NodeType *) list->tail;
+   return ptr ? (Type *)     ptr->obj  : (Type *) NULL;
 }
 
 template <class Type>
 Type *ListIter<Type>::operator ++() {
    last = ptr;
-   ptr  = ptr ? ptr->next : list->head;
-   return *this;
+   ptr  = ptr ? (NodeType *) ptr->next : (NodeType *) list->head;
+   return ptr ? (Type *)     ptr->obj  : (Type *) NULL;
+}
+
+template <class Type>
+Type *ListIter<Type>::operator --(int) {
+   last = ptr;
+   ptr  = ptr  ? (NodeType *) ptr->prev : (NodeType *) list->tail;
+   return last ? (Type *)     last->obj : (Type *) NULL;
+}
+
+template <class Type>
+Type *ListIter<Type>::operator ++(int) {
+   last = ptr;
+   ptr  = ptr  ? (NodeType *) ptr->next : (NodeType *) list->head;
+   return last ? (Type *)     last->obj : (Type *) NULL;
 }
 
 template <class Type>
