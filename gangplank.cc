@@ -141,7 +141,7 @@ void OpenLog()                    // XXX class Log?
    setvbuf(logfile, NULL, _IOLBF, 0);
 #endif
    unlink("log");
-   link(~filename, "log");
+   symlink(~filename, "log");
    fprintf(stderr, "Logging on \"%s\".\n", ~filename);
 }
 
