@@ -24,6 +24,7 @@
 #ifndef _FUNCTIONS_H
 #define _FUNCTIONS_H 1
 
+// Declare strerror() if needed.
 #ifndef HAVE_STRERROR
 const char *strerror(int errno);
 #endif
@@ -34,6 +35,7 @@ typedef void (Session::*InputFuncPtr)(const char *line);
 // Callback function pointer type.
 typedef void (Telnet::*CallbackFuncPtr)();
 
+// Function prototypes.
 void  OpenLog     ();
 void  Log         (const char *format, ...);
 void  warn        (const char *format, ...);

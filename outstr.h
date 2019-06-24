@@ -34,6 +34,7 @@ private:
    OutputStreamObject *next;
    Pointer<OutputObj>  Output;
 
+   // constructor
    OutputStreamObject(OutputObj *out): Output(out) { next = NULL; }
 
    void output(Telnet *telnet);

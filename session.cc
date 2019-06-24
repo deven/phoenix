@@ -32,12 +32,13 @@ List<Session>    Session::sessions;
 List<Discussion> Session::discussions;
 Hash             Session::defaults;
 
+// Initialize default session-level system variables for all users.
 void Session::init_defaults()
 {
    defaults["time_format"] = "verbose";
 }
 
-Session::Session(Telnet *t)
+Session::Session(Telnet *t)     // constructor
 {
    if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
    telnet        = t;           // Save Telnet pointer.
@@ -54,7 +55,7 @@ Session::Session(Telnet *t)
    inits.AddTail(this);         // Add session to initializing list.
 }
 
-Session::~Session()
+Session::~Session()             // destructor
 {
    Close();
 }
@@ -83,7 +84,7 @@ void Session::Close(boolean drain) // Close session.
    user = NULL;
 }
 
-void Session::Transfer(Telnet *t) // Transfer session to connection.
+void Session::Transfer(Telnet *t) // Transfer session to telnet connection.
 {
    Pointer<Telnet> old(telnet);
    telnet          = t;
@@ -101,7 +102,7 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    EnqueueOutput();
 }
 
-void Session::Attach(Telnet *t) // Attach session to connection.
+void Session::Attach(Telnet *t) // Attach session to telnet connection.
 {
    telnet          = t;
    telnet->session = this;
@@ -113,7 +114,8 @@ void Session::Attach(Telnet *t) // Attach session to connection.
    EnqueueOutput();
 }
 
-void Session::Detach(Telnet *t, boolean intentional) // Detach session from t.
+// Detach session from specified telnet connection.
+void Session::Detach(Telnet *t, boolean intentional)
 {
    if (SignedOn && priv > 0) {
       if (telnet == t) {
@@ -132,7 +134,7 @@ void Session::Detach(Telnet *t, boolean intentional) // Detach session from t.
    }
 }
 
-void Session::SaveInputLine(const char *line)
+void Session::SaveInputLine(const char *line) // Save input line.
 {
    Line *p = new Line(line);
    if (lines) {
@@ -142,6 +144,7 @@ void Session::SaveInputLine(const char *line)
    }
 }
 
+// Set input function and prompt.
 void Session::SetInputFunction(InputFuncPtr input, const char *prompt)
 {
    Pointer<Line> l;
@@ -174,7 +177,7 @@ void Session::Input(const char *line) // Process an input line.
    }
 }
 
-void Session::print(const char *format, ...) // formatted write
+void Session::print(const char *format, ...) // Print formatted output.
 {
    String msg;
    va_list ap;
@@ -185,7 +188,7 @@ void Session::print(const char *format, ...) // formatted write
    output(~msg);
 }
 
-void Session::announce(const char *format, ...) // formatted output to all sessions
+void Session::announce(const char *format, ...) // Print to all sessions.
 {
    String msg;
    va_list ap;
@@ -207,7 +210,8 @@ void Session::announce(const char *format, ...) // formatted output to all sessi
    }
 }
 
-int match_name(const char *name, const char *sendlist) // returns position of match or 0.
+// Returns position of a match within a name or 0 if not found.
+int match_name(const char *name, const char *sendlist)
 {
    const char *start, *p, *q;
 
@@ -225,6 +229,7 @@ int match_name(const char *name, const char *sendlist) // returns position of ma
    return 0;
 }
 
+// Find sessions/discussions matching sendlist string.
 boolean Session::FindSendable(const char *sendlist, Session *&session,
                               Set<Session> &sessionmatches,
                               Discussion *&discussion,
@@ -295,6 +300,7 @@ boolean Session::FindSendable(const char *sendlist, Session *&session,
    return false;
 }
 
+// Find sessions matching sendlist string.
 Session *Session::FindSession(const char *sendlist, Set<Session> &matches)
 {
    Session        *session;
@@ -308,6 +314,7 @@ Session *Session::FindSession(const char *sendlist, Set<Session> &matches)
    return NULL;
 }
 
+// Find discussions matching sendlist string.
 Discussion *Session::FindDiscussion(const char *sendlist, Set<Discussion> &matches,
                                     boolean member)
 {
@@ -322,6 +329,7 @@ Discussion *Session::FindDiscussion(const char *sendlist, Set<Discussion> &match
    return NULL;
 }
 
+// Print a set of sessions.
 void Session::PrintSessions(Set<Session> &sessions)
 {
    SetIter<Session> session(sessions);
@@ -333,6 +341,7 @@ void Session::PrintSessions(Set<Session> &sessions)
    }
 }
 
+// Print a set of discussions.
 void Session::PrintDiscussions(Set<Discussion> &discussions)
 {
    SetIter<Discussion> discussion(discussions);
@@ -344,6 +353,7 @@ void Session::PrintDiscussions(Set<Discussion> &discussions)
    }
 }
 
+// Print sessions matching sendlist string.
 void Session::SessionMatches(const char *name, Set<Session> &matches)
 {
    String tmp = name;
@@ -363,6 +373,7 @@ void Session::SessionMatches(const char *name, Set<Session> &matches)
    }
 }
 
+// Print discussions matching sendlist string.
 void Session::DiscussionMatches(const char *name, Set<Discussion> &matches)
 {
    String tmp = name;
@@ -382,7 +393,7 @@ void Session::DiscussionMatches(const char *name, Set<Discussion> &matches)
    }
 }
 
-void Session::PrintReservedNames()
+void Session::PrintReservedNames()  // Print user's reserved names.
 {
    ListIter<StringObj> reserved(user->reserved);
 
@@ -409,7 +420,7 @@ void Session::PrintReservedNames()
    telnet->output(Newline);
 }
 
-void Session::Login(const char *line)
+void Session::Login(const char *line)  // Process login prompt response.
 {
    if (match(line, "/bye", 4)) {
       DoBye(line);
@@ -449,7 +460,7 @@ void Session::Login(const char *line)
    }
 }
 
-void Session::Password(const char *line)
+void Session::Password(const char *line) // Process password prompt response.
 {
    telnet->output(Newline);     // Send newline.
    telnet->DoEcho = true;       // Enable echoing.
@@ -473,6 +484,7 @@ void Session::Password(const char *line)
    SetInputFunction(&Session::EnteredName, "Enter name: "); // Name prompt.
 }
 
+// Check name availability.
 boolean Session::CheckNameAvailability(const char *name, boolean double_check,
                                        boolean transferring)
 {
@@ -537,7 +549,7 @@ boolean Session::CheckNameAvailability(const char *name, boolean double_check,
    return true;
 }
 
-void Session::EnteredName(const char *line)
+void Session::EnteredName(const char *line) // Process name prompt response.
 {
    trim(line);
    if (!*line) {                // blank line
@@ -556,6 +568,7 @@ void Session::EnteredName(const char *line)
    }
 }
 
+// Process transfer prompt response.
 void Session::TransferSession(const char *line)
 {
    if (!match(line, "yes", 1)) {
@@ -570,7 +583,7 @@ void Session::TransferSession(const char *line)
    }
 }
 
-void Session::EnteredBlurb(const char *line)
+void Session::EnteredBlurb(const char *line) // Process blurb prompt response.
 {
    if (!CheckNameAvailability(~name, true, false)) return;
    if (!line || !*line) line = user->blurb;
@@ -615,7 +628,7 @@ void Session::EnteredBlurb(const char *line)
    SetInputFunction(&Session::ProcessInput); // Set normal input routine.
 }
 
-void Session::ProcessInput(const char *line)
+void Session::ProcessInput(const char *line) // Process normal input.
 {
    // XXX Make ! normal for average users?  normal if not a valid command?
    if (*line == '!') {
@@ -737,8 +750,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
    if (format == 1) output(")");
 }
 
-// Reset and return idle time, maybe report.
-int Session::ResetIdle(int min)
+int Session::ResetIdle(int min)    // Reset/return idle time, maybe report.
 {
    Timestamp now;
    int       idle = (now - idle_since) / 60;
@@ -753,7 +765,7 @@ int Session::ResetIdle(int min)
    return idle;
 }
 
-void Session::SetIdle(const char *args) // Set idle time.
+void Session::SetIdle(const char *args)   // Set idle time.
 {
    Timestamp now;
    int       num, idle, days, hours, minutes;
@@ -877,7 +889,7 @@ void Session::DoRestart(const char *args) // Do !restart command.
    }
 }
 
-void Session::DoDown(const char *args) // Do !down command.
+void Session::DoDown(const char *args)    // Do !down command.
 {
    String who(name);
    who.append(" (");
@@ -918,7 +930,7 @@ void Session::DoDown(const char *args) // Do !down command.
    }
 }
 
-void Session::DoNuke(const char *args) // Do !nuke command.
+void Session::DoNuke(const char *args)    // Do !nuke command.
 {
    boolean drain;
    Session *session;
@@ -955,12 +967,12 @@ void Session::DoNuke(const char *args) // Do !nuke command.
    }
 }
 
-void Session::DoBye(const char *)     // Do /bye command.
+void Session::DoBye(const char *args)     // Do /bye command.
 {
    Close();                     // Close session.
 }
 
-void Session::DoSet(const char *args) // Do /set command.
+void Session::DoSet(const char *args)     // Do /set command.
 {
    const char *var;
 
@@ -1100,12 +1112,12 @@ void Session::DoDisplay(const char *args) // Do /display command.
    }
 }
 
-void Session::DoClear(const char *)   // Do /clear command.
+void Session::DoClear(const char *args)   // Do /clear command.
 {
    output("\033[H\033[J");      // XXX ANSI!
 }
 
-void Session::DoDetach(const char *)  // Do /detach command.
+void Session::DoDetach(const char *args)  // Do /detach command.
 {
    if (priv > 0) {
       ResetIdle();
@@ -1118,7 +1130,7 @@ void Session::DoDetach(const char *)  // Do /detach command.
    }
 }
 
-void Session::DoHowMany(const char *) // Do /howmany command.
+void Session::DoHowMany(const char *args) // Do /howmany command.
 {
    int here = 0, away = 0, busy = 0, gone = 0, attached = 0, detached = 0,
       total = 0;
@@ -1158,6 +1170,7 @@ void Session::DoHowMany(const char *) // Do /howmany command.
    print("\nDiscussions in use: %d\n\n", discussions.Count());
 }
 
+// Output an item from a list.
 void Session::ListItem(boolean &flag, String &last, const char *str)
 {
    if (flag) {
@@ -1172,6 +1185,7 @@ void Session::ListItem(boolean &flag, String &last, const char *str)
    }
 }
 
+// Get sessions for /who arguments.
 boolean Session::GetWhoSet(const char *args, Set<Session> &who, String &errors,
                            String &msg)
 {
@@ -1297,7 +1311,7 @@ boolean Session::GetWhoSet(const char *args, Set<Session> &who, String &errors,
    return false;
 }
 
-void Session::DoWho(const char *args) // Do /who command.
+void Session::DoWho(const char *args)     // Do /who command.
 {
    Set<Session> who;
    String       errors, msg, tmp;
@@ -1392,7 +1406,7 @@ void Session::DoWho(const char *args) // Do /who command.
    }
 }
 
-void Session::DoWhy(const char *args) // Do /why command.
+void Session::DoWhy(const char *args)     // Do /why command.
 {
    Set<Session> who;
    String       errors, msg, tmp;
@@ -1489,7 +1503,7 @@ void Session::DoWhy(const char *args) // Do /why command.
    }
 }
 
-void Session::DoIdle(const char *args) // Do /idle command.
+void Session::DoIdle(const char *args)    // Do /idle command.
 {
    Set<Session> who;
    String       errors, msg, tmp;
@@ -1553,7 +1567,7 @@ void Session::DoIdle(const char *args) // Do /idle command.
    }
 }
 
-void Session::DoWhat(const char *args) // Do /what command.
+void Session::DoWhat(const char *args)    // Do /what command.
 {
    Pointer<Sendlist> sendlist(new Sendlist(*this, args, true, false, true));
    String            tmp;
@@ -1630,14 +1644,14 @@ void Session::DoWhat(const char *args) // Do /what command.
    }
 }
 
-void Session::DoDate(const char *)    // Do /date command.
+void Session::DoDate(const char *args)    // Do /date command.
 {
    Timestamp t;
 
    print("%s\n", t.date());     // Print current date and time.
 }
 
-void Session::DoSignal(const char *args) // Do /signal command.
+void Session::DoSignal(const char *args)  // Do /signal command.
 {
    if (match(args, "on", 2)) {
       SignalPublic = SignalPrivate = true;
@@ -1685,7 +1699,7 @@ void Session::DoSignal(const char *args) // Do /signal command.
    }
 }
 
-void Session::DoSend(const char *args) // Do /send command.
+void Session::DoSend(const char *args)    // Do /send command.
 {
    Pointer<Sendlist> sendlist;
    String slist;
@@ -1788,7 +1802,7 @@ void Session::DoBlurb(const char *start, boolean entry)
    }
 }
 
-void Session::DoHere(const char *args) // Do /here command.
+void Session::DoHere(const char *args)    // Do /here command.
 {
    ResetIdle();
    while (*args == Space) args++;
@@ -1798,7 +1812,7 @@ void Session::DoHere(const char *args) // Do /here command.
    EnqueueOthers(new HereNotify(name_obj));
 }
 
-void Session::DoAway(const char *args) // Do /away command.
+void Session::DoAway(const char *args)    // Do /away command.
 {
    ResetIdle();
    while (*args == Space) args++;
@@ -1808,7 +1822,7 @@ void Session::DoAway(const char *args) // Do /away command.
    EnqueueOthers(new AwayNotify(name_obj));
 }
 
-void Session::DoBusy(const char *args) // Do /busy command.
+void Session::DoBusy(const char *args)    // Do /busy command.
 {
    ResetIdle();
    while (*args == Space) args++;
@@ -1818,7 +1832,7 @@ void Session::DoBusy(const char *args) // Do /busy command.
    EnqueueOthers(new BusyNotify(name_obj));
 }
 
-void Session::DoGone(const char *args) // Do /gone command.
+void Session::DoGone(const char *args)    // Do /gone command.
 {
    ResetIdle();
    while (*args == Space) args++;
@@ -1828,12 +1842,12 @@ void Session::DoGone(const char *args) // Do /gone command.
    EnqueueOthers(new GoneNotify(name_obj));
 }
 
-void Session::DoUnidle(const char *)  // Do /unidle idle time reset.
+void Session::DoUnidle(const char *args)  // Do /unidle idle time reset.
 {
    if (!ResetIdle(1)) output("Your idle time has been reset.\n");
 }
 
-void Session::DoCreate(const char *args) // Do /create command.
+void Session::DoCreate(const char *args)  // Do /create command.
 {
    Session        *session;
    Discussion     *discussion;
@@ -1907,7 +1921,7 @@ void Session::DoDestroy(const char *args) // Do /destroy command.
    }
 }
 
-void Session::DoJoin(const char *args) // Do /join command.
+void Session::DoJoin(const char *args)    // Do /join command.
 {
    if (!*args) {
       output("Usage: /join <disc>[,<disc>...]\n");
@@ -1924,7 +1938,7 @@ void Session::DoJoin(const char *args) // Do /join command.
    }
 }
 
-void Session::DoQuit(const char *args) // Do /quit command.
+void Session::DoQuit(const char *args)    // Do /quit command.
 {
    if (!*args) {
       output("Usage: /quit <disc>[,<disc>...]\n");
@@ -1945,7 +1959,7 @@ void Session::DoQuit(const char *args) // Do /quit command.
    }
 }
 
-void Session::DoPermit(const char *args) // Do /permit command.
+void Session::DoPermit(const char *args)  // Do /permit command.
 {
    const char *name = getword(args);
    if (!*args) {
@@ -2029,7 +2043,7 @@ void Session::DoUnappoint(const char *args) // Do /unappoint command.
    }
 }
 
-void Session::DoRename(const char *args) // Do /rename command.
+void Session::DoRename(const char *args)  // Do /rename command.
 {
    Session        *session;
    Discussion     *discussion;
@@ -2069,7 +2083,7 @@ void Session::DoRename(const char *args) // Do /rename command.
    name_obj = new Name(this, name, blurb);
 }
 
-void Session::DoAlso(const char *args) // Do /also command.
+void Session::DoAlso(const char *args)    // Do /also command.
 {
    Pointer<Sendlist> sendlist;
 
@@ -2088,7 +2102,7 @@ void Session::DoAlso(const char *args) // Do /also command.
    SendMessage(sendlist, last_message->text);
 }
 
-void Session::DoOops(const char *args) // Do /oops command.
+void Session::DoOops(const char *args)    // Do /oops command.
 {
    if (!*args) {
       output("Usage: /oops <sendlist> OR /oops text [<message>]\n");
@@ -2116,7 +2130,7 @@ void Session::DoOops(const char *args) // Do /oops command.
    }
 }
 
-void Session::DoHelp(const char *args) // Do /help command.
+void Session::DoHelp(const char *args)    // Do /help command.
 {
    if (match(args, "/who", 2) || match(args, "who", 3) ||
        match(args, "/idle", 2) || match(args, "idle", 4)) {
@@ -2442,11 +2456,12 @@ Type \"/help <command>\" for more information about a particular command.\n");
    }
 }
 
-void Session::DoReset()         // Do <space><return> idle time reset.
+void Session::DoReset()                   // Do <space><return> idle reset.
 {
    ResetIdle(1);
 }
 
+// Find the start of message text following possible explicit sendlist.
 const char *message_start(const char *line, String &sendlist,
    String &last_explicit_sendlist, boolean &is_explicit)
 {
@@ -2667,7 +2682,8 @@ void Session::SendMessage(Sendlist *sendlist, const char *msg)
    while (session++) session->Enqueue((Message *) last_message);
 }
 
-void Session::CheckShutdown()   // Exit if shutting down and no users are left.
+// Exit if shutting down and no users are left.
+static void Session::CheckShutdown()
 {
    ShutdownEvent *shutdown;
    RestartEvent  *restart;
