@@ -34,14 +34,15 @@
 #include "gangplank.h"
 #include "object.h"
 
+// Single input lines waiting to be processed.
 class Line: public Object {
 public:
    String line;                 // input line
    Pointer<Line> next;          // next input line
 
-   Line(char *p): line(p) {     // constructor
-      next = 0;
-   }
+   // constructors
+   Line(      char *p): line(p) { next = NULL; }
+   Line(const char *p): line(p) { next = NULL; }
 
    void Append(Line *p) {       // Add new line at end of list.
       if (next) {
