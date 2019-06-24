@@ -2539,22 +2539,17 @@ const char *message_start(const char *line, String &sendlist,
 
    // Attempt to detect smileys that shouldn't be sendlists...
    if (!isalpha(*line) && !isspace(*line)) {
-      // Truncate line at first whitespace for a moment.
-      for (p = line; *p; p++) if (isspace(*p)) break;
-      i  = *p;
-      *p = 0;
+      /* Only compare initial non-whitespace characters. */
+      for (i = 0; i < len; i++) if (isspace(line[i])) break;
 
       // Just special-case a few smileys...
-      if (!strcmp(line, ":-)") || !strcmp(line, ":-(") ||
-          !strcmp(line, ":-P") || !strcmp(line, ";-)") ||
-          !strcmp(line, ":_)") || !strcmp(line, ":_(") ||
-          !strcmp(line, ":)")  || !strcmp(line, ":(")  ||
-          !strcmp(line, ":P")  || !strcmp(line, ";)")) {
-         *p       = i;
+      if (!strncmp(line, ":-)", i) || !strncmp(line, ":-(", i) ||
+          !strncmp(line, ":-P", i) || !strncmp(line, ";-)", i) ||
+          !strncmp(line, ":_)", i) || !strncmp(line, ":_(", i) ||
+          !strncmp(line, ":)",  i) || !strncmp(line, ":(",  i) ||
+          !strncmp(line, ":P",  i) || !strncmp(line, ";)",  i)) {
          sendlist = "default";
          return line;
-      } else {
-         *p = i;
       }
    }
 
