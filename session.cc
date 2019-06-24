@@ -125,7 +125,7 @@ void Session::init_defaults()
    defaults["time_format"] = "verbose";
 }
 
-void Session::Close(boolean drain) // Close session.
+void Session::Close(boolean drain = true) // Close session.
 {
    inits.Remove(this);
    sessions.Remove(this);
@@ -299,8 +299,9 @@ boolean Session::FindSendable(const char *sendlist, Session *&session,
                               Set<Session> &sessionmatches,
                               Discussion *&discussion,
                               Set<Discussion> &discussionmatches,
-                              boolean member, boolean exact,
-                              boolean do_sessions, boolean do_discussions)
+                              boolean member = false, boolean exact = false,
+                              boolean do_sessions = true,
+                              boolean do_discussions = true)
 {
    int                  pos, count     = 0;
    Session             *sessionlead    = NULL;
@@ -380,8 +381,9 @@ Session *Session::FindSession(const char *sendlist, Set<Session> &matches)
 }
 
 // Find discussions matching sendlist string.
-Discussion *Session::FindDiscussion(const char *sendlist, Set<Discussion> &matches,
-                                    boolean member)
+Discussion *Session::FindDiscussion(const char *sendlist,
+                                    Set<Discussion> &matches,
+                                    boolean member = false)
 {
    Session     *session;
    Discussion  *discussion;
@@ -815,7 +817,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
    if (format == 1) output(")");
 }
 
-int Session::ResetIdle(int min)    // Reset/return idle time, maybe report.
+int Session::ResetIdle(int min = 10)    // Reset/return idle time, maybe report.
 {
    Timestamp now;
    int       idle = (now - idle_since) / 60;
@@ -1838,7 +1840,7 @@ void Session::DoSend(const char *args)    // Do /send command.
 }
 
 // Do /blurb command (or blurb set on entry).
-void Session::DoBlurb(const char *start, boolean entry)
+void Session::DoBlurb(const char *start, boolean entry = false);
 {
    while (*start && isspace(*start)) start++;
    if (*start) {
