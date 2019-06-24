@@ -81,7 +81,7 @@ Listen::Listen(int port)           // Listen on a port.
    // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));
    saddr.sin_family      = AF_INET;
-   saddr.sin_addr.s_addr = INADDR_ANY;
+   saddr.sin_addr.s_addr = htonl(INADDR_ANY);
    saddr.sin_port        = htons((u_short) port);
    if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
       error("Listen::Listen(): socket()");
