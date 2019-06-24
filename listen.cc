@@ -119,8 +119,3 @@ void Listen::Closed()           // Connection is closed.
    NoWriteSelect();
    fd = -1;                     // Connection is closed.
 }
-
-void Listen::InputReady()
-{
-   if (fd != -1) fdtable.OpenTelnet(fd); // Accept pending telnet connection.
-}
