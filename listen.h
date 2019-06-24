@@ -37,9 +37,13 @@ public:
    Listen(int port);                  // constructor
    ~Listen();                         // destructor
 
-   void InputReady();
-   void OutputReady() { abort(); }
-   void Closed();
+   void InputReady() {                // Input ready on file descriptor fd.
+      if (fd != -1) fdtable.OpenTelnet(fd); // Accept pending telnet connection.
+   }
+   void OutputReady() {               // Output ready on file descriptor fd.
+      error("Listen::OutputReady(fd = %d): invalid operation!", fd);
+   }
+   void Closed();                     // Connection is closed.
 };
 
 #endif // listen.h
