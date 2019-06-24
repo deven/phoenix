@@ -192,13 +192,6 @@ public:
    void EnteredBlurb   (const char *line);  // Process blurb prompt response.
    void ProcessInput   (const char *line);  // Process normal input.
 
-   // Output an item from a list.
-   void ListItem(boolean &flag, String &last, const char *str);
-
-   // Get sessions for /who arguments.
-   boolean GetWhoSet(const char *args, Set<Session> &who, String &errors,
-                     String &msg);
-
    void NotifyEntry  ();                // Notify other users of entry and log.
    void NotifyExit   ();                // Notify other users of exit and log.
    void PrintTimeLong(int minutes);     // Print time value, long format.
@@ -215,12 +208,21 @@ public:
    void DoClear      (const char *args);      // Do /clear command.
    void DoDetach     (const char *args);      // Do /detach command.
    void DoHowMany    (const char *args);      // Do /howmany command.
+
+   // Output an item from a list.
+   void ListItem(boolean &flag, String &last, const char *str);
+
+   // Get sessions for /who arguments.
+   boolean GetWhoSet(const char *args, Set<Session> &who, String &errors,
+                     String &msg);
+
    void DoWho        (const char *args);      // Do /who command.
+   void DoWhy        (const char *args);      // Do /why command.
    void DoIdle       (const char *args);      // Do /idle command.
+   void DoWhat       (const char *args);      // Do /what command.
    void DoDate       (const char *args);      // Do /date command.
    void DoSignal     (const char *args);      // Do /signal command.
    void DoSend       (const char *args);      // Do /send command.
-   void DoWhy        (const char *args);      // Do /why command.
 
    // Do /blurb command (or blurb set on entry).
    void DoBlurb(const char *start, boolean entry = false);
@@ -229,13 +231,11 @@ public:
    void DoAway       (const char *args);      // Do /away command.
    void DoBusy       (const char *args);      // Do /busy command.
    void DoGone       (const char *args);      // Do /gone command.
-   void DoHelp       (const char *args);      // Do /help command.
    void DoUnidle     (const char *args);      // Do /unidle idle time reset.
    void DoCreate     (const char *args);      // Do /create command.
    void DoDestroy    (const char *args);      // Do /destroy command.
    void DoJoin       (const char *args);      // Do /join command.
    void DoQuit       (const char *args);      // Do /quit command.
-   void DoWhat       (const char *args);      // Do /what command.
    void DoPermit     (const char *args);      // Do /permit command.
    void DoDepermit   (const char *args);      // Do /depermit command.
    void DoAppoint    (const char *args);      // Do /appoint command.
@@ -243,6 +243,7 @@ public:
    void DoRename     (const char *args);      // Do /rename command.
    void DoAlso       (const char *args);      // Do /also command.
    void DoOops       (const char *args);      // Do /oops command.
+   void DoHelp       (const char *args);      // Do /help command.
    void DoReset      ();                      // Do <space><return> idle reset.
    void DoMessage    (const char *line);      // Do message send.
 
