@@ -53,7 +53,7 @@ public:
 };
 
 class ShutdownEvent: public Event {
-private:
+protected:
    boolean final;
 public:
    static const int FinalWarningTime = 3;
@@ -73,7 +73,7 @@ public:
 };
 
 class RestartEvent: public Event {
-private:
+protected:
    boolean final;
 public:
    static const int FinalWarningTime = 3;
@@ -93,7 +93,7 @@ public:
 };
 
 class LoginTimeoutEvent: public Event {
-private:
+protected:
    Pointer<Telnet> telnet;
 public:
    LoginTimeoutEvent(Telnet *t, time_t when):
