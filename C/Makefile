@@ -17,6 +17,7 @@
 CC = gcc -Wall -Werror
 CFLAGS = -g
 LDFLAGS =
+LIBS = -lcrypt
 
 # ESIX:
 #CFLAGS = -DUSE_SIGIGNORE -DNO_BOOLEAN
@@ -39,10 +40,10 @@ OBJS2 = $(SRCS2:.c=.o)
 all: $(EXEC) $(EXEC2)
 
 $(EXEC): $(OBJS)
-	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 
 $(EXEC2): $(OBJS2)
-	$(CC) $(LDFLAGS) -o $(EXEC2) $(OBJS2)
+	$(CC) $(LDFLAGS) -o $(EXEC2) $(OBJS2) $(LIBS)
 
 $(OBJS): $(HDRS)
 
