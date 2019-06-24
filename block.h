@@ -33,6 +33,7 @@
 #ifndef _BLOCK_H
 #define _BLOCK_H 1
 
+// Block in a data buffer.
 class Block {
 public:
    static const int BlockSize = 4096; // data size for block
@@ -41,7 +42,7 @@ public:
    char       *free;                  // start of free area
    char        block[BlockSize];      // actual data block
 
-   Block() {                          // block constructor
+   Block() {                          // constructor
       next = NULL;
       data = free = block;
    }

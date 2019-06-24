@@ -53,11 +53,11 @@
 #include "telnet.h"
 #include "user.h"
 
-FDTable FD::fdtable;            // File descriptor table.
-fd_set  FDTable::readfds;       // read fdset for select()
-fd_set  FDTable::writefds;      // write fdset for select()
+FDTable FD::fdtable;                // File descriptor table.
+fd_set  FDTable::readfds;           // read fdset for select()
+fd_set  FDTable::writefds;          // write fdset for select()
 
-FDTable::FDTable()              // constructor
+FDTable::FDTable()                  // constructor
 {
    FD_ZERO(&readfds);
    FD_ZERO(&writefds);
@@ -68,12 +68,12 @@ FDTable::FDTable()              // constructor
    for (int i = 0; i < size; i++) array[i] = NULL;
 }
 
-FDTable::~FDTable()             // destructor
+FDTable::~FDTable()                 // destructor
 {
    delete [] array;
 }
 
-void FDTable::OpenListen(int port)   // Open a listening port.
+void FDTable::OpenListen(int port)  // Open a listening port.
 {
    Pointer<Listen> l(new Listen(port));
    if (l->fd == -1) return;
@@ -90,12 +90,12 @@ void FDTable::OpenTelnet(int lfd)   // Open a telnet connection.
    array[t->fd] = t;
 }
 
-Pointer<FD> FDTable::Closed(int fd)   // Close fd, return pointer to FD object.
+Pointer<FD> FDTable::Closed(int fd) // Close fd, return pointer to FD object.
 {
    if (fd < 0 || fd >= used) return Pointer<FD>(NULL);
    Pointer<FD> FD(array[fd]);
    array[fd] = NULL;
-   if (fd == used - 1) {              // Fix highest used index if necessary.
+   if (fd == used - 1) {            // Fix highest used index if necessary.
       while (used > 0) {
          if (array[--used]) {
             used++;
@@ -106,13 +106,13 @@ Pointer<FD> FDTable::Closed(int fd)   // Close fd, return pointer to FD object.
    return FD;
 }
 
-void FDTable::Close(int fd)     // Close fd, deleting FD object.
+void FDTable::Close(int fd)         // Close fd, deleting FD object.
 {
    Pointer<FD> FD(Closed(fd));
    if (FD) FD->Closed();
 }
 
-void FDTable::CloseAll()        // Close all fds.
+void FDTable::CloseAll()            // Close all fds.
 {
    for (int i = 0; i < used; i++) Close(i);
    used = 0;
@@ -121,9 +121,11 @@ void FDTable::CloseAll()        // Close all fds.
 // Select across all ready connections, with specified timeout.
 void FDTable::Select(struct timeval *timeout)
 {
-   fd_set rfds  = readfds;
-   fd_set wfds  = writefds;
-   int    found = select(used, &rfds, &wfds, 0, timeout);
+   fd_set rfds  = readfds;              // copy of readfds to pass to select()
+   fd_set wfds  = writefds;             // copy of writefds to pass to select()
+   int    found;                        // number of file descriptors found
+
+   found = select(used, &rfds, &wfds, 0, timeout);
 
    if (found == -1) {
       if (errno == EINTR) return;

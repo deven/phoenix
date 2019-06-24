@@ -78,6 +78,10 @@ enum TelnetOption {
    TelnetNAWS            = 31
 };
 
+// Telnet options are stored in a single byte each, with bit 0 representing
+// WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
+// is only enabled when both bits are set.
+
 // Telnet option bits.
 static const int TelnetWillWont = 1;
 static const int TelnetDoDont   = 2;
@@ -94,11 +98,8 @@ enum TelnetSubnegotiationState {
    TelnetSB_Unknown
 };
 
-// Telnet options are stored in a single byte each, with bit 0 representing
-// WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
-// is only enabled when both bits are set.
-
-class Telnet: public FD {         // Data about a particular telnet connection.
+// Data about a particular telnet connection (subclass of FD).
+class Telnet: public FD {
 protected:
    static int count;              // Count of telnet connections. (global)
 
@@ -116,7 +117,7 @@ public:
    int              height;        // current screen height
    int              NAWS_width;    // NAWS negotiated screen width
    int              NAWS_height;   // NAWS negotiated screen height
-   Pointer<Session> session;       // back-pointer to session structure
+   Pointer<Session> session;       // link to session object
    Pointer<Event>   LoginTimeout;  // login timeout event
    char            *data;          // start of input data
    char            *free;          // start of free area of allocated block
@@ -139,12 +140,12 @@ public:
    boolean          CloseOnEOF;    // close connection on EOF?
    boolean          acknowledge;   // use telnet TIMING-MARK option?
    boolean          DoEcho;        // should server be echoing?
-   char             Echo;          // telnet ECHO option (local)
-   char             LSGA;          // telnet SUPPRESS-GO-AHEAD option (local)
-   char             RSGA;          // telnet SUPPRESS-GO-AHEAD option (remote)
-   char             LBin;          // telnet TRANSMIT-BINARY option (local)
-   char             RBin;          // telnet TRANSMIT-BINARY option (remote)
-   char             NAWS;          // telnet NAWS option (remote)
+   char             Echo;          // ECHO option (local)
+   char             LSGA;          // SUPPRESS-GO-AHEAD option (local)
+   char             RSGA;          // SUPPRESS-GO-AHEAD option (remote)
+   char             LBin;          // TRANSMIT-BINARY option (local)
+   char             RBin;          // TRANSMIT-BINARY option (remote)
+   char             NAWS;          // NAWS option (remote)
    CallbackFuncPtr  Echo_callback; // ECHO callback (local)
    CallbackFuncPtr  LSGA_callback; // SUPPRESS-GO-AHEAD callback (local)
    CallbackFuncPtr  RSGA_callback; // SUPPRESS-GO-AHEAD callback (remote)
@@ -157,82 +158,81 @@ public:
    ~Telnet();                      // destructor
 
    static int Count() { return count; }
-   void Closed();
+   void Closed();                  // Connection is closed.
    void ResetLoginTimeout();
    void LoginSequenceFinished();
-   void Prompt(const char *p);
-   boolean GetEcho    ()             { return Echo == TelnetEnabled; }
-   void SetEcho       (boolean flag) { Echo = flag ? TelnetEnabled : 0; }
-   boolean AtStart    ()             { return boolean(point == data); }
-   boolean AtEnd      ()             { return boolean(point == free); }
-   int     Start      ()             { return prompt.length(); }
-   int     StartLine  ()             { return Start() / width; }
-   int     StartColumn()             { return Start() % width; }
-   int     Point      ()             { return point - data; }
-   int     PointLine  ()             { return (Start() + Point()) / width; }
-   int     PointColumn()             { return (Start() + Point()) % width; }
-   int     Mark       ()             { return mark - data; }
-   int     MarkLine   ()             { return (Start() + Mark()) / width; }
-   int     MarkColumn ()             { return (Start() + Mark()) % width; }
-   int     End        ()             { return free - data; }
-   int     EndLine    ()             { return (Start() + End()) / width; }
-   int     EndColumn  ()             { return (Start() + End()) % width; }
-   void Close         (boolean drain = true);
-   void output        (int byte);
-   void output        (const char *buf);
-   void output        (const char *buf, int len);
-   void print         (const char *format, ...);
-   void echo          (int byte);
-   void echo          (const char *buf);
-   void echo          (const char *buf, int len);
-   void echo_print    (const char *format, ...);
-   void command       (const char *buf);      // queue command data
-   void command       (const char *buf, int len); // queue command data (w/length)
-   void command       (int byte);             // Queue command byte.
-   void command       (int byte1, int byte2); // Queue 2 command bytes.
-   void command       (int byte1, int byte2,  // Queue 3 command bytes.
-                       int byte3);
-   void TimingMark    ();
-   void PrintMessage  (OutputType type, Timestamp time,
-                       Name *from, Sendlist *to, const char *start);
-   void Welcome       ();
-   void UndrawInput   ();          // Erase input line from screen.
-   void RedrawInput   ();          // Redraw input line on screen.
-   int  SetWidth      (int n);     // Set terminal width.
-   int  SetHeight     (int n);     // Set terminal height.
-   void set_Echo      (CallbackFuncPtr callback, int state);
-   void set_LSGA      (CallbackFuncPtr callback, int state);
-   void set_RSGA      (CallbackFuncPtr callback, int state);
-   void set_LBin      (CallbackFuncPtr callback, int state);
-   void set_RBin      (CallbackFuncPtr callback, int state);
-   void set_NAWS      (CallbackFuncPtr callback, int state);
-   void InsertString  (String &s); // Insert string at point.
+   void Prompt(const char *p);     // Print and set new prompt.
+   boolean GetEcho()          { return Echo == TelnetEnabled; }
+   void SetEcho(boolean flag) { Echo = flag ? TelnetEnabled : 0; }
+   boolean AtStart() { return boolean(point == data); } // at start of input?
+   boolean AtEnd()   { return boolean(point == free); } // at end of input?
+   int Start()       { return prompt.length(); }        // start (after prompt)
+   int StartLine()   { return Start() / width; }        // start line
+   int StartColumn() { return Start() % width; }        // start column
+   int Point()       { return point - data; }           // cursor position
+   int PointLine()   { return (Start() + Point()) / width; } // point line
+   int PointColumn() { return (Start() + Point()) % width; } // point column
+   int Mark()        { return mark - data; }                 // saved position
+   int MarkLine()    { return (Start() + Mark()) / width; }  // mark line
+   int MarkColumn()  { return (Start() + Mark()) % width; }  // mark column
+   int End()         { return free - data; }                 // end of input
+   int EndLine()     { return (Start() + End()) / width; }   // end line
+   int EndColumn()   { return (Start() + End()) % width; }   // end column
+   void Close     (boolean drain = true);       // Close telnet connection.
+   void output    (int byte);                   // queue output byte
+   void output    (const char *buf);            // queue output data
+   void output    (const char *buf, int len);   // queue output (w/length)
+   void print     (const char *format, ...);    // formatted write
+   void echo      (int byte);                   // echo output byte
+   void echo      (const char *buf);            // echo output data
+   void echo      (const char *buf, int len);   // echo output data (w/length)
+   void echo_print(const char *format, ...);    // formatted echo
+   void command   (const char *buf);            // queue command data
+   void command   (const char *buf, int len);   // queue command data (w/length)
+   void command   (int byte);                        // Queue command byte.
+   void command   (int byte1, int byte2);            // Queue 2 command bytes.
+   void command   (int byte1, int byte2, int byte3); // Queue 3 command bytes.
+   void TimingMark();              // Queue TIMING-MARK telnet option.
+   void PrintMessage(OutputType type, Timestamp time, // Print user message.
+                     Name *from, Sendlist *to, const char *start);
+   void Welcome();                 // Send welcome banner and login prompt.
+   void UndrawInput();             // Erase input line from screen.
+   void RedrawInput();             // Redraw input line on screen.
+   int  SetWidth (int n);          // Set terminal width.
+   int  SetHeight(int n);          // Set terminal height.
+   void set_Echo(CallbackFuncPtr callback, int state); // Local ECHO option.
+   void set_LSGA(CallbackFuncPtr callback, int state); // Local SGA option.
+   void set_RSGA(CallbackFuncPtr callback, int state); // Remote SGA option.
+   void set_LBin(CallbackFuncPtr callback, int state); // Local binary option.
+   void set_RBin(CallbackFuncPtr callback, int state); // Remote binary option.
+   void set_NAWS(CallbackFuncPtr callback, int state); // Remote NAWS option.
+   void InsertString(String &s);   // Insert string at point.
    void beginning_of_line();       // Jump to beginning of line.
-   void end_of_line   ();          // Jump to end of line.
-   void kill_line     ();          // Kill from point to end of line.
-   void erase_line    ();          // Erase input line.
-   void previous_line ();          // Jump to previous line.
-   void next_line     ();          // Jump to next line.
-   void yank          ();          // Yank from kill-ring.
-   void do_semicolon  ();          // Do semicolon processing.
-   void do_colon      ();          // Do colon processing.
-   void accept_input  ();          // Accept input line.
-   void insert_char   (int ch);    // Insert character at point.
-   void forward_char  ();          // Move point forward one character.
-   void backward_char ();          // Move point backward one character.
-   void erase_char    ();          // Erase input character before point.
-   void delete_char   ();          // Delete character at point.
+   void end_of_line();             // Jump to end of line.
+   void kill_line();               // Kill from point to end of line.
+   void erase_line();              // Erase input line.
+   void previous_line();           // Jump to previous line.
+   void next_line();               // Jump to next line.
+   void yank();                    // Yank from kill-ring.
+   void do_semicolon();            // Do semicolon processing.
+   void do_colon();                // Do colon processing.
+   void accept_input();            // Accept input line.
+   void insert_char(int ch);       // Insert character at point.
+   void forward_char();            // Move point forward one character.
+   void backward_char();           // Move point backward one character.
+   void erase_char();              // Erase input character before point.
+   void delete_char();             // Delete character at point.
    void transpose_chars();         // Transpose characters at point.
-   void forward_word  ();          // Move point forward one word.
-   void backward_word ();          // Move point backward one word.
-   void erase_word    ();          // Erase word before point.
-   void delete_word   ();          // Delete word at point.
-   void upcase_word   ();          // Upcase word at point.
-   void downcase_word ();          // Downcase word at point.
+   void forward_word();            // Move point forward one word.
+   void backward_word();           // Move point backward one word.
+   void erase_word();              // Erase word before point.
+   void delete_word();             // Delete word at point.
+   void upcase_word();             // Upcase word at point.
+   void downcase_word();           // Downcase word at point.
    void capitalize_word();         // Capitalize word at point.
    void transpose_words();         // Transpose words at point.
-   void InputReady    ();
-   void OutputReady   ();
+   void InputReady();              // Telnet stream can input data.
+   void OutputReady();             // Telnet stream can output data.
 };
 
 #endif // telnet.h

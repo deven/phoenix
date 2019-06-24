@@ -40,18 +40,19 @@
 #include "gangplank.h"
 #include "object.h"
 
+// Data about a particular user.
 class User: public Object {
    static List<User> users;         // List of users in system.
 public:
    static const int BufSize = 1024; // size of password input buffer
    List<Session>    sessions;       // sessions for this user
    String           user;           // account name
-   String           password;       // password for this account (during login)
+   String           password;       // password for this account
    List<StringObj>  reserved;       // reserved user names (pseudos)
    String           blurb;          // default blurb
    int              priv;           // privilege level
 
-   User(char *login, char *pass, char *names, char *bl, int p);
+   User(char *login, char *pass, char *names, char *bl, int p); // constructor
    ~User()                                 { users.Remove(this); }
 
    void         SetReserved (char *names);

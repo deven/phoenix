@@ -35,13 +35,13 @@
 #include "object.h"
 
 // File descriptor table.
-class FDTable {                        // File Descriptor Table
+class FDTable {
 protected:
    static fd_set readfds;              // read fdset for select()
    static fd_set writefds;             // write fdset for select()
-   Pointer<FD>  *array;
-   int size;
-   int used;
+   Pointer<FD>  *array;                // dynamic array of file descriptors
+   int size;                           // size of file descriptor table
+   int used;                           // number of file descriptors used
 public:
    FDTable();                          // constructor
    ~FDTable();                         // destructor

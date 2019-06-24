@@ -94,16 +94,16 @@ char *strerror(int n)
 }
 #endif
 
+// Global variables.
 EventQueue     events;            // Server event queue.
-
 Pointer<Event> Shutdown;          // Pointer to Shutdown event, if any.
-
-// XXX have to use non-blocking code instead?
-FILE          *logfile = NULL;    // XXX log file
-
+FILE          *logfile = NULL;    // log file
 Timestamp      ServerStartTime;   // time server started
 int            ServerStartUptime; // system uptime when server started
 
+// XXX Should logfile use non-blocking code instead?
+
+// Required C++ operator definitions.
 void *operator new(size_t s)      // Provide a basic new operator.
 {
    return malloc(s);
@@ -124,7 +124,8 @@ void operator delete[](void *p)   // Provide a basic delete[] operator.
    free(p);
 }
 
-void OpenLog()                    // XXX class Log?
+// XXX class Log?
+void OpenLog()                    // Open log file.
 {
    String     filename;
    Timestamp  t;

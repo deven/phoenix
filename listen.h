@@ -38,6 +38,7 @@
 #include "fdtable.h"
 #include "gangplank.h"
 
+// Listening socket (subclass of FD).
 class Listen: public FD {
 public:
    static boolean PortBusy(int port); // Check if a listening port is busy.

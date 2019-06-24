@@ -54,6 +54,7 @@
 
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
+// Data about a particular session.
 class Session: public Object {
 protected:
    static List<Session>    inits;       // List of sessions initializing.
@@ -92,85 +93,117 @@ public:
    String            oops_text;        // /oops message text
    Pointer<Message>  last_message;     // last message sent
 
-   Session(Telnet *t);
-   ~Session();
+   Session(Telnet *t);                 // constructor
+   ~Session();                         // destructor
 
+   // Initialize default session-level system variables for all users.
    void init_defaults();
-   void Close            (boolean drain = true);
-   void Transfer         (Telnet *t);
-   void Attach           (Telnet *t);
-   void Detach           (Telnet *t, boolean intentional);
-   void SaveInputLine    (const char *line);
-   void SetInputFunction (InputFuncPtr input, const char *prompt = NULL);
-   void InitInputFunction();
-   void Input            (const char *line);
 
+   void Close            (boolean drain = true); // Close session.
+   void Transfer         (Telnet *t);  // Transfer session to telnet connection.
+   void Attach           (Telnet *t);  // Attach session to telnet connection.
+
+   // Detach session from specified telnet connection.
+   void Detach(Telnet *t, boolean intentional);
+
+   void SaveInputLine    (const char *line);   // Save input line.
+
+   // Set input function and prompt.
+   void SetInputFunction(InputFuncPtr input, const char *prompt = NULL);
+
+   void InitInputFunction();           // Initialize input function to Login.
+   void Input(const char *line);       // Process an input line.
+
+   // Remove a discussion from the user's list of discussions.
    static void RemoveDiscussion(Discussion *discussion) {
       discussions.Remove(discussion);
    }
-   void output(int byte) {      // queue output byte
+
+   void output(int byte) {                        // queue output byte
       Output.out(byte);
    }
-   void output(const char *buf) { // queue output data
-      if (!buf) return;         // return if no data
+   void output(const char *buf) {                 // queue output data
+      if (!buf) return;                           // return if no data
       while (*buf) Output.out(*((const unsigned char *) buf++));
    }
-   void output(const char *buf) { // queue output data
-      if (!buf) return;         // return if no data
+   void output(const char *buf) {                 // queue output data
+      if (!buf) return;                           // return if no data
       while (*buf) Output.out(*((const unsigned char *) buf++));
    }
-   void print(const char *format, ...); // formatted output
-   static void announce(const char *format, ...); // formatted output to all sessions
+   void print(const char *format, ...);           // Print formatted output.
+   static void announce(const char *format, ...); // Print to all sessions.
 
-   void EnqueueOutput(void) {   // Enqueue output buffer.
+   void EnqueueOutput(void) {                     // Enqueue output buffer.
       const char *buf = Output.GetData();
       if (buf) Pending.Enqueue(telnet, new Text(buf));
    }
-   void Enqueue(OutputObj *out) { // Enqueue output buffer and object.
+   void Enqueue(OutputObj *out) {           // Enqueue output buffer and object.
       EnqueueOutput();
       Pending.Enqueue(telnet, out);
    }
-   void EnqueueOthers(OutputObj *out) { // Enqueue output to others.
+   void EnqueueOthers(OutputObj *out) {     // Enqueue output to others.
       ListIter<Session> session(sessions);
       while (session++) if (session != this) session->Enqueue(out);
    }
-   void AcknowledgeOutput(void) { // Output acknowledgement.
+   void AcknowledgeOutput(void) {           // Output acknowledgement.
       Pending.Acknowledge();
    }
-   boolean OutputNext(Telnet *telnet) { // Output next output block.
+   boolean OutputNext(Telnet *telnet) {     // Output next output block.
       return Pending.SendNext(telnet);
    }
 
+   // Find sessions/discussions matching sendlist string.
    boolean FindSendable(const char *sendlist, Session *&session,
                         Set<Session> &sessionmatches, Discussion *&discussion,
                         Set<Discussion> &discussionmatches,
                         boolean member = false, boolean exact = false,
                         boolean do_sessions = true,
                         boolean do_discussions = true);
+
+   // Find sessions matching sendlist string.
    Session *FindSession(const char *sendlist, Set<Session> &matches);
+
+   // Find discussions matching sendlist string.
    Discussion *FindDiscussion(const char *sendlist, Set<Discussion> &matches,
                               boolean member = false);
+
+   // Print a set of sessions.
    void PrintSessions(Set<Session> &sessions);
+
+   // Print a set of discussions.
    void PrintDiscussions(Set<Discussion> &discussions);
+
+   // Print sessions matching sendlist string.
    void SessionMatches(const char *name, Set<Session> &matches);
+
+   // Print discussions matching sendlist string.
    void DiscussionMatches(const char *name, Set<Discussion> &matches);
-   void PrintReservedNames();
-   void Login(const char *line);       // Process response to login prompt.
-   void Password(const char *line);    // Process response to password prompt.
+
+   void PrintReservedNames();               // Print user's reserved names.
+   void Login   (const char *line);         // Process login prompt response.
+   void Password(const char *line);         // Process password prompt response.
+
+   // Check name availability.
    boolean CheckNameAvailability(const char *name, boolean double_check,
                                  boolean transferring);
-   void EnteredName(const char *line);
-   void TransferSession(const char *line);
-   void EnteredBlurb(const char *line);
-   void ProcessInput(const char *line);
+
+   void EnteredName    (const char *line);  // Process name prompt response.
+   void TransferSession(const char *line);  // Process transfer prompt response.
+   void EnteredBlurb   (const char *line);  // Process blurb prompt response.
+   void ProcessInput   (const char *line);  // Process normal input.
+
+   // Output an item from a list.
    void ListItem(boolean &flag, String &last, const char *str);
+
+   // Get sessions for /who arguments.
    boolean GetWhoSet(const char *args, Set<Session> &who, String &errors,
                      String &msg);
+
    void NotifyEntry  ();                // Notify other users of entry and log.
    void NotifyExit   ();                // Notify other users of exit and log.
    void PrintTimeLong(int minutes);     // Print time value, long format.
-   int  ResetIdle    (int min = 10);    // Reset and return idle time, maybe
-                                        // report.
+   int  ResetIdle    (int min = 10);    // Reset/return idle time, maybe report.
+
    void SetIdle      (const char *args);      // Set idle time.
    void SetBlurb     (const char *newblurb);  // Set a new blurb.
    void DoRestart    (const char *args);      // Do !restart command.
@@ -188,7 +221,10 @@ public:
    void DoSignal     (const char *args);      // Do /signal command.
    void DoSend       (const char *args);      // Do /send command.
    void DoWhy        (const char *args);      // Do /why command.
-   void DoBlurb      (const char *start, boolean entry = false); // Do /blurb command.
+
+   // Do /blurb command (or blurb set on entry).
+   void DoBlurb(const char *start, boolean entry = false);
+
    void DoHere       (const char *args);      // Do /here command.
    void DoAway       (const char *args);      // Do /away command.
    void DoBusy       (const char *args);      // Do /busy command.
@@ -207,10 +243,14 @@ public:
    void DoRename     (const char *args);      // Do /rename command.
    void DoAlso       (const char *args);      // Do /also command.
    void DoOops       (const char *args);      // Do /oops command.
-   void DoReset      ();                // Do <space><return> idle time reset.
+   void DoReset      ();                      // Do <space><return> idle reset.
    void DoMessage    (const char *line);      // Do message send.
-   void SendMessage  (Sendlist *sendlist, const char *msg);
-   static void CheckShutdown(); // Exit if shutting down and no users are left.
+
+   // Send message to sendlist.
+   void SendMessage(Sendlist *sendlist, const char *msg);
+
+   // Exit if shutting down and no users are left.
+   static void CheckShutdown();
 };
 
 #endif // session.h

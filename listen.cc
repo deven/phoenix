@@ -76,7 +76,7 @@ Listen::Listen(int port)           // Listen on a port.
    int                tries = 0;   // number of tries so far
    int                option = 1;  // option to set for setsockopt()
 
-   type = ListenFD;                // XXX Identify as a Listen FD.
+   type = ListenFD;                // Identify as a Listen FD.
 
    // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));
@@ -114,7 +114,7 @@ void Listen::Closed()           // Connection is closed.
    if (fd == -1) return;        // Skip the rest if already closed.
    fdtable.Closed(fd);          // Remove from FDTable.
    close(fd);                   // Close connection.
-   NoReadSelect();              // Don't select closed connection at all!
+   NoReadSelect();              // Don't select closed connections!
    NoWriteSelect();
    fd = -1;                     // Connection is closed.
 }
