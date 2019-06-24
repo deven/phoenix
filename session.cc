@@ -97,12 +97,6 @@ List<Session>    Session::sessions;
 List<Discussion> Session::discussions;
 Hash             Session::defaults;
 
-// Initialize default session-level system variables for all users.
-void Session::init_defaults()
-{
-   defaults["time_format"] = "verbose";
-}
-
 Session::Session(Telnet *t)     // constructor
 {
    if (!defaults.Count()) init_defaults(); // Initialize defaults if not done.
@@ -123,6 +117,12 @@ Session::Session(Telnet *t)     // constructor
 Session::~Session()             // destructor
 {
    Close();
+}
+
+// Initialize default session-level system variables for all users.
+void Session::init_defaults()
+{
+   defaults["time_format"] = "verbose";
 }
 
 void Session::Close(boolean drain) // Close session.
