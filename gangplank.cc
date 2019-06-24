@@ -145,7 +145,7 @@ void OpenLog()                    // XXX class Log?
 }
 
 // XXX Use << operator instead of printf() formats?
-void log(char *format, ...)       // XXX log message
+void Log(char *format, ...)       // XXX log message
 {
    String    msg;
    va_list   ap;
@@ -211,7 +211,7 @@ void crash(char *format, ...)     // XXX print error message and crash
 void quit(int sig)                // received SIGQUIT or SIGTERM
 {
    if (Shutdown) {
-      log("Additional shutdown signal %d received.", sig);
+      Log("Additional shutdown signal %d received.", sig);
    } else {
       String signal;
 
@@ -318,8 +318,8 @@ int main(int argc, char **argv)   // main program
 #if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
    // Fork subprocess and exit parent.
    if (debug) {
-      log("Started Gangplank server, version %s.", VERSION);
-      log("Listening for connections on TCP port %d. (pid %d)", port, getpid());
+      Log("Started Gangplank server, version %s.", VERSION);
+      Log("Listening for connections on TCP port %d. (pid %d)", port, getpid());
    } else {
       switch (pid = fork()) {
       case 0:
@@ -329,8 +329,8 @@ int main(int argc, char **argv)   // main program
             close(0);
             close(1);
             close(2);
-            log("Started Gangplank server, version %s.", VERSION);
-            log("Listening for connections on TCP port %d. (pid %d)", port,
+            Log("Started Gangplank server, version %s.", VERSION);
+            Log("Listening for connections on TCP port %d. (pid %d)", port,
                 getpid());
             break;
          case -1:
@@ -355,8 +355,8 @@ int main(int argc, char **argv)   // main program
       }
    }
 #else
-   log("Started Gangplank server, version %s. (pid %d)"), VERSION, getpid());
-   log("Listening for connections on TCP port %d.", port);
+   Log("Started Gangplank server, version %s. (pid %d)"), VERSION, getpid());
+   Log("Listening for connections on TCP port %d.", port);
 #endif
 
    // Setup signal handlers.

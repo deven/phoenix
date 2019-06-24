@@ -44,7 +44,7 @@ typedef void (Session::*InputFuncPtr)(char *line);
 typedef void (Telnet::*CallbackFuncPtr)();
 
 void  OpenLog     ();
-void  log         (char *format, ...);
+void  Log         (char *format, ...);
 void  warn        (char *format, ...);
 void  error       (char *format, ...);
 void  crash       (char *format, ...);
