@@ -78,7 +78,7 @@ void FDTable::OpenListen(int port)   // Open a listening port.
    Pointer<Listen> l(new Listen(port));
    if (l->fd == -1) return;
    if (l->fd >= used) used = l->fd + 1;
-   array[l->fd] = ((FD *) l);
+   array[l->fd] = l;
    l->ReadSelect();
 }
 
@@ -87,7 +87,7 @@ void FDTable::OpenTelnet(int lfd)   // Open a telnet connection.
    Pointer<Telnet> t(new Telnet(lfd));
    if (t->fd == -1) return;
    if (t->fd >= used) used = t->fd + 1;
-   array[t->fd] = ((FD *) t);
+   array[t->fd] = t;
 }
 
 Pointer<FD> FDTable::Closed(int fd)   // Close fd, return pointer to FD object.
