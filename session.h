@@ -37,6 +37,7 @@
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
 class Session: public Object {
+protected:
    static List<Session>    inits;       // List of sessions initializing.
    static List<Session>    sessions;    // List of signed-on sessions.
    static List<Discussion> discussions; // List of active discussions.

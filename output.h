@@ -56,7 +56,7 @@ public:
 };
 
 class Text: public OutputObj {
-private:
+protected:
    const char *text;
 public:
    Text(const char *buf): OutputObj(TextOutput, TextClass), text(buf) { }
@@ -66,7 +66,7 @@ public:
 };
 
 class Message: public OutputObj {
-private:
+protected:
    friend class Session;
    Pointer<Name>     from;
    Pointer<Sendlist> to;
@@ -79,7 +79,7 @@ public:
 };
 
 class EntryNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    EntryNotify(Name *who, time_t when = 0):
@@ -89,7 +89,7 @@ public:
 };
 
 class ExitNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    ExitNotify(Name *who, time_t when = 0):
@@ -99,7 +99,7 @@ public:
 };
 
 class TransferNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    TransferNotify(Name *who, time_t when = 0):
@@ -109,7 +109,7 @@ public:
 };
 
 class AttachNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    AttachNotify(Name *who, time_t when = 0):
@@ -119,7 +119,7 @@ public:
 };
 
 class DetachNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
    boolean       intentional;
 public:
@@ -131,7 +131,7 @@ public:
 };
 
 class HereNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    HereNotify(Name *who, time_t when = 0):
@@ -141,7 +141,7 @@ public:
 };
 
 class AwayNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    AwayNotify(Name *who, time_t when = 0):
@@ -151,7 +151,7 @@ public:
 };
 
 class BusyNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    BusyNotify(Name *who, time_t when = 0):
@@ -161,7 +161,7 @@ public:
 };
 
 class GoneNotify: public OutputObj {
-private:
+protected:
    Pointer<Name> name;
 public:
    GoneNotify(Name *who, time_t when = 0):
@@ -171,7 +171,7 @@ public:
 };
 
 class CreateNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
 public:
    CreateNotify(Discussion *d, time_t when = 0):
@@ -181,7 +181,7 @@ public:
 };
 
 class DestroyNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
 public:
@@ -191,7 +191,7 @@ public:
 };
 
 class JoinNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
 public:
@@ -201,7 +201,7 @@ public:
 };
 
 class QuitNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
 public:
@@ -211,7 +211,7 @@ public:
 };
 
 class PublicNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
 public:
@@ -221,7 +221,7 @@ public:
 };
 
 class PrivateNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
 public:
@@ -231,7 +231,7 @@ public:
 };
 
 class PermitNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
    boolean             is_explicit;
@@ -242,7 +242,7 @@ public:
 };
 
 class DepermitNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       name;
    boolean             is_explicit;
@@ -255,7 +255,7 @@ public:
 };
 
 class AppointNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       appointer;
    Pointer<Name>       appointee;
@@ -266,7 +266,7 @@ public:
 };
 
 class UnappointNotify: public OutputObj {
-private:
+protected:
    Pointer<Discussion> discussion;
    Pointer<Name>       unappointer;
    Pointer<Name>       unappointee;
@@ -277,7 +277,7 @@ public:
 };
 
 class RenameNotify: public OutputObj {
-private:
+protected:
    String oldname;
    String newname;
 public:
