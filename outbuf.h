@@ -79,7 +79,7 @@ public:
    }
    boolean out(int byte) {              // Output one byte, return if new.
       boolean select;
-      if (select = boolean(!tail)) {
+      if ((select = boolean(!tail))) {
          head = tail = new Block;
       } else if (tail->free >= tail->block + Block::BlockSize) {
          tail->next = new Block;
@@ -90,7 +90,7 @@ public:
    }
    boolean out(int byte1, int byte2) {  // Output two bytes, return if new.
       boolean select;
-      if (select = boolean(!tail)) {
+      if ((select = boolean(!tail))) {
          head = tail = new Block;
       } else if (tail->free >= tail->block + Block::BlockSize - 1) {
          tail->next = new Block;
@@ -103,7 +103,7 @@ public:
    boolean out(int byte1, int byte2,    // Output three bytes, return if new.
                int byte3) {
       boolean select;
-      if (select = boolean(!tail)) {
+      if ((select = boolean(!tail))) {
          head = tail = new Block;
       } else if (tail->free >= tail->block + Block::BlockSize - 2) {
          tail->next = new Block;
