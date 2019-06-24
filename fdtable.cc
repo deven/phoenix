@@ -49,7 +49,6 @@ FDTable::FDTable()              // constructor
 
 FDTable::~FDTable()             // destructor
 {
-   for (int i = 0; i < used; i++) array[i] = 0;
    delete [] array;
 }
 
