@@ -87,8 +87,7 @@ Listen::Listen(int port)           // Listen on a port.
       error("Listen::Listen(): socket()");
    }
    if (fcntl(fd, F_SETFD, 0) == -1) error("Listen::Listen(): fcntl()");
-   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &option,
-       sizeof(int))) {
+   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
       error("Listen::Listen(): setsockopt()");
    }
 
