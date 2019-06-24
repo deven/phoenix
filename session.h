@@ -90,6 +90,7 @@ public:
    String            last_explicit;    // last explicit sendlist typed
    String            reply_sendlist;   // last explicit sendlist typed
    String            oops_text;        // /oops message text
+   Pointer<Message>  last_message;     // last message sent
 
    Session(Telnet *t);
    ~Session();
