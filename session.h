@@ -74,10 +74,10 @@ public:
    Timestamp         login_time;       // time logged in
    Timestamp         idle_since;       // time session has been idle since
    AwayState         away;             // here/away/busy/gone state
-   char              SignalPublic;     // Signal for public messages? (boolean)
-   char              SignalPrivate;    // Signal for private messages? (boolean)
-   char              SignedOn;         // Session signed on? (boolean)
-   char              closing;          // Session closing? (boolean)
+   boolean           SignalPublic;     // Signal for public messages?
+   boolean           SignalPrivate;    // Signal for private messages?
+   boolean           SignedOn;         // Session signed on?
+   boolean           closing;          // Session closing?
    int               attempts;         // login attempts
    int               priv;             // current privilege level
    String            name;             // current user name (pseudo)
