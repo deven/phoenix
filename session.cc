@@ -679,7 +679,7 @@ void Session::NotifyEntry()     // Notify other users of entry and log.
    } else {
       log("Enter: %s (%s), detached.", ~name, ~user->user);
    }
-   EnqueueOthers(new EntryNotify(name_obj, message_time = login_time = 0));
+   EnqueueOthers(new EntryNotify(name_obj, idle_since = login_time = 0));
 }
 
 void Session::NotifyExit()      // Notify other users of exit and log.
@@ -741,7 +741,7 @@ void Session::PrintTimeLong(int minutes) // Print time value, long format.
 int Session::ResetIdle(int min)
 {
    Timestamp now;
-   int       idle = (now - message_time) / 60;
+   int       idle = (now - idle_since) / 60;
 
    if (min && idle >= min) {
       output("[You were idle for");
@@ -749,7 +749,7 @@ int Session::ResetIdle(int min)
       output(".]\n");
    }
 
-   message_time = now;
+   idle_since = now;
    return idle;
 }
 
@@ -759,7 +759,7 @@ void Session::SetIdle(char *args) // Set idle time.
    int       num, idle, days, hours, minutes;
 
    days = hours = minutes = 0;
-   idle = (now - message_time) / 60;
+   idle = (now - idle_since) / 60;
 
    while (*args && isspace(*args)) args++;
    if (isdigit(*args)) {
@@ -799,27 +799,27 @@ void Session::SetIdle(char *args) // Set idle time.
       output("Sorry, you can't be idle longer than you've been signed on.\n");
       return;
    } else {
-      message_time = num;
-      if (message_time < login_time) login_time = message_time;
+      idle_since = num;
+      if (idle_since < login_time) login_time = idle_since;
    }
 
-   if (idle && idle != (now - message_time) / 60) {
+   if (idle && idle != (now - idle_since) / 60) {
       output("[You were idle for");
       PrintTimeLong(idle);
       output(".]\n");
    }
 
-   if (idle == (now - message_time) / 60) {
+   if (idle == (now - idle_since) / 60) {
       output("Your idle time is still");
       PrintTimeLong(idle);
       output(".\n");
-   } else if ((idle = (now - message_time) / 60)) {
+   } else if ((idle = (now - idle_since) / 60)) {
       output("Your idle time has been set to");
       PrintTimeLong(idle);
       output(".\n");
    } else {
       output("Your idle time has been reset.\n");
-      message_time = now;
+      idle_since = now;
    }
 }
 
@@ -1048,7 +1048,7 @@ void Session::DoDisplay(char *args) // Do /display command.
          Timestamp now;
 
          output("Your idle time is");
-         PrintTimeLong((now - message_time) / 60);
+         PrintTimeLong((now - idle_since) / 60);
          output(".\n");
       } else if (match(var, "time_format")) {
          String time_format;
@@ -1231,7 +1231,7 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
 
    ListIter<Session> s(sessions);
    while (s++) {
-      idle = (now - s->message_time) / 60;
+      idle = (now - s->idle_since) / 60;
       boolean is_active = (s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
                            s->away == Away && s->telnet && (idle < 10));
       if (here       &&  s->away == Here ||
@@ -1311,7 +1311,7 @@ void Session::DoWho(char *args) // Do /who command.
    // Scan users for long idle times.
    SetIter<Session> session(who);
    while (session++) {
-      days = (now - session->message_time) / 86400;
+      days = (now - session->idle_since) / 86400;
       if (!days) continue;
       tmp = days;
       i   = tmp.length();
@@ -1351,7 +1351,7 @@ void Session::DoWho(char *args) // Do /who command.
       } else {
          output("detached");
       }
-      idle = (now - session->message_time) / 60;
+      idle = (now - session->idle_since) / 60;
       if (idle) {
          hours   = idle / 60;
          minutes = idle - hours * 60;
@@ -1411,7 +1411,7 @@ void Session::DoWhy(char *args) // Do /why command.
    // Scan users for long idle times.
    SetIter<Session> session(who);
    while (session++) {
-      days = (now - session->message_time) / 86400;
+      days = (now - session->idle_since) / 86400;
       if (!days) continue;
       tmp = days;
       i   = tmp.length();
@@ -1443,7 +1443,7 @@ void Session::DoWhy(char *args) // Do /why command.
          output(session->login_time.date(4, 4));
          output(session->login_time.date(20, 4));
       }
-      idle = (now - session->message_time) / 60;
+      idle = (now - session->idle_since) / 60;
       if (idle) {
          hours   = idle / 60;
          minutes = idle - hours * 60;
@@ -1524,7 +1524,7 @@ void Session::DoIdle(char *args) // Do /idle command.
       tmp = session->name;
       tmp.append(session->blurb);
       print("%-32.32s%c", ~tmp, tmp.length() > 32 ? '+' : ' ');
-      idle = (now - session->message_time) / 60;
+      idle = (now - session->idle_since) / 60;
       if (idle) {
          hours   = idle / 60;
          minutes = idle - hours * 60;
@@ -1581,7 +1581,7 @@ void Session::DoWhat(char *args) // Do /what command.
    // Scan users for long idle times.
    SetIter<Discussion> discussion(sendlist->discussions);
    while (discussion++) {
-      days = (now - discussion->message_time) / 86400;
+      days = (now - discussion->idle_since) / 86400;
       if (!days) continue;
       tmp = days;
       i = tmp.length();
@@ -1598,7 +1598,7 @@ void Session::DoWhat(char *args) // Do /what command.
             discussion->name.length() > 15 ? '+' : ' ',
             discussion->members.Count(),
             discussion->members.In(this) ? '*' : Space);
-      idle = (now - discussion->message_time) / 60;
+      idle = (now - discussion->idle_since) / 60;
       if (idle) {
          hours   = idle / 60;
          minutes = idle - hours * 60;
@@ -2579,7 +2579,7 @@ void Session::SendMessage(Sendlist *sendlist, char *msg)
 
    if (away == Gone) {
       output("[Warning: you are listed as \"gone\".]\n");
-   } else if (away == Busy && (now - message_time) >= 600) {
+   } else if (away == Busy && (now - idle_since) >= 600) {
       output(Bell);
       output("[Warning: you are still listed as \"busy\".]\n");
    }
@@ -2620,7 +2620,7 @@ void Session::SendMessage(Sendlist *sendlist, char *msg)
             break;
          }
       }
-      int idle = (now - session->message_time) / 60;
+      int idle = (now - session->idle_since) / 60;
       if (idle) {
          output(flag ? ", " : " (");
          flag = true;
@@ -2646,7 +2646,7 @@ void Session::SendMessage(Sendlist *sendlist, char *msg)
       PrintDiscussions(sendlist->discussions);
 
       SetIter<Discussion> discussion(sendlist->discussions);
-      while (discussion++) discussion->message_time = now;
+      while (discussion++) discussion->idle_since = now;
    }
 
    if (count > 1) {
