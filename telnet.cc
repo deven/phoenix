@@ -230,7 +230,7 @@ void Telnet::command(const char *buf, int len) // queue command data (w/length)
    while (len--) Command.out(*((const unsigned char *) buf++));
 }
 
-void Telnet::TimingMark(void)   // Queue Telnet TIMING-MARK option in OUTPUT.
+void Telnet::TimingMark(void)   // Queue Telnet TIMING-MARK option.
 {
    if (acknowledge) {
       outstanding++;
@@ -496,9 +496,9 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    reply_to      = NULL;           // No last sender.
    undrawn       = false;          // Input line not undrawn.
    state         = 0;              // telnet input state = 0 (data)
-   closing       = false;          // conection not closing
+   closing       = false;          // connection not closing
    CloseOnEOF    = true;           // close on EOF
-   acknowledge   = false;          // Assume no TIMING-MARK option until tested.
+   acknowledge   = false;          // Test TIMING-MARK option before use.
    DoEcho        = true;           // Do echoing, if ECHO option enabled.
    Echo          = 0;              // ECHO option off (local)
    LSGA          = 0;              // SUPPRESS-GO-AHEAD option off (local)
@@ -595,7 +595,7 @@ void Telnet::Closed()           // Connection is closed.
 
    fdtable.Closed(fd);          // Remove from FDTable.
    close(fd);                   // Close connection.
-   NoReadSelect();              // Don't select closed connection at all!
+   NoReadSelect();              // Don't select closed connections!
    NoWriteSelect();
    Command.~OutputBuffer();     // Destroy command output buffer.
    Output .~OutputBuffer();     // Destroy data output buffer.
@@ -1114,7 +1114,7 @@ void Telnet::transpose_words()  // Exchange two words at point.
    output(Bell);
 }
 
-void Telnet::InputReady()       // telnet stream can input data
+void Telnet::InputReady()       // Telnet stream can input data.
 {
    char                 buf[BufSize];
    Block               *block;
@@ -2098,7 +2098,7 @@ void Telnet::InputReady()       // telnet stream can input data
    if (closing && !outstanding && !Command.head && !Output.head) Closed();
 }
 
-void Telnet::OutputReady()      // telnet stream can output data
+void Telnet::OutputReady()      // Telnet stream can output data.
 {
    Block       *block;
    register int n;

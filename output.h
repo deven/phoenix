@@ -57,6 +57,7 @@ public:
    OutputClass Class;                   // Output class.
    Timestamp   time;                    // Timestamp.
 
+   // constructor
    OutputObj(OutputType t, OutputClass c, time_t when = 0): Type(t), Class(c),
              time(when) { }
    virtual ~OutputObj() { }             // destructor

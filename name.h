@@ -41,6 +41,7 @@ public:
    String           name;       // Current name (pseudo) for this session.
    String           blurb;      // Current blurb for this session.
 
+   // constructor
    Name(Session *s, String &n, String &b): session(s), name(n), blurb(b) { }
 };
 

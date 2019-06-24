@@ -37,6 +37,7 @@
 #include "block.h"
 #include "boolean.h"
 
+// Output buffer consisting of linked list of output blocks.
 class OutputBuffer {
 public:
    Block *head;                         // first data block
