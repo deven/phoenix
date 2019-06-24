@@ -131,8 +131,9 @@ void OpenLog()                    // XXX class Log?
    struct tm *tm;
 
    if (!(tm = t.localtime())) error("OpenLog(): localtime");
-   filename.sprintf("logs/%04d%02d%02d-%02d%02d", tm->tm_year + 1900,
-                    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+   filename.sprintf("logs/%04d%02d%02d-%02d%02d%02d", tm->tm_year + 1900,
+                    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
+                    tm->tm_sec);
    if (!(logfile = fopen(~filename, "a"))) error("OpenLog(): %s", ~filename);
 #ifdef SETVBUF_REVERSED
    setvbuf(logfile, _IOLBF, NULL, 0);
