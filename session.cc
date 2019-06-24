@@ -155,7 +155,7 @@ void Session::Transfer(Telnet *t) // Transfer session to connection.
    telnet->session = this;
    old   ->session = NULL;
    telnet->LoginSequenceFinished();
-   log("Transfer: %s (%s) from fd %d to fd %d.", ~name, ~user->user, old->fd,
+   Log("Transfer: %s (%s) from fd %d to fd %d.", ~name, ~user->user, old->fd,
        t->fd);
    old->output("*** This session has been transferred to a new connection. ***"
                "\n");
@@ -171,7 +171,7 @@ void Session::Attach(Telnet *t) // Attach session to connection.
    telnet          = t;
    telnet->session = this;
    telnet->LoginSequenceFinished();
-   log("Attach: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
+   Log("Attach: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
    EnqueueOthers(new AttachNotify(name_obj));
    Pending.Attach(telnet);
    output("*** End of reviewed output. ***\n");
@@ -183,10 +183,10 @@ void Session::Detach(Telnet *t, boolean intentional) // Detach session from t.
    if (SignedOn && priv > 0) {
       if (telnet == t) {
          if (intentional) {
-            log("Detach: %s (%s) on fd %d. (intentional)", ~name, ~user->user,
+            Log("Detach: %s (%s) on fd %d. (intentional)", ~name, ~user->user,
                 t->fd);
          } else {
-            log("Detach: %s (%s) on fd %d. (accidental)", ~name, ~user->user,
+            Log("Detach: %s (%s) on fd %d. (accidental)", ~name, ~user->user,
                 t->fd);
          }
          EnqueueOthers(new DetachNotify(name_obj, intentional));
@@ -740,9 +740,9 @@ void Session::ProcessInput(char *line)
 void Session::NotifyEntry()     // Notify other users of entry and log.
 {
    if (telnet) {
-      log("Enter: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
+      Log("Enter: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
    } else {
-      log("Enter: %s (%s), detached.", ~name, ~user->user);
+      Log("Enter: %s (%s), detached.", ~name, ~user->user);
    }
    EnqueueOthers(new EntryNotify(name_obj, idle_since = login_time = 0));
 }
@@ -750,9 +750,9 @@ void Session::NotifyEntry()     // Notify other users of entry and log.
 void Session::NotifyExit()      // Notify other users of exit and log.
 {
    if (telnet) {
-      log("Exit: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
+      Log("Exit: %s (%s) on fd %d.", ~name, ~user->user, telnet->fd);
    } else {
-      log("Exit: %s (%s), detached.", ~name, ~user->user);
+      Log("Exit: %s (%s), detached.", ~name, ~user->user);
    }
    EnqueueOthers(new ExitNotify(name_obj));
 }
@@ -916,12 +916,12 @@ void Session::DoRestart(char *args) // Do !restart command.
       if (Shutdown) {
          switch (Shutdown->Type()) {
          case Shutdown_Event:
-            log("Shutdown cancelled by %s (%s).", ~name, ~user->user);
+            Log("Shutdown cancelled by %s (%s).", ~name, ~user->user);
             announce("*** %s%s has cancelled the server shutdown. ***\n",
                      ~name, ~blurb);
             break;
          case Restart_Event:
-            log("Restart cancelled by %s (%s).", ~name, ~user->user);
+            Log("Restart cancelled by %s (%s).", ~name, ~user->user);
             announce("*** %s%s has cancelled the server restart. ***\n", ~name,
                      ~blurb);
             break;
@@ -957,12 +957,12 @@ void Session::DoDown(char *args) // Do !down command.
       if (Shutdown) {
          switch (Shutdown->Type()) {
          case Shutdown_Event:
-            log("Shutdown cancelled by %s (%s).", ~name, ~user->user);
+            Log("Shutdown cancelled by %s (%s).", ~name, ~user->user);
             announce("*** %s%s has cancelled the server shutdown. ***\n",
                      ~name, ~blurb);
             break;
          case Restart_Event:
-            log("Restart cancelled by %s (%s).", ~name, ~user->user);
+            Log("Restart cancelled by %s (%s).", ~name, ~user->user);
             announce("*** %s%s has cancelled the server restart. ***\n", ~name,
                      ~blurb);
             break;
@@ -1002,7 +1002,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
       if (session->telnet) {
          Pointer<Telnet> telnet(session->telnet);
          session->telnet = NULL;
-         log("%s (%s) on fd %d has been nuked by %s (%s).", ~session->name,
+         Log("%s (%s) on fd %d has been nuked by %s (%s).", ~session->name,
              ~session->user->user, telnet->fd, ~name, ~user->user);
          telnet->UndrawInput();
          telnet->print("\a\a\a*** You have been nuked by %s%s. ***\n", ~name,
@@ -1010,7 +1010,7 @@ void Session::DoNuke(char *args) // Do !nuke command.
          telnet->RedrawInput();
          telnet->Close(drain);
       } else {
-         log("%s (%s), detached, has been nuked by %s (%s).", ~session->name,
+         Log("%s (%s), detached, has been nuked by %s (%s).", ~session->name,
              ~session->user->user, ~name, ~user->user);
          session->Close();
       }
@@ -2743,12 +2743,12 @@ void Session::CheckShutdown()   // Exit if shutting down and no users are left.
       switch (Shutdown->Type()) {
       case Shutdown_Event:
          shutdown = (ShutdownEvent *) (Event *) Shutdown;
-         log("All connections closed, shutting down.");
+         Log("All connections closed, shutting down.");
          shutdown->ShutdownServer();
          break;
       case Restart_Event:
          restart = (RestartEvent *) (Event *) Shutdown;
-         log("All connections closed, restarting.");
+         Log("All connections closed, restarting.");
          restart->RestartServer();
          break;
       default:

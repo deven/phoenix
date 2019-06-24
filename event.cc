@@ -38,7 +38,7 @@
 void ShutdownEvent::ShutdownWarning(char *by, time_t when)
 {
    final = false;
-   log("Shutdown requested by %s in %d seconds.", by, when);
+   Log("Shutdown requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will shutdown in %d seconds... <<<\n\a",
                      when);
 }
@@ -47,13 +47,13 @@ void ShutdownEvent::FinalWarning()
 {
    final = true;
    SetRelTime(FinalWarningTime);
-   log("Final shutdown warning.");
+   Log("Final shutdown warning.");
    Session::announce("\a>>> Server shutting down NOW!  Goodbye. <<<\n\a");
 }
 
 void ShutdownEvent::ShutdownServer()
 {
-   log("Server down.");
+   Log("Server down.");
    if (logfile) fclose(logfile);
    exit(0);
 }
@@ -72,7 +72,7 @@ boolean ShutdownEvent::Execute()
 void RestartEvent::RestartWarning(char *by, time_t when)
 {
    final = false;
-   log("Restart requested by %s in %d seconds.", by, when);
+   Log("Restart requested by %s in %d seconds.", by, when);
    Session::announce("\a>>> This server will restart in %d seconds... <<<\n\a",
                      when);
 }
@@ -81,13 +81,13 @@ void RestartEvent::FinalWarning()
 {
    final = true;
    SetRelTime(FinalWarningTime);
-   log("Final restart warning.");
+   Log("Final restart warning.");
    Session::announce("\a>>> Server restarting NOW!  Goodbye. <<<\n\a");
 }
 
 void RestartEvent::RestartServer()
 {
-   log("Restarting server.");
+   Log("Restarting server.");
    if (logfile) fclose(logfile);
    FD::CloseAll();
    execl(SERVER_PATH, SERVER_PATH, (const char *) NULL);

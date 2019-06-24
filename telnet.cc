@@ -86,7 +86,7 @@ void Telnet::LogCaller()        // Log calling host and port.
    socklen_t          saddrlen = sizeof(saddr);
 
    if (!getpeername(fd, (struct sockaddr *) &saddr, &saddrlen)) {
-      log("Accepted connection on fd %d from %s port %d.", fd,
+      Log("Accepted connection on fd #%d from %s port %d.", fd,
           inet_ntoa(saddr.sin_addr), saddr.sin_port);
    } else {
       warn("Telnet::LogCaller(): getpeername()");

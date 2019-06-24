@@ -75,7 +75,7 @@ public:
       ShutdownWarning(by, when);
    }
    ShutdownEvent(char *by): Event(Shutdown_Event, 0) {
-      log("Immediate shutdown requested by %s.", by);
+      Log("Immediate shutdown requested by %s.", by);
       FinalWarning();
    }
 
@@ -95,7 +95,7 @@ public:
       RestartWarning(by, when);
    }
    RestartEvent(char *by): Event(Restart_Event, 0) {
-      log("Immediate restart requested by %s.", by);
+      Log("Immediate restart requested by %s.", by);
       FinalWarning();
    }
 
