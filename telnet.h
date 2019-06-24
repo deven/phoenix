@@ -79,9 +79,9 @@ enum TelnetOption {
 };
 
 // Telnet option bits.
-const int TelnetWillWont = 1;
-const int TelnetDoDont   = 2;
-const int TelnetEnabled  = (TelnetDoDont|TelnetWillWont);
+static const int TelnetWillWont = 1;
+static const int TelnetDoDont   = 2;
+static const int TelnetEnabled  = (TelnetDoDont|TelnetWillWont);
 
 // Telnet subnegotiation states.
 enum TelnetSubnegotiationState {
