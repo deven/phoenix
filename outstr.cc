@@ -92,7 +92,7 @@ void OutputStream::Dequeue()    // Dequeue all acknowledged output.
 
 boolean OutputStream::SendNext(Telnet *telnet) // Send next output.
 {
-   if (!telnet || !sent && !head) return false;
+   if (!telnet || (!sent && !head)) return false;
    if (sent && !sent->next) {
       telnet->RedrawInput();
       return false;
