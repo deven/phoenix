@@ -51,17 +51,17 @@ boolean Listen::PortBusy(int port)
    saddr.sin_family      = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
    saddr.sin_port        = htons((u_short) port);
-   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) return 0;
+   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) return false;
    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
       close(fd);
-      return 0;
+      return false;
    }
    if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
       close(fd);
       return errno == EADDRINUSE;
    }
    close(fd);
-   return 0;
+   return false;
 }
 
 void Listen::Open(int port)
