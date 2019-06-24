@@ -71,7 +71,7 @@ public:
    Hash              user_vars;        // session-level user variables
    Hash              sys_vars;         // session-level system variables
    Timestamp         login_time;       // time logged in
-   Timestamp         message_time;     // time last message sent (for idle time)
+   Timestamp         idle_since;       // time session has been idle since
    AwayState         away;             // here/away/busy/gone state
    char              SignalPublic;     // Signal for public messages? (boolean)
    char              SignalPrivate;    // Signal for private messages? (boolean)
