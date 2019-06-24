@@ -52,8 +52,8 @@ public:
    operator time_t()      { return time; }
    struct tm *gmtime()    { return ::gmtime(&time); }
    struct tm *localtime() { return ::localtime(&time); }
-   char *date(int start = 0, int len = 0);   // Get part of date string.
-   char *stamp();                            // Return short timestamp string.
+   const char *date(int start = 0, int len = 0);   // Get part of date string.
+   const char *stamp();                            // Return short timestamp.
 };
 
 #endif // timestamp.h

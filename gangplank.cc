@@ -146,7 +146,7 @@ void OpenLog()                    // XXX class Log?
 }
 
 // XXX Use << operator instead of printf() formats?
-void Log(char *format, ...)       // XXX log message
+void Log(const char *format, ...)       // XXX log message
 {
    String    msg;
    va_list   ap;
@@ -159,7 +159,7 @@ void Log(char *format, ...)       // XXX log message
    (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void warn(char *format, ...)      // XXX print error message
+void warn(const char *format, ...)      // XXX print error message
 {
    String    msg;
    va_list   ap;
@@ -173,7 +173,7 @@ void warn(char *format, ...)      // XXX print error message
    if (logfile) (void) fprintf(logfile, "[%s] %s\n", t.date(4, 15), ~msg);
 }
 
-void error(char *format, ...)     // XXX print error message and exit
+void error(const char *format, ...)     // XXX print error message and exit
 {
    String    msg;
    va_list   ap;
@@ -191,7 +191,7 @@ void error(char *format, ...)     // XXX print error message and exit
    exit(1);
 }
 
-void crash(char *format, ...)     // XXX print error message and crash
+void crash(const char *format, ...)     // XXX print error message and crash
 {
    String    msg;
    va_list   ap;

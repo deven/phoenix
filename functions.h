@@ -34,20 +34,20 @@
 #define _FUNCTIONS_H 1
 
 #ifndef HAVE_STRERROR
-extern char *strerror(int errno);
+const char *strerror(int errno);
 #endif
 
 // Input function pointer type.
-typedef void (Session::*InputFuncPtr)(char *line);
+typedef void (Session::*InputFuncPtr)(const char *line);
 
 // Callback function pointer type.
 typedef void (Telnet::*CallbackFuncPtr)();
 
 void  OpenLog     ();
-void  Log         (char *format, ...);
-void  warn        (char *format, ...);
-void  error       (char *format, ...);
-void  crash       (char *format, ...);
+void  Log         (const char *format, ...);
+void  warn        (const char *format, ...);
+void  error       (const char *format, ...);
+void  crash       (const char *format, ...);
 void  quit        (int);
 int   SystemUptime();                   // Get system uptime, if available.
 void  trim        (char *&input);

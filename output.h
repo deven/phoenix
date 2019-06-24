@@ -66,9 +66,9 @@ public:
 
 class Text: public OutputObj {
 private:
-   char *text;
+   const char *text;
 public:
-   Text(char *buf): OutputObj(TextOutput, TextClass), text(buf) { }
+   Text(const char *buf): OutputObj(TextOutput, TextClass), text(buf) { }
    ~Text() { delete [] text; }
 
    void output(Telnet *telnet);
