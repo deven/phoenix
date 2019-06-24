@@ -34,7 +34,7 @@
 
 #include "gangplank.h"
 
-char *Timestamp::date(int start, int len) // Get part of date string.
+const char *Timestamp::date(int start, int len) // Get part of date string.
 {
    static char buf[MaxFormattedLength + 1];
 
@@ -46,7 +46,7 @@ char *Timestamp::date(int start, int len) // Get part of date string.
    return buf + start;          // Return (sub)string.
 }
 
-char *Timestamp::stamp()        // Return short timestamp string.
+const char *Timestamp::stamp()        // Return short timestamp string.
 {
    static char buf[MaxFormattedLength + 1];
    String buffer;

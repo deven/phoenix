@@ -111,14 +111,14 @@ void Telnet::output(int byte)   // queue output byte
    }
 }
 
-void Telnet::output(char *buf)  // queue output data
+void Telnet::output(const char *buf)  // queue output data
 {
    int byte;
 
    if (!buf || !*buf) return;   // return if no data
-   output(*((unsigned char *)buf++)); // Handle WriteSelect().
+   output(*((const unsigned char *) buf++)); // Handle WriteSelect().
    while (*buf) {
-      switch (byte = *((unsigned char *) buf++)) {
+      switch (byte = *((const unsigned char *) buf++)) {
       case TelnetIAC:           // command escape: double it
          Output.out(TelnetIAC, TelnetIAC);
          break;
@@ -135,14 +135,14 @@ void Telnet::output(char *buf)  // queue output data
    }
 }
 
-void Telnet::output(char *buf, int len) // queue output data (with length)
+void Telnet::output(const char *buf, int len) // queue output data (with length)
 {
    int byte;
 
    if (!buf || !len) return;    // return if no data
-   output(*((unsigned char *) buf++)); // Handle WriteSelect().
+   output(*((const unsigned char *) buf++)); // Handle WriteSelect().
    while (--len) {
-      switch (byte = *((unsigned char *) buf++)) {
+      switch (byte = *((const unsigned char *) buf++)) {
       case TelnetIAC:           // command escape: double it
          Output.out(TelnetIAC, TelnetIAC);
          break;
@@ -159,7 +159,7 @@ void Telnet::output(char *buf, int len) // queue output data (with length)
    }
 }
 
-void Telnet::print(char *format, ...) // formatted write
+void Telnet::print(const char *format, ...) // formatted write
 {
    String  msg;
    va_list ap;
@@ -175,17 +175,17 @@ void Telnet::echo(int byte)     // echo output byte
    if (Echo == TelnetEnabled && DoEcho && !undrawn) output(byte);
 }
 
-void Telnet::echo(char *buf)    // echo output data
+void Telnet::echo(const char *buf) // echo output data
 {
    if (Echo == TelnetEnabled && DoEcho && !undrawn) output(buf);
 }
 
-void Telnet::echo(char *buf, int len) // echo output data (with length)
+void Telnet::echo(const char *buf, int len) // echo output data (with length)
 {
    if (Echo == TelnetEnabled && DoEcho && !undrawn) output(buf, len);
 }
 
-void Telnet::echo_print(char *format, ...) // formatted echo
+void Telnet::echo_print(const char *format, ...) // formatted echo
 {
    String  msg;
    va_list ap;
@@ -216,18 +216,18 @@ void Telnet::command(int byte1, int byte2, int byte3) // Queue 3 command bytes.
    Command.out(byte1, byte2, byte3); // Queue 3 command bytes.
 }
 
-void Telnet::command(char *buf) // queue command data
+void Telnet::command(const char *buf)  // queue command data
 {
    if (!buf || !*buf) return;   // return if no data
    WriteSelect();               // Always write for command output.
-   while (*buf) Command.out(*((unsigned char *) buf++));
+   while (*buf) Command.out(*((const unsigned char *) buf++));
 }
 
-void Telnet::command(char *buf, int len) // queue command data (with length)
+void Telnet::command(const char *buf, int len) // queue command data (w/length)
 {
    if (!buf || !*buf) return;   // return if no data
    WriteSelect();               // Always write for command output.
-   while (len--) Command.out(*((unsigned char *) buf++));
+   while (len--) Command.out(*((const unsigned char *) buf++));
 }
 
 void Telnet::TimingMark(void)   // Queue Telnet TIMING-MARK option in OUTPUT.
@@ -239,11 +239,11 @@ void Telnet::TimingMark(void)   // Queue Telnet TIMING-MARK option in OUTPUT.
 }
 
 void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
-                          Sendlist *to, char *start)
+                          Sendlist *to, const char *start)
 {
-   char   *wrap, *p;
-   int     col;
-   boolean flag;
+   const char *wrap, *p;
+   int         col;
+   boolean     flag;
 
    if (!session) return;
    switch (type) {
@@ -546,7 +546,7 @@ Telnet::Telnet(int lfd)         // Telnet constructor.
    print("\nWelcome to Gangplank! (%s)\n\n", VERSION);
 }
 
-void Telnet::Prompt(char *p)    // Print and set new prompt.
+void Telnet::Prompt(const char *p)    // Print and set new prompt.
 {
    if (session) session->EnqueueOutput();
    prompt = p;
@@ -704,7 +704,7 @@ int Telnet::SetHeight(int n)    // Set terminal height.
 
 void Telnet::InsertString(String &s) // Insert string at point.
 {
-   char *p;
+   const char *p;
    int n, slen = s.length();
 
    if (!s) return;
@@ -1115,10 +1115,10 @@ void Telnet::transpose_words()  // Exchange two words at point.
 
 void Telnet::InputReady()       // telnet stream can input data
 {
-   char           buf[BufSize];
-   Block         *block;
-   register char *from, *from_end;
-   register int   n;
+   char                 buf[BufSize];
+   Block               *block;
+   register const char *from, *from_end;
+   register int         n;
 
    if (fd == -1) return;
    n = read(fd, buf, BufSize);
@@ -1169,7 +1169,7 @@ void Telnet::InputReady()       // telnet stream can input data
             delete [] data;
             data = tmp;
          }
-         n = *((unsigned char *) from++);
+         n = *((const unsigned char *) from++);
          switch (state) {
          case TelnetIAC:
             switch (n) {
@@ -2011,7 +2011,7 @@ void Telnet::InputReady()       // telnet stream can input data
             state = 0;
             from--;             // Backup to current input character.
             while (!state && from < from_end && free < end) {
-               switch (n = *((unsigned char *) from++)) {
+               switch (n = *((const unsigned char *) from++)) {
                case TelnetIAC:
                   state = TelnetIAC;
                   break;

@@ -120,9 +120,9 @@ public:
    Pointer<Event>   LoginTimeout;  // login timeout event
    char            *data;          // start of input data
    char            *free;          // start of free area of allocated block
-   char            *end;           // end of allocated block (+1)
+   const char      *end;           // end of allocated block (+1)
    char            *point;         // current point location
-   char            *mark;          // current mark location
+   const char      *mark;          // current mark location
    String           prompt;        // current prompt
    List<StringObj>  History;       // history lines
    ListIter<StringObj> history;    // history iterator
@@ -160,7 +160,7 @@ public:
    void Closed();
    void ResetLoginTimeout();
    void LoginSequenceFinished();
-   void Prompt(char *p);
+   void Prompt(const char *p);
    boolean GetEcho    ()             { return Echo == TelnetEnabled; }
    void SetEcho       (boolean flag) { Echo = flag ? TelnetEnabled : 0; }
    boolean AtStart    ()             { return boolean(point == data); }
@@ -179,21 +179,22 @@ public:
    int     EndColumn  ()             { return (Start() + End()) % width; }
    void Close         (boolean drain = true);
    void output        (int byte);
-   void output        (char *buf);
-   void output        (char *buf, int len);
-   void print         (char *format, ...);
+   void output        (const char *buf);
+   void output        (const char *buf, int len);
+   void print         (const char *format, ...);
    void echo          (int byte);
-   void echo          (char *buf);
-   void echo          (char *buf, int len);
-   void echo_print    (char *format, ...);
-   void command       (char *buf);            // queue command data
-   void command       (char *buf, int len);   // queue command data (w/length)
+   void echo          (const char *buf);
+   void echo          (const char *buf, int len);
+   void echo_print    (const char *format, ...);
+   void command       (const char *buf);      // queue command data
+   void command       (const char *buf, int len); // queue command data (w/length)
    void command       (int byte);             // Queue command byte.
    void command       (int byte1, int byte2); // Queue 2 command bytes.
    void command       (int byte1, int byte2,  // Queue 3 command bytes.
                        int byte3);
    void TimingMark    ();
-   void PrintMessage  (OutputType type, Timestamp time, Name *from, Sendlist *to, char *start);
+   void PrintMessage  (OutputType type, Timestamp time,
+                       Name *from, Sendlist *to, const char *start);
    void Welcome       ();
    void UndrawInput   ();          // Erase input line from screen.
    void RedrawInput   ();          // Redraw input line on screen.
