@@ -36,7 +36,7 @@
 
 // File descriptor table.
 class FDTable {                        // File Descriptor Table
-private:
+protected:
    static fd_set readfds;              // read fdset for select()
    static fd_set writefds;             // write fdset for select()
    Pointer<FD>  *array;

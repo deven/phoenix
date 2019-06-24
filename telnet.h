@@ -99,7 +99,7 @@ enum TelnetSubnegotiationState {
 // is only enabled when both bits are set.
 
 class Telnet: public FD {         // Data about a particular telnet connection.
-private:
+protected:
    static int count;              // Count of telnet connections. (global)
 
    void LogCaller();              // Log calling host and port.
