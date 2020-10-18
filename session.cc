@@ -684,6 +684,12 @@ void Session::ProcessInput(char *line)
       if (match(line,"!restart",8)) DoRestart(line);
       else if (match(line,"!down",5)) DoDown(line);
       else if (match(line,"!nuke",5)) DoNuke(line);
+      else if (match(line,"!join",2)) DoJoin(line,true);
+      else if (match(line,"!destroy",4)) DoDestroy(line,true);
+      else if (match(line,"!permit",4)) DoPermit(line,true);
+      else if (match(line,"!depermit",4)) DoDepermit(line,true);
+      else if (match(line,"!appoint",4)) DoAppoint(line,true);
+      else if (match(line,"!unappoint",10)) DoUnappoint(line,true);
       else output("Unknown !command.\n");
    } else if (*line == '/') {
       trim(line);
@@ -698,14 +704,14 @@ void Session::ProcessInput(char *line)
       else if (match(line,"/send",2)) DoSend(line);
       else if (match(line,"/bye",4)) DoBye(line);
       else if (match(line,"/what",3)) DoWhat(line);
-      else if (match(line,"/join",2)) DoJoin(line);
+      else if (match(line,"/join",2)) DoJoin(line,false);
       else if (match(line,"/quit",2)) DoQuit(line);
       else if (match(line,"/create",3)) DoCreate(line);
-      else if (match(line,"/destroy",4)) DoDestroy(line);
-      else if (match(line,"/permit",4)) DoPermit(line);
-      else if (match(line,"/depermit",4)) DoDepermit(line);
-      else if (match(line,"/appoint",4)) DoAppoint(line);
-      else if (match(line,"/unappoint",10)) DoUnappoint(line);
+      else if (match(line,"/destroy",4)) DoDestroy(line,false);
+      else if (match(line,"/permit",4)) DoPermit(line,false);
+      else if (match(line,"/depermit",4)) DoDepermit(line,false);
+      else if (match(line,"/appoint",4)) DoAppoint(line,false);
+      else if (match(line,"/unappoint",10)) DoUnappoint(line,false);
       else if (match(line,"/rename",7)) DoRename(line);
       else if (match(line,"/clear",3)) DoClear(line);
       else if (match(line,"/unidle",7)) DoUnidle(line);
@@ -1473,7 +1479,7 @@ void Session::DoWhat(char *args) // Do /what command.
 	 for (i = 0; i < extend; i++) output(Space);
 	 output("        ");
       }
-      if (discussion->Permitted(this)) {
+      if (discussion->Permitted(this,false)) {
 	 if (discussion->title.length() > 50) {
 	    printf("%-49.49s+\n",~discussion->title);
 	 } else {
@@ -1714,7 +1720,7 @@ void Session::DoCreate(char *args) // Do /create command.
 	 ~discussion->title);
 }
 
-void Session::DoDestroy(char *args) // Do /destroy command.
+void Session::DoDestroy(char *args,boolean override) // Do /destroy command.
 {
    if (!*args) {
       output("Usage: /destroy <disc>[,<disc>...]\n");
@@ -1725,17 +1731,17 @@ void Session::DoDestroy(char *args) // Do /destroy command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Destroy(this);
+      discussion->Destroy(this,override);
    } else {
       if (discussion = FindDiscussion(name,matches2,true)) {
-	 discussion->Destroy(this);
+	 discussion->Destroy(this,override);
       } else {
 	 DiscussionMatches(name,matches);
       }
    }
 }
 
-void Session::DoJoin(char *args) // Do /join command.
+void Session::DoJoin(char *args,boolean override) // Do /join command.
 {
    if (!*args) {
       output("Usage: /join <disc>[,<disc>...]\n");
@@ -1746,7 +1752,7 @@ void Session::DoJoin(char *args) // Do /join command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Join(this);
+      discussion->Join(this,override);
    } else {
       DiscussionMatches(name,matches);
    }
@@ -1773,7 +1779,7 @@ void Session::DoQuit(char *args) // Do /quit command.
    }
 }
 
-void Session::DoPermit(char *args) // Do /permit command.
+void Session::DoPermit(char *args,boolean override) // Do /permit command.
 {
    char *name = getword(args);
    if (!*args) {
@@ -1784,17 +1790,17 @@ void Session::DoPermit(char *args) // Do /permit command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Permit(this,args);
+      discussion->Permit(this,args,override);
    } else {
       if (discussion = FindDiscussion(name,matches2,true)) {
-	 discussion->Permit(this,args);
+	 discussion->Permit(this,args,override);
       } else {
 	 DiscussionMatches(name,matches);
       }
    }
 }
 
-void Session::DoDepermit(char *args) // Do /depermit command.
+void Session::DoDepermit(char *args,boolean override) // Do /depermit command.
 {
    char *name = getword(args);
    if (!*args) {
@@ -1805,17 +1811,17 @@ void Session::DoDepermit(char *args) // Do /depermit command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Depermit(this,args);
+      discussion->Depermit(this,args,override);
    } else {
       if (discussion = FindDiscussion(name,matches2,true)) {
-	 discussion->Depermit(this,args);
+	 discussion->Depermit(this,args,override);
       } else {
 	 DiscussionMatches(name,matches);
       }
    }
 }
 
-void Session::DoAppoint(char *args) // Do /appoint command.
+void Session::DoAppoint(char *args,boolean override) // Do /appoint command.
 {
    char *name = getword(args);
    if (!*args) {
@@ -1826,17 +1832,17 @@ void Session::DoAppoint(char *args) // Do /appoint command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Appoint(this,args);
+      discussion->Appoint(this,args,override);
    } else {
       if (discussion = FindDiscussion(name,matches2,true)) {
-	 discussion->Appoint(this,args);
+	 discussion->Appoint(this,args,override);
       } else {
 	 DiscussionMatches(name,matches);
       }
    }
 }
 
-void Session::DoUnappoint(char *args) // Do /unappoint command.
+void Session::DoUnappoint(char *args,boolean override)// Do /unappoint command
 {
    char *name = getword(args);
    if (!*args) {
@@ -1847,10 +1853,10 @@ void Session::DoUnappoint(char *args) // Do /unappoint command.
    Pointer<Discussion> discussion = FindDiscussion(name,matches);
 
    if (discussion) {
-      discussion->Unappoint(this,args);
+      discussion->Unappoint(this,args,override);
    } else {
       if (discussion = FindDiscussion(name,matches2,true)) {
-	 discussion->Unappoint(this,args);
+	 discussion->Unappoint(this,args,override);
       } else {
 	 DiscussionMatches(name,matches);
       }

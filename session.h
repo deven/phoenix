@@ -187,15 +187,15 @@ public:
    void DoGone(char *args);	// Do /gone command.
    void DoHelp(char *args);	// Do /help command.
    void DoUnidle(char *args);	// Do /unidle idle time reset.
-   void DoCreate(char *args);	// Do /create command.
-   void DoDestroy(char *args);	// Do /destroy command.
-   void DoJoin(char *args);	// Do /join command.
-   void DoQuit(char *args);	// Do /quit command.
    void DoWhat(char *args);	// Do /what command.
-   void DoPermit(char *args);	// Do /permit command.
-   void DoDepermit(char *args);	// Do /depermit command.
-   void DoAppoint(char *args);	// Do /appoint command.
-   void DoUnappoint(char *args); // Do /unappoint command.
+   void DoCreate(char *args);	// Do /create command.
+   void DoDestroy(char *args,boolean override);	  // Do /destroy command.
+   void DoJoin(char *args,boolean override);	  // Do /join command.
+   void DoQuit(char *args);			  // Do /quit command.
+   void DoPermit(char *args,boolean override);	  // Do /permit command.
+   void DoDepermit(char *args,boolean override);  // Do /depermit command.
+   void DoAppoint(char *args,boolean override);	  // Do /appoint command.
+   void DoUnappoint(char *args,boolean override); // Do /unappoint command.
    void DoRename(char *args);	 // Do /rename command.
    void DoReset();		 // Do <space><return> idle time reset.
    void DoMessage(char *line);	 // Do message send.

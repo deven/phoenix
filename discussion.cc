@@ -45,17 +45,20 @@ boolean Discussion::IsCreator(Session *session) {
    return boolean(!strcasecmp(creator->name,session->name));
 }
 
-Name *Discussion::IsModerator(Session *session) {
+Name *Discussion::IsModerator(Session *session,boolean override) {
    SetIter<Name> name(moderators);
    while (name++) if (!strcasecmp(name->name,session->name)) return name;
+   if (override && session->user->priv >= 50) {
+      session->output("[Not a moderator; using override privilege.]\n");
+      return session->name_obj;
+   }
    return 0;
 }
 
-boolean Discussion::Permitted(Session *session) {
+boolean Discussion::Permitted(Session *session,boolean override) {
    SetIter<Name> name;
 
-   if (!strcasecmp(creator->name,session->name)) return true;
-   if (IsCreator(session) || IsModerator(session)) return true;
+   if (IsCreator(session) || IsModerator(session,override)) return true;
    if (!Public && !Allowed(session)) return false;
    if (Denied(session)) return false;
    return true;
@@ -66,8 +69,8 @@ void Discussion::EnqueueOthers(Pointer<Output> &out,Session *sender) {
    while (session++) if (session != sender) session->Enqueue(out);
 }
 
-void Discussion::Destroy(Session *session) {
-   if (IsCreator(session) || IsModerator(session)) {
+void Discussion::Destroy(Session *session,boolean override) {
+   if (IsCreator(session) || IsModerator(session,override)) {
       Session::RemoveDiscussion(this);
       session->EnqueueOthers(new DestroyNotify(this,session));
       session->print("You have destroyed discussion %s.\n",~name);
@@ -76,8 +79,8 @@ void Discussion::Destroy(Session *session) {
    }
 }
 
-void Discussion::Join(Session *session) {
-   if (Permitted(session)) {
+void Discussion::Join(Session *session,boolean override = false) {
+   if (Permitted(session,override)) {
       EnqueueOthers(new JoinNotify(this,session),session);
       members.Add(session);
       session->print("You are now a member of discussion %s.\n",~name);
@@ -96,13 +99,13 @@ void Discussion::Quit(Session *session) {
    }
 }
 
-void Discussion::Permit(Session *session,char *args) {
+void Discussion::Permit(Session *session,char *args,boolean override) {
    Set<Session> matches;
    Pointer<Session> s;
    char *user;
    Name *n;
 
-   if (IsCreator(session) || IsModerator(session)) {
+   if (IsCreator(session) || IsModerator(session,override)) {
       while (user = getword(args)) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
@@ -156,13 +159,13 @@ void Discussion::Permit(Session *session,char *args) {
    }
 }
 
-void Discussion::Depermit(Session *session,char *args) {
+void Discussion::Depermit(Session *session,char *args,boolean override) {
    Set<Session> matches;
    Pointer<Session> s;
    char *user;
    Name *n;
 
-   if (IsCreator(session) || IsModerator(session)) {
+   if (IsCreator(session) || IsModerator(session,override)) {
       while (user = getword(args)) {
 	 if (match(user,"others",6)) {
 	    if (Public) {
@@ -184,9 +187,9 @@ void Discussion::Depermit(Session *session,char *args) {
 		  } else {
 		     denied.Add(s->name_obj);
 		     if (members.In(s)) {
-			members.Remove(s);
 			EnqueueOthers(new DepermitNotify(this,session,false,
 							 s),session);
+			members.Remove(s);
 			session->print("You have depermitted and removed "
 				       "%s from discussion %s.\n",~s->name,
 				       ~name);
@@ -200,9 +203,9 @@ void Discussion::Depermit(Session *session,char *args) {
 		  if (n = Allowed(s)) {
 		     allowed.Remove(n);
 		     if (members.In(s)) {
-			members.Remove(s);
 			EnqueueOthers(new DepermitNotify(this,session,false,s),
 				      session);
+			members.Remove(s);
 			session->print("You have depermitted and removed "
 				       "%s from discussion %s.\n",~s->name,
 				       ~name);
@@ -233,20 +236,23 @@ void Discussion::Depermit(Session *session,char *args) {
    }
 }
 
-void Discussion::Appoint(Session *session,char *args) {
+void Discussion::Appoint(Session *session,char *args,boolean override) {
    Set<Session> matches;
    Pointer<Session> s;
+   AppointNotify *notify;
    char *user;
 
-   if (IsCreator(session) || IsModerator(session)) {
+   if (IsCreator(session) || IsModerator(session,override)) {
       while (user = getword(args)) {
 	 if (s = session->FindSession(user,matches)) {
-	    if (IsModerator(s)) {
+	    if (IsModerator(s,false)) {
 	       session->print("%s is already a moderator of discussion %s.\n",
 			      ~s->name,~name);
 	    } else {
 	       moderators.Add(s->name_obj);
-	       EnqueueOthers(new AppointNotify(this,session),session);
+	       notify = new AppointNotify(this,session,s);
+	       EnqueueOthers(notify,session);
+	       if (!members.In(s)) s->Enqueue(notify);
 	       session->print("You have appointed %s as a moderator of "
 			      "discussion %s.\n",~s->name,~name);
 	    }
@@ -259,18 +265,24 @@ void Discussion::Appoint(Session *session,char *args) {
    }
 }
 
-void Discussion::Unappoint(Session *session,char *args) {
+void Discussion::Unappoint(Session *session,char *args,boolean override) {
    Set<Session> matches;
    Pointer<Session> s;
+   UnappointNotify *notify;
    char *user;
    Name *n;
 
-   if (IsCreator(session) || IsModerator(session)) {
+   if (IsCreator(session) || IsModerator(session,override)) {
       while (user = getword(args)) {
 	 if (s = session->FindSession(user,matches)) {
-	    if (n = IsModerator(s)) {
+	    if (IsCreator(s)) {
+	       session->print("%s is the creator of discussion %s.\n",
+			      ~s->name,~name);
+	    } else if (n = IsModerator(s,false)) {
 	       moderators.Remove(n);
-	       EnqueueOthers(new UnappointNotify(this,session),session);
+	       notify = new UnappointNotify(this,session,s);
+	       EnqueueOthers(notify,session);
+	       if (!members.In(s)) s->Enqueue(notify);
 	       session->print("You have unappointed %s as a moderator of "
 			      "discussion %s.\n",~s->name,~name);
 	    } else {
