@@ -34,16 +34,8 @@ AC_ARG_ENABLE(port,
    AC_DEFINE(GUEST_ACCESS, 1, [Define to enable guest access.])
 )
 
-# Check for Cygwin environment.
-m4_warn([obsolete],
-[AC_CYGWIN is obsolete: use AC_CANONICAL_HOST and check if $host_os
-matches *cygwin*])dnl
+# Get canonical host-system type.
 AC_CANONICAL_HOST
-case $host_os in
-  *cygwin* ) CYGWIN=yes;;
-	 * ) CYGWIN=no;;
-esac
-
 
 # Checks for programs.
 AC_PROG_CXX
@@ -124,10 +116,12 @@ if test "$GCC" = yes; then
 fi
 
 # Apply Cygwin-specific options only if running under Cygwin.
-if test "$CYGWIN" = yes; then
-  CFLAGS="$CFLAGS -DFD_SETSIZE=256"
-  CXXFLAGS="$CXXFLAGS -DFD_SETSIZE=256"
-fi
+case $host_os in
+  *cygwin* )
+    CFLAGS="$CFLAGS -DFD_SETSIZE=256"
+    CXXFLAGS="$CXXFLAGS -DFD_SETSIZE=256"
+    ;;
+esac
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
