@@ -21,7 +21,7 @@
 AC_INIT([gangplank],[1.0.0.beta.11],[bugs@gangplank.org])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gangplank.cc])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Argument handling.
 AC_ARG_ENABLE(port,
