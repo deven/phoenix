@@ -83,7 +83,7 @@ if test "$GCC" = yes; then
 
   # Add "-fno-rtti" option to disable RTTI, if supported.
   if test "$ac_cv_cxx_rtti" = yes; then
-    CFLAGS="$CFLAGS -fno-rtti"
+    CFLAGS="$CFLAGS"
     CXXFLAGS="$CXXFLAGS -fno-rtti"
   fi
 
