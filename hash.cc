@@ -20,13 +20,11 @@
 //
 // $Log$
 
-#include "boolean.h"
 #include "config.h"
-#include "general.h"
-#include "hash.h"
+#include "boolean.h"
 #include "object.h"
 #include "string2.h"
-#include "system.h"
+#include "hash.h"
 
 int Hash::HashFunction(char *key)
 {

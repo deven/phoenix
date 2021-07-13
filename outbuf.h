@@ -24,10 +24,6 @@
 #ifndef _OUTBUF_H
 #define _OUTBUF_H 1
 
-// Include files.
-#include "block.h"
-#include "boolean.h"
-
 // Output buffer consisting of linked list of output blocks.
 class OutputBuffer {
 public:

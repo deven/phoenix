@@ -11,9 +11,6 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H 1
 
-// Include files.
-#include "boolean.h"
-
 class Object {
 private:
    int RefCnt;                          // Reference count.
