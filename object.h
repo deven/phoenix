@@ -11,6 +11,11 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H 1
 
+extern "C" {
+#include <stdio.h>
+#include <stdlib.h>
+};
+
 class Object {
 private:
    int RefCnt;                          // Reference count.
@@ -18,7 +23,9 @@ public:
    Object(): RefCnt(0) { }              // Object constructor.
    virtual ~Object() {                  // Object destructor.
       if (RefCnt > 0) {                 // Check for outstanding references.
-         crash("Object destroyed with %d outstanding references!", RefCnt);
+         (void) fprintf(stderr, "\nObject destroyed with %d outstanding references!\n", RefCnt);
+         abort();
+         exit(-1);
       }
       RefCnt = -1;                      // Flag object as destroyed.
    }
