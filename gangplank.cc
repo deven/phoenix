@@ -20,15 +20,7 @@
 //
 // $Log$
 
-// Include files.
-#include "block.h"
-#include "fd.h"
-#include "fdtable.h"
 #include "gangplank.h"
-#include "listen.h"
-#include "session.h"
-#include "telnet.h"
-#include "user.h"
 
 #ifndef HAVE_STRERROR
 extern int   sys_nerr;
