@@ -62,13 +62,11 @@ public:
    Pointer(const Pointer &p): ptr(NULL) { SetPointer(p.ptr); }
    Pointer(Type *p):          ptr(NULL) { SetPointer(p); }
    Pointer(Type &p):          ptr(NULL) { SetPointer(&p); }
-   Pointer(int n):            ptr(NULL) { if (n) abort(); }
    ~Pointer()                           { SetPointer(NULL); }
 
    Pointer &operator =(Pointer &p) { return SetPointer(p.ptr); }
    Pointer &operator =(Type *p)    { return SetPointer(p); }
    Pointer &operator =(Type &p)    { return SetPointer(&p); }
-   Pointer &operator =(int n)      { if (n) abort(); return SetPointer(NULL); }
    Type *operator ->()             { return ptr; }
    operator Type *()               { return ptr; }
    operator boolean()              { return ptr != NULL; }
