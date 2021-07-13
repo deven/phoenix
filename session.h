@@ -42,16 +42,6 @@
 #ifndef _SESSION_H
 #define _SESSION_H 1
 
-// Include files.
-#include "boolean.h"
-#include "gangplank.h"
-#include "list.h"
-#include "object.h"
-#include "outbuf.h"
-#include "output.h"
-#include "outstr.h"
-#include "set.h"
-
 enum AwayState { Here, Away, Busy, Gone }; // Degrees of "away" status.
 
 // Data about a particular session.

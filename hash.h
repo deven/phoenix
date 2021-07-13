@@ -33,6 +33,9 @@
 #ifndef _HASH_H
 #define _HASH_H 1
 
+#include "object.h"
+#include "string2.h"
+
 class HashEntry: public Object {
 friend class Hash;
 friend class HashIter;

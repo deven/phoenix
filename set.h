@@ -30,11 +30,6 @@
 #ifndef _SET_H
 #define _SET_H 1
 
-// Include files.
-#include "boolean.h"
-#include "list.h"
-#include "object.h"
-
 template <class Type> class SetIter;
 
 template <class Type>

@@ -30,10 +30,6 @@
 #ifndef _OUTSTR_H
 #define _OUTSTR_H 1
 
-// Include files.
-#include "gangplank.h"
-#include "output.h"
-
 class OutputStreamObject {
 friend class OutputStream;
 private:

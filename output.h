@@ -33,11 +33,6 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H 1
 
-// Include files.
-#include "gangplank.h"
-#include "name.h"
-#include "object.h"
-
 // Types of Output subclasses.
 enum OutputType {
    UnknownOutput,  TextOutput,    PublicMessage,   PrivateMessage,
