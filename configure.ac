@@ -71,9 +71,9 @@ if test "$GCC" = yes; then
   # Use "gcc" driver instead of "g++" driver, since libstdc++ is not needed.
   CXX="$CC"
 
-  # Add "-Wall" option to enable all warnings.
-  CFLAGS="$CFLAGS -Wall"
-  CXXFLAGS="$CXXFLAGS -Wall"
+  # Add "-Wall" option to enable all warnings and -Werror to make them fatal.
+  CFLAGS="$CFLAGS -Wall -Werror"
+  CXXFLAGS="$CXXFLAGS -Wall -Werror"
 
   # Add "-fno-exceptions" option to disable exceptions, if supported.
   if test "$ac_cv_cxx_exceptions" = yes; then
