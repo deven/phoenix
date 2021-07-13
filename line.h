@@ -30,10 +30,6 @@
 #ifndef _LINE_H
 #define _LINE_H 1
 
-// Include files.
-#include "gangplank.h"
-#include "object.h"
-
 // Single input lines waiting to be processed.
 class Line: public Object {
 public:

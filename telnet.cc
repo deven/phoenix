@@ -70,13 +70,7 @@
 // Initial revision
 //
 
-// Include files.
-#include "fdtable.h"
 #include "gangplank.h"
-#include "line.h"
-#include "session.h"
-#include "telnet.h"
-#include "user.h"
 
 int Telnet::count = 0;
 

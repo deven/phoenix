@@ -30,10 +30,6 @@
 #ifndef _NAME_H
 #define _NAME_H 1
 
-// Include files.
-#include "gangplank.h"
-#include "object.h"
-
 class Name: public Object {
 public:
    Pointer<Session> session;    // Session this name refers to.

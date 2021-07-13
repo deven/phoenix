@@ -33,12 +33,7 @@
 // Initial revision
 //
 
-// Include files.
-#include "fdtable.h"
 #include "gangplank.h"
-#include "listen.h"
-#include "session.h"
-#include "telnet.h"
 
 boolean Listen::PortBusy(int port)
 {

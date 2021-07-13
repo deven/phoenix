@@ -56,6 +56,12 @@
 #ifndef _STRING2_H
 #define _STRING2_H 1
 
+#include "object.h"
+
+extern "C" {
+#include <string.h>
+};
+
 class String {
 private:
    static const size_t Extra        = 128;

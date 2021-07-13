@@ -33,10 +33,6 @@
 #ifndef _LIST_H
 #define _LIST_H 1
 
-// Include files.
-#include "boolean.h"
-#include "object.h"
-
 template <class Type> class List;
 template <class Type> class ListIter;
 

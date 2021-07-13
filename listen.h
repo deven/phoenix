@@ -33,11 +33,6 @@
 #ifndef _LISTEN_H
 #define _LISTEN_H 1
 
-// Include files.
-#include "fd.h"
-#include "fdtable.h"
-#include "gangplank.h"
-
 // Listening socket (subclass of FD).
 class Listen: public FD {
 public:
