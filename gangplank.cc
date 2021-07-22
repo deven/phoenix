@@ -207,7 +207,7 @@ int SystemUptime()                // Get system uptime, if available.
    FILE *fp = fopen("/proc/uptime", "r");
 
    if (fp) {
-      fscanf(fp, "%d", &uptime);
+      if (fscanf(fp, "%d", &uptime) != 1) uptime = 0;
       fclose(fp);
    }
    return uptime;
