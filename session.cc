@@ -2681,7 +2681,7 @@ void Session::SendMessage(Sendlist *sendlist, const char *msg)
 }
 
 // Exit if shutting down and no users are left.
-static void Session::CheckShutdown()
+void Session::CheckShutdown()
 {
    ShutdownEvent *shutdown;
    RestartEvent  *restart;
