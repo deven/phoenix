@@ -2541,7 +2541,7 @@ char *message_start(char *line, String &sendlist,
    // Attempt to detect smileys that shouldn't be sendlists...
    if (!isalpha(*line) && !isspace(*line)) {
       /* Only compare initial non-whitespace characters. */
-      for (i = 0; i < len; i++) if (isspace(line[i])) break;
+      for (i = 0; line[i]; i++) if (isspace(line[i])) break;
 
       // Just special-case a few smileys...
       if (!strncmp(line, ":-)", i) || !strncmp(line, ":-(", i) ||
