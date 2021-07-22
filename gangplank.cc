@@ -248,8 +248,9 @@ char *getword(char *&input, char separator)
    return *p ? p : NULL;
 }
 
-char *match(char *&input, char *keyword, int min) {
-   char *p = input, *q = keyword;
+char *match(char *&input, const char *keyword, int min) {
+   char *p = input;
+   const char *q = keyword;
    int i;
 
    if (!min) min = strlen(keyword);

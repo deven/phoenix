@@ -39,7 +39,7 @@ const char *strerror(int errno);
 #endif
 
 // Input function pointer type.
-typedef void (Session::*InputFuncPtr)(const char *line);
+typedef void (Session::*InputFuncPtr)(char *line);
 
 // Callback function pointer type.
 typedef void (Telnet::*CallbackFuncPtr)();
@@ -54,7 +54,7 @@ void  quit        (int);
 int   SystemUptime();                   // Get system uptime, if available.
 void  trim        (char *&input);
 char *getword     (char *&input, char separator = 0);
-char *match       (char *&input, char *keyword, int min = 0);
+char *match       (char *&input, const char *keyword, int min = 0);
 int   main        (int argc, char **argv);
 
 #endif // functions.h

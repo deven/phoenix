@@ -46,19 +46,19 @@
 
 List<User> User::users;
 
-User::User(char *login, char *pass, char *names, char *bl, int p): user(login),
+User::User(const char *login, const char *pass, const char *names, const char *bl, int p): user(login),
    password(pass), blurb(bl), priv(p)
 {
    SetReserved(names);
    users.AddTail(this);
 }
 
-void User::SetReserved(char *names)
+void User::SetReserved(const char *names)
 {
    reserved.Reset();
    if (names) {
-      char *name = names;
-      for (char *p = name; *p; p++) {
+      const char *name = names;
+      for (const char *p = name; *p; p++) {
          if (*p == ',') {
             reserved.AddTail(new StringObj(name, p - name));
             reserved.Last()->trim();
@@ -70,14 +70,14 @@ void User::SetReserved(char *names)
    }
 }
 
-User *User::GetUser(char *login)
+User *User::GetUser(const char *login)
 {
    ListIter<User> u(users);
    while (u++) if (!strcasecmp(~u->user, login)) return u;
    return NULL;
 }
 
-void User::Update(char *login, char *pass, char *names, char *defblurb, int p)
+void User::Update(const char *login, const char *pass, const char *names, const char *defblurb, int p)
 {
    User *u = GetUser(login);
    if (!u) u = new User(login, pass, names, defblurb, p);
@@ -119,7 +119,7 @@ void User::UpdateAll()          // Update all user entries from password file.
 #endif
 }
 
-char *User::FindReserved(char *name, User *&user)
+const char *User::FindReserved(const char *name, User *&user)
 {
    UpdateAll();                 // Update user accounts.
 

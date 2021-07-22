@@ -41,7 +41,7 @@
 
 #include "gangplank.h"
 
-Discussion::Discussion(Session *s, char *Name, char *Title, boolean ispublic) {
+Discussion::Discussion(Session *s, const char *Name, const char *Title, boolean ispublic) {
    name   = Name;
    title  = Title;
    Public = ispublic;
