@@ -652,8 +652,7 @@ void Session::EnteredBlurb(char *input) // Process blurb prompt response.
    char *line = input;
 
    if (!CheckNameAvailability(~name, true, false)) return;
-   if (!line || !*line) line = user->blurb;
-   if (!line) line = "";
+   if ((!line || !*line) && user->blurb) line = user->blurb;
    DoBlurb(line, true);
 
    telnet->LoginSequenceFinished();
