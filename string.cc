@@ -366,7 +366,7 @@ String &String::append(const char *s)
          strncpy(str, tmp, len);
          delete [] tmp;
       }
-      strncpy(str + len, s, n);
+      memcpy(str + len, s, n);
       len     += n;
       str[len] = 0;
    }
@@ -468,7 +468,7 @@ String &String::prepend(const char *s)
          strncpy(str + n, tmp, len);
          delete [] tmp;
       }
-      strncpy(str, s, n);
+      memcpy(str, s, n);
       len     += n;
       str[len] = 0;
    }
