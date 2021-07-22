@@ -683,10 +683,11 @@ void Session::EnteredBlurb(char *input) // Process blurb prompt response.
    }
 
    // Automatic commands: (all enqueue output)
-   DoJoin("A");
-   DoSend("A");
-   DoWho("");
-   DoHowMany("");
+   String A("A"), empty("");
+   DoJoin(A);
+   DoSend(A);
+   DoWho(empty);
+   DoHowMany(empty);
 
    telnet->History.Reset();     // Reset input history.
 
