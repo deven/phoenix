@@ -6,7 +6,7 @@
 #
 # Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
 #
-# This file is part of the Gangplank conferencing system.
+# This file is part of the Phoenix conferencing system.
 #
 # This file may be distributed under the terms of the Q Public License
 # as defined by Trolltech AS of Norway (except for Choice of Law) and as
@@ -15,14 +15,14 @@
 # This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 # WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
+# Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 # for more information or if any conditions of this licensing are unclear.
 #
 
 AC_PREREQ([2.71])
-AC_INIT([gangplank], [1.0.0.beta.11], [bugs@gangplank.org])
+AC_INIT([phoenix], [1.0.0.beta.11], [bugs@phoenix-cmc.org])
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([gangplank.cc])
+AC_CONFIG_SRCDIR([phoenix.cc])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4])
 

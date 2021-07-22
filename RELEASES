@@ -3,7 +3,7 @@ $Id: RELEASES,v 1.11 2003/09/18 04:29:31 deven Exp $
 Stable Releases
 ---------------
 
- * No Gangplank release has been designated "stable" yet.  This is to
+ * No Phoenix release has been designated "stable" yet.  This is to
    ensure no dumb mistakes (as with version 1.0.0.beta.1) ever occur in
    a release declared "stable" -- every "stable" release will be identical
    to a development release, with only the version number changed.

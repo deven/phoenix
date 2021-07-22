@@ -1,12 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.h,v 1.5 2003/02/18 05:08:56 deven Exp $
+// $Id: phoenix.h,v 1.5 2003/02/18 05:08:56 deven Exp $
 //
 // Primary header file.
 //
 // Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
 //
-// This file is part of the Gangplank conferencing system.
+// This file is part of the Phoenix conferencing system.
 //
 // This file may be distributed under the terms of the Q Public License
 // as defined by Trolltech AS of Norway (except for Choice of Law) and as
@@ -15,13 +15,13 @@
 // This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 // WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 //
-// Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
+// Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 // for more information or if any conditions of this licensing are unclear.
 //
 
 // Check if previously included.
-#ifndef _GANGPLANK_H
-#define _GANGPLANK_H 1
+#ifndef _PHOENIX_H
+#define _PHOENIX_H 1
 
 #include "config.h"
 #include "system.h"
@@ -53,4 +53,4 @@
 #include "telnet.h"
 #include "globals.h"
 
-#endif // gangplank.h
+#endif // phoenix.h

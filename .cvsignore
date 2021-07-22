@@ -10,7 +10,7 @@ config.h.in~
 configure
 config.log
 config.status
-gangplank
+phoenixd
 makepw
 restart
 stamp-h1

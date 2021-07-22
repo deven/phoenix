@@ -1,12 +1,12 @@
 // -*- C++ -*-
 //
-// $Id: gangplank.cc,v 1.13 2003/09/18 01:24:55 deven Exp $
+// $Id: phoenix.cc,v 1.13 2003/09/18 01:24:55 deven Exp $
 //
 // Main program.
 //
 // Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
 //
-// This file is part of the Gangplank conferencing system.
+// This file is part of the Phoenix conferencing system.
 //
 // This file may be distributed under the terms of the Q Public License
 // as defined by Trolltech AS of Norway (except for Choice of Law) and as
@@ -15,11 +15,11 @@
 // This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 // WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 //
-// Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
+// Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 // for more information or if any conditions of this licensing are unclear.
 //
 
-#include "gangplank.h"
+#include "phoenix.h"
 
 #ifndef HAVE_STRERROR
 extern int   sys_nerr;
@@ -248,7 +248,7 @@ int main(int argc, char **argv)   // main program
 #if defined(HAVE_FORK) && defined(HAVE_WORKING_FORK)
    // Fork subprocess and exit parent.
    if (debug) {
-      Log("Started Gangplank server, version %s.", VERSION);
+      Log("Started Phoenix server, version %s.", VERSION);
       Log("Listening for connections on TCP port %d. (pid %d)", port, getpid());
    } else {
       switch (pid = fork()) {
@@ -259,7 +259,7 @@ int main(int argc, char **argv)   // main program
             close(0);
             close(1);
             close(2);
-            Log("Started Gangplank server, version %s.", VERSION);
+            Log("Started Phoenix server, version %s.", VERSION);
             Log("Listening for connections on TCP port %d. (pid %d)", port,
                 getpid());
             break;
@@ -267,7 +267,7 @@ int main(int argc, char **argv)   // main program
             error("main(): fork()");
             break;
          default:
-            fprintf(stderr, "Started Gangplank server, version %s.\n"
+            fprintf(stderr, "Started Phoenix server, version %s.\n"
                     "Listening for connections on TCP port %d. (pid %d)\n",
                     VERSION, port, pid);
             exit(0);
@@ -285,7 +285,7 @@ int main(int argc, char **argv)   // main program
       }
    }
 #else
-   Log("Started Gangplank server, version %s. (pid %d)"), VERSION, getpid());
+   Log("Started Phoenix server, version %s. (pid %d)"), VERSION, getpid());
    Log("Listening for connections on TCP port %d.", port);
 #endif
 

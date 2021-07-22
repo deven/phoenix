@@ -1,6 +1,6 @@
 $Id: OVERVIEW,v 1.1 2001/11/30 23:53:32 deven Exp $
 
-This is a short overview of some coding conventions in the Gangplank source.
+This is a short overview of some coding conventions in the Phoenix source.
 
 String objects use a unary ~ (tilde) operator as a shorthand for casting the
 string to a (char *).  This syntax is used extensively throughout the source.

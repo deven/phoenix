@@ -1,6 +1,6 @@
 $Id: PORTING,v 1.5 2003/02/18 05:47:42 deven Exp $
 
-Gangplank has been known to build and run on the following platforms:
+Phoenix has been known to build and run on the following platforms:
 
  * Linux (i386) - Red Hat 6.x, 7.x; Debian 2.2; Fedore Core 1
  * FreeBSD 4.x, 5.x (i386)
@@ -13,12 +13,12 @@ Gangplank has been known to build and run on the following platforms:
  * AIX 4.3.2
  * Cygwin (under Windows)
 
-Gangplank is known to compile with GCC versions from 2.95 through 3.1, using
-the "gcc" driver.  (Although Gangplank is written in C++, it does not use the
-standard C++ library.)  Gangplank has also been tested with the Sun compiler
+Phoenix is known to compile with GCC versions from 2.95 through 3.1, using
+the "gcc" driver.  (Although Phoenix is written in C++, it does not use the
+standard C++ library.)  Phoenix has also been tested with the Sun compiler
 under Solaris.
 
-All of these have been tested with some version of the Gangplank code, and
+All of these have been tested with some version of the Phoenix code, and
 any problems found have been corrected in newer releases.  However, newer
 releases have not generally been re-tested against every previously-tested
 platform, so new bugs could be present on some platforms.  Whenever possible,

@@ -1,20 +1,20 @@
 $Id: HISTORY,v 1.1 2001/11/30 23:53:32 deven Exp $
 
-This is a brief history of the Gangplank conferencing system.
+This is a brief history of the Phoenix conferencing system.
 
-Initial development of the system began on November 30, 1992.  Gangplank
+Initial development of the system began on November 30, 1992.  Phoenix
 was finally released (under the Q Public License) on its ninth birthday,
 November 30, 2001.  Unreleased versions have run as a production service
-(on a private host computer) since March 5, 1993 or earlier, mostly under
-the name of "Phoenix".  The name change to "Gangplank" coincides with the
-Open Source release on November 30, 2001.
+(on a private host computer) since March 5, 1993 or earlier.  The name
+change to "Gangplank" coincided with the original Open Source release on
+November 30, 2001.
 
 To date, all of the source code has been written by the original author,
 Deven T. Corzine <deven@ties.org>.  Due to a rather draconian Intellectual
 Property agreement, no development work occurred on this codebase between
 July 23, 1996 and March 10, 2000.
 
-During early development, Gangplank was simply called "conf" for lack of
+During early development, Phoenix was simply called "conf" for lack of
 any real name.  Initial development was in C, from November 30, 1992 until
 April 8, 1993.  (It was first placed under RCS control on March 5, 1993.)
 After that, the codebase was ported to C++ and redesigned as a series of
@@ -26,5 +26,5 @@ renamed to "Phoenix" on April 21, 1994.
 
 The name was changed to "Gangplank" to coincide with the Open Source release
 on November 30, 2001.  A 1.x version number was used for the initial release
-of Gangplank because there was already long history under the "conf" and
+of Phoenix because there was already long history under the "conf" and
 "Phoenix" names, which could be viewed as (unreleased) 0.x versions.

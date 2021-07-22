@@ -11,8 +11,6 @@ session.cc...  (For that matter, get rid of message_start()!)
 Raw TCP connections don't disconnect on login timeout.  (hang on TIMING-MARK)
 [#33?]
 
-Rename server executable to "gangplankd"?  (To prepare for a client...)
-
 Possibly add a VERSIONS document, listing the CVS versions for a release?
 
 Regenerate configure.scan?  Seems to be different; update configure.ac?
@@ -177,7 +175,7 @@ generalized word-wrapping code!)
 
 Should all Strings be Objects?  Get rid of StringObj perhaps?
 
-Update old Phoenix client to make an official Gangplank C or C++ client, with
+Update old Phoenix client to make an official Phoenix C or C++ client, with
 full Emacs-style line editing?
 
 Port or reimplement C client as a Java applet for use as a web client?
