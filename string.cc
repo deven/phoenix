@@ -18,46 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: string.cc,v $
-// Revision 1.11  2003/09/18 01:39:03  deven
-// Added trim().
-//
-// Revision 1.10  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.9  2003/02/18 04:32:04  deven
-// Modified to use size_t type.  Changed Extra constant to 128 bytes.  Added
-// assign(), append() and prepend() methods for buffers.  Avoided unnecessary
-// reallocations for numeric assignments.  Modified %s escape in vsprintf() to
-// use new buffer form of append() instead of creating a temporary String, and
-// to remove a redundant call to strlen().
-//
-// Revision 1.8  2003/02/18 03:28:54  deven
-// Moved variable declarations outside of switch statement for portability.
-//
-// Revision 1.7  2003/02/17 06:35:51  deven
-// Added String::vsprintf() and String::sprintf() functions.
-//
-// Revision 1.6  2003/02/17 06:32:55  deven
-// Added NumberLength constant and operator =() calls for numeric assignment.
-//
-// Revision 1.5  2002/11/26 04:27:51  deven
-// Modified to include both <string.h> and <strings.h> if both are available.
-//
-// Revision 1.4  2002/11/21 06:07:48  deven
-// Changed "string.h" to "string2.h" to avoid conflict with <string.h> file.
-//
-// Revision 1.3  2002/09/17 02:41:30  deven
-// Added include file config.h.  Added conditional checks for some includes,
-// based on configure's tests.
-//
-// Revision 1.2  2001/12/12 05:13:43  deven
-// Updated include files for portability.  Added additional operations for
-// completeness, including const/non-const variants.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "config.h"
 #include <stdio.h>

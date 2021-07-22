@@ -18,25 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: telnet.h,v $
-// Revision 1.6  2003/02/21 03:12:19  deven
-// Added login timeout.
-//
-// Revision 1.5  2003/02/18 05:43:41  deven
-// Implemented CloseOnEOF flag to close on Ctrl-D during login sequence.
-//
-// Revision 1.4  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.3  2003/02/17 06:22:29  deven
-// Moved InputSize constant into Telnet class, increased size to 1024 bytes.
-//
-// Revision 1.2  2003/02/17 06:16:20  deven
-// Moved BufSize constant into Telnet class.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _TELNET_H

@@ -18,16 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: functions.h,v $
-// Revision 1.3  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.2  2002/11/26 06:42:28  deven
-// If configure did not find strerror(), declare implementation prototype.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _FUNCTIONS_H

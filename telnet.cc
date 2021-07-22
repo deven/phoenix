@@ -18,57 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: telnet.cc,v $
-// Revision 1.13  2003/09/18 02:01:29  deven
-// Added session checks, fixed timeout, avoided saving empty input lines in
-// history and added application cursor support.
-//
-// Revision 1.12  2003/02/24 06:35:42  deven
-// Removed inet_ntoa() check.
-//
-// Revision 1.11  2003/02/22 04:39:59  deven
-// Modified Session::SetInputFunction() to set prompt with input function.
-//
-// Revision 1.10  2003/02/21 03:12:19  deven
-// Added login timeout.
-//
-// Revision 1.9  2003/02/18 05:43:41  deven
-// Implemented CloseOnEOF flag to close on Ctrl-D during login sequence.
-//
-// Revision 1.8  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.7  2003/02/17 06:40:06  deven
-// Modified to use String::vsprintf() and String::sprintf() in preference to
-// the system vsprintf() and sprintf() functions, to avoid buffer overflows.
-//
-// Revision 1.6  2002/10/30 05:55:05  deven
-// Fixed ANSI terminal-handling problems related to line wrapping.  (This code
-// was originally developed for the Amiga ANSI emulation, which may not work
-// correctly with this new code, but this code works correctly with standard
-// ANSI terminals.)  Also modified erase_line() to call kill_line() to place
-// the erased line into the kill-ring.
-//
-// Revision 1.5  2002/09/20 05:34:42  deven
-// Generate a compile-time error if inet_ntoa() not available.  Modified to
-// only output banner message about guest access if enabled by configure.
-// Added gangplank version number to banner message.  Removed EWOULDBLOCK and
-// EAGAIN from switch statements because it causes a duplicate-case error on
-// some platforms.  Made ECONNRESET, ECONNTIMEDOUT and ETIMEDOUT cases
-// conditional.
-//
-// Revision 1.4  2002/07/28 05:50:34  deven
-// Changed third argument of getpeername() to socklen_t for more compatibility.
-//
-// Revision 1.3  2002/07/28 05:46:09  deven
-// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
-//
-// Revision 1.2  2001/12/12 05:45:28  deven
-// Modified to assign null string instead of null pointer to wipe prompt.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 

@@ -18,25 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: session.h,v $
-// Revision 1.6  2003/09/18 01:26:08  deven
-// Added PrintReservedNames().
-//
-// Revision 1.5  2003/02/22 04:39:59  deven
-// Modified Session::SetInputFunction() to set prompt with input function.
-//
-// Revision 1.4  2003/02/21 03:17:39  deven
-// Renamed Blurb() to EnteredBlurb(), added CheckNameAvailability().
-//
-// Revision 1.3  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.2  2003/02/17 08:06:13  deven
-// Added MaxLoginAttempts and removed "Login incorrect" for invalid logins.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _SESSION_H

@@ -18,39 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: string2.h,v $
-// Revision 1.9  2003/09/18 01:38:29  deven
-// Added trim().
-//
-// Revision 1.8  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.7  2003/02/18 04:32:04  deven
-// Modified to use size_t type.  Changed Extra constant to 128 bytes.  Added
-// assign(), append() and prepend() methods for buffers.  Avoided unnecessary
-// reallocations for numeric assignments.  Modified %s escape in vsprintf() to
-// use new buffer form of append() instead of creating a temporary String, and
-// to remove a redundant call to strlen().
-//
-// Revision 1.6  2003/02/17 06:35:51  deven
-// Added String::vsprintf() and String::sprintf() functions.
-//
-// Revision 1.5  2003/02/17 06:32:55  deven
-// Added NumberLength constant and operator =() calls for numeric assignment.
-//
-// Revision 1.4  2003/02/17 06:28:02  deven
-// Modified default String() constructor to allocate extra bytes.
-//
-// Revision 1.3  2002/09/17 04:49:50  deven
-// Modified to check HAVE_BOOL (determined by configure) instead of BOOL_TYPE.
-//
-// Revision 1.2  2001/12/12 05:12:44  deven
-// Added additional operations for completeness, including const/non-const
-// variants.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _STRING2_H

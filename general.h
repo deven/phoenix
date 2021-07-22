@@ -18,19 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: general.h,v $
-// Revision 1.4  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.3  2002/09/17 03:33:51  deven
-// Stop defining ECONNTIMEDOUT as ETIMEDOUT if missing.
-//
-// Revision 1.2  2002/09/10 04:13:35  deven
-// Added prototypes for new/delete operators.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _GENERAL_H

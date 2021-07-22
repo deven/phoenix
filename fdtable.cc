@@ -18,28 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: fdtable.cc,v $
-// Revision 1.6  2003/02/24 06:27:03  deven
-// Removed check for select().
-//
-// Revision 1.5  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.4  2002/09/18 02:09:14  deven
-// Generate a compile-time error if select() not available.
-//
-// Revision 1.3  2002/09/10 04:18:08  deven
-// Modified to take FD_SETSIZE into account.  This was the portability flaw
-// which kept Cygwin from working.  Also, changed select() call to pass only
-// the used number of file descriptor slots (which was already being tracked)
-// instead of the full size.  (This change is solely for efficiency purposes.)
-//
-// Revision 1.2  2001/12/12 05:46:27  deven
-// Modified to explicitly construct null-pointer return value.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 

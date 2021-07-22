@@ -18,54 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: gangplank.cc,v $
-// Revision 1.13  2003/09/18 01:24:55  deven
-// Modified warn(), error() and crash() to check if logfile is open.  Modified
-// to double-fork and close I/O during server startup.
-//
-// Revision 1.12  2003/02/24 06:29:36  deven
-// Removed mkdir() check.  Modified to use LIBDIR instead of "~/lib/gangplank"
-// directory.  Added options processing, required -port to specify port number.
-// When -cron is specified, exit silently if the port is busy.
-//
-// Revision 1.11  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.10  2003/02/17 06:40:06  deven
-// Modified to use String::vsprintf() and String::sprintf() in preference to
-// the system vsprintf() and sprintf() functions, to avoid buffer overflows.
-//
-// Revision 1.9  2003/02/17 06:25:14  deven
-// Removed DefaultPort constant in favor of using configured PORT parameter.
-//
-// Revision 1.8  2002/11/26 06:43:22  deven
-// If configure did not find strerror(), define an implementation.  (For very
-// old BSD systems.)  Fixed getpid() back to pid, from last update to startup
-// messages.  (Parent process was reporting the wrong pid for child process.)
-//
-// Revision 1.7  2002/11/22 05:06:47  deven
-// Modified startup messages in logfile to include server version number.
-//
-// Revision 1.6  2002/09/20 04:29:22  deven
-// Generate a compile-time error if mkdir() or strerror() not available.
-// Reverse parameters to setvbuf() if configure says so.  Don't compile code
-// to fork a subprocess to background unless configure found a working fork.
-//
-// Revision 1.5  2002/09/10 04:22:21  deven
-// Provided basic new/delete operators using malloc/free.
-//
-// Revision 1.4  2002/07/28 05:49:03  deven
-// Changed setlinebuf() call to setvbuf() equivalent.
-//
-// Revision 1.3  2002/07/28 05:46:09  deven
-// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
-//
-// Revision 1.2  2001/12/12 05:52:53  deven
-// Modified to use strerror() instead of sys_nerr and sys_errlist.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 

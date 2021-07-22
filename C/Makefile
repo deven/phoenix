@@ -9,10 +9,6 @@
 #
 # Development began on November 30, 1992.
 #
-# $Log: Makefile,v $
-# Revision 1.1  1993/03/05 18:01:47  deven
-# Initial revision
-#
 
 CC = gcc -Wall -Werror
 CFLAGS = -g

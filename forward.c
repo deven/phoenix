@@ -5,7 +5,6 @@
  *
  * Copyright 1994 by Deven T. Corzine.  All rights reserved.
  *
- * $Log$
  */
 
 #include <errno.h>
