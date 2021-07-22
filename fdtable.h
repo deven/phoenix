@@ -18,7 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
 
 // Check if previously included.
 #ifndef _FDTABLE_H

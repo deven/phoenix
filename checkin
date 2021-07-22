@@ -6,7 +6,6 @@
 #
 # Copyright 1992-2003 by Deven T. Corzine.  All rights reserved.
 #
-# $Log$
 
 stty erase '^h'
 for x in $*; do
