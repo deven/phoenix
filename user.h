@@ -48,16 +48,16 @@ public:
    String           blurb;          // default blurb
    int              priv;           // privilege level
 
-   User(char *login, char *pass, char *names, char *bl, int p); // constructor
-   ~User()                                 { users.Remove(this); }
+   User(const char *login, const char *pass, const char *names, const char *bl, int p); // constructor
+   ~User()                               { users.Remove(this); }
 
-   void         SetReserved (char *names);
-   static User *GetUser     (char *login);
-   static void  Update      (char *login, char *pass, char *name,
-                             char *defblurb, int p);
+   void         SetReserved (const char *names);
+   static User *GetUser     (const char *login);
+   static void  Update      (const char *login, const char *pass,
+                             const char *name, const char *defblurb, int p);
    static void  UpdateAll   ();
-   char        *FindReserved(char *name, User *&user);
-   void         AddSession  (Session *s)   { sessions.AddTail(s); }
+   const char  *FindReserved(const char *name, User *&user);
+   void         AddSession  (Session *s) { sessions.AddTail(s); }
 };
 
 #endif // user.h

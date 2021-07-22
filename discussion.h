@@ -44,7 +44,7 @@ public:
    Timestamp     message_time;
    OutputStream  Output;
 
-   Discussion(Session *s, char *Name, char *Title, boolean ispublic);
+   Discussion(Session *s, const char *Name, const char *Title, boolean ispublic);
 
    Name   *Allowed    (Session *session);
    Name   *Denied     (Session *session);

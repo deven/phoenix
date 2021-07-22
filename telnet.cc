@@ -699,7 +699,7 @@ int Telnet::SetHeight(int n)    // Set terminal height.
 
 void Telnet::InsertString(String &s) // Insert string at point.
 {
-   const char *p;
+   char *p;
    int n, slen = s.length();
 
    if (!s) return;

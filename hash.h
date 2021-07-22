@@ -44,7 +44,7 @@ private:
    String key;                          // Key for hash entry.
    String value;                        // Value for hash entry.
 
-   HashEntry(char *k, char *v): key(k), value(v) { }
+   HashEntry(const char *k, const char *v): key(k), value(v) { }
 public:
    String Key()   { return key; }
    String Value() { return value; }
@@ -56,7 +56,7 @@ public:
       value = v;
       return *this;
    }
-   HashEntry &operator =(char *v) {
+   HashEntry &operator =(const char *v) {
       value = v;
       return *this;
    }
@@ -64,7 +64,7 @@ public:
    operator const char *() const  { return value; }
    operator char *()              { return value; }
    const char *operator ~() const { return ~value; }
-   char *operator ~()             { return ~value; }
+   const char *operator ~()       { return ~value; }
 };
 
 class Hash {
@@ -74,23 +74,23 @@ private:
    int count;
    Pointer<HashEntry> bucket[Size];
 
-   int HashFunction(char *key);
+   int HashFunction(const char *key);
 public:
    Hash(): count(0) { }
 
    int        Count() { return count; }
    void       Reset() { for (int i = 0; i < Size; i++) bucket[i] = 0; }
    boolean    Known      (String &key)                { return Known(~key); }
-   boolean    Known      (char *key);
+   boolean    Known      (const char *key);
    void       Store      (String &key, String &value) { Store(~key, ~value); }
-   void       Store      (String &key, char *value)   { Store(~key,  value); }
-   void       Store      (char *key, String &value)   { Store(key,  ~value); }
-   void       Store      (char *key, char *value);
+   void       Store      (String &key, const char *value)   { Store(~key,  value); }
+   void       Store      (const char *key, String &value)   { Store(key,  ~value); }
+   void       Store      (const char *key, const char *value);
    void       Delete     (String &key)                { Delete(~key); }
-   void       Delete     (char *key);
+   void       Delete     (const char *key);
    String     Fetch      (String &key)                { return Fetch(~key); }
-   String     Fetch      (char *key);
-   HashEntry &operator [](char *key);
+   String     Fetch      (const char *key);
+   HashEntry &operator [](const char *key);
    HashEntry &operator [](String &key)                { return (*this)[~key]; }
 };
 
@@ -120,7 +120,7 @@ public:
    HashEntry *operator ++(int) { return ++(*this); }
    operator HashEntry *()      { return entry; }
    operator HashEntry &()      { return *entry; }
-   char *operator ~()          { return ~(entry->value); }
+   const char *operator ~()    { return ~(entry->value); }
 };
 
 #endif // hash.h

@@ -41,10 +41,10 @@
 #include "string2.h"
 #include "hash.h"
 
-int Hash::HashFunction(char *key)
+int Hash::HashFunction(const char *key)
 {
    unsigned long  hash = 0;
-   unsigned char *ptr  = (unsigned char *) key;
+   unsigned const char *ptr  = (unsigned const char *) key;
    int            len  = strlen(key);
 
    while (len--) {
@@ -56,7 +56,7 @@ int Hash::HashFunction(char *key)
    return hash % Size;
 }
 
-void Hash::Store(char *key, char *value)
+void Hash::Store(const char *key, const char *value)
 {
    HashEntry *entry = new HashEntry(key, value);
    int        hash  = HashFunction(key);
@@ -73,7 +73,7 @@ void Hash::Store(char *key, char *value)
    }
 }
 
-void Hash::Delete(char *key)
+void Hash::Delete(const char *key)
 {
    int                hash = HashFunction(key);
    Pointer<HashEntry> entry(bucket[hash]);
@@ -92,7 +92,7 @@ void Hash::Delete(char *key)
    }
 }
 
-boolean Hash::Known(char *key)
+boolean Hash::Known(const char *key)
 {
    int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
@@ -104,7 +104,7 @@ boolean Hash::Known(char *key)
    return false;
 }
 
-String Hash::Fetch(char *key)
+String Hash::Fetch(const char *key)
 {
    int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
@@ -116,7 +116,7 @@ String Hash::Fetch(char *key)
    return String();
 }
 
-HashEntry &Hash::operator [](char *key)
+HashEntry &Hash::operator [](const char *key)
 {
    int        hash  = HashFunction(key);
    HashEntry *entry = bucket[hash];
