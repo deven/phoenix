@@ -19,4 +19,4 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 
-aclocal && autoheader && touch config.h.in && automake --add-missing && autoconf
+aclocal --force --install && autoheader --force && automake --add-missing && autoconf --force
