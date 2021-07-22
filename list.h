@@ -245,7 +245,7 @@ public:
 
    Type *operator ->() { return ptr ? (Type *) ptr->obj : (Type *) NULL; }
    operator Type *()   { return ptr ? (Type *) ptr->obj : (Type *) NULL; }
-   operator boolean()  { return ptr != NULL; }
+   operator boolean()  { return boolean(ptr); }
    Type *operator --();
    Type *operator ++();
    Type *operator --(int);
