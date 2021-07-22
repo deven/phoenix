@@ -41,7 +41,7 @@ public:
    Set<Name>     allowed;
    Set<Name>     denied;
    Timestamp     creation_time;
-   Timestamp     message_time;
+   Timestamp     idle_since;
    OutputStream  Output;
 
    Discussion(Session *s, const char *Name, const char *Title, boolean ispublic);
