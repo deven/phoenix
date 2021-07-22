@@ -1,14 +1,14 @@
 $Id: README,v 1.1 2001/11/30 23:53:32 deven Exp $
 
-Gangplank Conferencing System
------------------------------
+Phoenix Conferencing System
+---------------------------
 
-[This description is better viewed at http://www.gangplank.org/ to benefit
+[This description is better viewed at http://www.phoenix-cmc.org/ to benefit
 from hyperlinks.]
 
-This is [an adaptation of] the homepage for the Gangplank conferencing system.
+This is [an adaptation of] the homepage for the Phoenix conferencing system.
 
-Gangplank is a Computer Mediated Communication (CMC) system which supports
+Phoenix is a Computer Mediated Communication (CMC) system which supports
 real-time communication between users, currently using a text-based user
 interface.  Functionally, this is similar to IRC (Internet Relay Chat), but
 the current user interface is patterned after CONNECT, a CMC system (pre-dating
@@ -16,7 +16,7 @@ IRC) which comes from a series of CMC systems written and used at Rensselaer
 (RPI).  Some users find the interface easier to use than IRC, others consider
 it too verbose!  Perhaps it's a matter of what you're accustomed to.
 
-The initial Open Source release of the Gangplank source code (version
+The initial Open Source release of the Phoenix source code (version
 1.0.0.beta.1) was made available under the Q Public License [as shown in
 the LICENSE.QPL file] on November 30, 2001.  This was the ninth anniversary
 of the codebase -- initial development began on November 30, 1992.  For the
@@ -33,7 +33,7 @@ more often than the server code actually crashes.
 Due to a rather draconian Intellectual Property agreement, no development
 work occurred on this codebase between July 23, 1996 and March 10, 2000.
 
-During early development, Gangplank was simply called "conf" for lack of
+During early development, Phoenix was simply called "conf" for lack of
 any real name.  Initial development was in C, from November 30, 1992 until
 April 8, 1993.  After that, the codebase was ported to C++ and redesigned as
 a series of object-oriended classes.  This redesign was complex, and kept the
@@ -44,7 +44,7 @@ was renamed to "Phoenix" on April 21, 1994.
 
 The name was changed to "Gangplank" to coincide with the Open Source release
 on November 30, 2001.  A 1.x version number was used for the initial release
-of Gangplank because there was already long history under the "conf" and
+of Phoenix because there was already long history under the "conf" and
 "Phoenix" names, which could be viewed as (unreleased) 0.x versions.
 
 What's in a name?  Why "Gangplank"?  Actually, the primary criterion was that
@@ -53,4 +53,4 @@ it was a real word that would be distinctive, memorable and easy to spell.
 It sounds bizarre at first, but it tends to grow on you.  Regardless, nobody
 ever suggested a better alternative to "Gangplank", so the name stuck...
 
-Meanwhile, Gangplank still needs more work on documentation and the homepage!
+Meanwhile, Phoenix still needs more work on documentation and the homepage!

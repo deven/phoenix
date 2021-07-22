@@ -1,6 +1,6 @@
 $Id: INSTALL,v 1.3 2003/02/24 06:21:41 deven Exp $
 
-This document describes how to build and install the Gangplank CMC server.
+This document describes how to build and install the Phoenix CMC server.
 
 Use "./configure --help" to see the configuration options available.  Use
 "./configure" alone to configure with the defaults.  After configuring,
@@ -18,17 +18,19 @@ used, any user can run the server.
 
 If a "guest" login is not desired, use the "--disable-guest" option.
 
-If any errors occur during the build, please email relevant information to
-<build-help@gangplank.org> for assistance.
+If any errors occur during the build, please create a new GitHub issue with
+relevant information:
 
-By default, the server is installed as "/usr/local/sbin/gangplank", and the
+     https://github.com/deven/phoenix/issues
+
+By default, the server is installed as "/usr/local/sbin/phoenixd", and the
 "makepw" utility program is installed as "/usr/local/bin/makepw".  Logs and
-the "passwd" file are stored in "/usr/local/lib/gangplank".  The "passwd"
+the "passwd" file are stored in "/usr/local/lib/phoenix".  The "passwd"
 file in the distribution may be used as an example.  (Since the password file
 is read dynamically when needed, there is no need to restart the server after
 modifying the password file.)
 
-Copy the example password file to "/usr/local/lib/gangplank/passwd" and edit
+Copy the example password file to "/usr/local/lib/phoenix/passwd" and edit
 it to create server accounts.  The default file contains a (commented-out)
 sample administrative account for the author.  The field containing "100" is
 a privilege level (NOT a user ID number!) -- guest users have a privilege
@@ -46,7 +48,7 @@ minute from cron, to ensure that the server remains running.  With the -cron
 option, the server will silently exit if it CANNOT bind to its port, on the
 assumption that another server is already running.  If the server can bind
 to the port, it will startup normally.  To use this option, add cron job such
-as "* * * * * /usr/local/sbin/gangplank -cron" to the crontab of the user to
+as "* * * * * /usr/local/sbin/phoenixd -cron" to the crontab of the user to
 run the server under.
 
 The "makepw" program is a simple utility to encrypt Unix-style passwords,
