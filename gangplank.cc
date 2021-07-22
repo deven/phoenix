@@ -115,11 +115,7 @@ void OpenLog()                    // Open log file.
                     tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
                     tm->tm_sec);
    if (!(logfile = fopen(~filename, "a"))) error("OpenLog(): %s", ~filename);
-#ifdef SETVBUF_REVERSED
-   setvbuf(logfile, _IOLBF, NULL, 0);
-#else
    setvbuf(logfile, NULL, _IOLBF, 0);
-#endif
    unlink("log");
    if (symlink(~filename, "log") == -1) error("OpenLog(): log -> %s", ~filename);
    fprintf(stderr, "Logging on \"%s\".\n", ~filename);
