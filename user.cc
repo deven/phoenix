@@ -115,7 +115,7 @@ void User::UpdateAll()          // Update all user entries from password file.
 
 #ifdef GUEST_ACCESS
    // Create the "guest" account.
-   Update("guest", NULL, NULL, NULL, NULL);
+   Update("guest", NULL, NULL, NULL, 0);
 #endif
 }
 
