@@ -6,7 +6,7 @@
 //
 // Copyright 1992-2003 by Deven T. Corzine.  All rights reserved.
 //
-// This file is part of the Gangplank conferencing system.
+// This file is part of the Phoenix conferencing system.
 //
 // This file may be distributed under the terms of the Q Public License
 // as defined by Trolltech AS of Norway (except for Choice of Law) and as
@@ -15,12 +15,12 @@
 // This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 // WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 //
-// Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
+// Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 // for more information or if any conditions of this licensing are unclear.
 //
 // $Log$
 
-#include "gangplank.h"
+#include "phoenix.h"
 
 List<Session>    Session::inits;
 List<Session>    Session::sessions;
@@ -601,7 +601,7 @@ void Session::EnteredBlurb(char *input) // Process blurb prompt response.
    NotifyEntry();               // Notify other users of entry.
 
    // Print welcome banner and do a /who list and a /howmany.
-   output("\n\nWelcome to Gangplank.  "
+   output("\n\nWelcome to Phoenix.  "
           "Type \"/help\" for a list of commands.\n\n");
 
    Session        *session;
@@ -860,7 +860,7 @@ void Session::DoRestart(char *args) // Do !restart command.
 
    if (!strcmp(args, "!")) {
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has restarted Gangplank! ***\n", ~name, ~blurb);
+      announce("*** %s%s has restarted Phoenix! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new RestartEvent(who));
    } else if (match(args, "cancel")) {
       if (Shutdown) {
@@ -887,7 +887,7 @@ void Session::DoRestart(char *args) // Do !restart command.
       int seconds;
       if (sscanf(args, "%d", &seconds) != 1) seconds = 30;
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has restarted Gangplank! ***\n", ~name, ~blurb);
+      announce("*** %s%s has restarted Phoenix! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new RestartEvent(who, seconds));
    }
 }
@@ -901,7 +901,7 @@ void Session::DoDown(char *args)    // Do !down command.
 
    if (!strcmp(args, "!")) {
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has shut down Gangplank! ***\n", ~name, ~blurb);
+      announce("*** %s%s has shut down Phoenix! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new ShutdownEvent(who));
    } else if (match(args, "cancel")) {
       if (Shutdown) {
@@ -928,7 +928,7 @@ void Session::DoDown(char *args)    // Do !down command.
       int seconds;
       if (sscanf(args, "%d", &seconds) != 1) seconds = 30;
       if (Shutdown) events.Dequeue(Shutdown);
-      announce("*** %s%s has shut down Gangplank! ***\n", ~name, ~blurb);
+      announce("*** %s%s has shut down Phoenix! ***\n", ~name, ~blurb);
       events.Enqueue(Shutdown = new ShutdownEvent(who, seconds));
    }
 }
@@ -1105,7 +1105,7 @@ void Session::DoDisplay(char *args) // Do /display command.
             output(".)\n");
          }
       } else if (match(var, "version")) {
-         print("Gangplank server version: %s\n", VERSION);
+         print("Phoenix server version: %s\n", VERSION);
       } else if (match(var, "width")) {
          int width = telnet->SetWidth(-1);
          print("Terminal width is currently set to %d.\n", width);
@@ -2138,7 +2138,7 @@ void Session::DoHelp(char *args)    // Do /help command.
    if (match(args, "/who", 2) || match(args, "who", 3) ||
        match(args, "/idle", 2) || match(args, "idle", 4)) {
       output("\
-The /who and /idle commands are used to list users on Gangplank.  Both /who\n\
+The /who and /idle commands are used to list users on Phoenix.  Both /who\n\
 and /idle take identical arguments, but the output differs.  /who will give\n\
 more information, while /idle will give a more compact presentation.\n\n\
 Both /who and /idle will accept either categorical keywords or strings to\n\
@@ -2272,7 +2272,7 @@ sendlist completely.  \"/send\" alone will display your current default\n\
 sendlist without changing it.  /send may be abbreviated to /s.\n");
    } else if (match(args, "/bye", 4) || match(args, "bye", 3)) {
       output("\
-The /bye command is used to leave Gangplank completely.  If you sign off, you\n\
+The /bye command is used to leave Phoenix completely.  If you sign off, you\n\
 will be disconnected from the system and unable to receive messages at all.\n\
 You may wish to consider using the /detach command instead.\n");
    } else if (match(args, "/what", 3) || match(args, "what", 4)) {
@@ -2325,7 +2325,7 @@ In general, when you become unidle, you will receive a report of the previous\
 \nidle time if it exceeded the normal threshold of ten minutes.\n");
    } else if (match(args, "/detach", 4) || match(args, "detach", 6)) {
       output("\
-The /detach command is used to disconnect from Gangplank without signing off.\n\
+The /detach command is used to disconnect from Phoenix without signing off.\n\
 You can still receive messages while detached, to be reviewed later.  When\n\
 the /detach command is used, others are notified that you intentionally\n\
 detached.  If any other event causes you to become detached (e.g. network\n\
