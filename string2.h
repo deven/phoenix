@@ -79,9 +79,7 @@ public:
    String(const String &s);
    String(String &s);
    String(const char *s);
-   String(char *s);
    String(const char *s, size_t n);
-   String(char *s, size_t n);
    String(int n);
    String(unsigned int n);
    String(long n);
@@ -91,26 +89,20 @@ public:
    String &operator =(const String &s);
    String &operator =(String &s);
    String &operator =(const char *s);
-   String &operator =(char *s) { return operator =((const char *) s); }
    String &operator =(int n);
    String &operator =(unsigned int n);
    String &operator =(long n);
    String &operator =(unsigned long n);
    String &assign  (const char *s, size_t n);
-   String &assign  (char *s, size_t n);
    String &append  (const String &s);
    String &append  (String &s);
    String &append  (const char *s);
-   String &append  (char *s)           { return append((const char *) s); }
    String &append  (const char *s, size_t n);
-   String &append  (char *s, size_t n) { return append((const char *) s, n); }
    String &append  (char c);
    String &prepend (const String &s);
    String &prepend (String &s);
    String &prepend (const char *s);
-   String &prepend (char *s)           { return prepend((const char *) s); }
    String &prepend (const char *s, size_t n);
-   String &prepend (char *s, size_t n) { return prepend((const char *) s, n); }
    String &prepend (char c);
    void    trim    ();
    String &vsprintf(const char *format, va_list ap);
@@ -148,9 +140,7 @@ public:
    StringObj(const String &s):         Object(), String(s)    { }
    StringObj(String &s):               Object(), String(s)    { }
    StringObj(const char *s):           Object(), String(s)    { }
-   StringObj(char *s):                 Object(), String(s)    { }
    StringObj(const char *s, size_t n): Object(), String(s, n) { }
-   StringObj(char *s, size_t n):       Object(), String(s, n) { }
 };
 
 #endif // string2.h

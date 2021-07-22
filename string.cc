@@ -102,30 +102,7 @@ String::String(const char *s)
    extra    = 0;
 }
 
-String::String(char *s)
-{
-   if (!s) s = "";
-   len = strlen(s);
-   str = new char[len + 1];
-   strncpy(str, s, len);
-   str[len] = 0;
-   extra    = 0;
-}
-
 String::String(const char *s, size_t n)
-{
-   len = n;
-   str = new char[len + 1];
-   if (s) {
-      strncpy(str, s, len);
-      str[len] = 0;
-   } else {
-      for (size_t i = 0; i <= len; i++) str[i] = 0;
-   }
-   extra = 0;
-}
-
-String::String(char *s, size_t n)
 {
    len = n;
    str = new char[len + 1];
@@ -278,25 +255,6 @@ String &String::operator =(unsigned long n)
 }
 
 String &String::assign(const char *s, size_t n)
-{
-   if (n <= len + extra) {
-      extra += len - n;
-   } else {
-      delete [] str;
-      extra = extra ? Extra : 0;
-      str   = new char[n + extra + 1];
-   }
-   len = n;
-   if (s) {
-      strncpy(str, s, len);
-      str[len] = 0;
-   } else {
-      for (size_t i = 0; i <= len; i++) str[i] = 0;
-   }
-   return *this;
-}
-
-String &String::assign(char *s, size_t n)
 {
    if (n <= len + extra) {
       extra += len - n;
