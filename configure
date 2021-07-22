@@ -5279,7 +5279,6 @@ fi
 
 
 
-
 # Checks for libraries.
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for crypt in -lcrypt" >&5
@@ -5599,68 +5598,126 @@ fi
 
 
 # Checks for typedefs, structures, and compiler characteristics.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
-printf %s "checking for an ANSI C-conforming const... " >&6; }
-if test ${ac_cv_c_const+y}
+ac_fn_c_check_type "$LINENO" "_Bool" "ac_cv_type__Bool" "$ac_includes_default"
+if test "x$ac_cv_type__Bool" = xyes
+then :
+
+printf "%s\n" "#define HAVE__BOOL 1" >>confdefs.h
+
+
+fi
+
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for stdbool.h that conforms to C99" >&5
+printf %s "checking for stdbool.h that conforms to C99... " >&6; }
+if test ${ac_cv_header_stdbool_h+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#include <stdbool.h>
+
+             #ifndef __bool_true_false_are_defined
+               #error "__bool_true_false_are_defined is not defined"
+             #endif
+             char a[__bool_true_false_are_defined == 1 ? 1 : -1];
+
+             /* Regardless of whether this is C++ or "_Bool" is a
+                valid type name, "true" and "false" should be usable
+                in #if expressions and integer constant expressions,
+                and "bool" should be a valid type name.  */
+
+             #if !true
+               #error "'true' is not true"
+             #endif
+             #if true != 1
+               #error "'true' is not equal to 1"
+             #endif
+             char b[true == 1 ? 1 : -1];
+             char c[true];
+
+             #if false
+               #error "'false' is not false"
+             #endif
+             #if false != 0
+               #error "'false' is not equal to 0"
+             #endif
+             char d[false == 0 ? 1 : -1];
+
+             enum { e = false, f = true, g = false * true, h = true * 256 };
+
+             char i[(bool) 0.5 == true ? 1 : -1];
+             char j[(bool) 0.0 == false ? 1 : -1];
+             char k[sizeof (bool) > 0 ? 1 : -1];
+
+             struct sb { bool s: 1; bool t; } s;
+             char l[sizeof s.t > 0 ? 1 : -1];
+
+             /* The following fails for
+                HP aC++/ANSI C B3910B A.05.55 [Dec 04 2003]. */
+             bool m[h];
+             char n[sizeof m == h * sizeof m[0] ? 1 : -1];
+             char o[-1 - (bool) 0 < 0 ? 1 : -1];
+             /* Catch a bug in an HP-UX C compiler.  See
+         https://gcc.gnu.org/ml/gcc-patches/2003-12/msg02303.html
+         https://lists.gnu.org/archive/html/bug-coreutils/2005-11/msg00161.html
+              */
+             bool p = true;
+             bool *pp = &p;
+
+             /* C 1999 specifies that bool, true, and false are to be
+                macros, but C++ 2011 and later overrule this.  */
+             #if __cplusplus < 201103
+              #ifndef bool
+               #error "bool is not defined"
+              #endif
+              #ifndef false
+               #error "false is not defined"
+              #endif
+              #ifndef true
+               #error "true is not defined"
+              #endif
+             #endif
+
+             /* If _Bool is available, repeat with it all the tests
+                above that used bool.  */
+             #ifdef HAVE__BOOL
+               struct sB { _Bool s: 1; _Bool t; } t;
+
+               char q[(_Bool) 0.5 == true ? 1 : -1];
+               char r[(_Bool) 0.0 == false ? 1 : -1];
+               char u[sizeof (_Bool) > 0 ? 1 : -1];
+               char v[sizeof t.t > 0 ? 1 : -1];
+
+               _Bool w[h];
+               char x[sizeof m == h * sizeof m[0] ? 1 : -1];
+               char y[-1 - (_Bool) 0 < 0 ? 1 : -1];
+               _Bool z = true;
+               _Bool *pz = &p;
+             #endif
 
 int
 main (void)
 {
 
-#ifndef __cplusplus
-  /* Ultrix mips cc rejects this sort of thing.  */
-  typedef int charset[2];
-  const charset cs = { 0, 0 };
-  /* SunOS 4.1.1 cc rejects this.  */
-  char const *const *pcpcc;
-  char **ppc;
-  /* NEC SVR4.0.2 mips cc rejects this.  */
-  struct point {int x, y;};
-  static struct point const zero = {0,0};
-  /* IBM XL C 1.02.0.0 rejects this.
-     It does not let you subtract one const X* pointer from another in
-     an arm of an if-expression whose if-part is not a constant
-     expression */
-  const char *g = "string";
-  pcpcc = &g + (g ? g-g : 0);
-  /* HPUX 7.0 cc rejects these. */
-  ++pcpcc;
-  ppc = (char**) pcpcc;
-  pcpcc = (char const *const *) ppc;
-  { /* SCO 3.2v4 cc rejects this sort of thing.  */
-    char tx;
-    char *t = &tx;
-    char const *s = 0 ? (char *) 0 : (char const *) 0;
+             bool ps = &s;
+             *pp |= p;
+             *pp |= ! p;
 
-    *t++ = 0;
-    if (s) return 0;
-  }
-  { /* Someone thinks the Sun supposedly-ANSI compiler will reject this.  */
-    int x[] = {25, 17};
-    const int *foo = &x[0];
-    ++foo;
-  }
-  { /* Sun SC1.0 ANSI compiler rejects this -- but not the above. */
-    typedef const int *iptr;
-    iptr p = 0;
-    ++p;
-  }
-  { /* IBM XL C 1.02.0.0 rejects this sort of thing, saying
-       "k.c", line 2.27: 1506-025 (S) Operand must be a modifiable lvalue. */
-    struct s { int j; const int *ap[3]; } bx;
-    struct s *b = &bx; b->j = 5;
-  }
-  { /* ULTRIX-32 V3.1 (Rev 9) vcc rejects this */
-    const int foo = 10;
-    if (!foo) return 0;
-  }
-  return !cs[0] && !zero.x;
-#endif
+             #ifdef HAVE__BOOL
+               _Bool pt = &t;
+               *pz |= z;
+               *pz |= ! z;
+             #endif
+
+             /* Refer to every declared value, so they cannot be
+                discarded as unused.  */
+             return (!a + !b + !c + !d + !e + !f + !g + !h + !i + !j + !k
+                     + !l + !m + !n + !o + !p + !pp + !ps
+             #ifdef HAVE__BOOL
+                     + !q + !r + !u + !v + !w + !x + !y + !z + !pt
+             #endif
+                    );
 
   ;
   return 0;
@@ -5668,63 +5725,24 @@ main (void)
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
-  ac_cv_c_const=yes
+  ac_cv_header_stdbool_h=yes
 else $as_nop
-  ac_cv_c_const=no
+  ac_cv_header_stdbool_h=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_const" >&5
-printf "%s\n" "$ac_cv_c_const" >&6; }
-if test $ac_cv_c_const = no; then
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdbool_h" >&5
+printf "%s\n" "$ac_cv_header_stdbool_h" >&6; }
 
-printf "%s\n" "#define const /**/" >>confdefs.h
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for inline" >&5
-printf %s "checking for inline... " >&6; }
-if test ${ac_cv_c_inline+y}
+ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
+if test "x$ac_cv_type_size_t" = xyes
 then :
-  printf %s "(cached) " >&6
+
 else $as_nop
-  ac_cv_c_inline=no
-for ac_kw in inline __inline__ __inline; do
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifndef __cplusplus
-typedef int foo_t;
-static $ac_kw foo_t static_foo (void) {return 0; }
-$ac_kw foo_t foo (void) {return 0; }
-#endif
 
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  ac_cv_c_inline=$ac_kw
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-  test "$ac_cv_c_inline" != no && break
-done
+printf "%s\n" "#define size_t unsigned int" >>confdefs.h
 
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_inline" >&5
-printf "%s\n" "$ac_cv_c_inline" >&6; }
-
-case $ac_cv_c_inline in
-  inline | yes) ;;
-  *)
-    case $ac_cv_c_inline in
-      no) ac_val=;;
-      *) ac_val=$ac_cv_c_inline;;
-    esac
-    cat >>confdefs.h <<_ACEOF
-#ifndef __cplusplus
-#define inline $ac_val
-#endif
-_ACEOF
-    ;;
-esac
 
 
  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler recognizes bool as a built-in type" >&5
@@ -5877,43 +5895,6 @@ printf "%s\n" "$ax_cv_cxx_rtti" >&6; }
 if test "$ax_cv_cxx_rtti" = yes; then
 
 printf "%s\n" "#define HAVE_RTTI /**/" >>confdefs.h
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
-printf %s "checking whether struct tm is in sys/time.h or time.h... " >&6; }
-if test ${ac_cv_struct_tm+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <time.h>
-
-int
-main (void)
-{
-struct tm tm;
-				     int *p = &tm.tm_sec;
-				     return !p;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  ac_cv_struct_tm=time.h
-else $as_nop
-  ac_cv_struct_tm=sys/time.h
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_tm" >&5
-printf "%s\n" "$ac_cv_struct_tm" >&6; }
-if test $ac_cv_struct_tm = sys/time.h; then
-
-printf "%s\n" "#define TM_IN_SYS_TIME 1" >>confdefs.h
 
 fi
 
@@ -6237,120 +6218,135 @@ printf "%s\n" "#define HAVE_WORKING_FORK 1" >>confdefs.h
 
 fi
 
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether lstat correctly handles trailing slash" >&5
-printf %s "checking whether lstat correctly handles trailing slash... " >&6; }
-if test ${ac_cv_func_lstat_dereferences_slashed_symlink+y}
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GNU libc compatible malloc" >&5
+printf %s "checking for GNU libc compatible malloc... " >&6; }
+if test ${ac_cv_func_malloc_0_nonnull+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  rm -f conftest.sym conftest.file
-echo >conftest.file
-if test "$as_ln_s" = "ln -s" && ln -s conftest.file conftest.sym; then
   if test "$cross_compiling" = yes
 then :
   case "$host_os" in # ((
-			   # Guess yes on glibc systems.
-		   *-gnu*) ac_cv_func_lstat_dereferences_slashed_symlink=yes ;;
-			   # If we don't know, assume the worst.
-		   *)      ac_cv_func_lstat_dereferences_slashed_symlink=no ;;
-		 esac
+		  # Guess yes on platforms where we know the result.
+		  *-gnu* | freebsd* | netbsd* | openbsd* | bitrig* \
+		  | hpux* | solaris* | cygwin* | mingw* | msys* )
+		    ac_cv_func_malloc_0_nonnull=yes ;;
+		  # If we don't know, assume the worst.
+		  *) ac_cv_func_malloc_0_nonnull=no ;;
+		esac
 else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-$ac_includes_default
+#include <stdlib.h>
+
 int
 main (void)
 {
-struct stat sbuf;
-     /* Linux will dereference the symlink and fail, as required by POSIX.
-	That is better in the sense that it means we will not
-	have to compile and use the lstat wrapper.  */
-     return lstat ("conftest.sym/", &sbuf) == 0;
+void *p = malloc (0);
+		   int result = !p;
+		   free (p);
+		   return result;
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"
 then :
-  ac_cv_func_lstat_dereferences_slashed_symlink=yes
+  ac_cv_func_malloc_0_nonnull=yes
 else $as_nop
-  ac_cv_func_lstat_dereferences_slashed_symlink=no
+  ac_cv_func_malloc_0_nonnull=no
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-else
-  # If the `ln -s' command failed, then we probably don't even
-  # have an lstat function.
-  ac_cv_func_lstat_dereferences_slashed_symlink=no
 fi
-rm -f conftest.sym conftest.file
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_malloc_0_nonnull" >&5
+printf "%s\n" "$ac_cv_func_malloc_0_nonnull" >&6; }
+if test $ac_cv_func_malloc_0_nonnull = yes
+then :
 
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_lstat_dereferences_slashed_symlink" >&5
-printf "%s\n" "$ac_cv_func_lstat_dereferences_slashed_symlink" >&6; }
+printf "%s\n" "#define HAVE_MALLOC 1" >>confdefs.h
 
-test $ac_cv_func_lstat_dereferences_slashed_symlink = yes &&
+else $as_nop
+  printf "%s\n" "#define HAVE_MALLOC 0" >>confdefs.h
 
-printf "%s\n" "#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1" >>confdefs.h
-
-
-if test "x$ac_cv_func_lstat_dereferences_slashed_symlink" = xno; then
-  case " $LIBOBJS " in
-  *" lstat.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS lstat.$ac_objext"
+   case " $LIBOBJS " in
+  *" malloc.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS malloc.$ac_objext"
  ;;
 esac
 
+
+printf "%s\n" "#define malloc rpl_malloc" >>confdefs.h
+
 fi
 
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether stat accepts an empty string" >&5
-printf %s "checking whether stat accepts an empty string... " >&6; }
-if test ${ac_cv_func_stat_empty_string_bug+y}
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GNU libc compatible realloc" >&5
+printf %s "checking for GNU libc compatible realloc... " >&6; }
+if test ${ac_cv_func_realloc_0_nonnull+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   if test "$cross_compiling" = yes
 then :
-  ac_cv_func_stat_empty_string_bug=yes
+  case "$host_os" in # ((
+		  # Guess yes on platforms where we know the result.
+		  *-gnu* | freebsd* | netbsd* | openbsd* | bitrig* \
+		  | hpux* | solaris* | cygwin* | mingw* | msys* )
+		    ac_cv_func_realloc_0_nonnull=yes ;;
+		  # If we don't know, assume the worst.
+		  *) ac_cv_func_realloc_0_nonnull=no ;;
+		esac
 else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-$ac_includes_default
+#include <stdlib.h>
+
 int
 main (void)
 {
-struct stat sbuf;
-  return stat ("", &sbuf) == 0;
+void *p = realloc (0, 0);
+		   int result = !p;
+		   free (p);
+		   return result;
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"
 then :
-  ac_cv_func_stat_empty_string_bug=no
+  ac_cv_func_realloc_0_nonnull=yes
 else $as_nop
-  ac_cv_func_stat_empty_string_bug=yes
+  ac_cv_func_realloc_0_nonnull=no
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_stat_empty_string_bug" >&5
-printf "%s\n" "$ac_cv_func_stat_empty_string_bug" >&6; }
-if test $ac_cv_func_stat_empty_string_bug = yes; then
-  case " $LIBOBJS " in
-  *" stat.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS stat.$ac_objext"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_realloc_0_nonnull" >&5
+printf "%s\n" "$ac_cv_func_realloc_0_nonnull" >&6; }
+if test $ac_cv_func_realloc_0_nonnull = yes
+then :
+
+printf "%s\n" "#define HAVE_REALLOC 1" >>confdefs.h
+
+else $as_nop
+  printf "%s\n" "#define HAVE_REALLOC 0" >>confdefs.h
+
+   case " $LIBOBJS " in
+  *" realloc.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS realloc.$ac_objext"
  ;;
 esac
 
 
-printf "%s\n" "#define HAVE_STAT_EMPTY_STRING_BUG 1" >>confdefs.h
+printf "%s\n" "#define realloc rpl_realloc" >>confdefs.h
 
 fi
+
 
 ac_fn_c_check_func "$LINENO" "getpass" "ac_cv_func_getpass"
 if test "x$ac_cv_func_getpass" = xyes
@@ -6366,7 +6362,7 @@ then :
 fi
 
 
-  for ac_func in crypt inet_ntoa memset mkdir select socket strcasecmp strchr strncasecmp
+  for ac_func in crypt inet_ntoa memmove memset mkdir select socket strcasecmp strchr strncasecmp
 do :
   as_ac_var=`printf "%s\n" "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
