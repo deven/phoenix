@@ -31,7 +31,6 @@ public:
    Pointer<Line> next;          // next input line
 
    // constructors
-   Line(      char *p): line(p) { next = NULL; }
    Line(const char *p): line(p) { next = NULL; }
 
    void Append(Line *p) {       // Add new line at end of list.
