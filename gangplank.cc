@@ -95,26 +95,13 @@ int            ServerStartUptime; // system uptime when server started
 
 // XXX Should logfile use non-blocking code instead?
 
-// Required C++ operator definitions.
-void *operator new(size_t s)      // Provide a basic new operator.
-{
-   return malloc(s);
-}
-
-void *operator new[](size_t s)    // Provide a basic new[] operator.
-{
-   return malloc(s);
-}
-
-void operator delete(void *p)     // Provide a basic delete operator.
-{
-   free(p);
-}
-
-void operator delete[](void *p)   // Provide a basic delete[] operator.
-{
-   free(p);
-}
+// Provide basic new and delete operators.
+void *operator new     (size_t s)          { return malloc(s); }
+void *operator new[]   (size_t s)          { return malloc(s); }
+void  operator delete  (void *p)           { free(p); }
+void  operator delete[](void *p)           { free(p); }
+void  operator delete  (void *p, size_t s) { free(p); }
+void  operator delete[](void *p, size_t s) { free(p); }
 
 // XXX class Log?
 void OpenLog()                    // Open log file.
