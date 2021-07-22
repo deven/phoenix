@@ -42,7 +42,9 @@ class User;
 
 void *operator new     (size_t s); // Provide a basic new operator.
 void *operator new[]   (size_t s); // Provide a basic new[] operator.
-void  operator delete  (void *p);  // Provide a basic delete operator.
-void  operator delete[](void *p);  // Provide a basic delete[] operator.
+void  operator delete  (void *p); // Provide a basic delete operator.
+void  operator delete[](void *p); // Provide a basic delete[] operator.
+void  operator delete  (void *p, size_t s); // Provide a basic delete operator.
+void  operator delete[](void *p, size_t s); // Provide a basic delete[] operator.
 
 #endif // general.h
