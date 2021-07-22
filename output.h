@@ -68,7 +68,7 @@ protected:
    Pointer<Sendlist> to;
    String            text;
 public:
-   Message(OutputType type, Name *sender, Sendlist *dest, char *msg):
+   Message(OutputType type, Name *sender, Sendlist *dest, const char *msg):
       OutputObj(type, MessageClass), from(sender), to(dest), text(msg) { }
 
    void output(Telnet *telnet);
