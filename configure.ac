@@ -1,3 +1,4 @@
+# -*- Autoconf -*-
 #
 # $Id: configure.ac,v 1.8 2003/09/18 03:53:24 deven Exp $
 #
@@ -18,7 +19,8 @@
 # for more information or if any conditions of this licensing are unclear.
 #
 
-AC_INIT([gangplank],[1.0.0.beta.11],[bugs@gangplank.org])
+AC_PREREQ([2.71])
+AC_INIT([gangplank], [1.0.0.beta.11], [bugs@gangplank.org])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gangplank.cc])
 AC_CONFIG_HEADERS([config.h])
@@ -41,7 +43,6 @@ AC_CANONICAL_HOST
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_INSTALL
 
 # Checks for libraries.
 AC_CHECK_LIB([crypt], [crypt])
@@ -51,12 +52,11 @@ AX_LIB_SOCKET_NSL
 AC_CHECK_HEADERS([arpa/inet.h crypt.h fcntl.h memory.h netdb.h netinet/in.h strings.h sys/ioctl.h sys/select.h sys/socket.h sys/time.h sys/wait.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
+AC_CHECK_HEADER_STDBOOL
+AC_TYPE_SIZE_T
 AX_CXX_BOOL
 AX_CXX_EXCEPTIONS
 AX_CXX_RTTI
-AC_STRUCT_TM
 
 # Check for socklen_t type.
 AC_CHECK_TYPE([socklen_t], , [AC_DEFINE([socklen_t], [int],
@@ -68,9 +68,10 @@ AC_CHECK_TYPE([socklen_t], , [AC_DEFINE([socklen_t], [int],
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
-AC_FUNC_STAT
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
 AC_CHECK_FUNCS([getpass strerror])
-AC_CHECK_FUNCS([crypt inet_ntoa memset mkdir select socket strcasecmp strchr strncasecmp], [], [AC_MSG_ERROR([Required function $ac_func() not found!])])
+AC_CHECK_FUNCS([crypt inet_ntoa memmove memset mkdir select socket strcasecmp strchr strncasecmp], [], [AC_MSG_ERROR([Required function $ac_func() not found!])])
 
 # Apply GCC-specific options only if GCC is in use.
 if test "$GCC" = yes; then
