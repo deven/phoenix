@@ -323,7 +323,7 @@ void Telnet::PrintMessage(OutputType type, Timestamp time, Name *from,
       }
       output(Colon);
    default:
-      log("Internal error! (%s:%d)\n", __FILE__, __LINE__);
+      Log("Internal error! (%s:%d)\n", __FILE__, __LINE__);
       break;
    }
 
