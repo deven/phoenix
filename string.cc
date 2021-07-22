@@ -62,18 +62,9 @@
 #include "config.h"
 #include <stdio.h>
 #include <ctype.h>
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
