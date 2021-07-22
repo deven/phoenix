@@ -9,7 +9,6 @@
  *
  * Development began on November 30, 1992.
  *
- * $Log$
  */
 
 #include <sys/types.h>

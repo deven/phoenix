@@ -9,7 +9,6 @@
 #
 # Development began on November 30, 1992.
 #
-# $Log$
 
 CC = gcc -Wall -Werror
 CFLAGS = -g

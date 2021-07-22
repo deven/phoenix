@@ -18,7 +18,6 @@
 // Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log$
 
 // Check if previously included.
 #ifndef _STRING2_H
