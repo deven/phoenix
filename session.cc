@@ -1276,7 +1276,7 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
       return true;
    }
 
-   if (everyone = boolean(!*args)) lastcount = 1;
+   if ((everyone = boolean(!*args))) lastcount = 1;
    here = away = busy = gone = attached = detached = active = inactive =
       doidle = unidle = privileged = guests = false;
    while (*args) {
@@ -1316,20 +1316,20 @@ boolean Session::GetWhoSet(char *args, Set<Session> &who, String &errors,
    ListIter<Session> s(sessions);
    while (s++) {
       idle = (now - s->idle_since) / 60;
-      boolean is_active = (s->away == Here && (idle < (s-> telnet ? 60 : 10)) ||
-                           s->away == Away && s->telnet && (idle < 10));
-      if (here       &&  s->away == Here ||
-          away       &&  s->away == Away ||
-          busy       &&  s->away == Busy ||
-          gone       &&  s->away == Gone ||
-          attached   &&  s->telnet       ||
-          detached   && !s->telnet       ||
-          active     &&  is_active       ||
-          inactive   && !is_active       ||
-          doidle     &&  idle >= 10      ||
-          unidle     &&  idle < 10       ||
-          privileged &&  s->priv >= 50   ||
-          guests     &&  s->priv == 0    ||
+      boolean is_active = ((s->away == Here && (idle < (s-> telnet ? 60 : 10))) ||
+                           (s->away == Away && s->telnet && (idle < 10)));
+      if ((here       &&  s->away == Here) ||
+          (away       &&  s->away == Away) ||
+          (busy       &&  s->away == Busy) ||
+          (gone       &&  s->away == Gone) ||
+          (attached   &&  s->telnet)       ||
+          (detached   && !s->telnet)       ||
+          (active     &&  is_active)       ||
+          (inactive   && !is_active)       ||
+          (doidle     &&  idle >= 10)      ||
+          (unidle     &&  idle < 10)       ||
+          (privileged &&  s->priv >= 50)   ||
+          (guests     &&  s->priv == 0)    ||
           everyone
       ) {
          who.Add((Session *) s);
@@ -1821,7 +1821,7 @@ void Session::DoSend(char *args)    // Do /send command.
          output("\a\a");
          output(~sendlist->errors);
       }
-      if (!sendlist->sessions.Count() && !sendlist->discussions.Count() ||
+      if ((!sendlist->sessions.Count() && !sendlist->discussions.Count()) ||
           sendlist->errors) {
          output("Your default sendlist is unchanged.\n");
          return;
@@ -1857,8 +1857,8 @@ void Session::DoBlurb(char *start, boolean entry)
             if (!entry) output("Your blurb was already turned off.\n");
          }
       } else {
-         if (*start == '\"' && *end == '\"' && start < end ||
-             *start == '[' && *end == ']') start++; else end++;
+         if ((*start == '\"' && *end == '\"' && start < end) ||
+             (*start == '['  && *end == ']')) start++; else end++;
          start[end - start] = 0;
          SetBlurb(start);
          if (!entry) print("Your blurb has been set to%s.\n", ~blurb);

@@ -246,7 +246,7 @@ char *match(char *&input, const char *keyword, int min) {
       if ((isupper(*p) ? tolower(*p) : *p) !=
           (isupper(*q) ? tolower(*q) : *q)) return NULL;
    }
-   if (*p && !isspace(*p) && !*q || i < min) return NULL;
+   if ((*p && !isspace(*p) && !*q) || i < min) return NULL;
    while (isspace(*p)) p++;
    return input = p;
 }

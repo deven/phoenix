@@ -910,7 +910,7 @@ void Telnet::accept_input()     // Accept input line.
 
 void Telnet::insert_char(int ch) // Insert character at point.
 {
-   if (ch >= Space && ch < Delete || ch >= NBSpace && ch <= y_umlaut) {
+   if ((ch >= Space && ch < Delete) || (ch >= NBSpace && ch <= y_umlaut)) {
       // Make room for the new character if necessary.
       if (AtEnd()) {
          // Insert character at point (end), echo if necessary.
