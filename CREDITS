@@ -5,6 +5,6 @@ invaluable assistance during original development, for catching the FD_SETSIZE
 bug that broke the Cygwin build, and for helping to break the dependency on
 -lstdc++ for GCC 3.x versions.  Thanks, Ron!
 
-Drew Card <drew@gangplank.org> also deserves special thanks for his tireless
+Drew Card <drew@phoenix-cmc.org> also deserves special thanks for his tireless
 efforts at beta testing, and particularly for discovering the buffer overflow
 vulnerability which was fixed in version 1.0.0.beta.9.  Thanks, Drew!

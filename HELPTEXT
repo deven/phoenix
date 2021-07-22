@@ -1,5 +1,5 @@
 [/w|ho,who,/i|dle,idle]
-The /who and /idle commands are used to list users on Gangplank.  Both /who
+The /who and /idle commands are used to list users on Phoenix.  Both /who
 and /idle take identical arguments, but the output differs.  /who will give
 more information, while /idle will give a more compact presentation.
 
@@ -152,7 +152,7 @@ smileys.  (See "/help smileys".)  "/send off" will turn off your default
 sendlist completely.  "/send" alone will display your current default
 sendlist without changing it.  /send may be abbreviated to /s.
 [/bye,bye]
-The /bye command is used to leave Gangplank completely.  If you sign off, you
+The /bye command is used to leave Phoenix completely.  If you sign off, you
 will be disconnected from the system and unable to receive messages at all.
 You may wish to consider using the /detach command instead.
 [/wha|t,what]
@@ -194,7 +194,7 @@ idle time was at least one minute, it is reported before being reset.
 In general, when you become unidle, you will receive a report of the previous
 idle time if it exceeded the normal threshold of ten minutes.
 [/det|ach,detach]
-The /detach command is used to disconnect from Gangplank without signing off.
+The /detach command is used to disconnect from Phoenix without signing off.
 You can still receive messages while detached, to be reviewed later.  When
 the /detach command is used, others are notified that you intentionally
 detached.  If any other event causes you to become detached (e.g. network
