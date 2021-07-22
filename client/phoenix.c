@@ -3,7 +3,6 @@
  *
  * Simple Phoenix standalone client.
  *
- * $Log$
  */
 
 #include <ctype.h>

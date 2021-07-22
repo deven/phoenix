@@ -18,26 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: discussion.cc,v $
-// Revision 1.6  2003/09/18 01:19:44  deven
-// Fixed Join() to check if the user is already a member, added privileged
-// session check to Appoint().
-//
-// Revision 1.5  2003/02/24 06:26:04  deven
-// Removed check for strcasecmp().
-//
-// Revision 1.4  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.3  2002/11/26 06:38:49  deven
-// Added missing ~ operator where String objects were being passed as char *.
-//
-// Revision 1.2  2002/09/18 02:21:35  deven
-// Generate a compile-time error if strcasecmp() not available.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 

@@ -18,13 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: eventqueue.cc,v $
-// Revision 1.2  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 

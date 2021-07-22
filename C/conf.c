@@ -9,37 +9,6 @@
  *
  * Development began on November 30, 1992.
  *
- * $Log: conf.c,v $
- * Revision 1.8  1996/03/06 06:28:38  deven
- * Renamed "shutdown" variable to "Shutdown".  Added argc check.  Removed calls
- * to sigigore(), replaced with signal().
- *
- * Revision 1.7  1993/12/21 19:52:17  deven
- * Modified to use external encrypted password file.
- *
- * Revision 1.6  1993/04/08 20:30:23  deven
- * Switched to log directory instead of single log file.
- *
- * Revision 1.5  1993/04/07 21:41:12  deven
- * Added session layer.
- *
- * Revision 1.4  1993/03/23 08:32:37  deven
- * Fixed a nasty little bug in output buffering -- if a second block was
- * added to the output chain, the tail pointer wasn't updated.  Oops.
- *
- * Revision 1.3  1993/03/18 19:06:42  deven
- * Added call to getpeername() and logged calling host and port.
- *
- * Revision 1.2  1993/03/17 07:09:05  deven
- * Fixed to use *current* input function when processing saved lines, taking
- * into account that those lines may change the input function.  Fixed the
- * match_name function to match correctly, if a bit inefficiently.  Added
- * SO_REUSEADDR option on listening socket to avoid time delay on server
- * restart.  Warn instead of aborting on accept() failure.
- *
- * Revision 1.1  1993/03/05 18:04:17  deven
- * Initial revision
- *
  */
 
 #include <stdio.h>

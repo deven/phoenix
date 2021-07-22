@@ -18,30 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: system.h,v $
-// Revision 1.7  2003/09/18 01:41:37  deven
-// Include <sys/wait.h> or define macros instead.
-//
-// Revision 1.6  2003/02/18 05:08:57  deven
-// Updated copyright dates.
-//
-// Revision 1.5  2002/11/26 04:27:51  deven
-// Modified to include both <string.h> and <strings.h> if both are available.
-//
-// Revision 1.4  2002/09/17 04:12:52  deven
-// Removed BSD checks, added conditional checks for various includes, based on
-// configure's tests.
-//
-// Revision 1.3  2002/08/14 00:25:45  deven
-// Added Macintosh OS X (__APPLE__ && __MACH__) test to list of BSD-derived
-// systems, defined "socklen_t" for BSD-derived systems.
-//
-// Revision 1.2  2001/12/12 05:44:36  deven
-// Added <time.h> header, avoid including <crypt.h> on BSD systems.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 // Check if previously included.
 #ifndef _SYSTEM_H

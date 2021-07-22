@@ -18,22 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: hash.cc,v $
-// Revision 1.5  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.4  2002/11/21 06:07:12  deven
-// Changed "string.h" to "string2.h" to avoid conflict with <string.h> file.
-//
-// Revision 1.3  2002/09/17 02:40:33  deven
-// Added include file config.h.
-//
-// Revision 1.2  2001/12/02 07:50:37  deven
-// Renamed internal hash function which conflicted with the class name.
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "config.h"
 #include "boolean.h"

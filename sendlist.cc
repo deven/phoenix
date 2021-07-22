@@ -18,26 +18,6 @@
 // Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
 // for more information or if any conditions of this licensing are unclear.
 //
-// $Log: sendlist.cc,v $
-// Revision 1.6  2003/02/24 06:34:22  deven
-// Removed strchr() check.
-//
-// Revision 1.5  2003/02/18 05:08:56  deven
-// Updated copyright dates.
-//
-// Revision 1.4  2003/02/17 06:40:06  deven
-// Modified to use String::vsprintf() and String::sprintf() in preference to
-// the system vsprintf() and sprintf() functions, to avoid buffer overflows.
-//
-// Revision 1.3  2002/09/18 02:23:29  deven
-// Generate a compile-time error if strchr() not available.
-//
-// Revision 1.2  2002/07/28 05:46:09  deven
-// Removed duplicate default initializers.  (GCC 3.1.1 caught this error.)
-//
-// Revision 1.1  2001/11/30 23:53:32  deven
-// Initial revision
-//
 
 #include "gangplank.h"
 
