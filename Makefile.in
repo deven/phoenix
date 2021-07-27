@@ -18,11 +18,11 @@
 #
 # $Id: Makefile.am,v 1.6 2003/02/24 06:23:12 deven Exp $
 #
-# Makefile for building the Gangplank server executable.
+# Makefile for building the Phoenix server executable.
 #
 # Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
 #
-# This file is part of the Gangplank conferencing system.
+# This file is part of the Phoenix conferencing system.
 #
 # This file may be distributed under the terms of the Q Public License
 # as defined by Trolltech AS of Norway (except for Choice of Law) and as
@@ -31,7 +31,7 @@
 # This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 # WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# Visit <http://www.gangplank.org/license/> or contact <info@gangplank.org>
+# Visit <http://www.phoenix-cmc.org/license/> or contact <info@phoenix-cmc.org>
 # for more information or if any conditions of this licensing are unclear.
 #
 
@@ -110,7 +110,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = makepw$(EXEEXT)
-sbin_PROGRAMS = gangplank$(EXEEXT)
+sbin_PROGRAMS = phoenixd$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_bool.m4 \
@@ -130,17 +130,17 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)"
 PROGRAMS = $(bin_PROGRAMS) $(sbin_PROGRAMS)
-am_gangplank_OBJECTS = discussion.$(OBJEXT) event.$(OBJEXT) \
-	eventqueue.$(OBJEXT) fdtable.$(OBJEXT) gangplank.$(OBJEXT) \
-	hash.$(OBJEXT) listen.$(OBJEXT) output.$(OBJEXT) \
-	outstr.$(OBJEXT) sendlist.$(OBJEXT) session.$(OBJEXT) \
-	string.$(OBJEXT) telnet.$(OBJEXT) timestamp.$(OBJEXT) \
-	user.$(OBJEXT)
-gangplank_OBJECTS = $(am_gangplank_OBJECTS)
-gangplank_LDADD = $(LDADD)
 am_makepw_OBJECTS = makepw.$(OBJEXT)
 makepw_OBJECTS = $(am_makepw_OBJECTS)
 makepw_LDADD = $(LDADD)
+am_phoenixd_OBJECTS = discussion.$(OBJEXT) event.$(OBJEXT) \
+	eventqueue.$(OBJEXT) fdtable.$(OBJEXT) hash.$(OBJEXT) \
+	listen.$(OBJEXT) output.$(OBJEXT) outstr.$(OBJEXT) \
+	phoenix.$(OBJEXT) sendlist.$(OBJEXT) session.$(OBJEXT) \
+	string.$(OBJEXT) telnet.$(OBJEXT) timestamp.$(OBJEXT) \
+	user.$(OBJEXT)
+phoenixd_OBJECTS = $(am_phoenixd_OBJECTS)
+phoenixd_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -158,9 +158,9 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/discussion.Po ./$(DEPDIR)/event.Po \
 	./$(DEPDIR)/eventqueue.Po ./$(DEPDIR)/fdtable.Po \
-	./$(DEPDIR)/gangplank.Po ./$(DEPDIR)/hash.Po \
-	./$(DEPDIR)/listen.Po ./$(DEPDIR)/makepw.Po \
-	./$(DEPDIR)/output.Po ./$(DEPDIR)/outstr.Po \
+	./$(DEPDIR)/hash.Po ./$(DEPDIR)/listen.Po \
+	./$(DEPDIR)/makepw.Po ./$(DEPDIR)/output.Po \
+	./$(DEPDIR)/outstr.Po ./$(DEPDIR)/phoenix.Po \
 	./$(DEPDIR)/sendlist.Po ./$(DEPDIR)/session.Po \
 	./$(DEPDIR)/string.Po ./$(DEPDIR)/telnet.Po \
 	./$(DEPDIR)/timestamp.Po ./$(DEPDIR)/user.Po
@@ -190,8 +190,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES)
-DIST_SOURCES = $(gangplank_SOURCES) $(makepw_SOURCES)
+SOURCES = $(makepw_SOURCES) $(phoenixd_SOURCES)
+DIST_SOURCES = $(makepw_SOURCES) $(phoenixd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -257,7 +257,7 @@ CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = -DSERVER_PATH=\"$(sbindir)/gangplank\" -DLIBDIR=\"$(pkglibdir)\"
+DEFS = -DSERVER_PATH=\"$(sbindir)/phoenixd\" -DLIBDIR=\"$(pkglibdir)\"
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -340,13 +340,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 makepw_SOURCES = makepw.c
-gangplank_SOURCES = discussion.cc event.cc eventqueue.cc fdtable.cc \
-	gangplank.cc hash.cc listen.cc output.cc outstr.cc sendlist.cc \
-	session.cc string.cc telnet.cc timestamp.cc user.cc gangplank.h \
-	system.h boolean.h object.h general.h constants.h functions.h \
-	string2.h list.h set.h hash.h timestamp.h line.h block.h outbuf.h \
-	name.h output.h outstr.h event.h eventqueue.h sendlist.h session.h \
-	discussion.h user.h fdtable.h fd.h listen.h telnet.h globals.h
+phoenixd_SOURCES = block.h boolean.h constants.h discussion.h event.h \
+	eventqueue.h fd.h fdtable.h functions.h general.h globals.h hash.h \
+	line.h list.h listen.h name.h object.h outbuf.h output.h outstr.h \
+	phoenix.h sendlist.h session.h set.h string2.h system.h telnet.h \
+	timestamp.h user.h discussion.cc event.cc eventqueue.cc fdtable.cc \
+	hash.cc listen.cc output.cc outstr.cc phoenix.cc sendlist.cc \
+	session.cc string.cc telnet.cc timestamp.cc user.cc
 
 EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING RELEASES \
 	TOUR bootstrap passwd
@@ -489,13 +489,13 @@ uninstall-sbinPROGRAMS:
 clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
 
-gangplank$(EXEEXT): $(gangplank_OBJECTS) $(gangplank_DEPENDENCIES) $(EXTRA_gangplank_DEPENDENCIES) 
-	@rm -f gangplank$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(gangplank_OBJECTS) $(gangplank_LDADD) $(LIBS)
-
 makepw$(EXEEXT): $(makepw_OBJECTS) $(makepw_DEPENDENCIES) $(EXTRA_makepw_DEPENDENCIES) 
 	@rm -f makepw$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(makepw_OBJECTS) $(makepw_LDADD) $(LIBS)
+
+phoenixd$(EXEEXT): $(phoenixd_OBJECTS) $(phoenixd_DEPENDENCIES) $(EXTRA_phoenixd_DEPENDENCIES) 
+	@rm -f phoenixd$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(phoenixd_OBJECTS) $(phoenixd_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -507,12 +507,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eventqueue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fdtable.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gangplank.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/listen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makepw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/output.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/outstr.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/phoenix.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sendlist.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/session.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Po@am__quote@ # am--include-marker
@@ -833,12 +833,12 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/event.Po
 	-rm -f ./$(DEPDIR)/eventqueue.Po
 	-rm -f ./$(DEPDIR)/fdtable.Po
-	-rm -f ./$(DEPDIR)/gangplank.Po
 	-rm -f ./$(DEPDIR)/hash.Po
 	-rm -f ./$(DEPDIR)/listen.Po
 	-rm -f ./$(DEPDIR)/makepw.Po
 	-rm -f ./$(DEPDIR)/output.Po
 	-rm -f ./$(DEPDIR)/outstr.Po
+	-rm -f ./$(DEPDIR)/phoenix.Po
 	-rm -f ./$(DEPDIR)/sendlist.Po
 	-rm -f ./$(DEPDIR)/session.Po
 	-rm -f ./$(DEPDIR)/string.Po
@@ -896,12 +896,12 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/event.Po
 	-rm -f ./$(DEPDIR)/eventqueue.Po
 	-rm -f ./$(DEPDIR)/fdtable.Po
-	-rm -f ./$(DEPDIR)/gangplank.Po
 	-rm -f ./$(DEPDIR)/hash.Po
 	-rm -f ./$(DEPDIR)/listen.Po
 	-rm -f ./$(DEPDIR)/makepw.Po
 	-rm -f ./$(DEPDIR)/output.Po
 	-rm -f ./$(DEPDIR)/outstr.Po
+	-rm -f ./$(DEPDIR)/phoenix.Po
 	-rm -f ./$(DEPDIR)/sendlist.Po
 	-rm -f ./$(DEPDIR)/session.Po
 	-rm -f ./$(DEPDIR)/string.Po
