@@ -20,7 +20,8 @@
 #
 
 AC_PREREQ([2.71])
-AC_INIT([phoenix], [1.0.0.beta.11], [bugs@phoenix-cmc.org])
+AC_INIT([Phoenix], m4_esyscmd([./version-gen]), [bugs@phoenix-cmc.org])
+
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([phoenix.cc])
 AC_CONFIG_HEADERS([config.h])
