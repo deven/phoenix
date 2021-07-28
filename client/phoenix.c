@@ -240,7 +240,6 @@ int connect_to(char *host, int port) /* open tcp connection, return socket fd */
 {
    struct sockaddr_in saddr;
    int cfd;
-   u_long inet_addr();
    struct hostent *hp;
 
    bzero((char *) &saddr, sizeof(saddr));
