@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: list.h,v 1.3 2003/09/18 01:25:33 deven Exp $
+// $Id$
 //
 // List class interface and implementation.
 //

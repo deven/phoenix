@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: hash.cc,v 1.5 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // Hash class implementation.
 //

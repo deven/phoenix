@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: makepw.c,v 1.8 2003/02/24 06:32:49 deven Exp $
+ * $Id$
  *
  * Utility program to encrypt a single password in standard Unix "crypt" form.
  *

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: event.cc,v 1.4 2003/02/24 06:26:43 deven Exp $
+// $Id$
 //
 // Event and derived classes, implementations.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.h,v 1.6 2003/02/21 03:12:19 deven Exp $
+// $Id$
 //
 // Telnet class interface.
 //

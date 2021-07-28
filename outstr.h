@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: outstr.h,v 1.2 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // OutputStream class interface.
 //

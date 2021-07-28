@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.h,v 1.6 2003/09/18 01:26:08 deven Exp $
+// $Id$
 //
 // Session class interface.
 //

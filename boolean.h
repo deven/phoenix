@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Phoenix conferencing system server.
+// $Id$
 //
 // Boolean type header file.
 //

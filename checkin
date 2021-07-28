@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: checkin,v 1.7 2000/03/22 06:07:47 deven Exp $
+# $Id$
 #
 # Conferencing system server -- RCS checkin script.
 #

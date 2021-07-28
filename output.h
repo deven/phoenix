@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: output.h,v 1.3 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // Output and derived classes, interfaces.
 //

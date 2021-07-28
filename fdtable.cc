@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fdtable.cc,v 1.6 2003/02/24 06:27:03 deven Exp $
+// $Id$
 //
 // FDTable class implementation.
 //

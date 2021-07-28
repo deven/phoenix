@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string.cc,v 1.11 2003/09/18 01:39:03 deven Exp $
+// $Id$
 //
 // String class implementation.
 //

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.h,v 1.4 2003/09/18 01:44:49 deven Exp $
+// $Id$
 //
 // User class interface.
 //

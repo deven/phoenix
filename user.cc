@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: user.cc,v 1.7 2003/09/18 01:44:49 deven Exp $
+// $Id$
 //
 // User class implementation.
 //

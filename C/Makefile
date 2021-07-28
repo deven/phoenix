@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.1 1993/03/05 18:01:47 deven Exp $
+# $Id$
 #
 # Conferencing system server.
 #

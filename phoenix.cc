@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: phoenix.cc,v 1.13 2003/09/18 01:24:55 deven Exp $
+// $Id$
 //
 // Main program.
 //

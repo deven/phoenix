@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: constants.h,v 1.7 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // Global constants header file.
 //

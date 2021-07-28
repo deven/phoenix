@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: globals.h,v 1.2 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // Global variables header file.
 //

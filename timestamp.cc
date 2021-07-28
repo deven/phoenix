@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: timestamp.cc,v 1.4 2003/02/18 05:08:57 deven Exp $
+// $Id$
 //
 // Timestamp class implementation.
 //

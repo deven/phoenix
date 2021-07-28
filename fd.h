@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: fd.h,v 1.3 2003/02/18 05:08:56 deven Exp $
+// $Id$
 //
 // FD class interface.
 //

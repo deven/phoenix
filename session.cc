@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: session.cc,v 1.17 2003/09/18 01:37:48 deven Exp $
+// $Id$
 //
 // Session class implementation.
 //
