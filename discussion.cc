@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: discussion.cc,v 1.6 2003/09/18 01:19:44 deven Exp $
+// $Id$
 //
 // Discussion class implementation.
 //

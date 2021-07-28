@@ -1,4 +1,4 @@
-$Id: KLUDGES,v 1.5 2003/02/22 05:04:55 deven Exp $
+$Id$
 
 All help text for the /help command is currently hardcoded into the source
 code, as an expedient kludge to minimize file I/O.  This is important, since

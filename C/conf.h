@@ -1,5 +1,5 @@
 /*
- * $Id: conf.h,v 1.3 1996/03/06 06:18:56 deven Exp $
+ * $Id$
  *
  * Conferencing system server.
  *

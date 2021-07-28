@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: sendlist.cc,v 1.6 2003/02/24 06:34:22 deven Exp $
+// $Id$
 //
 // Sendlist class implementation.
 //

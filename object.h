@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Phoenix conferencing system server.
+// $Id$
 //
 // Object base class and Pointer template class for smart pointers.
 //

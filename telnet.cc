@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: telnet.cc,v 1.13 2003/09/18 02:01:29 deven Exp $
+// $Id$
 //
 // Telnet class implementation.
 //

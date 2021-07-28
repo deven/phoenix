@@ -1,4 +1,4 @@
-# @(#)Makefile	1.28 by Deven Thomas Corzine 5/11/90
+# $Id$
 #
 # phoenix Makefile
 #

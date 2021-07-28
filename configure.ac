@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 #
-# $Id: configure.ac,v 1.8 2003/09/18 03:53:24 deven Exp $
+# $Id$
 #
 # Master autoconf configuration file.
 #

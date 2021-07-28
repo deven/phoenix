@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: listen.h,v 1.3 2003/02/24 06:31:03 deven Exp $
+// $Id$
 //
 // Listen class interface.
 //

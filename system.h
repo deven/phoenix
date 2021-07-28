@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: system.h,v 1.7 2003/09/18 01:41:37 deven Exp $
+// $Id$
 //
 // System include files.
 //

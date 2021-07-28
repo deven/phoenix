@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# $Id: Makefile.am,v 1.6 2003/02/24 06:23:12 deven Exp $
+# $Id$
 #
 # Makefile for building the Phoenix server executable.
 #

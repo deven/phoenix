@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: listen.cc,v 1.4 2003/02/24 06:32:26 deven Exp $
+// $Id$
 //
 // Listen class implementation.
 //

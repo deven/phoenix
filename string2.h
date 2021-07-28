@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// $Id: string2.h,v 1.9 2003/09/18 01:38:29 deven Exp $
+// $Id$
 //
 // String class interface.
 //
