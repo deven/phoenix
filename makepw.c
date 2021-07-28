@@ -38,11 +38,12 @@
 #error getpass() required!
 #endif
 
+static char *key = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+
 int main(int argc, char **argv)
 {
    char pw[256], salt[3];
-   char *key;
-   key = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+
    sleep(1);
    srandom(time(NULL));
    salt[0] = key[random() & 63];
