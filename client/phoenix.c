@@ -44,8 +44,8 @@ extern int errno;               /* error number */
 
 int server;                     /* server socket file descriptor */
 int tty;                        /* tty file descriptor */
-int log;                        /* logfile file descriptor */
-char *logfile;                  /* logfile name */
+int logfile;                    /* logfile file descriptor */
+char *logfile_name;             /* logfile name */
 FILE *init;                     /* initfile stream */
 int Aborting;                   /* abort flag */
 int waiting;                    /* wait for server output flag */
@@ -124,7 +124,7 @@ void refresh()                  /* simple screen refresh */
       tcsetattr(tty, TCSADRAIN, &origmode);
       get_screen_size();
       writef(tty, "\033[H\033[J");
-      sprintf(buf, "tail -%d %s", Height - 1, logfile);
+      sprintf(buf, "tail -%d %s", Height - 1, logfile_name);
       system(buf);
       tcsetattr(tty, TCSADRAIN, &mode);
    }
@@ -138,7 +138,7 @@ void review()                   /* simple review of logfile */
    if (logfile) {
       tcgetattr(tty, &mode);
       tcsetattr(tty, TCSADRAIN, &origmode);
-      sprintf(buf, "less %s", logfile);
+      sprintf(buf, "less %s", logfile_name);
       system(buf);
       refresh();
       tcsetattr(tty, TCSADRAIN, &mode);
@@ -308,7 +308,7 @@ void send_line()                /* send current line */
    *eol++ = 0;
    writef(tty, "\r\n");
    writef(server, "%s\r\n", line);
-   if (log) writef(log, "%s\n", line);
+   if (logfile) writef(logfile, "%s\n", line);
    eol = point = line;
 }
 
@@ -344,11 +344,11 @@ void sigalrm()                  /* SIGALRM handler */
             p++;
          } else {
             writef(tty, "%s", p);
-            if (log) writef(log, "%s", p);
+            if (logfile) writef(logfile, "%s", p);
          }
          writef(server, "%s\r\n", p);
          writef(tty, "\n");
-         if (log) writef(log, "\n");
+         if (logfile) writef(logfile, "\n");
          waiting = 1;
       } else {
          fclose(init);
@@ -550,18 +550,18 @@ int server_read()               /* process output from server */
       erase_line();
       write(tty, outbuf, q - outbuf);
       redraw_line();
-      if (log) {
+      if (logfile) {
          for (p = r = outbuf; p < q; p++, r++) {
             if (*p == '\r') p++;
             *r = *p;
          }
-         write(log, outbuf, r - outbuf);
+         write(logfile, outbuf, r - outbuf);
       }
       if (found && !*found) {
          if (send_next == login) {
             writef(tty, "%s\r\n", login);
             writef(server, "%s\r\n", login);
-            if (log) writef(log, "%s\n", login);
+            if (logfile) writef(logfile, "%s\n", login);
             send_next = passwd;
             ignore = ignored = \
                "\r\n\007Sorry, password probably WILL echo.\r\n\r\n";
@@ -569,7 +569,7 @@ int server_read()               /* process output from server */
          } else if (send_next == passwd) {
             writef(tty, "\r\n");
             writef(server, "%s\r\n", passwd);
-            if (log) writef(log, "\n");
+            if (logfile) writef(logfile, "\n");
             wait_for = found = (char *) 0;
             send_next = 0;
             got_through = 1;
@@ -700,22 +700,22 @@ char **argv;
    char buf[256], *getenv();
    struct passwd *pw, *getpwnam();
 
-   logfile = (char *) 0;
+   logfile_name = (char *) 0;
    tty = -1;
    if (argc > 2) error("Usage: phoenix [logfile]\n");
    if (argc == 2) {
-      logfile = argv[1];
-      if ((log = open(logfile, O_RDWR|O_APPEND|O_CREAT, 0600)) == -1) {
+      logfile_name = argv[1];
+      if ((logfile = open(logfile_name, O_RDWR|O_APPEND|O_CREAT, 0600)) == -1) {
          writef(2, "Error opening logfile ");
-         error(logfile);
-         logfile = (char *) 0;
-         log = 0;
+         error(logfile_name);
+         logfile_name = (char *) 0;
+         logfile = 0;
       }
    }
    eol = point = line;
    Aborting = Erased = got_through = 0;
    waiting = 1;
-   if (!log) log = !isatty(1);
+   if (!logfile) logfile = !isatty(1);
    width = getdtablesize();
    if ((tty = open("/dev/tty", O_RDWR)) == -1) error("open(\"/dev/tty\")");
    tcgetattr(tty, &origmode);
