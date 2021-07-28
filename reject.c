@@ -5,6 +5,8 @@
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
+ * SPDX-License-Identifier: MIT
+ *
  */
 
 #include <errno.h>
