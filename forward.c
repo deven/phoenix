@@ -1,4 +1,5 @@
-/*
+/* -*- C -*-
+ *
  * $Id$
  *
  * Utility program to forward TCP connections.

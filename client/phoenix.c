@@ -1,4 +1,5 @@
-/*
+/* -*- C -*-
+ *
  * $Id$
  *
  * Simple Phoenix standalone client.
