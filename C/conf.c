@@ -2,7 +2,7 @@
  *
  * $Id$
  *
- * Conferencing system server, main server code.
+ * Phoenix conferencing system server, main server code.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
@@ -10,7 +10,7 @@
  *
  */
 
-#include "conf.h"
+#include "phoenix.h"
 
 static char          buf[BUFSIZE];   /* temporary buffer */
 static char          inbuf[BUFSIZE]; /* input buffer */
@@ -615,7 +615,7 @@ void welcome(struct telnet *telnet)
    if (telnet->echo == TELNET_WILL_WONT) return;
 
    /* send welcome banner */
-   output(telnet, "\nWelcome to conf!\n\n");
+   output(telnet, "\nWelcome to Phoenix!\n\n");
 
    /* Announce guest account. */
    output(telnet, "A \"guest\" account is available.\n\n");
@@ -761,7 +761,7 @@ void name(struct telnet *telnet, char *line)
    /* XXX Link new session into user list. */
 
    /* Announce entry. */
-   notify("*** %s has entered conf! [%s] ***\n", telnet->session->name,
+   notify("*** %s has entered Phoenix! [%s] ***\n", telnet->session->name,
           date(time(&telnet->session->login_time), 11, 5));
    telnet->session->message_time = telnet->session->login_time;
    Log("Enter: %s (%s) on fd #%d.", telnet->session->name,
@@ -784,7 +784,7 @@ void process_input(struct telnet *telnet, char *line)
             Log("Immediate shutdown requested by %s (%s).",
                 telnet->session->name, telnet->session->user->user);
             Log("Final shutdown warning.");
-            announce("*** %s has shut down conf! ***\n", telnet->session->name);
+            announce("*** %s has shut down Phoenix! ***\n", telnet->session->name);
             announce("%c%c>>> Server shutting down NOW!  Goodbye. <<<\n%c%c",
                      7, 7, 7, 7);
             alarm(5);
@@ -806,7 +806,7 @@ void process_input(struct telnet *telnet, char *line)
             if (sscanf(line + 5, "%d", &i) != 1) i = 30;
             Log("Shutdown requested by %s (%s) in %d seconds.",
                 telnet->session->name, telnet->session->user->user, i);
-            announce("*** %s has shut down conf! ***\n", telnet->session->name);
+            announce("*** %s has shut down Phoenix! ***\n", telnet->session->name);
             announce("%c%c>>> This server will shutdown in %d seconds... "
                      "<<<\n%c%c", 7, 7, i, 7, 7);
             alarm(i);
@@ -852,7 +852,7 @@ void process_input(struct telnet *telnet, char *line)
       }
    } else if (*line == '/') {
       if (!strncmp(line, "/bye", 4)) {
-         /* Exit conf. */
+         /* Exit Phoenix. */
          if (telnet->output.head) {
             /* Queued output, try to send it first. */
             telnet->blocked = 0;
@@ -904,7 +904,7 @@ void process_input(struct telnet *telnet, char *line)
          /* help?  ha! */
          output(telnet, "Help?  Help?!?  This program isn't done, you know.\n");
          output(telnet, "\nOnly known commands:\n\n");
-         output(telnet, "/bye -- leave conf\n");
+         output(telnet, "/bye -- leave Phoenix\n");
          output(telnet, "/date -- display current date and time\n");
          output(telnet, "/send -- specify default sendlist\n");
          output(telnet, "/who -- gives trivial list of who is connected\n");
@@ -1225,7 +1225,7 @@ void close_connection(struct telnet *telnet)
 
    /* Notify and log exit if session found. */
    if (found) {
-      notify("*** %s has left conf! [%s] ***\n", session->name, date(0, 11, 5));
+      notify("*** %s has left Phoenix! [%s] ***\n", session->name, date(0, 11, 5));
       Log("Exit: %s (%s) on fd #%d.", session->name, session->user->user,
           telnet->fd);
    }
