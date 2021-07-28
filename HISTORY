@@ -5,9 +5,7 @@ This is a brief history of the Phoenix conferencing system.
 Initial development of the system began on November 30, 1992.  Phoenix
 was finally released (under the Q Public License) on its ninth birthday,
 November 30, 2001.  Unreleased versions have run as a production service
-(on a private host computer) since March 5, 1993 or earlier.  The name
-change to "Gangplank" coincided with the original Open Source release on
-November 30, 2001.
+(on a private host computer) since March 5, 1993 or earlier.
 
 To date, all of the source code has been written by the original author,
 Deven T. Corzine <deven@ties.org>.  Due to a rather draconian Intellectual
@@ -25,6 +23,21 @@ and the production server was upgraded to the C++ codebase.  "Conf" was
 renamed to "Phoenix" on April 21, 1994.
 
 The name was changed to "Gangplank" to coincide with the Open Source release
-on November 30, 2001.  A 1.x version number was used for the initial release
-of Phoenix because there was already long history under the "conf" and
-"Phoenix" names, which could be viewed as (unreleased) 0.x versions.
+on November 30, 2001, in large part because the domain "gangplank.org" was
+available.  A 1.x version number was used for the initial Gangplank release
+because there was already long history under the "conf" and "Phoenix" names,
+which could be viewed as (unreleased) 0.x versions.
+
+The final Gangplank release was version 1.0.0.beta.11 (September 18, 2003).
+After some occasional development over the next few years, the codebase was
+untouched for a decade until December 25, 2018, when the author refactored
+the original 1994 smart pointer code to work correctly with GCC 4.8.3.
+
+This was followed by over 2 years of on-and-off work to reconstruct the
+entire history of the codebase on GitHub from old backups, RCS files and
+CVS files, including the previously-unreleased original development history.
+
+After the complete history was converted to Git, the code was cleaned up to
+compile cleanly with GCC 9.3.0 and updated Autotools files, renamed from
+"Gangplank" back to "Phoenix" and relicensed under the MIT license before
+finally releasing Phoenix 1.0.0 on July 28, 2021.
