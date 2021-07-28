@@ -68,7 +68,7 @@ char *ignore;                   /* points to ignore string */
 char *ignored;                  /* points to ignore string remaining */
 int got_through;                /* indicates whether we got through already */
 
-writef(int fd, char *format, ...) /* formatted write */
+void writef(int fd, char *format, ...) /* formatted write */
 {
    static char buf[8192];
    va_list ap;
@@ -76,11 +76,10 @@ writef(int fd, char *format, ...) /* formatted write */
    va_start(ap, format);
    vsprintf(buf, format, ap);
    va_end(ap);
-   return write(fd, buf, strlen(buf));
+   write(fd, buf, strlen(buf));
 }
 
-void error(label)               /* print error message and exit */
-char *label;
+void error(char *label)         /* print error message and exit */
 {
    if (tty != -1) tcsetattr(tty, TCSADRAIN, &origmode);
    if (errno) {
@@ -157,9 +156,7 @@ void suspend()                  /* suspend the process */
    tcsetattr(tty, TCSADRAIN, &mode);
 }
 
-connect_to(host, port)           /* open tcp connection, return socket fd */
-char *host;
-int port;
+int connect_to(char *host, int port) /* open tcp connection, return socket fd */
 {
    struct sockaddr_in saddr;
    int cfd;
@@ -266,7 +263,7 @@ void redraw_line()              /* redraw current line */
    }
 }
 
-beginning_of_line()             /* go to beginning of line */
+void beginning_of_line()        /* go to beginning of line */
 {
    int lines;
 
@@ -281,7 +278,7 @@ beginning_of_line()             /* go to beginning of line */
    point = line;
 }
 
-end_of_line()                   /* go to end of line */
+void end_of_line()              /* go to end of line */
 {
    int lines, columns;
 
@@ -691,9 +688,7 @@ void get_passwd()               /* get Phoenix password */
    }
 }
 
-void main(argc, argv)            /* main program */
-int argc;
-char **argv;
+int main(int argc, char **argv) /* main program */
 {
    int width;
    fd_set readfds;
