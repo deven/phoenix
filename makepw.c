@@ -38,11 +38,35 @@
 #error getpass() required!
 #endif
 
-static char *key = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+static char *usage = "Usage: %s [<password>]\n";
+static char *key   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
 
 int main(int argc, char **argv)
 {
-   char pw[256], salt[3];
+   char *password = NULL;
+   int   opts     = 1;
+   int   arg;
+   char  pw[256], salt[3];
+
+   for (arg = 1; arg < argc && argv[arg]; arg++) {
+      if (opts && !strcmp(argv[arg], "--")) {
+         opts = 0;
+      } else if (opts && !strcmp(argv[arg], "--help")) {
+         fprintf(stdout, usage, argv[0]);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--version")) {
+         fprintf(stdout, "makepw %s\n", VERSION);
+         exit(0);
+      } else if (opts && argv[arg][0] == '-') {
+         fprintf(stderr, usage, argv[0]);
+         exit(1);
+      } else if (password == NULL) {
+         password = argv[arg];
+      } else {
+         fprintf(stderr, usage, argv[0]);
+         exit(1);
+      }
+   }
 
    sleep(1);
    srandom(time(NULL));
@@ -50,8 +74,8 @@ int main(int argc, char **argv)
    salt[1] = key[random() & 63];
    salt[2] = 0;
 
-   if (argv[1]) {
-      printf("%s\n", crypt(argv[1], salt));
+   if (password) {
+      printf("%s\n", crypt(password, salt));
    } else {
       while (1) {
          strcpy(pw, getpass("Enter password: "));

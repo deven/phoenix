@@ -1763,6 +1763,8 @@ void alrm(int sig)              /* received SIGALRM */
    }
 }
 
+static char *usage = "Usage: %s [--cron] [--debug] [--port %d]\n";
+
 int main(int argc, char **argv) /* main program */
 {
    struct telnet *telnet;       /* telnet struct pointer */
@@ -1771,6 +1773,7 @@ int main(int argc, char **argv) /* main program */
    int            found;        /* number of file descriptors found */
    int            lfd;          /* listening file descriptor */
    int            pid;          /* server process number */
+   int            opts   = 1;   /* option parsing flag */
    int            arg;          /* current argument */
    int            port   = 0;   /* TCP port to use */
    int            debug  = 0;   /* --debug option */
@@ -1785,15 +1788,27 @@ int main(int argc, char **argv) /* main program */
 
    /* Check for command-line options. */
    for (arg = 1; arg < argc && argv[arg]; arg++) {
-      if (!strcmp(argv[arg], "--cron")) {
+      if (opts && !strcmp(argv[arg], "--")) {
+         opts = 0;
+      } else if (opts && !strcmp(argv[arg], "--help")) {
+         fprintf(stdout, usage, argv[0], PORT);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--version")) {
+         fprintf(stdout, "Phoenix %s (C version)\n", VERSION);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--cron")) {
          cron = 1;
-      } else if (!strcmp(argv[arg], "--debug")) {
+      } else if (opts && !strcmp(argv[arg], "--debug")) {
          debug = 1;
-      } else if (!strcmp(argv[arg], "--port") && ++arg < argc && argv[arg]) {
-         port = atoi(argv[arg]);
+      } else if (opts && !strcmp(argv[arg], "--port")) {
+         if (++arg < argc && argv[arg]) {
+            port = atoi(argv[arg]);
+         } else {
+            fprintf(stderr, usage, argv[0], PORT);
+            exit(1);
+         }
       } else {
-         fprintf(stderr, "Usage: %s [--cron] [--debug] [--port %d]\n", argv[0],
-                 PORT);
+         fprintf(stderr, usage, argv[0], PORT);
          exit(1);
       }
    }
