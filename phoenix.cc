@@ -194,19 +194,19 @@ int main(int argc, char **argv)   // main program
    int     pid;                   // server process number
    int     port  = 0;             // TCP port to use
    int     arg;                   // current argument
-   boolean cron  = false;         // -cron option
-   boolean debug = false;         // -debug option
+   boolean cron  = false;         // --cron option
+   boolean debug = false;         // --debug option
 
    // Check for command-line options.
    for (arg = 1; arg < argc && argv[arg]; arg++) {
-      if (!strcmp(argv[arg], "-cron")) {
+      if (!strcmp(argv[arg], "--cron")) {
          cron = true;
-      } else if (!strcmp(argv[arg], "-debug")) {
+      } else if (!strcmp(argv[arg], "--debug")) {
          debug = true;
-      } else if (!strcmp(argv[arg], "-port") && ++arg < argc && argv[arg]) {
+      } else if (!strcmp(argv[arg], "--port") && ++arg < argc && argv[arg]) {
          port = atoi(argv[arg]);
       } else {
-         fprintf(stderr, "Usage: %s [-cron] [-debug] [-port %d]\n", argv[0],
+         fprintf(stderr, "Usage: %s [--cron] [--debug] [--port %d]\n", argv[0],
                  PORT);
          exit(1);
       }
@@ -215,7 +215,7 @@ int main(int argc, char **argv)   // main program
    // Use configured default port if not specified.
    if (!port) port = PORT;
 
-   // If -cron option was given, check if the listening port is busy.
+   // If --cron option was given, check if the listening port is busy.
    if (cron && Listen::PortBusy(port)) exit(0);
 
    // Mark server start with current time and system uptime if available.
