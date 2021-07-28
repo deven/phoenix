@@ -3,6 +3,8 @@
  *
  * Simple Phoenix standalone client.
  *
+ * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
+ *
  */
 
 #include <ctype.h>

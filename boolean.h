@@ -4,7 +4,7 @@
 //
 // Boolean type header file.
 //
-// Copyright (c) 1992-2018 Deven T. Corzine
+// Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 //
 
 // Check if previously included.

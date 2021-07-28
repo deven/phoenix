@@ -3,7 +3,7 @@
  *
  * Utility program to forward TCP connections.
  *
- * Copyright 1994 by Deven T. Corzine.  All rights reserved.
+ * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
  */
 
