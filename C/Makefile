@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Makefile for building "conf" server.
+# Makefile for building Phoenix server.
 #
 # Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 #
@@ -22,9 +22,9 @@ LIBS = -lcrypt
 #CFLAGS = -g -DNEED_STRERROR
 #LDFLAGS =
 
-EXEC = conf
-HDRS = conf.h
-SRCS = conf.c
+EXEC = phoenixd
+HDRS = phoenix.h
+SRCS = phoenix.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(EXEC)
