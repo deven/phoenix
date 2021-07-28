@@ -4,6 +4,8 @@
 #
 # Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 #
+# SPDX-License-Identifier: MIT
+#
 
 CC = gcc
 CFLAGS = -g
