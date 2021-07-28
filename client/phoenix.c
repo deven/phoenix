@@ -69,7 +69,7 @@ char *ignored;                  /* points to ignore string remaining */
 int got_through;                /* indicates whether we got through already */
 
 /* VARARGS1 */
-writef(fd,format,va_alist)      /* formatted write */
+writef(fd, format, va_alist)    /* formatted write */
 int fd;
 char *format;
 va_dcl
@@ -78,20 +78,20 @@ va_dcl
    va_list ap;
 
    va_start(ap);
-   vsprintf(buf,format,ap);
+   vsprintf(buf, format, ap);
    va_end(ap);
-   return write(fd,buf,strlen(buf));
+   return write(fd, buf, strlen(buf));
 }
 
 void error(label)               /* print error message and exit */
 char *label;
 {
-   if (tty != -1) tcsetattr(tty,TCSADRAIN,&origmode);
+   if (tty != -1) tcsetattr(tty, TCSADRAIN, &origmode);
    if (errno) {
-      fprintf(stderr,"\n");
+      fprintf(stderr, "\n");
       perror(label);
    } else {
-      fprintf(stderr,"\n%s\n",label);
+      fprintf(stderr, "\n%s\n", label);
    }
    close(server);
    close(tty);
@@ -101,8 +101,8 @@ char *label;
 
 void cleanup()                  /* clean up on abort or shutdown */
 {
-   writef(tty,"\r\033[K");
-   tcsetattr(tty,TCSADRAIN,&origmode);
+   writef(tty, "\r\033[K");
+   tcsetattr(tty, TCSADRAIN, &origmode);
    close(server);
    close(tty);
    if (init) fclose(init);
@@ -113,7 +113,7 @@ void get_screen_size()          /* get the screen size */
 {
    struct winsize ws;
 
-   ioctl(tty,TIOCGWINSZ,&ws);
+   ioctl(tty, TIOCGWINSZ, &ws);
    if (!(Width = ws.ws_col)) Width = 80;
    if (!(Height = ws.ws_row)) Height = 24;
 }
@@ -124,13 +124,13 @@ void refresh()                  /* simple screen refresh */
    char buf[300];
 
    if (logfile) {
-      tcgetattr(tty,&mode);
-      tcsetattr(tty,TCSADRAIN,&origmode);
+      tcgetattr(tty, &mode);
+      tcsetattr(tty, TCSADRAIN, &origmode);
       get_screen_size();
-      writef(tty,"\033[H\033[J");
-      sprintf(buf,"tail -%d %s",Height - 1,logfile);
+      writef(tty, "\033[H\033[J");
+      sprintf(buf, "tail -%d %s", Height - 1, logfile);
       system(buf);
-      tcsetattr(tty,TCSADRAIN,&mode);
+      tcsetattr(tty, TCSADRAIN, &mode);
    }
 }
 
@@ -140,12 +140,12 @@ void review()                   /* simple review of logfile */
    char buf[300];
 
    if (logfile) {
-      tcgetattr(tty,&mode);
-      tcsetattr(tty,TCSADRAIN,&origmode);
-      sprintf(buf,"less %s",logfile);
+      tcgetattr(tty, &mode);
+      tcsetattr(tty, TCSADRAIN, &origmode);
+      sprintf(buf, "less %s", logfile);
       system(buf);
       refresh();
-      tcsetattr(tty,TCSADRAIN,&mode);
+      tcsetattr(tty, TCSADRAIN, &mode);
    }
 }
 
@@ -153,15 +153,15 @@ void suspend()                  /* suspend the process */
 {
    struct termios mode;
 
-   tcgetattr(tty,&mode);
-   tcsetattr(tty,TCSADRAIN,&origmode);
-   kill(0,SIGTSTP);
+   tcgetattr(tty, &mode);
+   tcsetattr(tty, TCSADRAIN, &origmode);
+   kill(0, SIGTSTP);
    get_screen_size();
    refresh();
-   tcsetattr(tty,TCSADRAIN,&mode);
+   tcsetattr(tty, TCSADRAIN, &mode);
 }
 
-connect_to(host,port)           /* open tcp connection, return socket fd */
+connect_to(host, port)           /* open tcp connection, return socket fd */
 char *host;
 int port;
 {
@@ -170,15 +170,15 @@ int port;
    u_long inet_addr();
    struct hostent *hp;
 
-   bzero((char *) &saddr,sizeof(saddr));
+   bzero((char *) &saddr, sizeof(saddr));
    saddr.sin_family = AF_INET;
    if ((saddr.sin_addr.s_addr = inet_addr(host)) == -1) {
       if (!(hp = gethostbyname(host))) return -1;
-      bcopy(hp->h_addr,(char *) &saddr.sin_addr,hp->h_length);
+      bcopy(hp->h_addr, (char *) &saddr.sin_addr, hp->h_length);
    }
    saddr.sin_port = htons((u_short) port);
-   if ((cfd = socket(AF_INET,SOCK_STREAM,0)) == -1) return -1;
-   if (connect(cfd,(struct sockaddr *) &saddr,sizeof(saddr)) == -1) {
+   if ((cfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) return -1;
+   if (connect(cfd, (struct sockaddr *) &saddr, sizeof(saddr)) == -1) {
       close(cfd);
       return -1;
    }
@@ -191,33 +191,33 @@ void connect_to_server()        /* retry server until connect, return socket */
    struct termios mode;
 
    while (Aborting) sleep(1);
-   tcgetattr(tty,&mode);
-   tcsetattr(tty,TCSADRAIN,&origmode);
+   tcgetattr(tty, &mode);
+   tcsetattr(tty, TCSADRAIN, &origmode);
    af = Aborting;
    Aborting = 1;
    while (1) {
-      writef(tty,"\rTrying to connect to the Phoenix server... ");
-      if ((server = connect_to(HOST,PORT)) != -1) break;
+      writef(tty, "\rTrying to connect to the Phoenix server... ");
+      if ((server = connect_to(HOST, PORT)) != -1) break;
       if (errno == ECONNREFUSED) {
-         writef(tty,"\r\033[K");
-         writef(tty,"\rConnection refused. ");
+         writef(tty, "\r\033[K");
+         writef(tty, "\rConnection refused. ");
          sleep(3);
-         writef(tty,"\r\033[K");
+         writef(tty, "\r\033[K");
          continue;
       }
       if (errno == ETIMEDOUT) {
-         writef(tty,"\r\033[K");
-         writef(tty,"\rConnection timed out. ");
+         writef(tty, "\r\033[K");
+         writef(tty, "\rConnection timed out. ");
          sleep(3);
-         writef(tty,"\r\033[K");
+         writef(tty, "\r\033[K");
          continue;
       }
       error("connect_to");
    }
-   writef(server,"%c%c%c",TelnetIAC,TelnetWill,TelnetSuppressGoAhead);
-   writef(server,"%c%c%c",TelnetIAC,TelnetDo,TelnetSuppressGoAhead);
-   writef(tty,"\r\033[K");
-   tcsetattr(tty,TCSADRAIN,&mode);
+   writef(server, "%c%c%c", TelnetIAC, TelnetWill, TelnetSuppressGoAhead);
+   writef(server, "%c%c%c", TelnetIAC, TelnetDo, TelnetSuppressGoAhead);
+   writef(tty, "\r\033[K");
+   tcsetattr(tty, TCSADRAIN, &mode);
    Aborting = af;
 }
 
@@ -227,14 +227,14 @@ void erase_line()               /* erase the current line from the display */
 
    if (!Erased) {
       if (Aborting) {
-         writef(tty,"\r\033[K");
+         writef(tty, "\r\033[K");
       } else {
          if (eol > line) {
             lines = (point - line) / Width;
             if (lines) {
-               writef(tty,"\r\033[%dA\033[J",lines);
+               writef(tty, "\r\033[%dA\033[J", lines);
             } else {
-               writef(tty,"\r\033[J");
+               writef(tty, "\r\033[J");
             }
          }
       }
@@ -244,24 +244,24 @@ void erase_line()               /* erase the current line from the display */
 
 void redraw_line()              /* redraw current line */
 {
-   int lines,columns;
+   int lines, columns;
 
    if (Erased) {
       if (Aborting) {
-         writef(tty,"\rDisconnecting...");
+         writef(tty, "\rDisconnecting...");
       } else {
-         if (eol > line) write(tty,line,eol - line);
+         if (eol > line) write(tty, line, eol - line);
          if (eol > line && point < eol) {
             lines = (eol - line) / Width - (point - line) / Width;
             columns = (eol - line) % Width - (point - line) % Width;
             if (lines) {
-               writef(tty,"\033[%dA",lines);
+               writef(tty, "\033[%dA", lines);
             }
             if (columns) {
                if (columns > 0) {
-                  writef(tty,"\033[%dD",columns);
+                  writef(tty, "\033[%dD", columns);
                } else {
-                  writef(tty,"\033[%dC",-columns);
+                  writef(tty, "\033[%dC", -columns);
                }
             }
          }
@@ -277,9 +277,9 @@ beginning_of_line()             /* go to beginning of line */
    if (eol > line && point > line) {
       lines = (point - line) / Width;
       if (lines) {
-         writef(tty,"\r\033[%dA",lines);
+         writef(tty, "\r\033[%dA", lines);
       } else {
-         writef(tty,"\r");
+         writef(tty, "\r");
       }
    }
    point = line;
@@ -287,19 +287,19 @@ beginning_of_line()             /* go to beginning of line */
 
 end_of_line()                   /* go to end of line */
 {
-   int lines,columns;
+   int lines, columns;
 
    if (eol > line && point < eol) {
       lines = (eol - line) / Width - (point - line) / Width;
       columns = (eol - line) % Width - (point - line) % Width;
       if (lines) {
-         writef(tty,"\033[%dB",lines);
+         writef(tty, "\033[%dB", lines);
       }
       if (columns) {
          if (columns > 0) {
-            writef(tty,"\033[%dC",columns);
+            writef(tty, "\033[%dC", columns);
          } else {
-            writef(tty,"\033[%dD",-columns);
+            writef(tty, "\033[%dD", -columns);
          }
       }
    }
@@ -310,9 +310,9 @@ void send_line()                /* send current line */
 {
    end_of_line();
    *eol++ = 0;
-   writef(tty,"\r\n");
-   writef(server,"%s\r\n",line);
-   if (log) writef(log,"%s\n",line);
+   writef(tty, "\r\n");
+   writef(server, "%s\r\n", line);
+   if (log) writef(log, "%s\n", line);
    eol = point = line;
 }
 
@@ -337,39 +337,39 @@ void sigint()                   /* SIGINT handler */
 
 void sigalrm()                  /* SIGALRM handler */
 {
-   char buf[BUFSIZE],*p;
+   char buf[BUFSIZE], *p;
 
    if (Aborting) cleanup();
    if (init) {
-      if (fgets(buf,BUFSIZE,init)) {
+      if (fgets(buf, BUFSIZE, init)) {
          for (p = buf; *p; p++) if (*p == '\n') *p = 0;
          p = buf;
          if (*p == '~') {
             p++;
          } else {
-            writef(tty,"%s",p);
-            if (log) writef(log,"%s",p);
+            writef(tty, "%s", p);
+            if (log) writef(log, "%s", p);
          }
-         writef(server,"%s\r\n",p);
-         writef(tty,"\n");
-         if (log) writef(log,"\n");
+         writef(server, "%s\r\n", p);
+         writef(tty, "\n");
+         if (log) writef(log, "\n");
          waiting = 1;
       } else {
          fclose(init);
          init = 0;
-         tcsetattr(tty,TCSADRAIN,&rawmode);
+         tcsetattr(tty, TCSADRAIN, &rawmode);
       }
       return;
    }
-   tcsetattr(tty,TCSADRAIN,&rawmode);
+   tcsetattr(tty, TCSADRAIN, &rawmode);
 }
 
 int tty_read()                  /* process input from tty */
 {
-   int i,n;
-   char *p,*q;
+   int i, n;
+   char *p, *q;
 
-   if ((n = read(tty,inbuf,BUFSIZE)) == -1) error("read(tty)");
+   if ((n = read(tty, inbuf, BUFSIZE)) == -1) error("read(tty)");
    for (i = 0, p = inbuf; i < n; i++, p++) {
       if (Aborting && *p != 3 && *p != 26) {
          erase_line();
@@ -387,7 +387,7 @@ int tty_read()                  /* process input from tty */
       case 2:
          if (point > line) {
             point--;
-            writef(tty,"\010");
+            writef(tty, "\010");
          }
          break;
       case 3:
@@ -396,7 +396,7 @@ int tty_read()                  /* process input from tty */
       case 4:
          if (eol > line) {
             eol--;
-            writef(tty,"\033[P");
+            writef(tty, "\033[P");
             for (q = point; q < eol; q++) *q = q[1];
          }
          break;
@@ -405,7 +405,7 @@ int tty_read()                  /* process input from tty */
          break;
       case 6:
          if (point < eol) {
-            write(tty,point,1);
+            write(tty, point, 1);
             point++;
          }
          break;
@@ -413,13 +413,13 @@ int tty_read()                  /* process input from tty */
       case 127:
          if (point > line) {
             point--;
-            writef(tty,"\010\033[P");
+            writef(tty, "\010\033[P");
             for (q = point, eol--; q < eol; q++) *q = q[1];
          }
          break;
       case 11:
          if (point < eol) {
-            writef(tty,"\033[J");
+            writef(tty, "\033[J");
             eol = point;
          }
          break;
@@ -455,14 +455,14 @@ int tty_read()                  /* process input from tty */
             if (point < eol) {
                for (q = eol++; q > point; q--) *q = q[-1];
                *point++ = *p;
-               writef(tty,"\033[@");
+               writef(tty, "\033[@");
             } else {
                eol++;
                *point++ = *p;
             }
-            write(tty,p,1);
+            write(tty, p, 1);
          } else {
-            writef(tty,"\007");
+            writef(tty, "\007");
          }
          break;
       }
@@ -473,10 +473,10 @@ int tty_read()                  /* process input from tty */
 int server_read()               /* process output from server */
 {
    static int state = 0;
-   int i,n,count;
-   char *p,*q,*r;
+   int i, n, count;
+   char *p, *q, *r;
 
-   if ((count = read(server,inbuf,BUFSIZE)) == -1) return 1;
+   if ((count = read(server, inbuf, BUFSIZE)) == -1) return 1;
    for (i = 0, p = inbuf, q = outbuf; i < count; i++, p++) {
       n = *((unsigned char *) p);
       switch (state) {
@@ -498,12 +498,12 @@ int server_read()               /* process output from server */
       case TelnetWont:
          switch (n) {
          case TelnetSuppressGoAhead:
-            writef(server,"%c%c%c",TelnetIAC,state == TelnetWill ? TelnetDo :
-                   TelnetDont,TelnetSuppressGoAhead);
+            writef(server, "%c%c%c", TelnetIAC, state == TelnetWill ? TelnetDo :
+                   TelnetDont, TelnetSuppressGoAhead);
             break;
          default:
             if (state == TelnetWill) {
-               writef(server,"%c%c%c",TelnetIAC,TelnetDont,n);
+               writef(server, "%c%c%c", TelnetIAC, TelnetDont, n);
             }
             break;
          }
@@ -514,12 +514,12 @@ int server_read()               /* process output from server */
       case TelnetDont:
          switch (n) {
          case TelnetSuppressGoAhead:
-            writef(server,"%c%c%c",TelnetIAC,state == TelnetDo ? TelnetWill :
-                   TelnetWont,TelnetSuppressGoAhead);
+            writef(server, "%c%c%c", TelnetIAC, state == TelnetDo ? TelnetWill :
+                   TelnetWont, TelnetSuppressGoAhead);
             break;
          default:
             if (state == TelnetDo) {
-               writef(server,"%c%c%c",TelnetIAC,TelnetWont,n);
+               writef(server, "%c%c%c", TelnetIAC, TelnetWont, n);
             }
             break;
          }
@@ -542,7 +542,7 @@ int server_read()               /* process output from server */
                }
             }
             if (n == 7) {
-               write(tty,p,1);
+               write(tty, p, 1);
             } else {
                *q++ = *p;
             }
@@ -552,34 +552,34 @@ int server_read()               /* process output from server */
    }
    if (q > outbuf) {
       erase_line();
-      write(tty,outbuf,q - outbuf);
+      write(tty, outbuf, q - outbuf);
       redraw_line();
       if (log) {
          for (p = r = outbuf; p < q; p++, r++) {
             if (*p == '\r') p++;
             *r = *p;
          }
-         write(log,outbuf,r - outbuf);
+         write(log, outbuf, r - outbuf);
       }
       if (found && !*found) {
          if (send_next == login) {
-            writef(tty,"%s\r\n",login);
-            writef(server,"%s\r\n",login);
-            if (log) writef(log,"%s\n",login);
+            writef(tty, "%s\r\n", login);
+            writef(server, "%s\r\n", login);
+            if (log) writef(log, "%s\n", login);
             send_next = passwd;
             ignore = ignored = \
                "\r\n\007Sorry, password probably WILL echo.\r\n\r\n";
             wait_for = found = "Password: ";
          } else if (send_next == passwd) {
-            writef(tty,"\r\n");
-            writef(server,"%s\r\n",passwd);
-            if (log) writef(log,"\n");
+            writef(tty, "\r\n");
+            writef(server, "%s\r\n", passwd);
+            if (log) writef(log, "\n");
             wait_for = found = (char *) 0;
             send_next = 0;
             got_through = 1;
          } else send_next = 0;
          if (!send_next && !init) {
-            tcsetattr(tty,TCSADRAIN,&rawmode);
+            tcsetattr(tty, TCSADRAIN, &rawmode);
          }
       }
       waiting = 0;
@@ -590,30 +590,30 @@ int server_read()               /* process output from server */
 void get_login()                /* get Phoenix login */
 {
    struct termios mode;
-   char *p,*getenv(),*strcpy();
+   char *p, *getenv(), *strcpy();
 
    if (p = getenv("PHOENIXLOGIN")) {
-      strcpy(login,p);
+      strcpy(login, p);
    } else {
       p = login;
-      tcgetattr(tty,&mode);
-      tcsetattr(tty,TCSADRAIN,&rawmode);
-      writef(tty,"login: ");
+      tcgetattr(tty, &mode);
+      tcsetattr(tty, TCSADRAIN, &rawmode);
+      writef(tty, "login: ");
       while (1) {
-         if (read(tty,p,1) == 1) {
+         if (read(tty, p, 1) == 1) {
             switch (*p) {
             case '\r':
             case '\n':
                if (p == login) {
                   if (p = getenv("USER")) {
-                     strcpy(login,p);
-                     writef(tty,"\r\033[K");
-                     tcsetattr(tty,TCSADRAIN,&mode);
+                     strcpy(login, p);
+                     writef(tty, "\r\033[K");
+                     tcsetattr(tty, TCSADRAIN, &mode);
                      return;
                   }
                } else {
-                  writef(tty,"\r\033[K");
-                  tcsetattr(tty,TCSADRAIN,&mode);
+                  writef(tty, "\r\033[K");
+                  tcsetattr(tty, TCSADRAIN, &mode);
                   *p = 0;
                   return;
                }
@@ -628,15 +628,15 @@ void get_login()                /* get Phoenix login */
             case 8:
             case 127:
                if (p > login) {
-                  writef(tty,"\010 \010");
+                  writef(tty, "\010 \010");
                   p--;
                }
                break;
             default:
                if (isprint(*p) && *p != 32 && p < login + LOGINLEN - 1) {
-                  write(tty,p++,1);
+                  write(tty, p++, 1);
                } else {
-                  writef(tty,"\007");
+                  writef(tty, "\007");
                }
                break;
             }
@@ -648,26 +648,26 @@ void get_login()                /* get Phoenix login */
 void get_passwd()               /* get Phoenix password */
 {
    struct termios mode;
-   char *p,*getenv(),*strcpy();
+   char *p, *getenv(), *strcpy();
 
    if (p = getenv("PHOENIXPASSWD")) {
-      strcpy(passwd,p);
+      strcpy(passwd, p);
    } else {
       p = passwd;
-      tcgetattr(tty,&mode);
-      tcsetattr(tty,TCSADRAIN,&rawmode);
-      writef(tty,"Password for %s: ",login);
+      tcgetattr(tty, &mode);
+      tcsetattr(tty, TCSADRAIN, &rawmode);
+      writef(tty, "Password for %s: ", login);
       while (1) {
-         if (read(tty,p,1) == 1) {
+         if (read(tty, p, 1) == 1) {
             switch (*p) {
             case '\r':
             case '\n':
                if (p == passwd) {
-                  writef(tty,"\007");
+                  writef(tty, "\007");
                } else {
-                  writef(tty,"\r\033[K");
+                  writef(tty, "\r\033[K");
                   *p = 0;
-                  tcsetattr(tty,TCSADRAIN,&mode);
+                  tcsetattr(tty, TCSADRAIN, &mode);
                   return;
                }
                break;
@@ -686,7 +686,7 @@ void get_passwd()               /* get Phoenix password */
                if (isprint(*p) && p < passwd + PWLEN - 1) {
                   p++;
                } else {
-                  writef(tty,"\007");
+                  writef(tty, "\007");
                }
                break;
             }
@@ -695,22 +695,22 @@ void get_passwd()               /* get Phoenix password */
    }
 }
 
-void main(argc,argv)            /* main program */
+void main(argc, argv)            /* main program */
 int argc;
 char **argv;
 {
    int width;
    fd_set readfds;
-   char buf[256],*getenv();
-   struct passwd *pw,*getpwnam();
+   char buf[256], *getenv();
+   struct passwd *pw, *getpwnam();
 
    logfile = (char *) 0;
    tty = -1;
    if (argc > 2) error("Usage: phoenix [logfile]\n");
    if (argc == 2) {
       logfile = argv[1];
-      if ((log = open(logfile,O_RDWR|O_APPEND|O_CREAT,0600)) == -1) {
-         writef(2,"Error opening logfile ");
+      if ((log = open(logfile, O_RDWR|O_APPEND|O_CREAT, 0600)) == -1) {
+         writef(2, "Error opening logfile ");
          error(logfile);
          logfile = (char *) 0;
          log = 0;
@@ -721,8 +721,8 @@ char **argv;
    waiting = 1;
    if (!log) log = !isatty(1);
    width = getdtablesize();
-   if ((tty = open("/dev/tty",O_RDWR)) == -1) error("open(\"/dev/tty\")");
-   tcgetattr(tty,&origmode);
+   if ((tty = open("/dev/tty", O_RDWR)) == -1) error("open(\"/dev/tty\")");
+   tcgetattr(tty, &origmode);
    rawmode = origmode;
    rawmode.c_iflag &= ISTRIP;
    rawmode.c_iflag |= IGNBRK;
@@ -734,32 +734,32 @@ char **argv;
    get_passwd();
    refresh();
    while (!got_through) {
-      signal(SIGINT,cleanup);
-      signal(SIGHUP,cleanup);
-      signal(SIGQUIT,cleanup);
+      signal(SIGINT, cleanup);
+      signal(SIGHUP, cleanup);
+      signal(SIGQUIT, cleanup);
       pw = getpwnam(getenv("USER"));
-      sprintf(buf,"%s/%s",pw->pw_dir,INITFILE);
+      sprintf(buf, "%s/%s", pw->pw_dir, INITFILE);
       endpwent();
-      init = fopen(buf,"r");
+      init = fopen(buf, "r");
       connect_to_server();
-      signal(SIGINT,sigint);
-      signal(SIGALRM,sigalrm);
+      signal(SIGINT, sigint);
+      signal(SIGALRM, sigalrm);
       send_next = login;
       wait_for = found = "login: ";
       while (1) {
          FD_ZERO(&readfds);
-         if (!init) FD_SET(tty,&readfds);
-         FD_SET(server,&readfds);
+         if (!init) FD_SET(tty, &readfds);
+         FD_SET(server, &readfds);
          if (!waiting && (send_next || init)) alarm(3);
          errno = 0;
-         select(width,&readfds,0,0,0);
+         select(width, &readfds, 0, 0, 0);
          if (errno == EINTR) continue;
-         if (FD_ISSET(tty,&readfds) && tty_read()) break;
-         if (FD_ISSET(server,&readfds) && server_read()) break;
+         if (FD_ISSET(tty, &readfds) && tty_read()) break;
+         if (FD_ISSET(server, &readfds) && server_read()) break;
       }
       if (init) fclose(init);
       close(server);
-      tcsetattr(tty,TCSADRAIN,&origmode);
+      tcsetattr(tty, TCSADRAIN, &origmode);
    }
    cleanup();
 }
