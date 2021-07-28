@@ -145,6 +145,8 @@ struct user {
    char reserved_name[NAMELEN]; /* reserved user name (pseudo) */
 };
 
+char *        date              (time_t clock, int start, int len);
+void          open_log          ();
 void          Log               (char *format, ...);
 void          warn              (char *format, ...);
 void          error             (char *format, ...);
