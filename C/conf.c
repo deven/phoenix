@@ -1763,14 +1763,35 @@ int main(int argc, char **argv) /* main program */
    int            found;        /* number of file descriptors found */
    int            lfd;          /* listening file descriptor */
    int            pid;          /* server process number */
-   int            errors;       /* number of consecutive select() errors */
+   int            arg;          /* current argument */
+   int            port   = 0;   /* TCP port to use */
+   int            debug  = 0;   /* --debug option */
+   int            errors = 0;   /* number of consecutive select() errors */
 
-   errors      = 0;
+   /* Initialize global variables. */
    Shutdown    = 0;
    connections = NULL;
    sessions    = NULL;
    free_blocks = NULL;
+
+   /* Check for command-line options. */
+   for (arg = 1; arg < argc && argv[arg]; arg++) {
+      if (!strcmp(argv[arg], "--debug")) {
+         debug = 1;
+      } else if (!strcmp(argv[arg], "--port") && ++arg < argc && argv[arg]) {
+         port = atoi(argv[arg]);
+      } else {
+         fprintf(stderr, "Usage: %s [--debug] [--port %d]\n", argv[0],
+                 PORT);
+         exit(1);
+      }
+   }
+
+   /* Use configured default port if not specified. */
+   if (!port) port = PORT;
+
    if (chdir("/home/deven/src/conf")) error("chdir");
+
    open_log();
    nfds = getdtablesize();
    lfd  = listen_on(PORT, BACKLOG);
@@ -1779,7 +1800,7 @@ int main(int argc, char **argv) /* main program */
    FD_ZERO(&writefds);
 
    /* fork subprocess and exit parent */
-   if (argc > 1 && strcmp(argv[1], "--debug")) {
+   if (debug) {
       switch (pid = fork()) {
       case 0:
          setpgrp();
