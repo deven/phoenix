@@ -9,6 +9,9 @@
 # SPDX-License-Identifier: MIT
 #
 
+AUTOMAKE_OPTIONS = foreign check-news dist-bzip2 dist-zip \
+	filename-length-max=99 no-installinfo readme-alpha std-options
+
 DEFS = -DSERVER_PATH=\"$(sbindir)/phoenixd\" -DLIBDIR=\"$(pkglibdir)\"
 
 bin_PROGRAMS = makepw
