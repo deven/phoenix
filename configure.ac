@@ -12,7 +12,7 @@
 AC_PREREQ([2.71])
 AC_INIT([Phoenix], m4_esyscmd([./version-gen]), [bugs@phoenix-cmc.org])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([tar-v7])
 AC_CONFIG_SRCDIR([phoenix.cc])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4])
