@@ -52,5 +52,5 @@ int check_for_server(int port)  /* check for running server */
 int main(int argc, char **argv) /* main program */
 {
    if (check_for_server(PORT)) exit(0);
-   execl("/home/deven/src/conf/conf", "conf", 0);
+   execl("/home/deven/src/conf/conf", "conf", NULL);
 }
