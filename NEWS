@@ -1,87 +1,12 @@
 $Id$
 
-September 18, 2003: Version 1.0.0.beta.11
+2021-07-28 - Deven T. Corzine <deven@ties.org>
 
- * Modified server startup to double-fork and close I/O to better disconnect
-   from the parent process.  (Without this, crond was waiting with -cron.)
+* Version 1.0.0 released.
 
- * Added support for multiple reserved names per user account.
-
- * Added support for application-mode cursor sequences.
-
- * Added privileged session override to /appoint command.
-
- * Fixed various bugs (including several crashing bugs) related to the log
-   file, backslashes at the end of input lines, login timeout and double join.
-
-February 24, 2003: Version 1.0.0.beta.10
-
- * This release now uses configured directories instead of "~/lib/gangplank"
-   under the running user.  Most required functions now fail at configure
-   time instead of compile time.  The "restart" utility has been retired, in
-   favor of a new "-cron" option to the server.  The "most.cc" hack has also
-   been retired as the argument for it is no longer compelling.  A minor bug
-   involving session transfer has also been fixed.
-
-February 21, 2003: Version 1.0.0.beta.9
-
- * [SECURITY] This release fixes a buffer overflow vulnerability present in
-   all development releases up through 1.0.0.beta.8 involving vsprintf/sprintf
-   calls with 32K buffers.  This release replaces calls to the system functions
-   with a safe (albeit incomplete) reimplementation.
-
- * The entire codebase has been audited for other potential buffer overflow
-   situations.  A few minor cleanups have been done, but the code appears to
-   be clean now.
-
- * This release also improves the login processing.  There is now a 60-second
-   login timeout at all prompts until the user logs in, and a Ctrl-D at any
-   of those prompts will drop the connection.  (Both of these are disabled
-   after completely logging in.)  Also, invalid login names are no longer
-   revealed -- invalid login names now prompt for a password, like valid ones.
-   After 3 failed login attempts, the server will drop the connection.  Also,
-   a bug allowing duplicate sessions (with the same name) has been fixed.
-
-November 30, 2002: Version 1.0.0.beta.8
-
- * This release fixes several portability issues including several introduced
-   with autoconf in 1.0.0.beta.6.  (This release works again under Solaris.)
-   Added NetBSD, AIX, IRIX and SunOS to the list of supported platforms.
-
-November 22, 2002: Version 1.0.0.beta.7
-
- * This release applies GCC-specific compiler options only to GCC compilers,
-   and also increases the number of connections supported under Cygwin to 256.
-
-November 21, 2002: Version 1.0.0.beta.6
-
- * This release integrates autoconf/automake so "./configure; make" can be
-   used to build Gangplank.  Configure options exist to disable guest access
-   and/or change the default TCP port used by the server.  This release also
-   fixes the ANSI terminal-handling bugs related to line wrapping.
-
-September 10, 2002: Version 1.0.0.beta.5
-
- * Thanks to Ron Frederick <frederick@timeheart.net>, this release supports
-   Cygwin on Win32 systems, and no longer depends on "-lstdc++" under GCC 3.x.
-   (See RELEASES file for more details.)
-
-August 22, 2002: Version 1.0.0.beta.4
-
- * This release adds support for Macintosh OS X and GCC 3.1.
-
-December 12, 2001: Version 1.0.0.beta.3
-
- * This is a portability release.  Gangplank now builds with GCC 2 or 3 on
-   Linux (including newer distributions), BSD systems, and Solaris.  See the
-   RELEASES and PORTING files for more details.
-
-December 2, 2001: Version 1.0.0.beta.2
-
- * Forgot to test the initial release; it's a "brown paper bag" release
-   that fails to compile.  See the RELEASES file for more details.  This
-   release has been tested, and fixes the minor bug in the first release.
-
-November 30, 2001: Version 1.0.0.beta.1
-
- * Initial Open Source release of Gangplank conferencing system.
+* Reconstructed the entire history of this codebase on GitHub.
+* Refactored original 1994 smart pointer code.
+* Cleaned up code to compile cleanly with GCC 9.3.0.
+* Updated to latest version of Autotools.
+* Renamed Gangplank back to Phoenix, the original name.
+* Relicensed under the MIT license instead of QPL.
