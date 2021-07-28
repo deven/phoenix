@@ -40,7 +40,7 @@
 
 int main(int argc, char **argv)
 {
-   char pw[9], salt[3];
+   char pw[256], salt[3];
    char *key;
    key = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
    sleep(1);
