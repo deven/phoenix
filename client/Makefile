@@ -1,6 +1,9 @@
 # $Id$
 #
 # phoenix Makefile
+#
+# Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
+#
 
 CC = gcc
 CFLAGS = -g
