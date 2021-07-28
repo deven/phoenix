@@ -536,6 +536,30 @@ void request_shutdown(int port) /* connect to port, request server shutdown */
    return;
 }
 
+int port_busy(int port)
+{
+   struct sockaddr_in saddr;      /* socket address */
+   int                fd;         /* listening socket fd */
+   int                option = 1; /* option to set for setsockopt() */
+
+   /* Initialize listening socket. */
+   memset(&saddr, 0, sizeof(saddr));
+   saddr.sin_family      = AF_INET;
+   saddr.sin_addr.s_addr = INADDR_ANY;
+   saddr.sin_port        = htons((u_short) port);
+   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1) return 0;
+   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
+      close(fd);
+      return 0;
+   }
+   if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr))) {
+      close(fd);
+      return errno == EADDRINUSE;
+   }
+   close(fd);
+   return 0;
+}
+
 int listen_on(int port, int backlog) /* listen on a port, return socket fd */
 {
    struct sockaddr_in saddr;      /* socket address */
@@ -1750,6 +1774,7 @@ int main(int argc, char **argv) /* main program */
    int            arg;          /* current argument */
    int            port   = 0;   /* TCP port to use */
    int            debug  = 0;   /* --debug option */
+   int            cron   = 0;   /* --cron option */
    int            errors = 0;   /* number of consecutive select() errors */
 
    /* Initialize global variables. */
@@ -1760,12 +1785,14 @@ int main(int argc, char **argv) /* main program */
 
    /* Check for command-line options. */
    for (arg = 1; arg < argc && argv[arg]; arg++) {
-      if (!strcmp(argv[arg], "--debug")) {
+      if (!strcmp(argv[arg], "--cron")) {
+         cron = 1;
+      } else if (!strcmp(argv[arg], "--debug")) {
          debug = 1;
       } else if (!strcmp(argv[arg], "--port") && ++arg < argc && argv[arg]) {
          port = atoi(argv[arg]);
       } else {
-         fprintf(stderr, "Usage: %s [--debug] [--port %d]\n", argv[0],
+         fprintf(stderr, "Usage: %s [--cron] [--debug] [--port %d]\n", argv[0],
                  PORT);
          exit(1);
       }
@@ -1773,6 +1800,9 @@ int main(int argc, char **argv) /* main program */
 
    /* Use configured default port if not specified. */
    if (!port) port = PORT;
+
+   /* If --cron option was given, check if the listening port is busy. */
+   if (cron && port_busy(port)) exit(0);
 
    if (chdir("/home/deven/src/conf")) error("chdir");
 

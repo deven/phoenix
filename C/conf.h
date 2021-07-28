@@ -171,6 +171,7 @@ void          LSGA              (struct telnet *telnet, func_ptr callback,
 void          RSGA              (struct telnet *telnet, func_ptr callback,
                                  int state);
 void          request_shutdown  (int port);
+int           port_busy         (int port);
 int           listen_on         (int port, int backlog);
 void          welcome           (struct telnet *telnet);
 void          login             (struct telnet *telnet, char *line);
