@@ -10,6 +10,9 @@
  *
  */
 
+/* Version number. */
+#define VERSION "1.0.0"
+
 #define HAVE_ARPA_INET_H
 #define HAVE_CRYPT_H
 #define HAVE_FCNTL_H
@@ -767,18 +770,42 @@ void get_passwd()               /* get Phoenix password */
    }
 }
 
+static char *usage = "Usage: %s [<logfile>]\n";
+
 int main(int argc, char **argv) /* main program */
 {
-   int width;
-   fd_set readfds;
-   char buf[256], *getenv();
+   int            width;
+   fd_set         readfds;
+   char           buf[256], *getenv();
    struct passwd *pw, *getpwnam();
+   int            opts = 1;
+   int            arg;
 
-   logfile_name = (char *) 0;
+   logfile_name = NULL;
+
+   for (arg = 1; arg < argc && argv[arg]; arg++) {
+      if (opts && !strcmp(argv[arg], "--")) {
+         opts = 0;
+      } else if (opts && !strcmp(argv[arg], "--help")) {
+         fprintf(stdout, usage, argv[0]);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--version")) {
+         fprintf(stdout, "Phoenix client %s\n", VERSION);
+         exit(0);
+      } else if (opts && argv[arg][0] == '-') {
+         fprintf(stderr, usage, argv[0]);
+         exit(1);
+      } else if (logfile_name == NULL) {
+         logfile_name = argv[arg];
+      } else {
+         fprintf(stderr, usage, argv[0]);
+         exit(1);
+      }
+   }
+
    tty = -1;
-   if (argc > 2) error("Usage: phoenix [logfile]\n");
-   if (argc == 2) {
-      logfile_name = argv[1];
+
+   if (logfile_name) {
       if ((logfile = open(logfile_name, O_RDWR|O_APPEND|O_CREAT, 0600)) == -1) {
          writef(2, "Error opening logfile ");
          error(logfile_name);
@@ -786,6 +813,7 @@ int main(int argc, char **argv) /* main program */
          logfile = 0;
       }
    }
+
    eol = point = line;
    Aborting = Erased = got_through = 0;
    waiting = 1;

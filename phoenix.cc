@@ -189,25 +189,40 @@ char *match(char *&input, const char *keyword, int min) {
    return input = p;
 }
 
+static char usage[] = "Usage: %s [--cron] [--debug] [--port %d]\n";
+
 int main(int argc, char **argv)   // main program
 {
    int     pid;                   // server process number
    int     port  = 0;             // TCP port to use
+   int     opts  = 1;             // option parsing flag
    int     arg;                   // current argument
    boolean cron  = false;         // --cron option
    boolean debug = false;         // --debug option
 
    // Check for command-line options.
    for (arg = 1; arg < argc && argv[arg]; arg++) {
-      if (!strcmp(argv[arg], "--cron")) {
+      if (opts && !strcmp(argv[arg], "--")) {
+         opts = 0;
+      } else if (opts && !strcmp(argv[arg], "--help")) {
+         fprintf(stdout, usage, argv[0], PORT);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--version")) {
+         fprintf(stdout, "Phoenix %s (C++ version)\n", VERSION);
+         exit(0);
+      } else if (opts && !strcmp(argv[arg], "--cron")) {
          cron = true;
-      } else if (!strcmp(argv[arg], "--debug")) {
+      } else if (opts && !strcmp(argv[arg], "--debug")) {
          debug = true;
-      } else if (!strcmp(argv[arg], "--port") && ++arg < argc && argv[arg]) {
-         port = atoi(argv[arg]);
+      } else if (opts && !strcmp(argv[arg], "--port")) {
+         if (++arg < argc && argv[arg]) {
+            port = atoi(argv[arg]);
+         } else {
+            fprintf(stderr, usage, argv[0], PORT);
+            exit(1);
+         }
       } else {
-         fprintf(stderr, "Usage: %s [--cron] [--debug] [--port %d]\n", argv[0],
-                 PORT);
+         fprintf(stderr, usage, argv[0], PORT);
          exit(1);
       }
    }
