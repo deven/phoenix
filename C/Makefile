@@ -9,8 +9,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-CC = gcc -Wall -Werror
-CFLAGS = -g
+CC = gcc
+CFLAGS = -g -Wall -Werror
 LDFLAGS =
 LIBS = -lcrypt
 
