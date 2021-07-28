@@ -1804,9 +1804,16 @@ int main(int argc, char **argv) /* main program */
    /* If --cron option was given, check if the listening port is busy. */
    if (cron && port_busy(port)) exit(0);
 
-   if (chdir("/home/deven/src/conf")) error("chdir");
+   /* Change to LIBDIR (create if necessary). */
+   if (chdir(LIBDIR) && errno == ENOENT && mkdir(LIBDIR, 0700)) {
+      error("mkdir(\"%s\", 0700)", LIBDIR);
+   }
+   if (chdir(LIBDIR)) error("chdir(\"%s\")", LIBDIR);
 
+   /* Create logs subdirectory (ignore errors since it may exist), open log. */
+   mkdir("logs", 0700);         /* ignore errors */
    open_log();
+
    nfds = getdtablesize();
    lfd  = listen_on(PORT, BACKLOG);
    FD_ZERO(&readfds);
