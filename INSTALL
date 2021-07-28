@@ -43,12 +43,12 @@ If the password file is not found, only accounts hardcoded in "user.cc" will
 work until a password file is put in place.  By default, this is the "guest"
 account only, but administrative and/or accounts could easily be added also.
 
-The server accepts a "-cron" option, which was was designed to run once per
-minute from cron, to ensure that the server remains running.  With the -cron
+The server accepts a "--cron" option, which was was designed to run once per
+minute from cron, to ensure that the server remains running.  With the --cron
 option, the server will silently exit if it CANNOT bind to its port, on the
 assumption that another server is already running.  If the server can bind
 to the port, it will startup normally.  To use this option, add cron job such
-as "* * * * * /usr/local/sbin/phoenixd -cron" to the crontab of the user to
+as "* * * * * /usr/local/sbin/phoenixd --cron" to the crontab of the user to
 run the server under.
 
 The "makepw" program is a simple utility to encrypt Unix-style passwords,
