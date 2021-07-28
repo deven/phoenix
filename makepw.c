@@ -49,12 +49,17 @@ int main(int argc, char **argv)
    salt[0] = key[random() & 63];
    salt[1] = key[random() & 63];
    salt[2] = 0;
+
    if (argv[1]) {
       printf("%s\n", crypt(argv[1], salt));
-      exit(0);
+   } else {
+      while (1) {
+         strcpy(pw, getpass("Enter password: "));
+         if (!strcmp(pw, "")) exit(0);
+         if (!strcmp(pw, getpass("Re-enter password to verify: "))) break;
+      }
+      printf("Encrypted password: %s\n", crypt(pw, salt));
    }
-   strcpy(pw, getpass("Enter password: "));
-   if (strcmp(pw, getpass("Re-enter password to verify: "))) exit(1);
-   printf("Encrypted password: %s\n", crypt(pw, salt));
+
    return 0;
 }
