@@ -12,6 +12,9 @@
 
 #include "system.h"
 
+/* Version number. */
+#define VERSION "1.0.0"
+
 /* Library directory. */
 #define LIBDIR "/usr/local/lib/phoenix"
 
