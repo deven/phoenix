@@ -10,6 +10,8 @@
  *
  */
 
+#include "system.h"
+
 /* General parameters. */
 #define BUFSIZE   32768
 #define BLOCKSIZE 1024
