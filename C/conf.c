@@ -10,22 +10,6 @@
  *
  */
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <time.h>
-#include <crypt.h>
-
 #include "conf.h"
 
 static char          buf[BUFSIZE];   /* temporary buffer */
