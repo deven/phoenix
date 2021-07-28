@@ -1,5 +1,7 @@
 # Phoenix CMC - Conferencing system server
 
+[comment]: # ($Id$)
+
 This conferencing system (initially named "conf" for lack of a better name) is
 a type of [Computer-Mediated
 Communication](https://en.wikipedia.org/wiki/Computer-mediated_communication)
