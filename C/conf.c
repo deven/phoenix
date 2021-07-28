@@ -2,15 +2,11 @@
  *
  * $Id$
  *
- * Conferencing system server.
- *
- * conf.c -- main server code.
+ * Conferencing system server, main server code.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
  * SPDX-License-Identifier: MIT
- *
- * Development began on November 30, 1992.
  *
  */
 
