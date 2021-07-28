@@ -967,7 +967,7 @@ void process_input(struct telnet *telnet, char *line)
          }
       } else if (!strcmp(sendlist, "everyone")) {
          /* Send message to everyone. */
-         struct telnet *t, *dest;
+         struct telnet *dest;
          int            sent;
 
          time(&telnet->session->message_time); /* reset idle tme */
