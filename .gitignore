@@ -7,6 +7,7 @@ config.h
 config.log
 config.status
 makepw
+phoenix
 phoenixd
-restart
+releases
 stamp-h1
