@@ -6,6 +6,8 @@
 //
 // Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 //
+// SPDX-License-Identifier: MIT
+//
 
 // Check if previously included.
 #ifndef _OBJECT_H
