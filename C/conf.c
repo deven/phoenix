@@ -268,7 +268,7 @@ void notify(char *format, ...)  /* formatted write to all sessions */
    va_list ap;
    struct session *session;
 
-   va_start(ap);
+   va_start(ap, format);
    (void) vsprintf(buf, format, ap);
    va_end(ap);
    for (session = sessions; session; session = session->next) {
