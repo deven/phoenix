@@ -23,7 +23,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <termios.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #define BUFSIZE 1024
 #define LINELEN 8192
@@ -68,16 +68,12 @@ char *ignore;                   /* points to ignore string */
 char *ignored;                  /* points to ignore string remaining */
 int got_through;                /* indicates whether we got through already */
 
-/* VARARGS1 */
-writef(fd, format, va_alist)    /* formatted write */
-int fd;
-char *format;
-va_dcl
+writef(int fd, char *format, ...) /* formatted write */
 {
    static char buf[8192];
    va_list ap;
 
-   va_start(ap);
+   va_start(ap, format);
    vsprintf(buf, format, ap);
    va_end(ap);
    return write(fd, buf, strlen(buf));
