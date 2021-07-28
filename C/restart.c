@@ -4,13 +4,9 @@
  *
  * Utility program to restart conferencing server from cron.
  *
- * restart.c -- restart code.
- *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
  * SPDX-License-Identifier: MIT
- *
- * Development began on November 30, 1992.
  *
  */
 

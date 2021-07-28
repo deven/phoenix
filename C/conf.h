@@ -2,15 +2,11 @@
  *
  * $Id$
  *
- * Conferencing system server.
- *
- * conf.h -- constants, structures, variable declarations and prototypes.
+ * Constants, structures, variable declarations and prototypes.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
  * SPDX-License-Identifier: MIT
- *
- * Development began on November 30, 1992.
  *
  */
 
