@@ -2,15 +2,11 @@
 #
 # $Id$
 #
-# Conferencing system server.
-#
-# Makefile -- commands for building conf server.
+# Makefile for building "conf" server.
 #
 # Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 #
 # SPDX-License-Identifier: MIT
-#
-# Development began on November 30, 1992.
 #
 
 CC = gcc -Wall -Werror
