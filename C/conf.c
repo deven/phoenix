@@ -1068,7 +1068,7 @@ void new_connection(int lfd)    /* accept a new connection */
    struct session    *session;  /* new session data structure */
    struct user       *user;     /* new user data structure */
    struct sockaddr_in saddr;    /* for getpeername() */
-   int                saddrlen; /* for getpeername() */
+   socklen_t          saddrlen; /* for getpeername() */
    int                flags;    /* file status flags from fcntl() */
 
    telnet = alloc(sizeof(struct telnet));
