@@ -9,6 +9,6 @@ if [ "$files" != "" ]; then
    echo -n "Update copyright notices on the files above? [n] "
    read answer
    case "$answer" in
-      [Yy]*) perl -i -pe 'BEGIN { $year = shift; } warn "Updating copyright notice: $ARGV\n" if s/(Copyright.*?)(-\d{4})?( by Deven.*?Corzine)/$1 . (substr($1, -4) eq $year ? "" : "-$year") . $3/e' $year $files;;
+      [Yy]*) perl -i -pe 'BEGIN { $year = shift; } warn "Updating copyright notice: $ARGV\n" if s/(Copyright.*?)(-\d{4})?( Deven.*?Corzine)/$1 . (substr($1, -4) eq $year ? "" : "-$year") . $3/e' $year $files;;
    esac
 fi
