@@ -740,7 +740,7 @@ void name(struct telnet *telnet, char *line)
    notify("*** %s has entered conf! [%s] ***\n", telnet->session->name,
           date(time(&telnet->session->login_time), 11, 5));
    telnet->session->message_time = telnet->session->login_time;
-   Log("Enter: %s (%s) on fd %d.", telnet->session->name,
+   Log("Enter: %s (%s) on fd #%d.", telnet->session->name,
        telnet->session->user->user, telnet->fd);
 
    /* Set normal input routine. */
@@ -799,7 +799,7 @@ void process_input(struct telnet *telnet, char *line)
             }
             if (t) {
                /* Found user, nuke 'em. */
-               print(telnet, "User \"%s\" (%s) on fd %d has been nuked.\n",
+               print(telnet, "User \"%s\" (%s) on fd #%d has been nuked.\n",
                      t->session->name, t->session->user->user, t->fd);
 
                if (t->output.head && i > 0) {
@@ -817,7 +817,7 @@ void process_input(struct telnet *telnet, char *line)
                   close_connection(t);
                }
             } else {
-               print(telnet, "There is no user on fd %d.\n", i);
+               print(telnet, "There is no user on fd #%d.\n", i);
             }
          } else {
             print(telnet, "Bad fd #: \"%s\"\n", line + 6);
@@ -1085,7 +1085,7 @@ void new_connection(int lfd)    /* accept a new connection */
    /* Log calling host and port. */
    saddrlen = sizeof(saddr);
    if (!getpeername(telnet->fd, (struct sockaddr *) &saddr, &saddrlen)) {
-      Log("Accepted connection on fd %d from %s port %d.", telnet->fd,
+      Log("Accepted connection on fd #%d from %s port %d.", telnet->fd,
           inet_ntoa(saddr.sin_addr), saddr.sin_port);
    } else {
       warn("getpeername");
@@ -1202,7 +1202,7 @@ void close_connection(struct telnet *telnet)
    /* Notify and log exit if session found. */
    if (found) {
       notify("*** %s has left conf! [%s] ***\n", session->name, date(0, 11, 5));
-      Log("Exit: %s (%s) on fd %d.", session->name, session->user->user,
+      Log("Exit: %s (%s) on fd #%d.", session->name, session->user->user,
           telnet->fd);
    }
 
