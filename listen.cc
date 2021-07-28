@@ -13,11 +13,11 @@
 
 boolean Listen::PortBusy(int port)
 {
-   struct sockaddr_in saddr;      /* socket address */
-   int                fd;         /* listening socket fd */
-   int                option = 1; /* option to set for setsockopt() */
+   struct sockaddr_in saddr;      // socket address
+   int                fd;         // listening socket fd
+   int                option = 1; // option to set for setsockopt()
 
-   /* Initialize listening socket. */
+   // Initialize listening socket.
    memset(&saddr, 0, sizeof(saddr));
    saddr.sin_family      = AF_INET;
    saddr.sin_addr.s_addr = INADDR_ANY;
