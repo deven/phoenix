@@ -12,6 +12,9 @@
 
 #include "system.h"
 
+/* Library directory. */
+#define LIBDIR "/usr/local/lib/phoenix"
+
 /* General parameters. */
 #define BUFSIZE   32768
 #define BLOCKSIZE 1024
