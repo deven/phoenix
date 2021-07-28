@@ -26,5 +26,5 @@ phoenixd_SOURCES = block.h boolean.h constants.h discussion.h event.h \
 	hash.cc listen.cc output.cc outstr.cc phoenix.cc sendlist.cc \
 	session.cc string.cc telnet.cc timestamp.cc user.cc
 
-EXTRA_DIST = CREDITS HISTORY KLUDGES LICENSE.QPL OVERVIEW PORTING TOUR \
-	bootstrap passwd
+EXTRA_DIST = .reuse CREDITS HISTORY INSTALL.generic KLUDGES LICENSE LICENSES \
+	OVERVIEW PORTING README.md bootstrap passwd version-gen
