@@ -10,7 +10,7 @@
 #
 
 CC = gcc
-CFLAGS = -g
+CFLAGS = -g -Wall -Werror
 BINDIR = /home/deven/bin
 HDRS =
 SRCS = phoenix.c
