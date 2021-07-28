@@ -1,7 +1,7 @@
 #!/bin/sh
 
 for file in $*; do
-   pgp -asb $file -u 0xa610971d
+   gpg -asb -u 7D292C9843C1453534E3854664BC257093D3B1BC $file
    chmod 644 $file $file.asc
    mv $file.asc $file.sig
 done
