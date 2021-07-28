@@ -4,7 +4,7 @@
 //
 // EventQueue class implementation.
 //
-// Copyright 1992-1996, 2000-2003 by Deven T. Corzine.  All rights reserved.
+// Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 //
 // This file is part of the Phoenix conferencing system.
 //

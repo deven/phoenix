@@ -1,6 +1,9 @@
 # @(#)Makefile	1.28 by Deven Thomas Corzine 5/11/90
 #
 # phoenix Makefile
+#
+# Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
+#
 
 CC = gcc
 CFLAGS = -g

@@ -5,7 +5,7 @@
  *
  * restart.c -- restart code.
  *
- * Copyright 1993 by Deven T. Corzine.
+ * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
  *
  * Development began on November 30, 1992.
  *

@@ -4,7 +4,7 @@
 //
 // Object base class and Pointer template class for smart pointers.
 //
-// Copyright (c) 1992-2018 Deven T. Corzine
+// Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
 //
 
 // Check if previously included.
