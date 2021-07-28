@@ -602,7 +602,7 @@ int server_read()               /* process output from server */
          if (n == TelnetIAC) {
             state = n;
             continue;
-         } else if (n >= 32 && n < 127 || n == '\r' || n == '\n' || n == 7) {
+         } else if ((n >= 32 && n < 127) || n == '\r' || n == '\n' || n == 7) {
             if (ignored && *ignored) {
                if (*ignored++ == *p) {
                   if (!*ignored) ignore = ignored = 0;
@@ -664,7 +664,7 @@ void get_login()                /* get Phoenix login */
    struct termios mode;
    char *p, *getenv(), *strcpy();
 
-   if (p = getenv("PHOENIXLOGIN")) {
+   if ((p = getenv("PHOENIXLOGIN"))) {
       strcpy(login, p);
    } else {
       p = login;
@@ -677,7 +677,7 @@ void get_login()                /* get Phoenix login */
             case '\r':
             case '\n':
                if (p == login) {
-                  if (p = getenv("USER")) {
+                  if ((p = getenv("USER"))) {
                      strcpy(login, p);
                      writef(tty, "\r\033[K");
                      tcsetattr(tty, TCSADRAIN, &mode);
@@ -722,7 +722,7 @@ void get_passwd()               /* get Phoenix password */
    struct termios mode;
    char *p, *getenv(), *strcpy();
 
-   if (p = getenv("PHOENIXPASSWD")) {
+   if ((p = getenv("PHOENIXPASSWD"))) {
       strcpy(passwd, p);
    } else {
       p = passwd;
