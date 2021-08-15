@@ -12,3 +12,4 @@ license = "MIT"
 keywords = ["cmc", "chat", "conferencing", "im", "instant message"]
 
 [dependencies]
+structopt = "0.3"
