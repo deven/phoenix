@@ -1,8 +1,14 @@
 [package]
 name = "phoenix_cmc"
 version = "0.1.0"
+authors = ["Deven T. Corzine <deven@ties.org>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Conferencing system server supporting real-time communication between users, currently using a text-based user interface over the standard TELNET protocol, so no special client program is necessary for users."
+documentation = "https://docs.rs/phoenix_cmc"
+readme = "README.md"
+homepage = "https://phoenix-cmc.org/"
+repository = "https://github.com/deven/phoenix/"
+license = "MIT"
+keywords = ["cmc", "chat", "conferencing", "im", "instant message"]
 
 [dependencies]
