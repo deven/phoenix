@@ -200,6 +200,7 @@ dependencies = [
 name = "phoenix_cmc"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "structopt",
  "tokio",
 ]
