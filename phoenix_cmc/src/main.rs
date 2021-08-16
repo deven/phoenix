@@ -9,23 +9,24 @@
 // SPDX-License-Identifier: MIT
 //
 
-#[derive(Debug)]
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
 struct Opts {
-    /// Run from cron to restart server
+    /// Running from cron to restart server
+    #[structopt(long)]
     cron: bool,
 
     /// Enable debug mode
+    #[structopt(long)]
     debug: bool,
 
     /// Set listening port number
+    #[structopt(long, default_value = "9999")]
     port: u16,
 }
 
 fn main() {
-    let opts = Opts {
-        cron:  false,
-        debug: false,
-        port:  9999,
-    };
+    let opts = Opts::from_args();
     println!("opts: {:?}", opts);
 }
