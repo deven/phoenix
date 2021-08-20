@@ -9,10 +9,11 @@
 // SPDX-License-Identifier: MIT
 //
 
+use std::error::Error;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use structopt::StructOpt;
-use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpListener;
 
 #[derive(Debug, StructOpt)]
 struct Opts {
@@ -34,7 +35,7 @@ struct Opts {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
     let opts     = Opts::from_args();
     let socket   = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
     let listener = TcpListener::bind(socket).await?;
