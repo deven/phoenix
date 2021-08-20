@@ -14,6 +14,7 @@ use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use structopt::StructOpt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
+use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, StructOpt)]
 struct Opts {
@@ -36,6 +37,11 @@ struct Opts {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=info".parse()?))
+        .with_span_events(FmtSpan::FULL)
+        .init();
+
     let opts     = Opts::from_args();
     let socket   = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
     let listener = TcpListener::bind(socket).await?;
