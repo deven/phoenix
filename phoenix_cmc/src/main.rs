@@ -9,6 +9,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+#![warn(rust_2018_idioms)]
+
 use std::error::Error;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use structopt::StructOpt;
