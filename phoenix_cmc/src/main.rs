@@ -16,7 +16,7 @@ use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use structopt::StructOpt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use tracing::{warn, info};
+use tracing::{info, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, StructOpt)]
@@ -45,11 +45,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with_span_events(FmtSpan::FULL)
         .init();
 
-    let opts     = Opts::from_args();
-    let socket   = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
+    let opts = Opts::from_args();
+    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
     let listener = TcpListener::bind(socket).await?;
 
-    info!("Phoenix CMC running, accepting connections on port {}.", opts.port);
+    info!(
+        "Phoenix CMC running, accepting connections on port {}.",
+        opts.port
+    );
 
     loop {
         let (mut socket, _) = listener.accept().await?;
