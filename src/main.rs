@@ -73,6 +73,16 @@ impl Error for AppError {
     }
 }
 
+/// Shared state between async tasks.
+struct SharedState {}
+
+impl SharedState {
+    /// Create a new, empty, instance of `SharedState`.
+    fn new() -> Self {
+        SharedState {}
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
@@ -84,6 +94,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let opts = Opts::from_args();
     let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
     let listener = TcpListener::bind(socket).await?;
+    let state = Arc::new(Mutex::new(SharedState::new()));
 
     info!(
         "Phoenix CMC running, accepting connections on port {}.",
@@ -95,8 +106,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Ok((socket, addr)) => {
                 info!("Accepted TCP connection from {:?}", addr);
 
+                let state = Arc::clone(&state);
+
                 tokio::spawn(async move {
-                    if let Err(e) = process(socket, addr).await {
+                    if let Err(e) = process(socket, addr, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
                 });
@@ -107,7 +120,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Process an individual TCP connection.
-async fn process(mut socket: TcpStream, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
+async fn process(
+    mut socket: TcpStream,
+    addr: SocketAddr,
+    _state: Arc<Mutex<SharedState>>,
+) -> Result<(), Box<dyn Error>> {
     let mut buf = [0; 1024];
 
     // In a loop, read data from the socket and write the data back.
