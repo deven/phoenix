@@ -12,12 +12,15 @@
 #![warn(rust_2018_idioms)]
 
 use std::error::Error;
+use std::fmt;
+use std::io;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
+use std::sync::Arc;
 use structopt::StructOpt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::Mutex;
 use tracing::{info, warn};
-use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, StructOpt)]
 struct Opts {
@@ -38,8 +41,41 @@ struct Opts {
     port: u16,
 }
 
+#[derive(Debug)]
+pub enum AppError {
+    SocketReadError { addr: SocketAddr, source: io::Error },
+    SocketWriteError { addr: SocketAddr, source: io::Error },
+}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SocketReadError { addr, source } => write!(
+                f,
+                "failed to read from socket ({:?}); err = {:?}",
+                addr, source
+            ),
+            Self::SocketWriteError { addr, source } => write!(
+                f,
+                "failed to write to socket ({:?}); err = {:?}",
+                addr, source
+            ),
+        }
+    }
+}
+
+impl Error for AppError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::SocketReadError { addr: _, source } => Some(source),
+            Self::SocketWriteError { addr: _, source } => Some(source),
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=info".parse()?))
         .with_span_events(FmtSpan::FULL)
@@ -55,32 +91,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     loop {
-        let (mut socket, _) = listener.accept().await?;
+        match listener.accept().await {
+            Ok((socket, addr)) => {
+                info!("Accepted TCP connection from {:?}", addr);
 
-        info!("Accepted connection from {:?}", socket);
-
-        tokio::spawn(async move {
-            let mut buf = [0; 1024];
-            info!("Spawned a new async task.");
-
-            // In a loop, read data from the socket and write the data back.
-            loop {
-                let n = match socket.read(&mut buf).await {
-                    // socket closed
-                    Ok(n) if n == 0 => return,
-                    Ok(n) => n,
-                    Err(e) => {
-                        warn!("failed to read from socket; err = {:?}", e);
-                        return;
+                tokio::spawn(async move {
+                    if let Err(e) = process(socket, addr).await {
+                        warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
-                };
-
-                // Write the data back
-                if let Err(e) = socket.write_all(&buf[0..n]).await {
-                    warn!("failed to write to socket; err = {:?}", e);
-                    return;
-                }
+                });
             }
-        });
+            Err(e) => warn!("Error accepting TCP connection: {:?}", e),
+        }
+    }
+}
+
+/// Process an individual TCP connection.
+async fn process(mut socket: TcpStream, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
+    let mut buf = [0; 1024];
+
+    // In a loop, read data from the socket and write the data back.
+    loop {
+        let n = match socket.read(&mut buf).await {
+            // socket closed
+            Ok(n) if n == 0 => return Ok(()),
+            Ok(n) => n,
+            Err(e) => {
+                return Err(Box::new(AppError::SocketReadError {
+                    addr: addr,
+                    source: e,
+                }))
+            }
+        };
+
+        // Write the data back
+        if let Err(e) = socket.write_all(&buf[0..n]).await {
+            return Err(Box::new(AppError::SocketWriteError {
+                addr: addr,
+                source: e,
+            }));
+        }
     }
 }
