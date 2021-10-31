@@ -14,13 +14,14 @@
 use std::error::Error;
 use std::fmt;
 use std::io;
+use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 use structopt::StructOpt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 #[derive(Debug, StructOpt)]
 struct Opts {
@@ -91,10 +92,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with_span_events(FmtSpan::FULL)
         .init();
 
+    let state = Arc::new(Mutex::new(SharedState::new()));
     let opts = Opts::from_args();
     let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
-    let listener = TcpListener::bind(socket).await?;
-    let state = Arc::new(Mutex::new(SharedState::new()));
+
+    let listener = match TcpListener::bind(socket).await {
+        Ok(listener) => listener,
+        Err(e) => {
+            if opts.cron && e.kind() == ErrorKind::AddrInUse {
+                return Ok(());
+            } else {
+                error!("Error binding to TCP port {}: {:?}", opts.port, e);
+                return Err(Box::new(e));
+            }
+        }
+    };
 
     info!(
         "Phoenix CMC running, accepting connections on port {}.",
