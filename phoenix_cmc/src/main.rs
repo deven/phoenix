@@ -11,6 +11,7 @@
 
 #![warn(rust_2018_idioms)]
 
+use anyhow::Result;
 use std::error::Error;
 use std::fmt;
 use std::io;
@@ -42,37 +43,37 @@ struct Opts {
     port: u16,
 }
 
-#[derive(Debug)]
-pub enum AppError {
-    SocketReadError { addr: SocketAddr, source: io::Error },
-    SocketWriteError { addr: SocketAddr, source: io::Error },
-}
-
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SocketReadError { addr, source } => write!(
-                f,
-                "failed to read from socket ({:?}); err = {:?}",
-                addr, source
-            ),
-            Self::SocketWriteError { addr, source } => write!(
-                f,
-                "failed to write to socket ({:?}); err = {:?}",
-                addr, source
-            ),
-        }
-    }
-}
-
-impl Error for AppError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::SocketReadError { addr: _, source } => Some(source),
-            Self::SocketWriteError { addr: _, source } => Some(source),
-        }
-    }
-}
+//#[derive(Debug)]
+//pub enum AppError {
+//    SocketReadError { addr: SocketAddr, source: io::Error },
+//    SocketWriteError { addr: SocketAddr, source: io::Error },
+//}
+//
+//impl fmt::Display for AppError {
+//    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//        match self {
+//            Self::SocketReadError { addr, source } => write!(
+//                f,
+//                "failed to read from socket ({:?}); err = {:?}",
+//                addr, source
+//            ),
+//            Self::SocketWriteError { addr, source } => write!(
+//                f,
+//                "failed to write to socket ({:?}); err = {:?}",
+//                addr, source
+//            ),
+//        }
+//    }
+//}
+//
+//impl Error for AppError {
+//    fn source(&self) -> Option<&(dyn Error + 'static)> {
+//        match self {
+//            Self::SocketReadError { addr: _, source } => Some(source),
+//            Self::SocketWriteError { addr: _, source } => Some(source),
+//        }
+//    }
+//}
 
 /// Shared state between async tasks.
 struct SharedState {}
@@ -85,7 +86,7 @@ impl SharedState {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box(dyn Error)> {
     use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=info".parse()?))
@@ -136,29 +137,36 @@ async fn process(
     mut socket: TcpStream,
     addr: SocketAddr,
     _state: Arc<Mutex<SharedState>>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let mut buf = [0; 1024];
 
     // In a loop, read data from the socket and write the data back.
     loop {
-        let n = match socket.read(&mut buf).await {
-            // socket closed
-            Ok(n) if n == 0 => return Ok(()),
-            Ok(n) => n,
-            Err(e) => {
-                return Err(Box::new(AppError::SocketReadError {
-                    addr: addr,
-                    source: e,
-                }))
-            }
-        };
+        let n = socket.read(&mut buf).await?;
+        if n == 0 {
+            return Ok(());
+        }
+//        let n = match socket.read(&mut buf).await? {
+//            // socket closed
+//            Ok(n) if n == 0 => return Ok(()),
+//            Ok(n) => n,
+//            Err(e) => {
+//                return Err(e);
+//                return Err(Box::new(AppError::SocketReadError {
+//                    addr: addr,
+//                    source: e,
+//                }))
+//            }
+//        };
 
         // Write the data back
-        if let Err(e) = socket.write_all(&buf[0..n]).await {
-            return Err(Box::new(AppError::SocketWriteError {
-                addr: addr,
-                source: e,
-            }));
-        }
+        socket.write_all(&buf[0..n]).await?
+//        if let Err(e) = socket.write_all(&buf[0..n]).await {
+//            return Err(e);
+//            return Err(Box::new(AppError::SocketWriteError {
+//                addr: addr,
+//                source: e,
+//            }));
+//        }
     }
 }
