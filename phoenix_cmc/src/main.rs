@@ -31,11 +31,11 @@ struct Opts {
 
     /// Enable debug mode
     #[structopt(long)]
-    debug: bool,
+    _debug: bool,
 
     /// Use IPv6 instead of IPv4
     #[structopt(long)]
-    ipv6: bool,
+    _ipv6: bool,
 
     /// Set listening port number
     #[structopt(long, default_value = "9999")]
