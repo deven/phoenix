@@ -149,7 +149,7 @@ async fn process(
                 return Err(Box::new(AppError::SocketReadError {
                     addr: addr,
                     source: e,
-                }))
+                }));
             }
         };
 
