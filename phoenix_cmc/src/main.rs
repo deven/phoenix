@@ -103,7 +103,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 return Ok(());
             } else {
                 error!("Error binding to TCP port {}: {:?}", opts.port, e);
-                return Err(Box::new(e));
+                return Err(Box::new(e) as Box<dyn Error>);
             }
         }
     };
