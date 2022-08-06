@@ -12,8 +12,6 @@
 #![warn(rust_2018_idioms)]
 
 use std::error::Error;
-use std::fmt;
-use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
@@ -41,38 +39,6 @@ struct Opts {
     /// Set listening port number
     #[structopt(long, default_value = "9999")]
     port: u16,
-}
-
-#[derive(Debug)]
-pub enum AppError {
-    SocketReadError { addr: SocketAddr, source: io::Error },
-    SocketWriteError { addr: SocketAddr, source: io::Error },
-}
-
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SocketReadError { addr, source } => write!(
-                f,
-                "failed to read from socket ({:?}); err = {:?}",
-                addr, source
-            ),
-            Self::SocketWriteError { addr, source } => write!(
-                f,
-                "failed to write to socket ({:?}); err = {:?}",
-                addr, source
-            ),
-        }
-    }
-}
-
-impl Error for AppError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::SocketReadError { addr: _, source } => Some(source),
-            Self::SocketWriteError { addr: _, source } => Some(source),
-        }
-    }
 }
 
 /// Shared state between async tasks.
@@ -121,7 +87,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let state = Arc::clone(&state);
 
                 tokio::spawn(async move {
-                    if let Err(e) = process(socket, addr, state).await {
+                    if let Err(e) = process(socket, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
                 });
@@ -134,7 +100,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 /// Process an individual TCP connection.
 async fn process(
     mut socket: TcpStream,
-    addr: SocketAddr,
     _state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
     let mut buf = [0; 1024];
@@ -145,20 +110,12 @@ async fn process(
             // socket closed
             Ok(n) if n == 0 => return Ok(()),
             Ok(n) => n,
-            Err(e) => {
-                return Err(Box::new(AppError::SocketReadError {
-                    addr: addr,
-                    source: e,
-                }));
-            }
+            Err(e) => return Err(Box::new(e) as Box<dyn Error>),
         };
 
         // Write the data back
         if let Err(e) = socket.write_all(&buf[0..n]).await {
-            return Err(Box::new(AppError::SocketWriteError {
-                addr: addr,
-                source: e,
-            }));
+            return Err(Box::new(e) as Box<dyn Error>);
         }
     }
 }
