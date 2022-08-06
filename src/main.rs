@@ -22,6 +22,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
+use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, StructOpt)]
 struct Opts {
@@ -86,7 +87,6 @@ impl SharedState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=info".parse()?))
         .with_span_events(FmtSpan::FULL)
