@@ -9,7 +9,7 @@ readme        = "README.md"
 homepage      = "https://phoenix-cmc.org/"
 repository    = "https://github.com/deven/phoenix/"
 license       = "MIT"
-keywords      = ["cmc", "chat", "conferencing", "im", "instant message"]
+keywords      = ["cmc", "chat", "conferencing", "communication", "im", "instant message"]
 
 [dependencies]
 bytes              = "1.3.0"
