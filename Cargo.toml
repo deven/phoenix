@@ -3,7 +3,7 @@ name          = "phoenix_cmc"
 version       = "0.1.0"
 authors       = ["Deven T. Corzine <deven@ties.org>"]
 edition       = "2021"
-rust-version  = "1.56"
+rust-version  = "1.60"
 description   = "Conferencing system server supporting real-time communication between users, currently using a text-based user interface over the standard TELNET protocol, so no special client program is necessary for users."
 documentation = "https://docs.rs/phoenix_cmc"
 readme        = "README.md"
@@ -14,7 +14,7 @@ keywords      = ["cmc", "chat", "conferencing", "communication", "im", "instant 
 
 [dependencies]
 bytes              = "1.3.0"
-structopt          = "0.3.26"
+clap               = "4.0.32"
 tokio              = { version = "1.23.0", features = ["full"] }
 tracing            = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
@@ -22,18 +22,21 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 #
 # Rust compiler minimum version requirements for crate dependencies:
 #
-# ansi_term                    => 0.12.1  => 2015 edition =>
-# atty                         => 0.2.14  => 2015 edition =>
 # autocfg                      => 1.1.0   => 2015 edition =>
 # bitflags                     => 1.3.2   => 2018 edition =>
 # bytes                        => 1.3.0   => 2018 edition =>
+# cc                           => 1.0.78  => 2018 edition =>
 # cfg-if                       => 1.0.0   => 2018 edition =>
-# clap                         => 2.34.0  => 2018 edition =>
-# heck                         => 0.3.3   => 2018 edition =>
-# hermit-abi                   => 0.1.19  => 2018 edition =>
+# clap                         => 4.0.32  => 2021 edition => rustc 1.60
+# clap_lex                     => 0.3.0   => 2021 edition => rustc 1.60
+# errno                        => 0.2.8   => 2015 edition =>
+# errno-dragonfly              => 0.1.2   => 2018 edition =>
 # hermit-abi                   => 0.2.6   => 2021 edition =>
+# io-lifetimes                 => 1.0.3   => 2018 edition =>
+# is-terminal                  => 0.4.2   => 2018 edition => rustc 1.48
 # lazy_static                  => 1.4.0   => 2015 edition =>
 # libc                         => 0.2.139 => 2015 edition =>
+# linux-raw-sys                => 0.1.4   => 2018 edition => rustc 1.48
 # lock_api                     => 0.4.9   => 2018 edition =>
 # log                          => 0.4.17  => 2015 edition => rustc 1.0
 # matchers                     => 0.1.0   => 2018 edition =>
@@ -42,45 +45,40 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 # nu-ansi-term                 => 0.46.0  => 2018 edition =>
 # num_cpus                     => 1.15.0  => 2015 edition =>
 # once_cell                    => 1.16.0  => 2021 edition => rustc 1.56
+# os_str_bytes                 => 6.4.1   => 2021 edition => rustc 1.57
 # overload                     => 0.1.1   => 2018 edition =>
 # parking_lot                  => 0.12.1  => 2018 edition =>
 # parking_lot_core             => 0.9.5   => 2018 edition =>
 # pin-project-lite             => 0.2.9   => 2018 edition => rustc 1.37
-# proc-macro-error             => 1.0.4   => 2018 edition => rustc 0.9
-# proc-macro-error-attr        => 1.0.4   => 2018 edition => rustc 0.9
 # proc-macro2                  => 1.0.49  => 2018 edition => rustc 1.31
 # quote                        => 1.0.23  => 2018 edition => rustc 1.31
 # redox_syscall                => 0.2.16  => 2018 edition =>
 # regex                        => 1.7.0   => 2018 edition =>
 # regex-automata               => 0.1.10  => 2015 edition =>
 # regex-syntax                 => 0.6.28  => 2018 edition =>
+# rustix                       => 0.36.5  => 2018 edition => rustc 1.48
 # scopeguard                   => 1.1.0   => 2015 edition =>
 # sharded-slab                 => 0.1.4   => 2018 edition =>
 # signal-hook-registry         => 1.4.0   => 2015 edition =>
 # smallvec                     => 1.10.0  => 2018 edition =>
 # socket2                      => 0.4.7   => 2018 edition =>
-# strsim                       => 0.8.0   => 2015 edition =>
-# structopt                    => 0.3.26  => 2018 edition =>
-# structopt-derive             => 0.4.18  => 2018 edition =>
+# strsim                       => 0.10.0  => 2015 edition =>
 # syn                          => 1.0.107 => 2018 edition => rustc 1.31
-# textwrap                     => 0.11.0  => 2015 edition =>
+# termcolor                    => 1.1.3   => 2018 edition =>
 # thread_local                 => 1.1.4   => 2018 edition =>
-# tokio                        => 1.23.0  => 2018 edition => rustc 1.49.0
-# tokio-macros                 => 1.8.2   => 2018 edition => rustc 1.49.0
-# tracing                      => 0.1.37  => 2018 edition => rustc 1.49.0
-# tracing-attributes           => 0.1.23  => 2018 edition => rustc 1.49.0
-# tracing-core                 => 0.1.30  => 2018 edition => rustc 1.49.0
-# tracing-log                  => 0.1.3   => 2018 edition => rustc 1.49.0
-# tracing-subscriber           => 0.3.16  => 2018 edition => rustc 1.50.0
+# tokio                        => 1.23.0  => 2018 edition => rustc 1.49
+# tokio-macros                 => 1.8.2   => 2018 edition => rustc 1.49
+# tracing                      => 0.1.37  => 2018 edition => rustc 1.49
+# tracing-attributes           => 0.1.23  => 2018 edition => rustc 1.49
+# tracing-core                 => 0.1.30  => 2018 edition => rustc 1.49
+# tracing-log                  => 0.1.3   => 2018 edition => rustc 1.49
+# tracing-subscriber           => 0.3.16  => 2018 edition => rustc 1.50
 # unicode-ident                => 1.0.6   => 2018 edition => rustc 1.31
-# unicode-segmentation         => 1.10.0  => 2018 edition =>
-# unicode-width                => 0.1.10  => 2015 edition =>
-# valuable                     => 0.1.0   => 2018 edition => rustc 1.51.0
-# vec_map                      => 0.8.2   => 2015 edition =>
-# version_check                => 0.9.4   => 2015 edition =>
+# valuable                     => 0.1.0   => 2018 edition => rustc 1.51
 # wasi                         => 0.11.0  => 2018 edition =>
 # winapi                       => 0.3.9   => 2015 edition =>
 # winapi-i686-pc-windows-gnu   => 0.4.0   => 2015 edition =>
+# winapi-util                  => 0.1.5   => 2018 edition =>
 # winapi-x86_64-pc-windows-gnu => 0.4.0   => 2015 edition =>
 # windows-sys                  => 0.42.0  => 2015 edition =>
 # windows_aarch64_gnullvm      => 0.42.0  => 2015 edition =>
