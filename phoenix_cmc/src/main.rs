@@ -11,6 +11,7 @@
 
 #![warn(rust_2018_idioms)]
 
+use async_backtrace::{frame, framed, taskdump_tree};
 use clap::Parser;
 use std::error::Error;
 use std::io::ErrorKind;
@@ -83,11 +84,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         match listener.accept().await {
             Ok((socket, addr)) => {
                 info!("Accepted TCP connection from {:?}", addr);
-                info!("{}", async_backtrace::taskdump_tree(false));
+                info!("{}", taskdump_tree(false));
 
                 let state = Arc::clone(&state);
 
-                tokio::spawn(async_backtrace::frame!(async move {
+                tokio::spawn(frame!(async move {
                     if let Err(e) = process(socket, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
@@ -99,7 +100,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Process an individual TCP connection.
-#[async_backtrace::framed]
+#[framed]
 async fn process(
     mut socket: TcpStream,
     _state: Arc<Mutex<SharedState>>,
