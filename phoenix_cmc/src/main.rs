@@ -98,6 +98,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Process an individual TCP connection.
+#[async_backtrace::framed]
 async fn process(
     mut socket: TcpStream,
     _state: Arc<Mutex<SharedState>>,
