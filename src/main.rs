@@ -22,7 +22,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec};
-use tracing::{error, info, warn};
+use tracing::{error, info, trace, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, Parser)]
@@ -57,7 +57,7 @@ impl SharedState {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=info".parse()?))
+        .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=trace".parse()?))
         .with_span_events(FmtSpan::FULL)
         .init();
 
@@ -86,7 +86,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         match listener.accept().await {
             Ok((stream, addr)) => {
                 info!("Accepted TCP connection from {:?}", addr);
-                info!("{}", taskdump_tree(false));
 
                 let state = Arc::clone(&state);
 
@@ -120,6 +119,8 @@ async fn client_loop(
     lines: &mut Framed<TcpStream, LinesCodec>,
     _state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
+    trace!("{}", taskdump_tree(false));
+
     // In a loop, read lines from the socket and write them back.
     loop {
         let input = match lines.next().await {
