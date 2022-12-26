@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let state = Arc::clone(&state);
 
                 tokio::spawn(frame!(async move {
-                    if let Err(e) = process(stream, state).await {
+                    if let Err(e) = setup_client(addr, stream, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
                 }));
@@ -101,14 +101,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-/// Process an individual TCP connection.
+/// Setup a new client connection.
 #[framed]
-async fn process(
+async fn setup_client(
+    _addr: SocketAddr,
     stream: TcpStream,
-    _state: Arc<Mutex<SharedState>>,
+    state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
     let mut lines = Framed::new(stream, LinesCodec::new());
 
+    client_loop(&mut lines, state).await?;
+    Ok(())
+}
+
+/// Client main loop.
+#[framed]
+async fn client_loop(
+    lines: &mut Framed<TcpStream, LinesCodec>,
+    _state: Arc<Mutex<SharedState>>,
+) -> Result<(), Box<dyn Error>> {
     // In a loop, read lines from the socket and write them back.
     loop {
         let input = match lines.next().await {
