@@ -13,13 +13,15 @@
 
 use async_backtrace::{frame, framed, taskdump_tree};
 use clap::Parser;
+use futures::SinkExt;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
+use tokio_stream::StreamExt;
+use tokio_util::codec::{Framed, LinesCodec};
 use tracing::{error, info, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
@@ -82,14 +84,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
         match listener.accept().await {
-            Ok((socket, addr)) => {
+            Ok((stream, addr)) => {
                 info!("Accepted TCP connection from {:?}", addr);
                 info!("{}", taskdump_tree(false));
 
                 let state = Arc::clone(&state);
 
                 tokio::spawn(frame!(async move {
-                    if let Err(e) = process(socket, state).await {
+                    if let Err(e) = process(stream, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
                 }));
@@ -102,23 +104,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
 /// Process an individual TCP connection.
 #[framed]
 async fn process(
-    mut socket: TcpStream,
+    stream: TcpStream,
     _state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
-    let mut buf = [0; 1024];
+    let mut lines = Framed::new(stream, LinesCodec::new());
 
-    // In a loop, read data from the socket and write the data back.
+    // In a loop, read lines from the socket and write them back.
     loop {
-        let n = match socket.read(&mut buf).await {
-            // socket closed
-            Ok(n) if n == 0 => return Ok(()),
-            Ok(n) => n,
-            Err(e) => return Err(Box::new(e) as Box<dyn Error>),
+        let input = match lines.next().await {
+            Some(Ok(line)) => line,
+            _ => return Ok(()),
         };
-
-        // Write the data back
-        if let Err(e) = socket.write_all(&buf[0..n]).await {
-            return Err(Box::new(e) as Box<dyn Error>);
-        }
+        lines.send(input).await?;
     }
 }
