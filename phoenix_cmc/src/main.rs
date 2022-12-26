@@ -86,11 +86,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 let state = Arc::clone(&state);
 
-                tokio::spawn(async move {
+                tokio::spawn(async_backtrace::frame!(async move {
                     if let Err(e) = process(socket, state).await {
                         warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
                     }
-                });
+                }));
             }
             Err(e) => warn!("Error accepting TCP connection: {:?}", e),
         }
