@@ -11,33 +11,33 @@
 
 #![warn(rust_2018_idioms)]
 
+use clap::Parser;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
-use structopt::StructOpt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opts {
     /// Running from cron to restart server
-    #[structopt(long)]
+    #[clap(long)]
     cron: bool,
 
     /// Enable debug mode
-    #[structopt(long)]
+    #[clap(long)]
     _debug: bool,
 
     /// Use IPv6 instead of IPv4
-    #[structopt(long)]
+    #[clap(long)]
     _ipv6: bool,
 
     /// Set listening port number
-    #[structopt(long, default_value = "9999")]
+    #[clap(long, default_value = "9999")]
     port: u16,
 }
 
@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     let state = Arc::new(Mutex::new(SharedState::new()));
-    let opts = Opts::from_args();
+    let opts = Opts::parse();
     let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
 
     let listener = match TcpListener::bind(socket).await {
