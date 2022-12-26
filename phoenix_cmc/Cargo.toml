@@ -16,7 +16,9 @@ keywords      = ["cmc", "chat", "conferencing", "communication", "im", "instant 
 async-backtrace    = "0.2.2"
 bytes              = "1.3.0"
 clap               = { version = "4.0.32", features = ["derive"] }
+futures            = "0.3.25"
 tokio              = { version = "1.23.0", features = ["full"] }
+tokio-stream       = "0.1.11"
 tokio-util         = { version = "0.7.4", features = ["codec"] }
 tracing            = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
@@ -97,6 +99,7 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 # thread_local                 => 1.1.4   => 2018 edition =>
 # tokio                        => 1.23.0  => 2018 edition => rustc 1.49
 # tokio-macros                 => 1.8.2   => 2018 edition => rustc 1.49
+# tokio-stream                 => 0.1.11  => 2018 edition => rustc 1.49
 # tokio-util                   => 0.7.4   => 2018 edition => rustc 1.49
 # tracing                      => 0.1.37  => 2018 edition => rustc 1.49
 # tracing-attributes           => 0.1.23  => 2018 edition => rustc 1.49
