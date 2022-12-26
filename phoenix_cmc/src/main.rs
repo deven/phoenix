@@ -4,7 +4,7 @@
 //
 // Main program.
 //
-// Copyright 2021 Deven T. Corzine <deven@ties.org>
+// Copyright 2021-2022 Deven T. Corzine <deven@ties.org>
 //
 // SPDX-License-Identifier: MIT
 //
