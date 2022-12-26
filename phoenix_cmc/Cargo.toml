@@ -28,9 +28,11 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 # cc                           => 1.0.78  => 2018 edition =>
 # cfg-if                       => 1.0.0   => 2018 edition =>
 # clap                         => 4.0.32  => 2021 edition => rustc 1.60
+# clap_derive                  => 4.0.21  => 2021 edition => rustc 1.60
 # clap_lex                     => 0.3.0   => 2021 edition => rustc 1.60
 # errno                        => 0.2.8   => 2015 edition =>
 # errno-dragonfly              => 0.1.2   => 2018 edition =>
+# heck                         => 0.4.0   => 2018 edition =>
 # hermit-abi                   => 0.2.6   => 2021 edition =>
 # io-lifetimes                 => 1.0.3   => 2018 edition =>
 # is-terminal                  => 0.4.2   => 2018 edition => rustc 1.48
@@ -50,6 +52,8 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 # parking_lot                  => 0.12.1  => 2018 edition =>
 # parking_lot_core             => 0.9.5   => 2018 edition =>
 # pin-project-lite             => 0.2.9   => 2018 edition => rustc 1.37
+# proc-macro-error             => 1.0.4   => 2018 edition => rustc 0.9
+# proc-macro-error-attr        => 1.0.4   => 2018 edition => rustc 0.9
 # proc-macro2                  => 1.0.49  => 2018 edition => rustc 1.31
 # quote                        => 1.0.23  => 2018 edition => rustc 1.31
 # redox_syscall                => 0.2.16  => 2018 edition =>
@@ -75,6 +79,7 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 # tracing-subscriber           => 0.3.16  => 2018 edition => rustc 1.50
 # unicode-ident                => 1.0.6   => 2018 edition => rustc 1.31
 # valuable                     => 0.1.0   => 2018 edition => rustc 1.51
+# version_check                => 0.9.4   => 2015 edition =>
 # wasi                         => 0.11.0  => 2018 edition =>
 # winapi                       => 0.3.9   => 2015 edition =>
 # winapi-i686-pc-windows-gnu   => 0.4.0   => 2015 edition =>
