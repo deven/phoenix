@@ -25,19 +25,19 @@ use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 #[derive(Debug, Parser)]
 struct Opts {
     /// Running from cron to restart server
-    #[clap(long)]
+    #[arg(long)]
     cron: bool,
 
     /// Enable debug mode
-    #[clap(long)]
+    #[arg(long)]
     _debug: bool,
 
     /// Use IPv6 instead of IPv4
-    #[clap(long)]
+    #[arg(long)]
     _ipv6: bool,
 
     /// Set listening port number
-    #[clap(long, default_value = "9999")]
+    #[arg(long, default_value = "9999")]
     port: u16,
 }
 
