@@ -83,6 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         match listener.accept().await {
             Ok((socket, addr)) => {
                 info!("Accepted TCP connection from {:?}", addr);
+                info!("{}", async_backtrace::taskdump_tree(false));
 
                 let state = Arc::clone(&state);
 
