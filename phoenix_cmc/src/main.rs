@@ -20,6 +20,7 @@ use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
+use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
@@ -152,7 +153,10 @@ async fn setup_client(
 ) -> Result<(), Box<dyn Error>> {
     let mut lines = Framed::new(stream, LinesCodec::new());
 
-    lines.send("Enter username: ").await?;
+    {
+        let stream = lines.get_mut();
+        stream.write_all(b"Enter username: ").await?;
+    }
 
     let username = match lines.next().await {
         Some(Ok(line)) => line,
