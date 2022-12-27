@@ -14,11 +14,14 @@
 use async_backtrace::{frame, framed, taskdump_tree};
 use clap::Parser;
 use futures::SinkExt;
+use std::collections::HashMap;
 use std::error::Error;
+use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::Mutex;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec};
@@ -45,12 +48,49 @@ struct Opts {
 }
 
 /// Shared state between async tasks.
-struct SharedState {}
+struct SharedState {
+    clients: HashMap<SocketAddr, Arc<Mutex<Client>>>,
+}
 
 impl SharedState {
-    /// Create a new, empty, instance of `SharedState`.
+    /// Create a new instance of `SharedState`.
     fn new() -> Self {
-        SharedState {}
+        SharedState {
+            clients: HashMap::new(),
+        }
+    }
+}
+
+struct Client {
+    addr: SocketAddr,
+    lines: Framed<TcpStream, LinesCodec>,
+    sender: UnboundedSender<String>,
+    receiver: UnboundedReceiver<String>,
+}
+
+impl Client {
+    /// Create a new instance of `Client`.
+    async fn new(
+        addr: SocketAddr,
+        lines: Framed<TcpStream, LinesCodec>,
+        state: Arc<Mutex<SharedState>>,
+    ) -> io::Result<Arc<Mutex<Client>>> {
+        // Create a channel for sending events to this client.
+        let (sender, receiver) = unbounded_channel();
+
+        // Create the new `Client` instance.
+        let client = Arc::new(Mutex::new(Client {
+            addr,
+            lines,
+            sender,
+            receiver,
+        }));
+
+        // Save the new instance in the server shared state HashMap.
+        state.lock().await.clients.insert(addr, client.clone());
+
+        // Return the new instance.
+        Ok(client)
     }
 }
 
