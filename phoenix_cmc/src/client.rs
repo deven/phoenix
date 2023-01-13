@@ -9,102 +9,84 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::SharedState;
 use async_backtrace::{framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;
-use std::io;
 use std::net::SocketAddr;
-use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use tokio::sync::Mutex;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec};
 use tracing::{info, trace};
 
 pub struct Client {
-    username: String,
-    addr: SocketAddr,
+    pub username: Option<String>,
+    pub addr: SocketAddr,
     lines: Framed<TcpStream, LinesCodec>,
-    sender: UnboundedSender<String>,
-    receiver: UnboundedReceiver<String>,
+    _sender: UnboundedSender<String>,
+    _receiver: UnboundedReceiver<String>,
 }
 
 impl Client {
     /// Create a new instance of `Client`.
-    async fn new(
-        username: String,
-        addr: SocketAddr,
-        lines: Framed<TcpStream, LinesCodec>,
-        state: Arc<Mutex<SharedState>>,
-    ) -> io::Result<Arc<Mutex<Client>>> {
+    #[framed]
+    pub async fn new(addr: SocketAddr, stream: TcpStream) -> Self {
+        // Create a LinesCodec to encode the stream as lines.
+        let lines = Framed::new(stream, LinesCodec::new());
+
         // Create a channel for sending events to this client.
-        let (sender, receiver) = unbounded_channel();
+        let (_sender, _receiver) = unbounded_channel();
 
         // Create the new `Client` instance.
-        let client = Arc::new(Mutex::new(Client {
-            username,
+        Self {
+            username: None,
             addr,
             lines,
-            sender,
-            receiver,
-        }));
-
-        // Save the new instance in the server shared state HashMap.
-        state.lock().await.clients.insert(addr, client.clone());
-
-        // Return the new instance.
-        Ok(client)
-    }
-}
-
-/// Setup a new client connection.
-#[framed]
-pub async fn setup_client(
-    addr: SocketAddr,
-    stream: TcpStream,
-    state: Arc<Mutex<SharedState>>,
-) -> Result<(), Box<dyn Error>> {
-    let mut lines = Framed::new(stream, LinesCodec::new());
-
-    {
-        let stream = lines.get_mut();
-        stream.write_all(b"Enter username: ").await?;
-    }
-
-    let username = match lines.next().await {
-        Some(Ok(line)) => line,
-        _ => {
-            info!("Client disconnected from {addr} without sending a username.");
-            return Ok(());
+            _sender,
+            _receiver,
         }
-    };
+    }
 
-    info!("User \"{username}\" logged in from {addr}.");
+    /// Setup a new client connection.
+    #[framed]
+    pub async fn setup(&mut self) -> Result<(), Box<dyn Error>> {
+        {
+            let stream = self.lines.get_mut();
+            stream.write_all(b"Enter username: ").await?;
+        }
 
-    client_loop(&mut lines, state).await?;
-
-    info!("User \"{username}\" disconnected from {addr}.");
-
-    Ok(())
-}
-
-/// Client main loop.
-#[framed]
-async fn client_loop(
-    lines: &mut Framed<TcpStream, LinesCodec>,
-    state: Arc<Mutex<SharedState>>,
-) -> Result<(), Box<dyn Error>> {
-    trace!("{}", taskdump_tree(false));
-
-    // In a loop, read lines from the socket and write them back.
-    loop {
-        let input = match lines.next().await {
+        let addr = &self.addr;
+        let username = match self.lines.next().await {
             Some(Ok(line)) => line,
-            _ => return Ok(()),
+            _ => {
+                info!("Client disconnected from {addr} without sending a username.");
+                return Ok(());
+            }
         };
-        lines.send(input).await?;
+
+        info!("User \"{username}\" logged in from {addr}.");
+
+        self.client_loop().await?;
+
+        let addr = &self.addr;
+        info!("User \"{username}\" disconnected from {addr}.");
+
+        Ok(())
+    }
+
+    /// Client main loop.
+    #[framed]
+    async fn client_loop(&mut self) -> Result<(), Box<dyn Error>> {
+        trace!("{}", taskdump_tree(false));
+
+        // In a loop, read lines from the socket and write them back.
+        loop {
+            let input = match self.lines.next().await {
+                Some(Ok(line)) => line,
+                _ => return Ok(()),
+            };
+            self.lines.send(input).await?;
+        }
     }
 }

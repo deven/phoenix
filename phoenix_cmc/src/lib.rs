@@ -13,16 +13,13 @@
 
 mod client;
 
-use crate::client::{setup_client, Client};
+use crate::client::Client;
 use async_backtrace::frame;
 use clap::Parser;
-use std::collections::HashMap;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
-use std::sync::Arc;
 use tokio::net::TcpListener;
-use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
@@ -45,20 +42,6 @@ pub struct Options {
     pub port: u16,
 }
 
-/// Shared state between async tasks.
-pub struct SharedState {
-    clients: HashMap<SocketAddr, Arc<Mutex<Client>>>,
-}
-
-impl SharedState {
-    /// Create a new instance of `SharedState`.
-    fn new() -> Self {
-        SharedState {
-            clients: HashMap::new(),
-        }
-    }
-}
-
 #[tokio::main]
 pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
@@ -67,7 +50,6 @@ pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
         .init();
 
     let port = options.port;
-    let state = Arc::new(Mutex::new(SharedState::new()));
     let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port);
 
     let listener = match TcpListener::bind(socket).await {
@@ -89,10 +71,10 @@ pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
             Ok((stream, addr)) => {
                 info!("Accepted TCP connection from {addr:?}");
 
-                let state = Arc::clone(&state);
+                let mut client = Client::new(addr, stream).await;
 
                 tokio::spawn(frame!(async move {
-                    if let Err(e) = setup_client(addr, stream, state).await {
+                    if let Err(e) = client.setup().await {
                         warn!("Error processing TCP connection from {addr:?}: {e:?}");
                     }
                 }));
