@@ -62,6 +62,7 @@ impl SharedState {
 }
 
 struct Client {
+    username: String,
     addr: SocketAddr,
     lines: Framed<TcpStream, LinesCodec>,
     sender: UnboundedSender<String>,
@@ -71,6 +72,7 @@ struct Client {
 impl Client {
     /// Create a new instance of `Client`.
     async fn new(
+        username: String,
         addr: SocketAddr,
         lines: Framed<TcpStream, LinesCodec>,
         state: Arc<Mutex<SharedState>>,
@@ -80,6 +82,7 @@ impl Client {
 
         // Create the new `Client` instance.
         let client = Arc::new(Mutex::new(Client {
+            username,
             addr,
             lines,
             sender,
@@ -143,13 +146,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
 /// Setup a new client connection.
 #[framed]
 async fn setup_client(
-    _addr: SocketAddr,
+    addr: SocketAddr,
     stream: TcpStream,
     state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
     let mut lines = Framed::new(stream, LinesCodec::new());
 
+    lines.send("Enter username: ").await?;
+
+    let username = match lines.next().await {
+        Some(Ok(line)) => line,
+        _ => {
+            info!(
+                "Client disconnected from {} without sending a username.",
+                addr
+            );
+            return Ok(());
+        }
+    };
+
+    info!("User \"{}\" logged in from {}.", username, addr);
+
     client_loop(&mut lines, state).await?;
+
+    info!("User \"{}\" disconnected from {}.", username, addr);
+
     Ok(())
 }
 
