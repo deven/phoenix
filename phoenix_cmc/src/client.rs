@@ -77,19 +77,16 @@ pub async fn setup_client(
     let username = match lines.next().await {
         Some(Ok(line)) => line,
         _ => {
-            info!(
-                "Client disconnected from {} without sending a username.",
-                addr
-            );
+            info!("Client disconnected from {addr} without sending a username.");
             return Ok(());
         }
     };
 
-    info!("User \"{}\" logged in from {}.", username, addr);
+    info!("User \"{username}\" logged in from {addr}.");
 
     client_loop(&mut lines, state).await?;
 
-    info!("User \"{}\" disconnected from {}.", username, addr);
+    info!("User \"{username}\" disconnected from {addr}.");
 
     Ok(())
 }

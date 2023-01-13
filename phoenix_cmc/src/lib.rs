@@ -66,8 +66,9 @@ pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
         .with_span_events(FmtSpan::FULL)
         .init();
 
+    let port = options.port;
     let state = Arc::new(Mutex::new(SharedState::new()));
-    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), options.port);
+    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port);
 
     let listener = match TcpListener::bind(socket).await {
         Ok(listener) => listener,
@@ -75,31 +76,28 @@ pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
             if options.cron && e.kind() == ErrorKind::AddrInUse {
                 return Ok(());
             } else {
-                error!("Error binding to TCP port {}: {:?}", options.port, e);
+                error!("Error binding to TCP port {port}: {e:?}");
                 return Err(Box::new(e) as Box<dyn Error>);
             }
         }
     };
 
-    info!(
-        "Phoenix CMC running, accepting connections on port {}.",
-        options.port
-    );
+    info!("Phoenix CMC running, accepting connections on port {port}.");
 
     loop {
         match listener.accept().await {
             Ok((stream, addr)) => {
-                info!("Accepted TCP connection from {:?}", addr);
+                info!("Accepted TCP connection from {addr:?}");
 
                 let state = Arc::clone(&state);
 
                 tokio::spawn(frame!(async move {
                     if let Err(e) = setup_client(addr, stream, state).await {
-                        warn!("Error processing TCP connection from {:?}: {:?}", addr, e);
+                        warn!("Error processing TCP connection from {addr:?}: {e:?}");
                     }
                 }));
             }
-            Err(e) => warn!("Error accepting TCP connection: {:?}", e),
+            Err(e) => warn!("Error accepting TCP connection: {e:?}"),
         }
     }
 }
