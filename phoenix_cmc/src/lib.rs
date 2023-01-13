@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-// Main program.
+// Phoenix CMC library: crate root
 //
 // Copyright 2021-2023 Deven T. Corzine <deven@ties.org>
 //
@@ -30,22 +30,22 @@ use tracing::{error, info, trace, warn};
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, Parser)]
-struct Opts {
+pub struct Options {
     /// Running from cron to restart server
     #[arg(long)]
-    cron: bool,
+    pub cron: bool,
 
     /// Enable debug mode
     #[arg(long)]
-    _debug: bool,
+    pub debug: bool,
 
     /// Use IPv6 instead of IPv4
     #[arg(long)]
-    _ipv6: bool,
+    pub ipv6: bool,
 
     /// Set listening port number
     #[arg(long, default_value = "9999")]
-    port: u16,
+    pub port: u16,
 }
 
 /// Shared state between async tasks.
@@ -99,23 +99,22 @@ impl Client {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=trace".parse()?))
         .with_span_events(FmtSpan::FULL)
         .init();
 
     let state = Arc::new(Mutex::new(SharedState::new()));
-    let opts = Opts::parse();
-    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), opts.port);
+    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), options.port);
 
     let listener = match TcpListener::bind(socket).await {
         Ok(listener) => listener,
         Err(e) => {
-            if opts.cron && e.kind() == ErrorKind::AddrInUse {
+            if options.cron && e.kind() == ErrorKind::AddrInUse {
                 return Ok(());
             } else {
-                error!("Error binding to TCP port {}: {:?}", opts.port, e);
+                error!("Error binding to TCP port {}: {:?}", options.port, e);
                 return Err(Box::new(e) as Box<dyn Error>);
             }
         }
@@ -123,7 +122,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!(
         "Phoenix CMC running, accepting connections on port {}.",
-        opts.port
+        options.port
     );
 
     loop {
@@ -182,7 +181,7 @@ async fn setup_client(
 #[framed]
 async fn client_loop(
     lines: &mut Framed<TcpStream, LinesCodec>,
-    _state: Arc<Mutex<SharedState>>,
+    state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
     trace!("{}", taskdump_tree(false));
 
