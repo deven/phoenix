@@ -13,12 +13,28 @@
 
 use clap::Parser;
 use phoenix_cmc::Options;
+use std::error::Error;
 use std::process;
+use tracing::trace;
+use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
+
+fn setup_tracing(directive: &str) -> Result<(), Box<dyn Error>> {
+    Ok(tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env().add_directive(directive.parse()?))
+        .with_span_events(FmtSpan::FULL)
+        .init())
+}
+
+fn run() -> Result<(), Box<dyn Error>> {
+    setup_tracing("phoenix_cmc=trace")?;
+
+    let opts = Options::parse();
+    trace!("{opts:?}");
+    phoenix_cmc::run(opts)
+}
 
 fn main() {
-    let options = Options::parse();
-
-    if let Err(e) = phoenix_cmc::run(options) {
+    if let Err(e) = run() {
         eprintln!("{e}");
         process::exit(1);
     }

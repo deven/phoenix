@@ -21,7 +21,6 @@ use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use tokio::net::TcpListener;
 use tracing::{error, info, warn};
-use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -43,19 +42,14 @@ pub struct Options {
 }
 
 #[tokio::main]
-pub async fn run(options: Options) -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("phoenix_cmc=trace".parse()?))
-        .with_span_events(FmtSpan::FULL)
-        .init();
-
-    let port = options.port;
+pub async fn run(opts: Options) -> Result<(), Box<dyn Error>> {
+    let port = opts.port;
     let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port);
 
     let listener = match TcpListener::bind(socket).await {
         Ok(listener) => listener,
         Err(e) => {
-            if options.cron && e.kind() == ErrorKind::AddrInUse {
+            if opts.cron && e.kind() == ErrorKind::AddrInUse {
                 return Ok(());
             } else {
                 error!("Error binding to TCP port {port}: {e:?}");
