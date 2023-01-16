@@ -12,15 +12,12 @@
 #![warn(rust_2018_idioms)]
 
 mod client;
+mod server;
 
-use crate::client::Client;
-use async_backtrace::frame;
+use async_backtrace::taskdump_tree;
 use clap::Parser;
 use std::error::Error;
-use std::io::ErrorKind;
-use std::net::{IpAddr, Ipv6Addr, SocketAddr};
-use tokio::net::TcpListener;
-use tracing::{error, info, warn};
+use tracing::{trace, warn};
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -43,37 +40,19 @@ pub struct Options {
 
 #[tokio::main]
 pub async fn run(opts: Options) -> Result<(), Box<dyn Error>> {
-    let port = opts.port;
-    let socket = SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port);
+    trace!(
+        "phoenix_cmc::run()\n{taskdump}",
+        taskdump = taskdump_tree(true)
+    );
 
-    let listener = match TcpListener::bind(socket).await {
-        Ok(listener) => listener,
-        Err(e) => {
-            if opts.cron && e.kind() == ErrorKind::AddrInUse {
-                return Ok(());
-            } else {
-                error!("Error binding to TCP port {port}: {e:?}");
-                return Err(Box::new(e) as Box<dyn Error>);
-            }
-        }
-    };
+    let server = server::Server::new(opts);
 
-    info!("Phoenix CMC running, accepting connections on port {port}.");
+    server.run().await?;
 
-    loop {
-        match listener.accept().await {
-            Ok((stream, addr)) => {
-                info!("Accepted TCP connection from {addr:?}");
+    trace!(
+        "phoenix_cmc::run()\n{taskdump}",
+        taskdump = taskdump_tree(true)
+    );
 
-                let mut client = Client::new(addr, stream).await;
-
-                tokio::spawn(frame!(async move {
-                    if let Err(e) = client.setup().await {
-                        warn!("Error processing TCP connection from {addr:?}: {e:?}");
-                    }
-                }));
-            }
-            Err(e) => warn!("Error accepting TCP connection: {e:?}"),
-        }
-    }
+    Ok(())
 }
