@@ -19,10 +19,11 @@ use tracing::trace;
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 fn setup_tracing(directive: &str) -> Result<(), Box<dyn Error>> {
-    Ok(tracing_subscriber::fmt()
+    tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive(directive.parse()?))
         .with_span_events(FmtSpan::FULL)
-        .init())
+        .init();
+    Ok(())
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
