@@ -40,19 +40,13 @@ pub struct Options {
 
 #[tokio::main]
 pub async fn run(opts: Options) -> Result<(), Box<dyn Error>> {
-    trace!(
-        "phoenix_cmc::run()\n{taskdump}",
-        taskdump = taskdump_tree(true)
-    );
+    trace!("phoenix_cmc::run()\n{}", taskdump_tree(true));
 
     let server = server::Server::new(opts);
 
     server.run().await?;
 
-    trace!(
-        "phoenix_cmc::run()\n{taskdump}",
-        taskdump = taskdump_tree(true)
-    );
+    trace!("phoenix_cmc::run()\n{}", taskdump_tree(true));
 
     Ok(())
 }
