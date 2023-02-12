@@ -84,7 +84,8 @@ impl Client {
         loop {
             let input = match self.lines.next().await {
                 Some(Ok(line)) => line,
-                _ => return Ok(()),
+                Some(Err(e)) => return Err(Box::new(e)),
+                None => return Ok(()),
             };
             self.lines.send(input).await?;
         }
