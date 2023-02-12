@@ -55,7 +55,7 @@ impl Server {
                 Ok((stream, addr)) => {
                     info!("Accepted TCP connection from {addr:?}");
 
-                    let mut client = Client::new(addr, stream).await;
+                    let (mut client, tx) = Client::new(addr, stream).await;
 
                     tokio::spawn(frame!(async move {
                         if let Err(e) = client.setup().await {
