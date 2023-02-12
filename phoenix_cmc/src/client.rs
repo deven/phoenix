@@ -15,7 +15,7 @@ use std::error::Error;
 use std::net::SocketAddr;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec};
 use tracing::{info, trace};
@@ -24,27 +24,24 @@ pub struct Client {
     pub username: Option<String>,
     pub addr: SocketAddr,
     lines: Framed<TcpStream, LinesCodec>,
-    _sender: UnboundedSender<String>,
-    _receiver: UnboundedReceiver<String>,
+    rx: mpsc::Receiver<String>,
 }
 
 impl Client {
     /// Create a new instance of `Client`.
-    #[framed]
-    pub async fn new(addr: SocketAddr, stream: TcpStream) -> Self {
+    pub fn new(addr: SocketAddr, stream: TcpStream) -> (Self, rpsc::Sender) {
         // Create a LinesCodec to encode the stream as lines.
         let lines = Framed::new(stream, LinesCodec::new());
 
         // Create a channel for sending events to this client.
-        let (_sender, _receiver) = unbounded_channel();
+        let (tx, mut rx) = mpsc::channel(10);
 
         // Create the new `Client` instance.
         Self {
             username: None,
             addr,
             lines,
-            _sender,
-            _receiver,
+            rx,
         }
     }
 
