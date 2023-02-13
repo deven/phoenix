@@ -20,6 +20,7 @@ use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec};
 use tracing::{info, trace};
 
+#[derive(Debug)]
 pub struct Client {
     pub username: Option<String>,
     pub addr: SocketAddr,

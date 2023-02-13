@@ -18,6 +18,7 @@ use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use tokio::net::TcpListener;
 use tracing::{error, info, warn};
 
+#[derive(Debug)]
 pub struct Server {
     pub cron: bool,
     pub port: u16,
