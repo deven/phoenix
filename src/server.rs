@@ -16,6 +16,7 @@ use std::error::Error;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use tokio::net::TcpListener;
+use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 
 #[derive(Debug)]
@@ -56,7 +57,8 @@ impl Server {
                 Ok((stream, addr)) => {
                     info!("Accepted TCP connection from {addr:?}");
 
-                    let (mut client, tx) = Client::new(addr, stream).await;
+                    let (_sender, receiver) = mpsc::channel(8);
+                    let mut client = Client::new(addr, stream, receiver);
 
                     tokio::spawn(frame!(async move {
                         if let Err(e) = client.setup().await {
