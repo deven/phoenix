@@ -9,6 +9,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+mod session;
+
 use async_backtrace::{framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;
