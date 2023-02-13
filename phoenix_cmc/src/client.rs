@@ -25,24 +25,21 @@ pub struct Client {
     pub username: Option<String>,
     pub addr: SocketAddr,
     lines: Framed<TcpStream, LinesCodec>,
-    rx: mpsc::Receiver<String>,
+    receiver: mpsc::Receiver<String>,
 }
 
 impl Client {
     /// Create a new instance of `Client`.
-    pub fn new(addr: SocketAddr, stream: TcpStream) -> (Self, rpsc::Sender) {
+    pub fn new(addr: SocketAddr, stream: TcpStream, receiver: mpsc::Receiver<String>) -> Self {
         // Create a LinesCodec to encode the stream as lines.
         let lines = Framed::new(stream, LinesCodec::new());
-
-        // Create a channel for sending events to this client.
-        let (tx, mut rx) = mpsc::channel(10);
 
         // Create the new `Client` instance.
         Self {
             username: None,
             addr,
             lines,
-            rx,
+            receiver,
         }
     }
 
