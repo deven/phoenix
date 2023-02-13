@@ -12,6 +12,7 @@
 use async_backtrace::{frame, framed};
 use std::error::Error;
 use tokio::sync::{mpsc, oneshot};
+use tracing::warn;
 
 #[derive(Debug)]
 struct SessionObj {
@@ -27,6 +28,7 @@ pub struct Session {
 #[derive(Debug)]
 enum SessionMessage {
     GetUsername(oneshot::Sender<Result<Option<String>, Error>>),
+    SetUsername(oneshot::Sender<Result<(), Error>>, String),
 }
 
 impl SessionObj {
@@ -38,6 +40,10 @@ impl SessionObj {
     async fn handle_message(&mut self, msg: &SessionMessage) -> Result<(), Error> {
         match msg {
             SessionMessage::GetUsername(respond_to) => respond_to.send(Ok(self.username.clone()))?,
+            SessionMessage::SetUsername(respond_to, username) => {
+                self.username = username;
+                respond_to.send(Ok(()))?;
+            },
         }
         Ok(())
     }
@@ -66,6 +72,12 @@ impl Session {
     pub async fn get_username(&self) -> Result<Option<String>, Error> {
         let (sender, receiver) = oneshot::channel();
         self.sender.send(SessionMessage::GetUsername(sender)).await?;
-        receiver.await
+        self.receiver.await
+    }
+
+    #[framed]
+    pub async fn set_username(&self, username: String) -> Result<(), Error> {
+        self.sender.send(SessionMessage::SetUsername(username)).await?;
+        self.receiver.await
     }
 }
