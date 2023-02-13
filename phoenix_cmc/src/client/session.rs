@@ -26,7 +26,7 @@ pub struct Session {
 
 #[derive(Debug)]
 enum SessionMessage {
-    GetUsername(oneshot::Sender<Option<String>>),
+    GetUsername(oneshot::Sender<Result<Option<String>, Error>>),
 }
 
 impl SessionObj {
@@ -35,12 +35,18 @@ impl SessionObj {
     }
 
     #[framed]
+    async fn handle_message(&mut self, msg: &SessionMessage) -> Result<(), Error> {
+        match msg {
+            SessionMessage::GetUsername(respond_to) => respond_to.send(Ok(self.username.clone()))?,
+        }
+        Ok(())
+    }
+
+    #[framed]
     async fn run(&mut self) -> Result<(), Error> {
         while let Some(msg) = self.receiver.recv().await {
-            match msg {
-                SessionMessage::GetUsername(respond_to) => {
-                    let _ = respond_to.send(self.username.clone());
-                }
+            if let Err(e) = self.handle_message(&msg).await {
+                warn!("Error handling {msg:?}: {e:?}");
             }
         }
         Ok(())
@@ -57,10 +63,9 @@ impl Session {
     }
 
     #[framed]
-    pub async fn get_username(&self) -> Option<String> {
+    pub async fn get_username(&self) -> Result<Option<String>, Error> {
         let (sender, receiver) = oneshot::channel();
-        let msg = SessionMessage::GetUsername(sender);
-        let _ = self.sender.send(msg).await;
-        receiver.await.expect("SessionObj task has been killed")
+        self.sender.send(SessionMessage::GetUsername(sender)).await?;
+        receiver.await
     }
 }
