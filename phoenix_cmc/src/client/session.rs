@@ -9,8 +9,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+use crate::PhoenixError;
 use async_backtrace::{frame, framed};
-use std::error::Error;
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
 
@@ -27,8 +27,8 @@ pub struct Session {
 
 #[derive(Debug)]
 enum SessionMessage {
-    GetUsername(oneshot::Sender<Result<Option<String>, Error>>),
-    SetUsername(oneshot::Sender<Result<(), Error>>, String),
+    GetUsername(oneshot::Sender<Result<Option<String>, PhoenixError>>),
+    SetUsername(oneshot::Sender<Result<(), PhoenixError>>, String),
 }
 
 impl SessionObj {
@@ -37,19 +37,21 @@ impl SessionObj {
     }
 
     #[framed]
-    async fn handle_message(&mut self, msg: &SessionMessage) -> Result<(), Error> {
+    async fn handle_message(&mut self, msg: &SessionMessage) -> Result<(), PhoenixError> {
         match msg {
-            SessionMessage::GetUsername(respond_to) => respond_to.send(Ok(self.username.clone()))?,
+            SessionMessage::GetUsername(respond_to) => {
+                respond_to.send(Ok(self.username.clone()))?
+            }
             SessionMessage::SetUsername(respond_to, username) => {
                 self.username = username;
                 respond_to.send(Ok(()))?;
-            },
+            }
         }
         Ok(())
     }
 
     #[framed]
-    async fn run(&mut self) -> Result<(), Error> {
+    async fn run(&mut self) -> Result<(), PhoenixError> {
         while let Some(msg) = self.receiver.recv().await {
             if let Err(e) = self.handle_message(&msg).await {
                 warn!("Error handling {msg:?}: {e:?}");
@@ -69,15 +71,19 @@ impl Session {
     }
 
     #[framed]
-    pub async fn get_username(&self) -> Result<Option<String>, Error> {
+    pub async fn get_username(&self) -> Result<Option<String>, PhoenixError> {
         let (sender, receiver) = oneshot::channel();
-        self.sender.send(SessionMessage::GetUsername(sender)).await?;
+        self.sender
+            .send(SessionMessage::GetUsername(sender))
+            .await?;
         self.receiver.await
     }
 
     #[framed]
-    pub async fn set_username(&self, username: String) -> Result<(), Error> {
-        self.sender.send(SessionMessage::SetUsername(username)).await?;
+    pub async fn set_username(&self, username: String) -> Result<(), PhoenixError> {
+        self.sender
+            .send(SessionMessage::SetUsername(username))
+            .await?;
         self.receiver.await
     }
 }
