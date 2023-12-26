@@ -54,7 +54,7 @@ impl SessionObj {
     }
 
     #[framed]
-    async fn run(&mut self) -> Result<(), PhoenixError> {
+    async fn run(mut self) -> Result<(), PhoenixError> {
         while let Some(msg) = self.rx.recv().await {
             let debug_msg = format!("{msg:?}");
             if let Err(e) = self.handle_message(msg).await {
