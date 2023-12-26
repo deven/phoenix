@@ -661,6 +661,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-subscriber",
+ "trait-variant",
 ]
 
 [[package]]
@@ -1003,6 +1004,17 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "trait-variant"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a9183102ccb002e12e9b0f02bb3c4e85699b8cc5844eaf55496e22eff9a6c01"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
