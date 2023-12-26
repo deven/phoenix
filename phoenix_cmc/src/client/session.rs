@@ -16,8 +16,8 @@ use tracing::warn;
 
 #[derive(Debug)]
 struct SessionObj {
-    username: Option<String>,
     rx: mpsc::Receiver<SessionMessage>,
+    username: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -32,8 +32,8 @@ enum SessionMessage {
 }
 
 impl SessionObj {
-    fn new(username: Option<String>, rx: mpsc::Receiver<SessionMessage>) -> Self {
-        Self { username, rx }
+    fn new(rx: mpsc::Receiver<SessionMessage>, username: Option<String>) -> Self {
+        Self { rx, username }
     }
 
     #[framed]
@@ -65,7 +65,7 @@ impl SessionObj {
 impl Session {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel(8);
-        let obj = SessionObj::new(rx);
+        let obj = SessionObj::new(rx, None);
         tokio::spawn(frame!(async move { obj.run().await }));
 
         Self { tx }
