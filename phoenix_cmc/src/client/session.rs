@@ -80,7 +80,8 @@ impl Session {
 
     #[framed]
     pub async fn set_username(&self, username: String) -> Result<(), PhoenixError> {
-        self.tx.send(SessionMessage::SetUsername(username)).await?;
-        self.rx.await
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(SessionMessage::SetUsername(tx, username)).await?;
+        rx.await?
     }
 }
