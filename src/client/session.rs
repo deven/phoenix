@@ -9,8 +9,9 @@
 // SPDX-License-Identifier: MIT
 //
 
+use crate::actor::{Actor, ActorInner};
 use async_backtrace::{frame, framed};
-use std::error::Error;
+use std::error;
 use std::fmt;
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
@@ -21,15 +22,6 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel(8);
-        let inner = Inner::new(rx, None);
-        tokio::spawn(frame!(async move { inner.run().await }));
-
-        Self { tx }
-    }
-
-    #[framed]
     pub async fn get_username(&self) -> Result<Option<String>, SessionError> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(InnerMsg::GetUsername(tx)).await?;
@@ -41,6 +33,17 @@ impl Session {
         let (tx, rx) = oneshot::channel();
         self.tx.send(InnerMsg::SetUsername(tx, username)).await?;
         rx.await?
+    }
+}
+
+impl Actor for Session {
+    type Error = SessionError;
+
+    fn new() -> Self {
+        let (tx, rx) = mpsc::channel(8);
+        let inner = Inner::new(rx, None);
+        tokio::spawn(frame!(async move { inner.run().await }));
+        Self { tx }
     }
 }
 
@@ -56,17 +59,6 @@ impl Inner {
     }
 
     #[framed]
-    async fn run(mut self) -> Result<(), SessionError> {
-        while let Some(msg) = self.rx.recv().await {
-            let debug_msg = format!("{msg:?}");
-            if let Err(e) = self.handle_message(msg).await {
-                warn!("Error handling {debug_msg}: {e:?}");
-            }
-        }
-        Ok(())
-    }
-
-    #[framed]
     async fn handle_message(&mut self, msg: InnerMsg) -> Result<(), SessionError> {
         match msg {
             InnerMsg::GetUsername(respond_to) => {
@@ -77,6 +69,21 @@ impl Inner {
                 let _ = respond_to.send(Ok(()));
             }
         };
+        Ok(())
+    }
+}
+
+impl ActorInner for Inner {
+    type Error = SessionError;
+
+    #[framed]
+    async fn run(mut self) -> Result<(), Self::Error> where Self: Sized {
+        while let Some(msg) = self.rx.recv().await {
+            let debug_msg = format!("{msg:?}");
+            if let Err(e) = self.handle_message(msg).await {
+                warn!("Error handling {debug_msg}: {e:?}");
+            }
+        }
         Ok(())
     }
 }
@@ -96,8 +103,8 @@ pub enum SessionError {
     RxError(RecvError),
 }
 
-impl Error for SessionError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
+impl error::Error for SessionError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::TxError(err) => err.source(),
             Self::RxError(err) => err.source(),
