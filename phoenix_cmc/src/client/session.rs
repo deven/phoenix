@@ -9,7 +9,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::PhoenixError;
+use crate::error::PhoenixError;
 use async_backtrace::{frame, framed};
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
