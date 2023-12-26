@@ -14,7 +14,6 @@ use std::error::Error;
 use std::fmt;
 use std::path::PathBuf;
 use tokio::sync::{mpsc, oneshot};
-use tracing::{trace, warn};
 
 #[derive(Debug)]
 pub enum PhoenixError {

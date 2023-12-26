@@ -18,8 +18,6 @@ pub mod server;
 use async_backtrace::taskdump_tree;
 use clap::Parser;
 use std::error::Error;
-use std::fmt;
-use std::path::PathBuf;
 use tracing::{trace, warn};
 
 #[derive(Debug, Parser)]
