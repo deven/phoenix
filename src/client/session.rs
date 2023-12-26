@@ -15,40 +15,44 @@ use std::fmt;
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
 
-#[derive(Debug)]
-struct SessionObj {
-    rx: mpsc::Receiver<SessionMessage>,
-    username: Option<String>,
-}
-
 #[derive(Debug, Clone)]
 pub struct Session {
-    tx: mpsc::Sender<SessionMessage>,
+    tx: mpsc::Sender<InnerMsg>,
 }
 
-#[derive(Debug)]
-pub enum SessionMessage {
-    GetUsername(oneshot::Sender<Result<Option<String>, SessionError>>),
-    SetUsername(oneshot::Sender<Result<(), SessionError>>, String),
-}
+impl Session {
+    pub fn new() -> Self {
+        let (tx, rx) = mpsc::channel(8);
+        let inner = Inner::new(rx, None);
+        tokio::spawn(frame!(async move { inner.run().await }));
 
-impl SessionObj {
-    fn new(rx: mpsc::Receiver<SessionMessage>, username: Option<String>) -> Self {
-        Self { rx, username }
+        Self { tx }
     }
 
     #[framed]
-    async fn handle_message(&mut self, msg: SessionMessage) -> Result<(), SessionError> {
-        match msg {
-            SessionMessage::GetUsername(respond_to) => {
-                let _ = respond_to.send(Ok(self.username.clone()));
-            }
-            SessionMessage::SetUsername(respond_to, username) => {
-                self.username = Some(username);
-                let _ = respond_to.send(Ok(()));
-            }
-        };
-        Ok(())
+    pub async fn get_username(&self) -> Result<Option<String>, SessionError> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(InnerMsg::GetUsername(tx)).await?;
+        rx.await?
+    }
+
+    #[framed]
+    pub async fn set_username(&self, username: String) -> Result<(), SessionError> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(InnerMsg::SetUsername(tx, username)).await?;
+        rx.await?
+    }
+}
+
+#[derive(Debug)]
+struct Inner {
+    rx: mpsc::Receiver<InnerMsg>,
+    username: Option<String>,
+}
+
+impl Inner {
+    fn new(rx: mpsc::Receiver<InnerMsg>, username: Option<String>) -> Self {
+        Self { rx, username }
     }
 
     #[framed]
@@ -61,33 +65,29 @@ impl SessionObj {
         }
         Ok(())
     }
-}
-
-impl Session {
-    pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel(8);
-        let obj = SessionObj::new(rx, None);
-        tokio::spawn(frame!(async move { obj.run().await }));
-
-        Self { tx }
-    }
 
     #[framed]
-    pub async fn get_username(&self) -> Result<Option<String>, SessionError> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(SessionMessage::GetUsername(tx)).await?;
-        rx.await?
-    }
-
-    #[framed]
-    pub async fn set_username(&self, username: String) -> Result<(), SessionError> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(SessionMessage::SetUsername(tx, username)).await?;
-        rx.await?
+    async fn handle_message(&mut self, msg: InnerMsg) -> Result<(), SessionError> {
+        match msg {
+            InnerMsg::GetUsername(respond_to) => {
+                let _ = respond_to.send(Ok(self.username.clone()));
+            }
+            InnerMsg::SetUsername(respond_to, username) => {
+                self.username = Some(username);
+                let _ = respond_to.send(Ok(()));
+            }
+        };
+        Ok(())
     }
 }
 
-type SendError = mpsc::error::SendError<SessionMessage>;
+#[derive(Debug)]
+pub enum InnerMsg {
+    GetUsername(oneshot::Sender<Result<Option<String>, SessionError>>),
+    SetUsername(oneshot::Sender<Result<(), SessionError>>, String),
+}
+
+type SendError = mpsc::error::SendError<InnerMsg>;
 type RecvError = oneshot::error::RecvError;
 
 #[derive(Debug)]
