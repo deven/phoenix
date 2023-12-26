@@ -11,6 +11,7 @@
 
 #![warn(rust_2018_idioms)]
 
+pub mod actor;
 pub mod client;
 pub mod error;
 pub mod server;

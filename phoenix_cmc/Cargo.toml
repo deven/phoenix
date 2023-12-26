@@ -3,7 +3,7 @@ name          = "phoenix_cmc"
 version       = "0.1.0"
 authors       = ["Deven T. Corzine <deven@ties.org>"]
 edition       = "2021"
-rust-version  = "1.70"
+rust-version  = "1.75"
 description   = "Conferencing system server supporting real-time communication between users, currently using a text-based user interface over the standard TELNET protocol, so no special client program is necessary for users."
 documentation = "https://docs.rs/phoenix_cmc"
 readme        = "README.md"
@@ -26,6 +26,7 @@ tokio-stream            = "0.1.14"
 tokio-util              = { version = "0.7.10", features = ["codec"] }
 tracing                 = "0.1.40"
 tracing-subscriber      = { version = "0.3.18", features = ["env-filter"] }
+trait-variant           = "0.1.0"
 
 #
 # Rust compiler minimum version requirements for crate dependencies:
@@ -136,6 +137,7 @@ tracing-subscriber      = { version = "0.3.18", features = ["env-filter"] }
 # tracing-core                 => 0.1.32  => 2018 edition => rustc 1.56
 # tracing-log                  => 0.2.0   => 2018 edition => rustc 1.56
 # tracing-subscriber           => 0.3.18  => 2018 edition => rustc 1.63
+# trait-variant                => 0.1.0   => 2021 edition => rustc 1.75
 # unicode-ident                => 1.0.12  => 2018 edition => rustc 1.31
 # unicode-width                => 0.1.11  => 2015 edition => rustc 1.0
 # utf8parse                    => 0.2.1   => 2018 edition => rustc 1.31
