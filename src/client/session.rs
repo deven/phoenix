@@ -17,12 +17,12 @@ use tracing::warn;
 #[derive(Debug)]
 struct SessionObj {
     username: Option<String>,
-    receiver: mpsc::Receiver<SessionMessage>,
+    rx: mpsc::Receiver<SessionMessage>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Session {
-    sender: mpsc::Sender<SessionMessage>,
+    tx: mpsc::Sender<SessionMessage>,
 }
 
 #[derive(Debug)]
@@ -32,8 +32,8 @@ enum SessionMessage {
 }
 
 impl SessionObj {
-    fn new(username: Option<String>, receiver: mpsc::Receiver<SessionMessage>) -> Self {
-        Self { username, receiver }
+    fn new(username: Option<String>, rx: mpsc::Receiver<SessionMessage>) -> Self {
+        Self { username, rx }
     }
 
     #[framed]
@@ -52,7 +52,7 @@ impl SessionObj {
 
     #[framed]
     async fn run(&mut self) -> Result<(), PhoenixError> {
-        while let Some(msg) = self.receiver.recv().await {
+        while let Some(msg) = self.rx.recv().await {
             let debug_msg = format!("{msg:?}");
             if let Err(e) = self.handle_message(msg).await {
                 warn!("Error handling {debug_msg}: {e:?}");
@@ -64,27 +64,23 @@ impl SessionObj {
 
 impl Session {
     pub fn new() -> Self {
-        let (sender, receiver) = mpsc::channel(8);
-        let obj = SessionObj::new(receiver);
+        let (tx, rx) = mpsc::channel(8);
+        let obj = SessionObj::new(rx);
         tokio::spawn(frame!(async move { obj.run().await }));
 
-        Self { sender }
+        Self { tx }
     }
 
     #[framed]
     pub async fn get_username(&self) -> Result<Option<String>, PhoenixError> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(SessionMessage::GetUsername(sender))
-            .await?;
-        self.receiver.await
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(SessionMessage::GetUsername(tx)).await?;
+        self.rx.await
     }
 
     #[framed]
     pub async fn set_username(&self, username: String) -> Result<(), PhoenixError> {
-        self.sender
-            .send(SessionMessage::SetUsername(username))
-            .await?;
-        self.receiver.await
+        self.tx.send(SessionMessage::SetUsername(username)).await?;
+        self.rx.await
     }
 }
