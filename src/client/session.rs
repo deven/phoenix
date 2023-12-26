@@ -37,13 +37,13 @@ impl SessionObj {
     }
 
     #[framed]
-    async fn handle_message(&mut self, msg: &SessionMessage) -> Result<(), PhoenixError> {
+    async fn handle_message(&mut self, msg: SessionMessage) -> Result<(), PhoenixError> {
         match msg {
             SessionMessage::GetUsername(respond_to) => {
                 respond_to.send(Ok(self.username.clone()))?
             }
             SessionMessage::SetUsername(respond_to, username) => {
-                self.username = username;
+                self.username = Some(username);
                 respond_to.send(Ok(()))?;
             }
         }
@@ -53,8 +53,9 @@ impl SessionObj {
     #[framed]
     async fn run(&mut self) -> Result<(), PhoenixError> {
         while let Some(msg) = self.receiver.recv().await {
-            if let Err(e) = self.handle_message(&msg).await {
-                warn!("Error handling {msg:?}: {e:?}");
+            let debug_msg = format!("{msg:?}");
+            if let Err(e) = self.handle_message(msg).await {
+                warn!("Error handling {debug_msg}: {e:?}");
             }
         }
         Ok(())
