@@ -40,13 +40,13 @@ impl SessionObj {
     async fn handle_message(&mut self, msg: SessionMessage) -> Result<(), PhoenixError> {
         match msg {
             SessionMessage::GetUsername(respond_to) => {
-                respond_to.send(Ok(self.username.clone()))?
+                let _ = respond_to.send(Ok(self.username.clone()));
             }
             SessionMessage::SetUsername(respond_to, username) => {
                 self.username = Some(username);
-                respond_to.send(Ok(()))?;
+                let _ = respond_to.send(Ok(()));
             }
-        }
+        };
         Ok(())
     }
 
