@@ -75,7 +75,7 @@ impl Session {
     pub async fn get_username(&self) -> Result<Option<String>, PhoenixError> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(SessionMessage::GetUsername(tx)).await?;
-        self.rx.await
+        rx.await?
     }
 
     #[framed]
