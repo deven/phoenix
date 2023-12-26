@@ -14,6 +14,9 @@ use async_backtrace::{frame, framed};
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
 
+pub type TxError = mpsc::error::SendError<SessionMessage>;
+pub type RxError = oneshot::error::RecvError;
+
 #[derive(Debug)]
 struct SessionObj {
     rx: mpsc::Receiver<SessionMessage>,
