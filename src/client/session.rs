@@ -26,7 +26,7 @@ pub struct Session {
 }
 
 #[derive(Debug)]
-enum SessionMessage {
+pub enum SessionMessage {
     GetUsername(oneshot::Sender<Result<Option<String>, PhoenixError>>),
     SetUsername(oneshot::Sender<Result<(), PhoenixError>>, String),
 }
