@@ -11,9 +11,9 @@
 
 #![warn(rust_2018_idioms)]
 
-mod client;
-mod error;
-mod server;
+pub mod client;
+pub mod error;
+pub mod server;
 
 use async_backtrace::taskdump_tree;
 use clap::Parser;
