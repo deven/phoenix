@@ -9,11 +9,10 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::client::session::SessionMessage;
+use crate::client::session;
 use std::error::Error;
 use std::fmt;
 use std::path::PathBuf;
-use tokio::sync::{mpsc, oneshot};
 
 #[derive(Debug)]
 pub enum PhoenixError {
@@ -21,8 +20,8 @@ pub enum PhoenixError {
         path: PathBuf,
         source: std::io::Error,
     },
-    SessionTxError(mpsc::error::SendError<SessionMessage>),
-    SessionRxError(oneshot::error::RecvError),
+    SessionTxError(session::TxError),
+    SessionRxError(session::RxError),
 }
 
 impl Error for PhoenixError {
@@ -47,14 +46,14 @@ impl fmt::Display for PhoenixError {
     }
 }
 
-impl From<mpsc::error::SendError<SessionMessage>> for PhoenixError {
-    fn from(error: mpsc::error::SendError<SessionMessage>) -> Self {
+impl From<session::TxError> for PhoenixError {
+    fn from(error: session::TxError) -> Self {
         PhoenixError::SessionTxError(error)
     }
 }
 
-impl From<oneshot::error::RecvError> for PhoenixError {
-    fn from(error: oneshot::error::RecvError) -> Self {
+impl From<session::RxError> for PhoenixError {
+    fn from(error: session::RxError) -> Self {
         PhoenixError::SessionRxError(error)
     }
 }
