@@ -3,7 +3,7 @@ name          = "phoenix_cmc"
 version       = "0.1.0"
 authors       = ["Deven T. Corzine <deven@ties.org>"]
 edition       = "2021"
-rust-version  = "1.64"
+rust-version  = "1.70"
 description   = "Conferencing system server supporting real-time communication between users, currently using a text-based user interface over the standard TELNET protocol, so no special client program is necessary for users."
 documentation = "https://docs.rs/phoenix_cmc"
 readme        = "README.md"
@@ -31,116 +31,135 @@ tracing-subscriber      = { version = "0.3.18", features = ["env-filter"] }
 # Rust compiler minimum version requirements for crate dependencies:
 #
 
-# actix                        => 0.13.0  => 2018 edition =>
-# actix-rt                     => 2.8.0   => 2018 edition =>
-# actix_derive                 => 0.6.0   => 2018 edition =>
-# async-backtrace              => 0.2.3   => 2018 edition => rustc 1.59
-# async-backtrace-attributes   => 0.2.3   => 2018 edition => rustc 1.59
-# async-recursion              => 1.0.4   => 2018 edition =>
-# async-trait                  => 0.1.68  => 2018 edition => rustc 1.56
-# autocfg                      => 1.1.0   => 2015 edition =>
-# bitflags                     => 1.3.2   => 2018 edition =>
-# bytes                        => 1.4.0   => 2018 edition =>
-# cc                           => 1.0.79  => 2018 edition =>
-# cfg-if                       => 1.0.0   => 2018 edition =>
-# clap                         => 4.1.13  => 2021 edition => rustc 1.64
-# clap_derive                  => 4.1.12  => 2021 edition => rustc 1.64
-# clap_lex                     => 0.3.3   => 2021 edition => rustc 1.64
-# crossbeam-channel            => 0.5.7   => 2018 edition => rustc 1.38
-# crossbeam-utils              => 0.8.15  => 2018 edition => rustc 1.38
-# dashmap                      => 5.4.0   => 2018 edition => rustc 1.59
-# either                       => 1.8.1   => 2018 edition => rustc 1.36
-# errno                        => 0.2.8   => 2015 edition =>
-# errno                        => 0.3.0   => 2018 edition => rustc 1.48
-# errno-dragonfly              => 0.1.2   => 2018 edition =>
-# futures                      => 0.3.27  => 2018 edition => rustc 1.45
-# futures-channel              => 0.3.27  => 2018 edition => rustc 1.45
-# futures-core                 => 0.3.27  => 2018 edition => rustc 1.36
-# futures-executor             => 0.3.27  => 2018 edition => rustc 1.45
-# futures-io                   => 0.3.27  => 2018 edition => rustc 1.36
-# futures-macro                => 0.3.27  => 2018 edition => rustc 1.45
-# futures-sink                 => 0.3.27  => 2018 edition => rustc 1.36
-# futures-task                 => 0.3.27  => 2018 edition => rustc 1.45
-# futures-util                 => 0.3.27  => 2018 edition => rustc 1.45
-# generator                    => 0.7.3   => 2021 edition => rustc 1.0
-# hashbrown                    => 0.12.3  => 2021 edition => rustc 1.61
-# heck                         => 0.4.1   => 2018 edition =>
-# hermit-abi                   => 0.2.6   => 2021 edition =>
-# hermit-abi                   => 0.3.1   => 2021 edition =>
-# io-lifetimes                 => 1.0.9   => 2018 edition =>
-# is-terminal                  => 0.4.5   => 2018 edition => rustc 1.48
-# itertools                    => 0.10.5  => 2018 edition => rustc 0.9
-# lazy_static                  => 1.4.0   => 2015 edition =>
-# libc                         => 0.2.140 => 2015 edition =>
-# linux-raw-sys                => 0.1.4   => 2018 edition => rustc 1.48
-# lock_api                     => 0.4.9   => 2018 edition =>
-# log                          => 0.4.17  => 2015 edition => rustc 1.0
-# loom                         => 0.5.6   => 2018 edition =>
-# matchers                     => 0.1.0   => 2018 edition =>
-# memchr                       => 2.5.0   => 2018 edition =>
-# miette                       => 5.6.0   => 2018 edition => rustc 1.56
-# miette-derive                => 5.6.0   => 2018 edition => rustc 1.56
-# mio                          => 0.8.6   => 2018 edition =>
-# nu-ansi-term                 => 0.46.0  => 2018 edition =>
-# num_cpus                     => 1.15.0  => 2015 edition =>
-# once_cell                    => 1.17.1  => 2021 edition => rustc 1.56
-# os_str_bytes                 => 6.5.0   => 2021 edition => rustc 1.57
-# overload                     => 0.1.1   => 2018 edition =>
-# parking_lot                  => 0.12.1  => 2018 edition =>
-# parking_lot_core             => 0.9.7   => 2018 edition =>
-# phoenix_cmc                  => 0.1.0   => 2021 edition => rustc 1.64
-# pin-project-lite             => 0.2.9   => 2018 edition => rustc 1.37
-# pin-utils                    => 0.1.0   => 2018 edition =>
-# proc-macro2                  => 1.0.53  => 2018 edition => rustc 1.31
-# quote                        => 1.0.26  => 2018 edition => rustc 1.31
-# redox_syscall                => 0.2.16  => 2018 edition =>
-# regex                        => 1.7.3   => 2018 edition =>
-# regex-automata               => 0.1.10  => 2015 edition =>
-# regex-syntax                 => 0.6.29  => 2018 edition =>
-# rustc-hash                   => 1.1.0   => 2015 edition =>
-# rustix                       => 0.36.11 => 2018 edition => rustc 1.48
-# rustversion                  => 1.0.12  => 2018 edition => rustc 1.31
+# actix                        => 0.13.1  => 2021 edition => rustc 1.68
+# actix-macros                 => 0.2.4   => 2021 edition => rustc 1.65
+# actix-rt                     => 2.9.0   => 2021 edition => rustc 1.65
+# actix_derive                 => 0.6.1   => 2021 edition => rustc 1.68
+# addr2line                    => 0.21.0  => 2018 edition => rustc 1.65
+# adler                        => 1.0.2   => 2015 edition => rustc 1.31
+# aho-corasick                 => 1.1.2   => 2021 edition => rustc 1.60
+# anstream                     => 0.6.5   => 2021 edition => rustc 1.70
+# anstyle                      => 1.0.4   => 2021 edition => rustc 1.70
+# anstyle-parse                => 0.2.3   => 2021 edition => rustc 1.70
+# anstyle-query                => 1.0.2   => 2021 edition => rustc 1.70
+# anstyle-wincon               => 3.0.2   => 2021 edition => rustc 1.70
+# async-backtrace              => 0.2.6   => 2018 edition => rustc 1.59
+# async-backtrace-attributes   => 0.2.6   => 2018 edition => rustc 1.59
+# async-trait                  => 0.1.75  => 2021 edition => rustc 1.56
+# atomic                       => 0.6.0   => 2018 edition => rustc 1.31
+# autocfg                      => 1.1.0   => 2015 edition => rustc 1.0
+# backtrace                    => 0.3.69  => 2021 edition => rustc 1.65
+# bitflags                     => 1.3.2   => 2018 edition => rustc 1.46
+# bitflags                     => 2.4.1   => 2021 edition => rustc 1.56
+# bytemuck                     => 1.14.0  => 2018 edition => rustc 1.34
+# bytemuck_derive              => 1.5.0   => 2018 edition => rustc 1.34
+# bytes                        => 1.5.0   => 2018 edition => rustc 1.31
+# cc                           => 1.0.83  => 2018 edition => rustc 1.53
+# cfg-if                       => 1.0.0   => 2018 edition => rustc 1.31
+# clap                         => 4.4.11  => 2021 edition => rustc 1.70
+# clap_builder                 => 4.4.11  => 2021 edition => rustc 1.70
+# clap_derive                  => 4.4.7   => 2021 edition => rustc 1.70
+# clap_lex                     => 0.6.0   => 2021 edition => rustc 1.70
+# colorchoice                  => 1.0.0   => 2021 edition => rustc 1.70
+# crossbeam-channel            => 0.5.10  => 2021 edition => rustc 1.61
+# crossbeam-utils              => 0.8.18  => 2021 edition => rustc 1.61
+# dashmap                      => 5.5.3   => 2018 edition => rustc 1.65
+# either                       => 1.9.0   => 2018 edition => rustc 1.36
+# errno                        => 0.3.8   => 2018 edition => rustc 1.56
+# futures                      => 0.3.30  => 2018 edition => rustc 1.56
+# futures-channel              => 0.3.30  => 2018 edition => rustc 1.56
+# futures-core                 => 0.3.30  => 2018 edition => rustc 1.36
+# futures-executor             => 0.3.30  => 2018 edition => rustc 1.56
+# futures-io                   => 0.3.30  => 2018 edition => rustc 1.36
+# futures-macro                => 0.3.30  => 2018 edition => rustc 1.56
+# futures-sink                 => 0.3.30  => 2018 edition => rustc 1.36
+# futures-task                 => 0.3.30  => 2018 edition => rustc 1.56
+# futures-util                 => 0.3.30  => 2018 edition => rustc 1.56
+# generator                    => 0.7.5   => 2021 edition => rustc 1.56
+# gimli                        => 0.28.1  => 2018 edition => rustc 1.60
+# hashbrown                    => 0.14.3  => 2021 edition => rustc 1.63
+# heck                         => 0.4.1   => 2018 edition => rustc 1.31
+# hermit-abi                   => 0.3.3   => 2021 edition => rustc 1.56
+# itertools                    => 0.10.5  => 2018 edition => rustc 1.43.1
+# lazy_static                  => 1.4.0   => 2015 edition => rustc 1.27.2
+# libc                         => 0.2.151 => 2015 edition => rustc 1.13
+# lock_api                     => 0.4.11  => 2018 edition => rustc 1.49
+# log                          => 0.4.20  => 2021 edition => rustc 1.60
+# loom                         => 0.5.6   => 2018 edition => rustc 1.60
+# matchers                     => 0.1.0   => 2018 edition => rustc 1.31
+# memchr                       => 2.6.4   => 2021 edition => rustc 1.61
+# miette                       => 5.10.0  => 2018 edition => rustc 1.56
+# miette-derive                => 5.10.0  => 2018 edition => rustc 1.56
+# miniz_oxide                  => 0.7.1   => 2018 edition => rustc 1.40
+# mio                          => 0.8.10  => 2018 edition => rustc 1.31
+# nu-ansi-term                 => 0.46.0  => 2018 edition => rustc 1.31
+# num_cpus                     => 1.16.0  => 2015 edition => rustc 1.0
+# object                       => 0.32.2  => 2018 edition => rustc 1.60
+# once_cell                    => 1.19.0  => 2021 edition => rustc 1.60
+# overload                     => 0.1.1   => 2018 edition => rustc 1.31
+# parking_lot                  => 0.12.1  => 2018 edition => rustc 1.49
+# parking_lot_core             => 0.9.9   => 2018 edition => rustc 1.49
+# phoenix_cmc                  => 0.1.0   => 2021 edition => rustc 1.70
+# pin-project-lite             => 0.2.13  => 2018 edition => rustc 1.37
+# pin-utils                    => 0.1.0   => 2018 edition => rustc 1.31
+# proc-macro2                  => 1.0.71  => 2021 edition => rustc 1.56
+# quote                        => 1.0.33  => 2018 edition => rustc 1.56
+# redox_syscall                => 0.4.1   => 2018 edition => rustc 1.31
+# regex                        => 1.10.2  => 2021 edition => rustc 1.65
+# regex-automata               => 0.1.10  => 2015 edition => rustc 1.0
+# regex-automata               => 0.4.3   => 2021 edition => rustc 1.65
+# regex-syntax                 => 0.6.29  => 2018 edition => rustc 1.41.1
+# regex-syntax                 => 0.8.2   => 2021 edition => rustc 1.65
+# rustc-demangle               => 0.1.23  => 2015 edition => rustc 1.0
+# rustc-hash                   => 1.1.0   => 2015 edition => rustc 1.0
+# rustversion                  => 1.0.14  => 2018 edition => rustc 1.31
 # scoped-tls                   => 1.0.1   => 2015 edition => rustc 1.59
-# scopeguard                   => 1.1.0   => 2015 edition =>
-# sharded-slab                 => 0.1.4   => 2018 edition =>
-# signal-hook-registry         => 1.4.1   => 2015 edition =>
-# slab                         => 0.4.8   => 2018 edition => rustc 1.31
-# smallvec                     => 1.10.0  => 2018 edition =>
-# socket2                      => 0.4.9   => 2018 edition =>
-# socket2                      => 0.5.1   => 2021 edition => rustc 1.63
-# static_assertions            => 1.1.0   => 2015 edition =>
-# strsim                       => 0.10.0  => 2015 edition =>
-# syn                          => 1.0.109 => 2018 edition => rustc 1.31
-# syn                          => 2.0.10  => 2021 edition => rustc 1.56
-# termcolor                    => 1.2.0   => 2018 edition =>
-# thiserror                    => 1.0.40  => 2018 edition => rustc 1.56
-# thiserror-impl               => 1.0.40  => 2018 edition => rustc 1.56
+# scopeguard                   => 1.2.0   => 2015 edition => rustc 1.0
+# sharded-slab                 => 0.1.7   => 2018 edition => rustc 1.42
+# signal-hook-registry         => 1.4.1   => 2018 edition => rustc 1.31
+# slab                         => 0.4.9   => 2018 edition => rustc 1.31
+# smallvec                     => 1.11.2  => 2018 edition => rustc 1.31
+# socket2                      => 0.5.5   => 2021 edition => rustc 1.63
+# static_assertions            => 1.1.0   => 2015 edition => rustc 1.0
+# strsim                       => 0.10.0  => 2015 edition => rustc 1.0
+# syn                          => 2.0.43  => 2021 edition => rustc 1.56
+# thiserror                    => 1.0.52  => 2021 edition => rustc 1.56
+# thiserror-impl               => 1.0.52  => 2021 edition => rustc 1.56
 # thread_local                 => 1.1.7   => 2021 edition => rustc 1.59
-# tokio                        => 1.26.0  => 2021 edition => rustc 1.56
-# tokio-graceful-shutdown      => 0.12.1  => 2018 edition =>
-# tokio-macros                 => 1.8.2   => 2018 edition => rustc 1.56
-# tokio-stream                 => 0.1.12  => 2021 edition => rustc 1.56
-# tokio-util                   => 0.7.7   => 2021 edition => rustc 1.56
-# tracing                      => 0.1.37  => 2018 edition => rustc 1.49
-# tracing-attributes           => 0.1.23  => 2018 edition => rustc 1.49
-# tracing-core                 => 0.1.30  => 2018 edition => rustc 1.49
-# tracing-log                  => 0.1.3   => 2018 edition => rustc 1.49
-# tracing-subscriber           => 0.3.16  => 2018 edition => rustc 1.50
-# unicode-ident                => 1.0.8   => 2018 edition => rustc 1.31
-# unicode-width                => 0.1.10  => 2015 edition =>
-# valuable                     => 0.1.0   => 2018 edition => rustc 1.51
-# wasi                         => 0.11.0  => 2018 edition =>
-# winapi                       => 0.3.9   => 2015 edition =>
-# winapi-i686-pc-windows-gnu   => 0.4.0   => 2015 edition =>
-# winapi-util                  => 0.1.5   => 2018 edition =>
-# winapi-x86_64-pc-windows-gnu => 0.4.0   => 2015 edition =>
-# windows                      => 0.44.0  => 2018 edition => rustc 1.64
-# windows-sys                  => 0.45.0  => 2018 edition => rustc 1.48
-# windows-targets              => 0.42.2  => 2018 edition =>
-# windows_aarch64_gnullvm      => 0.42.2  => 2018 edition =>
-# windows_aarch64_msvc         => 0.42.2  => 2018 edition =>
-# windows_i686_gnu             => 0.42.2  => 2018 edition =>
-# windows_i686_msvc            => 0.42.2  => 2018 edition =>
-# windows_x86_64_gnu           => 0.42.2  => 2018 edition =>
-# windows_x86_64_gnullvm       => 0.42.2  => 2018 edition =>
-# windows_x86_64_msvc          => 0.42.2  => 2018 edition =>
+# tokio                        => 1.35.1  => 2021 edition => rustc 1.63
+# tokio-graceful-shutdown      => 0.14.2  => 2021 edition => rustc 1.63
+# tokio-macros                 => 2.2.0   => 2021 edition => rustc 1.63
+# tokio-stream                 => 0.1.14  => 2021 edition => rustc 1.63
+# tokio-util                   => 0.7.10  => 2021 edition => rustc 1.63
+# tracing                      => 0.1.40  => 2018 edition => rustc 1.56
+# tracing-attributes           => 0.1.27  => 2018 edition => rustc 1.56
+# tracing-core                 => 0.1.32  => 2018 edition => rustc 1.56
+# tracing-log                  => 0.2.0   => 2018 edition => rustc 1.56
+# tracing-subscriber           => 0.3.18  => 2018 edition => rustc 1.63
+# unicode-ident                => 1.0.12  => 2018 edition => rustc 1.31
+# unicode-width                => 0.1.11  => 2015 edition => rustc 1.0
+# utf8parse                    => 0.2.1   => 2018 edition => rustc 1.31
+# valuable                     => 0.1.0   => 2021 edition => rustc 1.56
+# wasi                         => 0.11.0  => 2018 edition => rustc 1.31
+# winapi                       => 0.3.9   => 2015 edition => rustc 1.6
+# winapi-i686-pc-windows-gnu   => 0.4.0   => 2015 edition => rustc 1.6
+# winapi-x86_64-pc-windows-gnu => 0.4.0   => 2015 edition => rustc 1.6
+# windows                      => 0.48.0  => 2018 edition => rustc 1.48
+# windows-sys                  => 0.48.0  => 2018 edition => rustc 1.48
+# windows-sys                  => 0.52.0  => 2021 edition => rustc 1.56
+# windows-targets              => 0.48.5  => 2018 edition => rustc 1.31
+# windows-targets              => 0.52.0  => 2021 edition => rustc 1.56
+# windows_aarch64_gnullvm      => 0.48.5  => 2018 edition => rustc 1.31
+# windows_aarch64_gnullvm      => 0.52.0  => 2021 edition => rustc 1.56
+# windows_aarch64_msvc         => 0.48.5  => 2018 edition => rustc 1.31
+# windows_aarch64_msvc         => 0.52.0  => 2021 edition => rustc 1.56
+# windows_i686_gnu             => 0.48.5  => 2018 edition => rustc 1.31
+# windows_i686_gnu             => 0.52.0  => 2021 edition => rustc 1.56
+# windows_i686_msvc            => 0.48.5  => 2018 edition => rustc 1.31
+# windows_i686_msvc            => 0.52.0  => 2021 edition => rustc 1.56
+# windows_x86_64_gnu           => 0.48.5  => 2018 edition => rustc 1.31
+# windows_x86_64_gnu           => 0.52.0  => 2021 edition => rustc 1.56
+# windows_x86_64_gnullvm       => 0.48.5  => 2018 edition => rustc 1.31
+# windows_x86_64_gnullvm       => 0.52.0  => 2021 edition => rustc 1.56
+# windows_x86_64_msvc          => 0.48.5  => 2018 edition => rustc 1.31
+# windows_x86_64_msvc          => 0.52.0  => 2021 edition => rustc 1.56
