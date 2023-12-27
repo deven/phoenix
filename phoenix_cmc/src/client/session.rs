@@ -22,10 +22,13 @@ pub struct Session {
 }
 
 impl Session {
-    pub async fn get_username(&self) -> Result<Option<String>, SessionError> {
+    pub async fn username(&self) -> Result<String, SessionError> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(InnerMsg::GetUsername(tx)).await?;
-        rx.await?
+        match rx.await? {
+            Some(username) => Ok(username),
+            None => Err(SessionError::UsernameNotFound),
+        }
     }
 
     #[framed]
@@ -101,6 +104,7 @@ type RecvError = oneshot::error::RecvError;
 pub enum SessionError {
     TxError(SendError),
     RxError(RecvError),
+    UsernameNotFound,
 }
 
 impl error::Error for SessionError {
