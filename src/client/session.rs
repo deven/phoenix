@@ -17,6 +17,7 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, watch};
 use tracing::warn;
 
+/// Session actor handle.
 #[derive(Debug, Clone)]
 pub struct Session {
     tx: mpsc::Sender<SessionMsg>,
@@ -24,6 +25,7 @@ pub struct Session {
 }
 
 impl Session {
+    /// Create a new instance of `Session`.
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel(8);
         let (inner, state_rx) = SessionInner::new(rx);
@@ -31,6 +33,7 @@ impl Session {
         Self { tx, state_rx }
     }
 
+    /// Get username.
     pub fn username(&self) -> Result<Arc<str>, SessionError> {
         self.state_rx
             .borrow()
@@ -40,6 +43,7 @@ impl Session {
     }
 
     #[framed]
+    /// Set username.
     pub async fn set_username(
         &self,
         username: Option<String>,
@@ -54,18 +58,21 @@ impl Actor for Session {
     type Error = SessionError;
 }
 
+/// Session actor state.
 #[derive(Debug, Clone)]
 pub struct SessionState {
     pub username: Option<Arc<str>>,
 }
 
 impl SessionState {
+    /// Create a new instance of `SessionState`.
     pub fn new() -> Self {
         let username = None;
         Self { username }
     }
 }
 
+/// Session actor implementation.
 #[derive(Debug)]
 struct SessionInner {
     rx: mpsc::Receiver<SessionMsg>,
@@ -74,6 +81,7 @@ struct SessionInner {
 }
 
 impl SessionInner {
+    /// Create a new instance of `SessionInner`.
     fn new(rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
@@ -85,6 +93,7 @@ impl SessionInner {
         (inner, state_rx)
     }
 
+    /// Handle a message sent from a `Session` handle.
     #[framed]
     async fn handle_message(&mut self, msg: SessionMsg) -> Result<(), SessionError> {
         let _ = match msg {
@@ -95,6 +104,7 @@ impl SessionInner {
         Ok(())
     }
 
+    /// Update username.
     fn update_username(
         &mut self,
         new_username: Option<String>,
@@ -114,6 +124,7 @@ impl SessionInner {
 impl ActorInner for SessionInner {
     type Error = SessionError;
 
+    /// Run session actor task.
     #[framed]
     async fn run(mut self) -> Result<(), Self::Error>
     where
@@ -129,6 +140,7 @@ impl ActorInner for SessionInner {
     }
 }
 
+/// Session actor message.
 #[derive(Debug)]
 pub enum SessionMsg {
     SetUsername(
@@ -140,6 +152,7 @@ pub enum SessionMsg {
 type SendError = mpsc::error::SendError<SessionMsg>;
 type RecvError = oneshot::error::RecvError;
 
+/// Session actor error.
 #[derive(Debug)]
 pub enum SessionError {
     TxError(SendError),
