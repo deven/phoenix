@@ -13,23 +13,35 @@ use crate::actor::{Actor, ActorInner};
 use async_backtrace::{frame, framed};
 use std::error;
 use std::fmt;
-use tokio::sync::{mpsc, oneshot};
+use std::sync::Arc;
+use tokio::sync::{mpsc, oneshot, watch};
 use tracing::warn;
+
+#[derive(Debug, Clone)]
+struct SessionState {
+    username: Option<Arc<str>>,
+}
+
+impl SessionState {
+    pub fn new() -> Self {
+        let username = None;
+        Self { username }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Session {
     tx: mpsc::Sender<InnerMsg>,
+    state_rx: watch::Receiver<Arc<SessionState>>,
 }
 
 impl Session {
-    pub async fn username(&self) -> Result<String, SessionError> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(InnerMsg::GetUsername(tx)).await?;
-        rx.await?
+    pub fn username(&self) -> Option<Arc<str>> {
+        self.state_rx.borrow().username.clone()
     }
 
     #[framed]
-    pub async fn set_username(&self, username: String) -> Result<(), SessionError> {
+    pub async fn set_username(&self, username: Option<String>) -> Result<Option<Arc<str>>, SessionError> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(InnerMsg::SetUsername(tx, username)).await?;
         rx.await?
@@ -41,38 +53,44 @@ impl Actor for Session {
 
     fn new() -> Self {
         let (tx, rx) = mpsc::channel(8);
-        let inner = Inner::new(rx, None);
+        let (inner, state_rx) = Inner::new(rx);
         tokio::spawn(frame!(async move { inner.run().await }));
-        Self { tx }
+        Self { tx, state_rx }
     }
 }
 
 #[derive(Debug)]
 struct Inner {
     rx: mpsc::Receiver<InnerMsg>,
-    username: Option<String>,
+    state: Arc<SessionState>,
+    state_tx: watch::Sender<Arc<SessionState>>,
 }
 
 impl Inner {
-    fn new(rx: mpsc::Receiver<InnerMsg>, username: Option<String>) -> Self {
-        Self { rx, username }
+    fn new(rx: mpsc::Receiver<InnerMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
+        let state = Arc::from(SessionState::new());
+        let (state_tx, state_rx) = watch::channel(state.clone());
+        (Self { rx, state, state_tx }, state_rx)
     }
 
     #[framed]
     async fn handle_message(&mut self, msg: InnerMsg) -> Result<(), SessionError> {
-        match msg {
-            InnerMsg::GetUsername(respond_to) => {
-                let _ = match &self.username {
-                    Some(username) => respond_to.send(Ok(username.clone())),
-                    None => respond_to.send(Err(SessionError::UsernameNotFound)),
-                };
-            }
-            InnerMsg::SetUsername(respond_to, username) => {
-                self.username = Some(username);
-                let _ = respond_to.send(Ok(()));
-            }
+        let _ = match msg {
+            InnerMsg::SetUsername(respond_to, username) => respond_to.send(self.update_username(username)),
         };
         Ok(())
+    }
+
+    fn update_username(&mut self, new_username: Option<String>) -> Result<Option<Arc<str>>, SessionError> {
+        let new_username = new_username.map(|s| Arc::from(s.into_boxed_str()));
+
+        Arc::make_mut(&mut self.state).username = new_username.clone();
+        self.state = self.state_tx.send_replace(self.state.clone());
+
+        let old_username = self.state.username.clone();
+        Arc::make_mut(&mut self.state).username = new_username;
+
+        Ok(old_username)
     }
 }
 
@@ -93,8 +111,7 @@ impl ActorInner for Inner {
 
 #[derive(Debug)]
 pub enum InnerMsg {
-    GetUsername(oneshot::Sender<Result<String, SessionError>>),
-    SetUsername(oneshot::Sender<Result<(), SessionError>>, String),
+    SetUsername(oneshot::Sender<Result<Option<Arc<str>>, SessionError>>, Option<String>),
 }
 
 type SendError = mpsc::error::SendError<InnerMsg>;
