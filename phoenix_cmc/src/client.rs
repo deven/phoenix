@@ -70,7 +70,7 @@ impl Client {
 
         self.client_loop().await?;
 
-        let username = self.session.username().unwrap();
+        let username = self.session.username()?;
         let addr = &self.addr;
         info!("User \"{username}\" disconnected from {addr}.");
 
@@ -89,7 +89,7 @@ impl Client {
                 Some(Err(e)) => return Err(Box::new(e)),
                 None => return Ok(()),
             };
-            let username = self.session.username().unwrap();
+            let username = self.session.username()?;
             let msg = format!("{username}: {input}");
             self.lines.send(msg).await?;
         }
