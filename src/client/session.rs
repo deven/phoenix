@@ -18,7 +18,7 @@ use tokio::sync::{mpsc, oneshot, watch};
 use tracing::warn;
 
 #[derive(Debug, Clone)]
-struct SessionState {
+pub struct SessionState {
     username: Option<Arc<str>>,
 }
 
@@ -36,6 +36,13 @@ pub struct Session {
 }
 
 impl Session {
+    pub fn new() -> Self {
+        let (tx, rx) = mpsc::channel(8);
+        let (inner, state_rx) = SessionInner::new(rx);
+        tokio::spawn(frame!(async move { inner.run().await }));
+        Self { tx, state_rx }
+    }
+
     pub fn username(&self) -> Result<Arc<str>, SessionError> {
         self.state_rx
             .borrow()
@@ -57,13 +64,6 @@ impl Session {
 
 impl Actor for Session {
     type Error = SessionError;
-
-    fn new() -> Self {
-        let (tx, rx) = mpsc::channel(8);
-        let (inner, state_rx) = SessionInner::new(rx);
-        tokio::spawn(frame!(async move { inner.run().await }));
-        Self { tx, state_rx }
-    }
 }
 
 #[derive(Debug)]

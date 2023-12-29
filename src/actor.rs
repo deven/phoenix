@@ -16,8 +16,6 @@ use trait_variant;
 #[trait_variant::make(Actor: Send)]
 pub trait LocalActor: Debug + Clone + Sized {
     type Error: Error;
-
-    fn new() -> Self;
 }
 
 #[trait_variant::make(ActorInner: Send)]
