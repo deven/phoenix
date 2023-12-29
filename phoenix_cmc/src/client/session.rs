@@ -48,7 +48,9 @@ impl Session {
         username: Option<String>,
     ) -> Result<Option<Arc<str>>, SessionError> {
         let (response_tx, response_rx) = oneshot::channel();
-        self.actor_tx.send(SessionMsg::SetUsername(response_tx, username)).await?;
+        self.actor_tx
+            .send(SessionMsg::SetUsername(response_tx, username))
+            .await?;
         response_rx.await?
     }
 }
@@ -80,7 +82,11 @@ struct SessionInner {
 
 impl SessionInner {
     /// Create a new instance of `SessionInner` and associated channels.
-    fn new() -> (Self, mpsc::Sender<SessionMsg>, watch::Receiver<Arc<SessionState>>) {
+    pub fn new() -> (
+        Self,
+        mpsc::Sender<SessionMsg>,
+        watch::Receiver<Arc<SessionState>>,
+    ) {
         let state = Arc::from(SessionState::new());
 
         let (actor_tx, actor_rx) = mpsc::channel(8);
