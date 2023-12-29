@@ -25,10 +25,7 @@ impl Session {
     pub async fn username(&self) -> Result<String, SessionError> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(InnerMsg::GetUsername(tx)).await?;
-        match rx.await? {
-            Some(username) => Ok(username),
-            None => Err(SessionError::UsernameNotFound),
-        }
+        rx.await?
     }
 
     #[framed]
@@ -65,7 +62,10 @@ impl Inner {
     async fn handle_message(&mut self, msg: InnerMsg) -> Result<(), SessionError> {
         match msg {
             InnerMsg::GetUsername(respond_to) => {
-                let _ = respond_to.send(Ok(self.username.clone()));
+                let _ = match &self.username {
+                    Some(username) => respond_to.send(Ok(username.clone())),
+                    None => respond_to.send(Err(SessionError::UsernameNotFound)),
+                };
             }
             InnerMsg::SetUsername(respond_to, username) => {
                 self.username = Some(username);
@@ -93,7 +93,7 @@ impl ActorInner for Inner {
 
 #[derive(Debug)]
 pub enum InnerMsg {
-    GetUsername(oneshot::Sender<Result<Option<String>, SessionError>>),
+    GetUsername(oneshot::Sender<Result<String, SessionError>>),
     SetUsername(oneshot::Sender<Result<(), SessionError>>, String),
 }
 
@@ -110,8 +110,9 @@ pub enum SessionError {
 impl error::Error for SessionError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::TxError(err) => err.source(),
-            Self::RxError(err) => err.source(),
+            Self::TxError(err)     => err.source(),
+            Self::RxError(err)     => err.source(),
+            Self::UsernameNotFound => None,
         }
     }
 }
@@ -119,8 +120,9 @@ impl error::Error for SessionError {
 impl fmt::Display for SessionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TxError(err) => err.fmt(f),
-            Self::RxError(err) => err.fmt(f),
+            Self::TxError(err)     => err.fmt(f),
+            Self::RxError(err)     => err.fmt(f),
+            Self::UsernameNotFound => write!(f, "Username not found!"),
         }
     }
 }
