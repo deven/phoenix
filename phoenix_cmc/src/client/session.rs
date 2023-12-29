@@ -36,8 +36,12 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn username(&self) -> Option<Arc<str>> {
-        self.state_rx.borrow().username.clone()
+    pub fn username(&self) -> Result<Arc<str>, SessionError> {
+        self.state_rx
+            .borrow()
+            .username
+            .clone()
+            .ok_or(SessionError::UsernameNotFound)
     }
 
     #[framed]
