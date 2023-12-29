@@ -31,7 +31,7 @@ impl SessionState {
 
 #[derive(Debug, Clone)]
 pub struct Session {
-    tx: mpsc::Sender<InnerMsg>,
+    tx: mpsc::Sender<SessionMsg>,
     state_rx: watch::Receiver<Arc<SessionState>>,
 }
 
@@ -41,9 +41,12 @@ impl Session {
     }
 
     #[framed]
-    pub async fn set_username(&self, username: Option<String>) -> Result<Option<Arc<str>>, SessionError> {
+    pub async fn set_username(
+        &self,
+        username: Option<String>,
+    ) -> Result<Option<Arc<str>>, SessionError> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(InnerMsg::SetUsername(tx, username)).await?;
+        self.tx.send(SessionMsg::SetUsername(tx, username)).await?;
         rx.await?
     }
 }
@@ -61,22 +64,22 @@ impl Actor for Session {
 
 #[derive(Debug)]
 struct SessionInner {
-    rx: mpsc::Receiver<InnerMsg>,
+    rx: mpsc::Receiver<SessionMsg>,
     state: Arc<SessionState>,
     state_tx: watch::Sender<Arc<SessionState>>,
 }
 
 impl SessionInner {
-    fn new(rx: mpsc::Receiver<InnerMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
+    fn new(rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
         (Self { rx, state, state_tx }, state_rx)
     }
 
     #[framed]
-    async fn handle_message(&mut self, msg: InnerMsg) -> Result<(), SessionError> {
+    async fn handle_message(&mut self, msg: SessionMsg) -> Result<(), SessionError> {
         let _ = match msg {
-            InnerMsg::SetUsername(respond_to, username) => respond_to.send(self.update_username(username)),
+            SessionMsg::SetUsername(respond_to, username) => respond_to.send(self.update_username(username)),
         };
         Ok(())
     }
@@ -110,11 +113,11 @@ impl ActorInner for SessionInner {
 }
 
 #[derive(Debug)]
-pub enum InnerMsg {
+pub enum SessionMsg {
     SetUsername(oneshot::Sender<Result<Option<Arc<str>>, SessionError>>, Option<String>),
 }
 
-type SendError = mpsc::error::SendError<InnerMsg>;
+type SendError = mpsc::error::SendError<SessionMsg>;
 type RecvError = oneshot::error::RecvError;
 
 #[derive(Debug)]
