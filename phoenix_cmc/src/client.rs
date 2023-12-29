@@ -11,7 +11,6 @@
 
 pub mod session;
 
-use crate::actor::Actor;
 use crate::client::session::Session;
 use async_backtrace::{framed, taskdump_tree};
 use futures::SinkExt;
