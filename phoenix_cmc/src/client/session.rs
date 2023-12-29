@@ -59,7 +59,7 @@ impl Actor for Session {
 }
 
 /// Session actor state.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SessionState {
     pub username: Option<Arc<str>>,
 }
@@ -67,8 +67,7 @@ pub struct SessionState {
 impl SessionState {
     /// Create a new instance of `SessionState`.
     pub fn new() -> Self {
-        let username = None;
-        Self { username }
+        Self::default()
     }
 }
 
