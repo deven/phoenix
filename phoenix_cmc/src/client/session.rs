@@ -53,20 +53,20 @@ impl Actor for Session {
 
     fn new() -> Self {
         let (tx, rx) = mpsc::channel(8);
-        let (inner, state_rx) = Inner::new(rx);
+        let (inner, state_rx) = SessionInner::new(rx);
         tokio::spawn(frame!(async move { inner.run().await }));
         Self { tx, state_rx }
     }
 }
 
 #[derive(Debug)]
-struct Inner {
+struct SessionInner {
     rx: mpsc::Receiver<InnerMsg>,
     state: Arc<SessionState>,
     state_tx: watch::Sender<Arc<SessionState>>,
 }
 
-impl Inner {
+impl SessionInner {
     fn new(rx: mpsc::Receiver<InnerMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
@@ -94,7 +94,7 @@ impl Inner {
     }
 }
 
-impl ActorInner for Inner {
+impl ActorInner for SessionInner {
     type Error = SessionError;
 
     #[framed]
