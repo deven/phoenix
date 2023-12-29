@@ -98,11 +98,12 @@ impl SessionInner {
     /// Handle a message sent from a `Session` handle.
     #[framed]
     async fn handle_message(&mut self, msg: SessionMsg) -> Result<(), SessionError> {
-        let _ = match msg {
+        match msg {
             SessionMsg::SetUsername(respond_to, username) => {
-                respond_to.send(self.update_username(username))
+                let _ = respond_to.send(self.update_username(username));
             }
         };
+
         Ok(())
     }
 
