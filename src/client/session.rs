@@ -73,7 +73,8 @@ impl SessionInner {
     fn new(rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
-        (Self { rx, state, state_tx }, state_rx)
+        let inner = Self { rx, state, state_tx };
+        (inner, state_rx)
     }
 
     #[framed]
