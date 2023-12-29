@@ -20,17 +20,17 @@ use tracing::warn;
 /// Session actor handle.
 #[derive(Debug, Clone)]
 pub struct Session {
-    tx: mpsc::Sender<SessionMsg>,
+    actor_tx: mpsc::Sender<SessionMsg>,
     state_rx: watch::Receiver<Arc<SessionState>>,
 }
 
 impl Session {
     /// Create a new instance of `Session`.
     pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel(8);
-        let (inner, state_rx) = SessionInner::new(rx);
+        let (actor_tx, actor_rx) = mpsc::channel(8);
+        let (inner, state_rx) = SessionInner::new(actor_rx);
         tokio::spawn(frame!(async move { inner.run().await }));
-        Self { tx, state_rx }
+        Self { actor_tx, state_rx }
     }
 
     /// Get username.
@@ -48,9 +48,9 @@ impl Session {
         &self,
         username: Option<String>,
     ) -> Result<Option<Arc<str>>, SessionError> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(SessionMsg::SetUsername(tx, username)).await?;
-        rx.await?
+        let (response_tx, response_rx) = oneshot::channel();
+        self.actor_tx.send(SessionMsg::SetUsername(response_tx, username)).await?;
+        response_rx.await?
     }
 }
 
@@ -75,18 +75,18 @@ impl SessionState {
 /// Session actor implementation.
 #[derive(Debug)]
 struct SessionInner {
-    rx: mpsc::Receiver<SessionMsg>,
+    actor_rx: mpsc::Receiver<SessionMsg>,
     state: Arc<SessionState>,
     state_tx: watch::Sender<Arc<SessionState>>,
 }
 
 impl SessionInner {
     /// Create a new instance of `SessionInner`.
-    fn new(rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
+    fn new(actor_rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
         let inner = Self {
-            rx,
+            actor_rx,
             state,
             state_tx,
         };
@@ -130,7 +130,7 @@ impl ActorInner for SessionInner {
     where
         Self: Sized,
     {
-        while let Some(msg) = self.rx.recv().await {
+        while let Some(msg) = self.actor_rx.recv().await {
             let debug_msg = format!("{msg:?}");
             if let Err(e) = self.handle_message(msg).await {
                 warn!("Error handling {debug_msg}: {e:?}");
