@@ -27,8 +27,7 @@ pub struct Session {
 impl Session {
     /// Create a new instance of `Session`.
     pub fn new() -> Self {
-        let (actor_tx, actor_rx) = mpsc::channel(8);
-        let (inner, state_rx) = SessionInner::new(actor_rx);
+        let (inner, actor_tx, state_rx) = SessionInner::new();
         tokio::spawn(frame!(async move { inner.run().await }));
         Self { actor_tx, state_rx }
     }
@@ -75,21 +74,25 @@ impl SessionState {
 #[derive(Debug)]
 struct SessionInner {
     actor_rx: mpsc::Receiver<SessionMsg>,
-    state: Arc<SessionState>,
     state_tx: watch::Sender<Arc<SessionState>>,
+    state: Arc<SessionState>,
 }
 
 impl SessionInner {
-    /// Create a new instance of `SessionInner`.
-    fn new(actor_rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
+    /// Create a new instance of `SessionInner` and associated channels.
+    fn new() -> (Self, mpsc::Sender<SessionMsg>, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
+
+        let (actor_tx, actor_rx) = mpsc::channel(8);
         let (state_tx, state_rx) = watch::channel(state.clone());
+
         let inner = Self {
             actor_rx,
-            state,
             state_tx,
+            state,
         };
-        (inner, state_rx)
+
+        (inner, actor_tx, state_rx)
     }
 
     /// Handle a message sent from a `Session` handle.
