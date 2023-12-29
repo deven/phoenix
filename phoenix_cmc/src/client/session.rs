@@ -11,7 +11,7 @@
 
 use crate::actor::{Actor, ActorInner};
 use async_backtrace::{frame, framed};
-use std::error;
+use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, watch};
@@ -147,8 +147,8 @@ pub enum SessionError {
     UsernameNotFound,
 }
 
-impl error::Error for SessionError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+impl Error for SessionError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::TxError(err) => err.source(),
             Self::RxError(err) => err.source(),
