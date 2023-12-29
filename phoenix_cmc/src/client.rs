@@ -11,6 +11,8 @@
 
 pub mod session;
 
+use crate::actor::Actor;
+use crate::client::session::Session;
 use async_backtrace::{framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;
@@ -24,7 +26,7 @@ use tracing::{info, trace};
 
 #[derive(Debug)]
 pub struct Client {
-    pub username: Option<String>,
+    pub session: Session,
     pub addr: SocketAddr,
     lines: Framed<TcpStream, LinesCodec>,
     receiver: mpsc::Receiver<String>,
@@ -38,7 +40,7 @@ impl Client {
 
         // Create the new `Client` instance.
         Self {
-            username: None,
+            session: Session::new(),
             addr,
             lines,
             receiver,
@@ -64,8 +66,11 @@ impl Client {
 
         info!("User \"{username}\" logged in from {addr}.");
 
+        self.session.set_username(Some(username)).await?;
+
         self.client_loop().await?;
 
+        let username = self.session.username().unwrap();
         let addr = &self.addr;
         info!("User \"{username}\" disconnected from {addr}.");
 
@@ -84,7 +89,9 @@ impl Client {
                 Some(Err(e)) => return Err(Box::new(e)),
                 None => return Ok(()),
             };
-            self.lines.send(input).await?;
+            let username = self.session.username().unwrap();
+            let msg = format!("{username}: {input}");
+            self.lines.send(msg).await?;
         }
     }
 }
