@@ -56,7 +56,7 @@ impl Actor for Session {
 
 #[derive(Debug, Clone)]
 pub struct SessionState {
-    username: Option<Arc<str>>,
+    pub username: Option<Arc<str>>,
 }
 
 impl SessionState {
