@@ -73,19 +73,28 @@ impl SessionInner {
     fn new(rx: mpsc::Receiver<SessionMsg>) -> (Self, watch::Receiver<Arc<SessionState>>) {
         let state = Arc::from(SessionState::new());
         let (state_tx, state_rx) = watch::channel(state.clone());
-        let inner = Self { rx, state, state_tx };
+        let inner = Self {
+            rx,
+            state,
+            state_tx,
+        };
         (inner, state_rx)
     }
 
     #[framed]
     async fn handle_message(&mut self, msg: SessionMsg) -> Result<(), SessionError> {
         let _ = match msg {
-            SessionMsg::SetUsername(respond_to, username) => respond_to.send(self.update_username(username)),
+            SessionMsg::SetUsername(respond_to, username) => {
+                respond_to.send(self.update_username(username))
+            }
         };
         Ok(())
     }
 
-    fn update_username(&mut self, new_username: Option<String>) -> Result<Option<Arc<str>>, SessionError> {
+    fn update_username(
+        &mut self,
+        new_username: Option<String>,
+    ) -> Result<Option<Arc<str>>, SessionError> {
         let new_username = new_username.map(|s| Arc::from(s.into_boxed_str()));
 
         Arc::make_mut(&mut self.state).username = new_username.clone();
@@ -102,7 +111,10 @@ impl ActorInner for SessionInner {
     type Error = SessionError;
 
     #[framed]
-    async fn run(mut self) -> Result<(), Self::Error> where Self: Sized {
+    async fn run(mut self) -> Result<(), Self::Error>
+    where
+        Self: Sized,
+    {
         while let Some(msg) = self.rx.recv().await {
             let debug_msg = format!("{msg:?}");
             if let Err(e) = self.handle_message(msg).await {
@@ -115,7 +127,10 @@ impl ActorInner for SessionInner {
 
 #[derive(Debug)]
 pub enum SessionMsg {
-    SetUsername(oneshot::Sender<Result<Option<Arc<str>>, SessionError>>, Option<String>),
+    SetUsername(
+        oneshot::Sender<Result<Option<Arc<str>>, SessionError>>,
+        Option<String>,
+    ),
 }
 
 type SendError = mpsc::error::SendError<SessionMsg>;
@@ -131,8 +146,8 @@ pub enum SessionError {
 impl error::Error for SessionError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::TxError(err)     => err.source(),
-            Self::RxError(err)     => err.source(),
+            Self::TxError(err) => err.source(),
+            Self::RxError(err) => err.source(),
             Self::UsernameNotFound => None,
         }
     }
@@ -141,8 +156,8 @@ impl error::Error for SessionError {
 impl fmt::Display for SessionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TxError(err)     => err.fmt(f),
-            Self::RxError(err)     => err.fmt(f),
+            Self::TxError(err) => err.fmt(f),
+            Self::RxError(err) => err.fmt(f),
             Self::UsernameNotFound => write!(f, "Username not found!"),
         }
     }
