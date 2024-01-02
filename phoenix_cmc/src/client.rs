@@ -4,7 +4,7 @@
 //
 // Phoenix CMC library: client module
 //
-// Copyright 2021-2023 Deven T. Corzine <deven@ties.org>
+// Copyright 2021-2024 Deven T. Corzine <deven@ties.org>
 //
 // SPDX-License-Identifier: MIT
 //
