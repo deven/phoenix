@@ -192,6 +192,19 @@ macro_rules! actor_field_error_variant {
     };
 }
 
+macro_rules! actor_error_enum {
+    ( $error:ident, $msg:ident, $( ( $field_type:ty $( , $not_found:ident )? ) )* ) => {
+        #[derive(Debug)]
+        pub enum $error {
+            TxError(mpsc::error::SendError<$msg>),
+            RxError(oneshot::error::RecvError),
+            $(
+                $( $not_found, )?
+            )*
+        }
+    };
+}
+
 macro_rules! actor_field_error_source {
     ( ( $field_type:ty, $not_found:ident ) ) => {
         Self::$not_found => None,
@@ -330,14 +343,7 @@ macro_rules! create_actor {
 //            )*
         }
 
-        #[derive(Debug)]
-        pub enum $error {
-            TxError(mpsc::error::SendError<$msg>),
-            RxError(oneshot::error::RecvError),
-            $(
-                actor_field_error_variant!($field_type)
-            )*
-        }
+        actor_error_enum!($error, $msg, $( $field_type )*);
 
         impl std::error::Error for $error {
             fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
