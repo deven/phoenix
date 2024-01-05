@@ -125,6 +125,17 @@ macro_rules! actor_field {
     };
 }
 
+macro_rules! actor_state_struct {
+    ( $state:ident => { $( $field_name:ident : $field_type:tt ),* } ) => {
+        #[derive(Debug, Clone, Default)]
+        pub struct $state {
+            $(
+                pub $field_name: Option<$field_type>,
+            )*
+        }
+    };
+}
+
 macro_rules! actor_field_handle_message {
     ( $msg:ident, $field_name:ident ( $setter:ident, $msg_variant:ident ) ) => {
         $msg::$msg_variant(respond_to, $field_name) => {
@@ -254,12 +265,11 @@ macro_rules! create_actor {
             type Error = $error;
         }
 
-        #[derive(Debug, Clone, Default)]
-        pub struct $state {
-//            $(
-//                $crate::actor_field!($field_name : $field_type),
-//            )*
-        }
+        actor_state_struct!($state => {
+            $(
+                $field_name: $field_type
+            ),*
+        });
 
         impl $state {
             pub fn new(
