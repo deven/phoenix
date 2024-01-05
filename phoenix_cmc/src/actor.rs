@@ -126,7 +126,7 @@ macro_rules! actor_field {
 }
 
 macro_rules! actor_state_struct {
-    ( $state:ident => { $( $field_name:ident : $field_type:tt ),* } ) => {
+    ( $state:ident => { $( $field_name:ident : ( $field_type:ident $( , $not_found:ident )? ) ),* } ) => {
         #[derive(Debug, Clone, Default)]
         pub struct $state {
             $(
