@@ -9,7 +9,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::client::session::SessionError;
+use crate::client::ClientError;
 use std::error::Error;
 use std::fmt;
 use std::path::PathBuf;
@@ -20,13 +20,13 @@ pub enum PhoenixError {
         path: PathBuf,
         source: std::io::Error,
     },
-    SessionError(SessionError),
+    ClientError(ClientError),
 }
 
 impl Error for PhoenixError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::SessionError(err) => err.source(),
+            Self::ClientError(err) => err.source(),
             Self::FileIoError { source, .. } => Some(source),
         }
     }
@@ -35,7 +35,7 @@ impl Error for PhoenixError {
 impl fmt::Display for PhoenixError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::SessionError(err) => err.fmt(f),
+            Self::ClientError(err) => err.fmt(f),
             Self::FileIoError { path, source } => {
                 write!(f, "File I/O error for path {}: {}", path.display(), source)
             }
@@ -43,8 +43,8 @@ impl fmt::Display for PhoenixError {
     }
 }
 
-impl From<SessionError> for PhoenixError {
-    fn from(err: SessionError) -> Self {
-        Self::SessionError(err)
+impl From<ClientError> for PhoenixError {
+    fn from(err: ClientError) -> Self {
+        Self::ClientError(err)
     }
 }

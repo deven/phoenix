@@ -128,7 +128,7 @@ impl ClientConnection {
             stream.write_all(b"Enter username: ").await?;
         }
 
-        let session = self.client.session();
+        let mut session = self.client.session();
         let addr = self.client.addr();
         let username = match self.lines.next().await {
             Some(Ok(line)) => line,
@@ -140,11 +140,11 @@ impl ClientConnection {
 
         info!("User \"{username}\" logged in from {addr}.");
 
-        session.set_username(Some(username)).await?;
+        session.set_username(username).await;
 
         self.client_loop().await?;
 
-        let username = session.username()?;
+        let username = session.username().await;
         info!("User \"{username}\" disconnected from {addr}.");
 
         Ok(())
@@ -164,7 +164,7 @@ impl ClientConnection {
                 Some(Err(e)) => return Err(Box::new(e)),
                 None => return Ok(()),
             };
-            let username = session.username()?;
+            let username = session.username().await;
             let msg = format!("{username}: {input}");
             self.lines.send(msg).await?;
         }
