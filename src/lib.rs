@@ -17,9 +17,9 @@ pub mod error;
 pub mod file;
 pub mod server;
 
+use crate::error::PhoenixError;
 use async_backtrace::taskdump_tree;
 use clap::Parser;
-use std::error::Error;
 use tracing::{trace, warn};
 
 #[derive(Debug, Parser)]
@@ -42,7 +42,7 @@ pub struct Options {
 }
 
 #[tokio::main]
-pub async fn run(opts: Options) -> Result<(), Box<dyn Error>> {
+pub async fn run(opts: Options) -> Result<(), PhoenixError> {
     trace!("phoenix_cmc::run()\n{}", taskdump_tree(true));
 
     let server = server::Server::new(opts);

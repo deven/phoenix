@@ -31,7 +31,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let opts = Options::parse();
     trace!("{opts:?}");
-    phoenix_cmc::run(opts)
+    Ok(phoenix_cmc::run(opts)?)
 }
 
 fn main() {

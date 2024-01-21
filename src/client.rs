@@ -17,13 +17,14 @@ use async_backtrace::{frame, framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;
 use std::fmt;
+use std::io::Error as IoError;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::{mpsc, oneshot, watch};
 use tokio_stream::StreamExt;
-use tokio_util::codec::{Framed, LinesCodec};
+use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tracing::{info, trace, warn};
 
 /// Client actor handle.
@@ -122,7 +123,7 @@ impl ClientConnection {
 
     /// Setup a new client connection.
     #[framed]
-    pub async fn setup(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn setup(&mut self) -> Result<(), ClientError> {
         {
             let stream = self.lines.get_mut();
             stream.write_all(b"Enter username: ").await?;
@@ -152,7 +153,7 @@ impl ClientConnection {
 
     /// Client main loop.
     #[framed]
-    async fn client_loop(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn client_loop(&mut self) -> Result<(), ClientError> {
         trace!("{}", taskdump_tree(false));
 
         let session = self.client.session();
@@ -161,7 +162,7 @@ impl ClientConnection {
         loop {
             let input = match self.lines.next().await {
                 Some(Ok(line)) => line,
-                Some(Err(e)) => return Err(Box::new(e)),
+                Some(Err(e)) => return Err(e.into()),
                 None => return Ok(()),
             };
             let username = session.username().await;
@@ -273,6 +274,8 @@ type RecvError = oneshot::error::RecvError;
 pub enum ClientError {
     TxError(SendError),
     RxError(RecvError),
+    IoError(IoError),
+    LinesCodecError(LinesCodecError),
 }
 
 impl Error for ClientError {
@@ -280,6 +283,8 @@ impl Error for ClientError {
         match self {
             Self::TxError(err) => err.source(),
             Self::RxError(err) => err.source(),
+            Self::IoError(err) => err.source(),
+            Self::LinesCodecError(err) => err.source(),
         }
     }
 }
@@ -289,6 +294,8 @@ impl fmt::Display for ClientError {
         match self {
             Self::TxError(err) => err.fmt(f),
             Self::RxError(err) => err.fmt(f),
+            Self::IoError(err) => write!(f, "I/O error: {err}"),
+            Self::LinesCodecError(err) => write!(f, "LinesCodec error: {err}"),
         }
     }
 }
@@ -302,5 +309,17 @@ impl From<SendError> for ClientError {
 impl From<RecvError> for ClientError {
     fn from(err: RecvError) -> Self {
         Self::RxError(err)
+    }
+}
+
+impl From<IoError> for ClientError {
+    fn from(err: IoError) -> Self {
+        Self::IoError(err)
+    }
+}
+
+impl From<LinesCodecError> for ClientError {
+    fn from(err: LinesCodecError) -> Self {
+        Self::LinesCodecError(err)
     }
 }
