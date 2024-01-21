@@ -14,6 +14,7 @@
 pub mod actor;
 pub mod client;
 pub mod error;
+pub mod file;
 pub mod server;
 
 use async_backtrace::taskdump_tree;
