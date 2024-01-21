@@ -11,6 +11,7 @@
 
 use crate::client::ClientError;
 use crate::file::FileError;
+use crate::server::ServerError;
 use std::error::Error;
 use std::fmt;
 
@@ -18,6 +19,7 @@ use std::fmt;
 pub enum PhoenixError {
     ClientError(ClientError),
     FileError(FileError),
+    ServerError(ServerError),
 }
 
 impl Error for PhoenixError {
@@ -25,6 +27,7 @@ impl Error for PhoenixError {
         match self {
             Self::ClientError(err) => err.source(),
             Self::FileError(err) => err.source(),
+            Self::ServerError(err) => err.source(),
         }
     }
 }
@@ -34,6 +37,7 @@ impl fmt::Display for PhoenixError {
         match self {
             Self::ClientError(err) => err.fmt(f),
             Self::FileError(err) => err.fmt(f),
+            Self::ServerError(err) => err.fmt(f),
         }
     }
 }
@@ -47,5 +51,11 @@ impl From<ClientError> for PhoenixError {
 impl From<FileError> for PhoenixError {
     fn from(err: FileError) -> Self {
         Self::FileError(err)
+    }
+}
+
+impl From<ServerError> for PhoenixError {
+    fn from(err: ServerError) -> Self {
+        Self::ServerError(err)
     }
 }
