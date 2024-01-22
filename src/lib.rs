@@ -22,7 +22,7 @@ use async_backtrace::taskdump_tree;
 use clap::Parser;
 use tracing::{trace, warn};
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Options {
     /// Running from cron to restart server
     #[arg(long)]
