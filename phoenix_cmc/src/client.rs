@@ -11,8 +11,8 @@
 
 pub mod session;
 
-use crate::actor::{Actor, ActorInner};
 use crate::client::session::Session;
+use crate::server::Server;
 use async_backtrace::{frame, framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;
@@ -22,116 +22,69 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::sync::{mpsc, oneshot, watch};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tracing::{info, trace, warn};
 
-/// Client actor handle.
+/// Client handle.
 #[derive(Debug, Clone)]
-pub struct Client {
-    actor_tx: mpsc::Sender<ClientMsg>,
-    state_rx: watch::Receiver<Arc<ClientState>>,
+pub struct Client(Arc<RwLock<ClientInner>>);
+
+#[derive(Debug, Clone)]
+pub struct ClientInner {
+    pub server: Server,
+    pub addr: SocketAddr,
+    pub session: Option<Session>,
+    pub task: Option<Arc<JoinHandle<()>>>,
 }
 
 impl Client {
     /// Create a new instance of `Client`.
-    pub fn new(addr: SocketAddr, stream: TcpStream) -> Self {
-        // Spawn actor task.
-        let (inner, actor_tx, state_rx) = ClientInner::new(addr);
-        tokio::spawn(frame!(async move { inner.run().await }));
+    pub fn new(server: Server, addr: SocketAddr) -> Self {
+        let inner = ClientInner {
+            server,
+            addr,
+            session: None,
+            task: None,
+        };
 
-        let client = Self { actor_tx, state_rx };
+        Client(Arc::new(RwLock::new(inner)))
+    }
 
-        let mut connection = ClientConnection::new(client.clone(), stream);
+    /// Run async task for `Client`.
+    pub async fn run(&mut self, stream: TcpStream) -> Result<(), ClientError> {
+        // Create a LinesCodec to encode the stream as lines.
+        let lines = Framed::new(stream, LinesCodec::new());
+
+        let mut client = self.clone();
 
         // Spawn separate async task to manage the TCP connection.
-        tokio::spawn(frame!(async move {
-            if let Err(e) = connection.setup().await {
-                let addr = connection.client.addr();
+        let task = tokio::spawn(frame!(async move {
+            if let Err(e) = client.setup(lines).await {
+                let addr = client.addr().await;
                 warn!("Error processing TCP connection from {addr:?}: {e:?}");
             }
         }));
 
-        client
-    }
+        self.set_task(Some(Arc::new(task))).await;
 
-    /// Get session actor handle.
-    pub fn session(&self) -> Session {
-        self.state_rx.borrow().session.clone()
-    }
-
-    #[framed]
-    /// Set session.
-    pub async fn set_session(&self, session: Session) -> Result<Session, ClientError> {
-        let (response_tx, response_rx) = oneshot::channel();
-        self.actor_tx
-            .send(ClientMsg::SetSession(response_tx, session))
-            .await?;
-        response_rx.await?
-    }
-
-    /// Get socket address.
-    pub fn addr(&self) -> SocketAddr {
-        self.state_rx.borrow().addr.clone()
-    }
-
-    #[framed]
-    /// Set socket address.
-    pub async fn set_addr(&self, addr: SocketAddr) -> Result<SocketAddr, ClientError> {
-        let (response_tx, response_rx) = oneshot::channel();
-        self.actor_tx
-            .send(ClientMsg::SetAddr(response_tx, addr))
-            .await?;
-        response_rx.await?
-    }
-}
-
-impl Actor for Client {
-    type Error = ClientError;
-}
-
-/// Client actor state.
-#[derive(Debug, Clone)]
-pub struct ClientState {
-    pub session: Session,
-    pub addr: SocketAddr,
-}
-
-impl ClientState {
-    /// Create a new instance of `ClientState`.
-    pub fn new(addr: SocketAddr) -> Self {
-        let session = Session::new();
-        Self { session, addr }
-    }
-}
-
-/// Client connection.
-pub struct ClientConnection {
-    pub client: Client,
-    pub lines: Framed<TcpStream, LinesCodec>,
-}
-
-impl ClientConnection {
-    /// Create a new instance of `ClientConnection`.
-    pub fn new(client: Client, stream: TcpStream) -> Self {
-        // Create a LinesCodec to encode the stream as lines.
-        let lines = Framed::new(stream, LinesCodec::new());
-
-        Self { client, lines }
+        Ok(())
     }
 
     /// Setup a new client connection.
     #[framed]
-    pub async fn setup(&mut self) -> Result<(), ClientError> {
+    pub async fn setup(&mut self, mut lines: Framed<TcpStream, LinesCodec>) -> Result<(), ClientError> {
+        let server = self.server().await;
+
         {
-            let stream = self.lines.get_mut();
+            let stream = lines.get_mut();
             stream.write_all(b"Enter username: ").await?;
         }
 
-        let mut session = self.client.session();
-        let addr = self.client.addr();
-        let username = match self.lines.next().await {
+        let addr = self.addr().await;
+        let username = match lines.next().await {
             Some(Ok(line)) => line,
             _ => {
                 info!("Client disconnected from {addr} without sending a username.");
@@ -141,139 +94,108 @@ impl ClientConnection {
 
         info!("User \"{username}\" logged in from {addr}.");
 
-        session.set_username(username).await;
+        let session = Session::new(username);
+        self.set_session(Some(session.clone())).await;
+        server.push_session(session).await;
 
-        self.client_loop().await?;
+        self.client_loop(lines).await?;
 
-        let username = session.username().await;
-        info!("User \"{username}\" disconnected from {addr}.");
+        if let Some(session) = self.session().await {
+            let username = session.username().await;
+            info!("User \"{username}\" disconnected from {addr}.");
+        } else {
+            info!("Unknown client disconnected from {addr}.");
+        }
 
         Ok(())
     }
 
     /// Client main loop.
     #[framed]
-    async fn client_loop(&mut self) -> Result<(), ClientError> {
+    pub async fn client_loop(&mut self, mut lines: Framed<TcpStream, LinesCodec>) -> Result<(), ClientError> {
         trace!("{}", taskdump_tree(false));
-
-        let session = self.client.session();
 
         // In a loop, read lines from the socket and write them back.
         loop {
-            let input = match self.lines.next().await {
+            let input = match lines.next().await {
                 Some(Ok(line)) => line,
                 Some(Err(e)) => return Err(e.into()),
                 None => return Ok(()),
             };
-            let username = session.username().await;
-            let msg = format!("{username}: {input}");
-            self.lines.send(msg).await?;
-        }
-    }
-}
 
-/// Client actor implementation.
-#[derive(Debug)]
-struct ClientInner {
-    actor_rx: mpsc::Receiver<ClientMsg>,
-    state_tx: watch::Sender<Arc<ClientState>>,
-    state: Arc<ClientState>,
-}
-
-impl ClientInner {
-    /// Create a new instance of `ClientInner`.
-    pub fn new(
-        addr: SocketAddr,
-    ) -> (
-        Self,
-        mpsc::Sender<ClientMsg>,
-        watch::Receiver<Arc<ClientState>>,
-    ) {
-        let state = Arc::from(ClientState::new(addr.clone()));
-
-        let (actor_tx, actor_rx) = mpsc::channel(8);
-        let (state_tx, state_rx) = watch::channel(state.clone());
-
-        let inner = Self {
-            actor_rx,
-            state_tx,
-            state,
-        };
-
-        (inner, actor_tx, state_rx)
-    }
-
-    /// Handle a message sent from a `Client` handle.
-    #[framed]
-    async fn handle_message(&mut self, msg: ClientMsg) -> Result<(), ClientError> {
-        match msg {
-            ClientMsg::SetSession(respond_to, session) => {
-                let _ = respond_to.send(self.update_session(session));
-            }
-            ClientMsg::SetAddr(respond_to, addr) => {
-                let _ = respond_to.send(self.update_addr(addr));
-            }
-        };
-
-        Ok(())
-    }
-
-    /// Update session.
-    fn update_session(&mut self, new_session: Session) -> Result<Session, ClientError> {
-        Arc::make_mut(&mut self.state).session = new_session.clone();
-        self.state = self.state_tx.send_replace(self.state.clone());
-
-        let old_session = self.state.session.clone();
-        Arc::make_mut(&mut self.state).session = new_session;
-
-        Ok(old_session)
-    }
-
-    /// Update addr.
-    fn update_addr(&mut self, new_addr: SocketAddr) -> Result<SocketAddr, ClientError> {
-        Arc::make_mut(&mut self.state).addr = new_addr.clone();
-        self.state = self.state_tx.send_replace(self.state.clone());
-
-        let old_addr = self.state.addr.clone();
-        Arc::make_mut(&mut self.state).addr = new_addr;
-
-        Ok(old_addr)
-    }
-}
-
-impl ActorInner for ClientInner {
-    type Error = ClientError;
-
-    /// Run client actor task.
-    #[framed]
-    async fn run(mut self) -> Result<(), Self::Error>
-    where
-        Self: Sized,
-    {
-        while let Some(msg) = self.actor_rx.recv().await {
-            let debug_msg = format!("{msg:?}");
-            if let Err(e) = self.handle_message(msg).await {
-                warn!("Error handling {debug_msg}: {e:?}");
+            if let Some(session) = self.session().await {
+                let username = session.username().await;
+                let msg = format!("{username}: {input}");
+                lines.send(msg).await?;
+            } else {
+                lines.send(format!("Error: You are not logged in!")).await?;
             }
         }
+    }
 
-        Ok(())
+    /// Obtain read lock on the client data.
+    #[framed]
+    pub async fn read(&self) -> RwLockReadGuard<'_, ClientInner> {
+        self.0.read().await
+    }
+
+    /// Obtain write lock on the client data.
+    #[framed]
+    pub async fn write(&self) -> RwLockWriteGuard<'_, ClientInner> {
+        self.0.write().await
+    }
+
+    /// Get server.
+    #[framed]
+    pub async fn server(&self) -> Server {
+        self.read().await.server.clone()
+    }
+
+    /// Set server.
+    #[framed]
+    pub async fn set_server(&self, server: Server) {
+        self.write().await.server = server;
+    }
+
+    /// Get socket address.
+    #[framed]
+    pub async fn addr(&self) -> SocketAddr {
+        self.read().await.addr.clone()
+    }
+
+    /// Set socket address.
+    #[framed]
+    pub async fn set_addr(&self, addr: SocketAddr) {
+        self.write().await.addr = addr;
+    }
+
+    /// Get session.
+    #[framed]
+    pub async fn session(&self) -> Option<Session> {
+        self.read().await.session.clone()
+    }
+
+    /// Set session.
+    #[framed]
+    pub async fn set_session(&self, session: Option<Session>) {
+        self.write().await.session = session;
+    }
+
+    /// Get task join handle.
+    #[framed]
+    pub async fn task(&self) -> Option<Arc<JoinHandle<()>>> {
+        self.read().await.task.clone()
+    }
+
+    /// Set task join handle.
+    #[framed]
+    pub async fn set_task(&self, task: Option<Arc<JoinHandle<()>>>) {
+        self.write().await.task = task;
     }
 }
-
-#[derive(Debug)]
-pub enum ClientMsg {
-    SetSession(oneshot::Sender<Result<Session, ClientError>>, Session),
-    SetAddr(oneshot::Sender<Result<SocketAddr, ClientError>>, SocketAddr),
-}
-
-type SendError = mpsc::error::SendError<ClientMsg>;
-type RecvError = oneshot::error::RecvError;
 
 #[derive(Debug)]
 pub enum ClientError {
-    TxError(SendError),
-    RxError(RecvError),
     IoError(IoError),
     LinesCodecError(LinesCodecError),
 }
@@ -281,8 +203,6 @@ pub enum ClientError {
 impl Error for ClientError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::TxError(err) => err.source(),
-            Self::RxError(err) => err.source(),
             Self::IoError(err) => err.source(),
             Self::LinesCodecError(err) => err.source(),
         }
@@ -292,23 +212,9 @@ impl Error for ClientError {
 impl fmt::Display for ClientError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TxError(err) => err.fmt(f),
-            Self::RxError(err) => err.fmt(f),
             Self::IoError(err) => write!(f, "I/O error: {err}"),
             Self::LinesCodecError(err) => write!(f, "LinesCodec error: {err}"),
         }
-    }
-}
-
-impl From<SendError> for ClientError {
-    fn from(err: SendError) -> Self {
-        Self::TxError(err)
-    }
-}
-
-impl From<RecvError> for ClientError {
-    fn from(err: RecvError) -> Self {
-        Self::RxError(err)
     }
 }
 

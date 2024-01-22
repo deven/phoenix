@@ -24,9 +24,9 @@ pub struct SessionInner {
 
 impl Session {
     /// Create a new instance of `Session`.
-    pub fn new() -> Self {
+    pub fn new(username: String) -> Self {
         let inner = SessionInner {
-            username: "<None>".into(),
+            username: username.into(),
         };
 
         Session(Arc::new(RwLock::new(inner)))
@@ -50,7 +50,7 @@ impl Session {
     }
 
     #[framed]
-    pub async fn set_username<T: Into<Arc<str>>>(&mut self, value: T) {
+    pub async fn set_username<T: Into<Arc<str>>>(&self, value: T) {
         self.write().await.username = value.into();
     }
 }
