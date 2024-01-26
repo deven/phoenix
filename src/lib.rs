@@ -14,6 +14,7 @@
 pub mod actor;
 pub mod client;
 pub mod error;
+pub mod event;
 pub mod file;
 pub mod server;
 
