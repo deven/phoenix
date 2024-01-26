@@ -9,17 +9,8 @@
 // SPDX-License-Identifier: MIT
 //
 
-#![allow(unused_imports)]
-#![allow(unused_macros)]
-#![allow(unused_variables)]
-#![allow(dead_code)]
-
-use async_backtrace::{frame, framed};
 use std::error::Error;
 use std::fmt::Debug;
-use std::sync::Arc;
-use tokio::sync::{mpsc, oneshot, watch};
-use tracing::warn;
 use trait_variant;
 
 #[trait_variant::make(Actor: Send)]
