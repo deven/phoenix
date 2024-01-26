@@ -33,18 +33,21 @@ pub enum Event {
 
 macro_rules! attr {
     ($getter:ident, $setter:ident, $type:ty, Into, [$($variant:ident),*]) => {
-        attr_impl!($getter, $setter, $type, ($getter.clone()), $setter<T: Into<$type>>, T, ($setter.into()), [$($variant),*]);
+        getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
+        setter_impl!($getter, $setter, Into<$type>, [$($variant),*]);
     };
     ($getter:ident, $setter:ident, $type:ty, Clone, [$($variant:ident),*]) => {
-        attr_impl!($getter, $setter, $type, ($getter.clone()), $setter, $type, ($setter), [$($variant),*]);
+        getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
+        setter_impl!($getter, $setter, $type, [$($variant),*]);
     };
     ($getter:ident, $setter:ident, $type:ty, Copy, [$($variant:ident),*]) => {
-        attr_impl!($getter, $setter, $type, (*$getter), $setter, $type, ($setter), [$($variant),*]);
+        getter_impl!($getter, $type, (*$getter), [$($variant),*]);
+        setter_impl!($getter, $setter, $type, [$($variant),*]);
     };
 }
 
-macro_rules! attr_impl {
-    ($getter:ident, $setter:ident, $type:ty, $clone:tt, $decl:tt, $type2:tt, $into:tt, [$($variant:ident),*]) => {
+macro_rules! getter_impl {
+    ($getter:ident, $type:ty, $clone:tt, [$($variant:ident),*]) => {
         #[framed]
         pub async fn $getter(&self) -> Result<$type, EventError> {
             let event = self.read().await;
@@ -55,14 +58,33 @@ macro_rules! attr_impl {
                 _ => Err(EventError::invalid_getter(stringify!($getter), self.clone())),
             }
         }
+    };
+}
 
+macro_rules! setter_impl {
+    ($field:ident, $setter:ident, Into<$type:ty>, [$($variant:ident),*]) => {
         #[framed]
-        pub async fn $decl(&self, $setter: $type2) -> Result<(), EventError> {
+        pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
             let mut event = self.write().await;
             match *event {
                 $(
-                    Event::$variant { ref mut $getter, .. } => {
-                        *$getter = $into;
+                    Event::$variant { ref mut $field, .. } => {
+                        *$field = $setter.into();
+                        Ok(())
+                    }
+                ),*
+                _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
+            }
+        }
+    };
+    ($field:ident, $setter:ident, $type:ty, [$($variant:ident),*]) => {
+        #[framed]
+        pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
+            let mut event = self.write().await;
+            match *event {
+                $(
+                    Event::$variant { ref mut $field, .. } => {
+                        *$field = $setter;
                         Ok(())
                     }
                 ),*
@@ -125,8 +147,8 @@ impl EventRef {
     }
 
     attr!(client, set_client, Client, Clone, [LoginTimeout]);
-    //attr!(message, set_message, Arc<str>, Into, [Message]);
-    //attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
+    attr!(message, set_message, Arc<str>, Into, [Message]);
+    attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
     attr!(seconds, set_seconds, u16, Copy, [Shutdown, Restart]);
     attr!(sender, set_sender, Session, Clone, [Message]);
 }
