@@ -75,7 +75,10 @@ impl Client {
 
     /// Setup a new client connection.
     #[framed]
-    pub async fn setup(&mut self, mut lines: Framed<TcpStream, LinesCodec>) -> Result<(), ClientError> {
+    pub async fn setup(
+        &mut self,
+        mut lines: Framed<TcpStream, LinesCodec>,
+    ) -> Result<(), ClientError> {
         let server = self.server().await;
 
         {
@@ -112,7 +115,10 @@ impl Client {
 
     /// Client main loop.
     #[framed]
-    pub async fn client_loop(&mut self, mut lines: Framed<TcpStream, LinesCodec>) -> Result<(), ClientError> {
+    pub async fn client_loop(
+        &mut self,
+        mut lines: Framed<TcpStream, LinesCodec>,
+    ) -> Result<(), ClientError> {
         trace!("{}", taskdump_tree(false));
 
         // In a loop, read lines from the socket and write them back.
