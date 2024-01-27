@@ -1,7 +1,5 @@
 // -*- Rust -*-
 //
-// $Id$
-//
 // Phoenix CMC: main program
 //
 // Copyright 2021-2024 Deven T. Corzine <deven@ties.org>
