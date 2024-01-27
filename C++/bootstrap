@@ -1,7 +1,5 @@
 #!/bin/sh
 #
-# $Id$
-#
 # Utility script to rebuild configure script.
 #
 # Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

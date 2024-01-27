@@ -1,7 +1,5 @@
 /* -*- C -*-
  *
- * $Id$
- *
  * Constants, structures, variable declarations and prototypes.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

@@ -1,7 +1,5 @@
 # -*- Makefile -*-
 #
-# $Id$
-#
 # Makefile for building Phoenix server.
 #
 # Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

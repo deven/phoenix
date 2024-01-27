@@ -1,7 +1,5 @@
 // -*- C++ -*-
 //
-// $Id$
-//
 // Primary header file.
 //
 // Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

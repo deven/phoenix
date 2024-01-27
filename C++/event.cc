@@ -1,7 +1,5 @@
 // -*- C++ -*-
 //
-// $Id$
-//
 // Event and derived classes, implementations.
 //
 // Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
