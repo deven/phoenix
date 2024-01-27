@@ -10,10 +10,10 @@
 use crate::client::session::Session;
 use crate::client::Client;
 use async_backtrace::framed;
+use chrono::{DateTime, Utc};
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
-use std::time::SystemTime;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 // Use the macros defined in the "macros" module below.
@@ -26,28 +26,28 @@ pub struct EventRef(Arc<RwLock<Event>>);
 #[derive(Debug)]
 pub enum Event {
     Message {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         sender: Session,
         message: Arc<str>,
     },
     EntryNotify {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         name: Arc<str>,
     },
     ExitNotify {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         name: Arc<str>,
     },
     Shutdown {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         seconds: u16,
     },
     Restart {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         seconds: u16,
     },
     LoginTimeout {
-        timestamp: SystemTime,
+        timestamp: DateTime<Utc>,
         client: Client,
     },
 }
@@ -82,7 +82,7 @@ impl EventRef {
     attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
     attr!(seconds, set_seconds, u16, Copy, [Shutdown, Restart]);
     attr!(sender, set_sender, Session, Clone, [Message]);
-    attr!(timestamp, set_timestamp, SystemTime, Copy, [*]);
+    attr!(timestamp, set_timestamp, DateTime<Utc>, Copy, [*]);
 }
 
 #[derive(Debug)]
@@ -130,7 +130,7 @@ mod macros {
                 #[allow(non_snake_case)]
                 pub fn $name($($field: $type),*) -> Self {
                     Event::$name {
-                        timestamp: SystemTime::now(),
+                        timestamp: Utc::now(),
                         $($field),*,
                     }
                 }
