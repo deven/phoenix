@@ -17,6 +17,9 @@ use std::fmt;
 use std::sync::Arc;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+// Use the macros defined in the "macros" module below.
+use macros::*;
+
 /// Event handle.
 #[derive(Debug, Clone)]
 pub struct EventRef(Arc<RwLock<Event>>);
@@ -29,69 +32,6 @@ pub enum Event {
     Shutdown { seconds: u16 },
     Restart { seconds: u16 },
     LoginTimeout { client: Client },
-}
-
-macro_rules! attr {
-    ($getter:ident, $setter:ident, $type:ty, Into, [$($variant:ident),*]) => {
-        getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
-        setter_impl!($getter, $setter, Into<$type>, [$($variant),*]);
-    };
-    ($getter:ident, $setter:ident, $type:ty, Clone, [$($variant:ident),*]) => {
-        getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
-        setter_impl!($getter, $setter, $type, [$($variant),*]);
-    };
-    ($getter:ident, $setter:ident, $type:ty, Copy, [$($variant:ident),*]) => {
-        getter_impl!($getter, $type, (*$getter), [$($variant),*]);
-        setter_impl!($getter, $setter, $type, [$($variant),*]);
-    };
-}
-
-macro_rules! getter_impl {
-    ($getter:ident, $type:ty, $clone:tt, [$($variant:ident),*]) => {
-        #[framed]
-        pub async fn $getter(&self) -> Result<$type, EventError> {
-            let event = self.read().await;
-            match &*event {
-                $(
-                    Event::$variant { $getter, .. } => Ok($clone),
-                )*
-                _ => Err(EventError::invalid_getter(stringify!($getter), self.clone())),
-            }
-        }
-    };
-}
-
-macro_rules! setter_impl {
-    ($field:ident, $setter:ident, Into<$type:ty>, [$($variant:ident),*]) => {
-        #[framed]
-        pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
-            let mut event = self.write().await;
-            match *event {
-                $(
-                    Event::$variant { ref mut $field, .. } => {
-                        *$field = $setter.into();
-                        Ok(())
-                    }
-                ),*
-                _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
-            }
-        }
-    };
-    ($field:ident, $setter:ident, $type:ty, [$($variant:ident),*]) => {
-        #[framed]
-        pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
-            let mut event = self.write().await;
-            match *event {
-                $(
-                    Event::$variant { ref mut $field, .. } => {
-                        *$field = $setter;
-                        Ok(())
-                    }
-                ),*
-                _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
-            }
-        }
-    };
 }
 
 impl EventRef {
@@ -189,4 +129,71 @@ impl fmt::Display for EventError {
             Self::InvalidSetter { setter, event } => write!(f, "Setter {setter}{called}{event:#?}"),
         }
     }
+}
+
+mod macros {
+    macro_rules! attr {
+        ($getter:ident, $setter:ident, $type:ty, Into, [$($variant:ident),*]) => {
+            getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
+            setter_impl!($getter, $setter, Into<$type>, [$($variant),*]);
+        };
+        ($getter:ident, $setter:ident, $type:ty, Clone, [$($variant:ident),*]) => {
+            getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
+            setter_impl!($getter, $setter, $type, [$($variant),*]);
+        };
+        ($getter:ident, $setter:ident, $type:ty, Copy, [$($variant:ident),*]) => {
+            getter_impl!($getter, $type, (*$getter), [$($variant),*]);
+            setter_impl!($getter, $setter, $type, [$($variant),*]);
+        };
+    }
+
+    macro_rules! getter_impl {
+        ($getter:ident, $type:ty, $clone:tt, [$($variant:ident),*]) => {
+            #[framed]
+            pub async fn $getter(&self) -> Result<$type, EventError> {
+                let event = self.read().await;
+                match &*event {
+                    $(
+                        Event::$variant { $getter, .. } => Ok($clone),
+                    )*
+                    _ => Err(EventError::invalid_getter(stringify!($getter), self.clone())),
+                }
+            }
+        };
+    }
+
+    macro_rules! setter_impl {
+        ($field:ident, $setter:ident, Into<$type:ty>, [$($variant:ident),*]) => {
+            #[framed]
+            pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    $(
+                        Event::$variant { ref mut $field, .. } => {
+                            *$field = $setter.into();
+                            Ok(())
+                        }
+                    ),*
+                    _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
+                }
+            }
+        };
+        ($field:ident, $setter:ident, $type:ty, [$($variant:ident),*]) => {
+            #[framed]
+            pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    $(
+                        Event::$variant { ref mut $field, .. } => {
+                            *$field = $setter;
+                            Ok(())
+                        }
+                    ),*
+                    _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
+                }
+            }
+        };
+    }
+
+    pub(crate) use {attr, getter_impl, setter_impl};
 }
