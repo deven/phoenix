@@ -52,12 +52,12 @@ pub enum Event {
     },
 }
 
-event_constructor!(Message, sender: Session, message: Arc<str>);
-event_constructor!(EntryNotify, name: Arc<str>);
-event_constructor!(ExitNotify, name: Arc<str>);
-event_constructor!(Shutdown, seconds: u16);
-event_constructor!(Restart, seconds: u16);
-event_constructor!(LoginTimeout, client: Client);
+constructor!(Message, sender: Session, message: Arc<str>);
+constructor!(EntryNotify, name: Arc<str>);
+constructor!(ExitNotify, name: Arc<str>);
+constructor!(Shutdown, seconds: u16);
+constructor!(Restart, seconds: u16);
+constructor!(LoginTimeout, client: Client);
 
 impl EventRef {
     /// Create a new event handle.
@@ -82,7 +82,7 @@ impl EventRef {
     attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
     attr!(seconds, set_seconds, u16, Copy, [Shutdown, Restart]);
     attr!(sender, set_sender, Session, Clone, [Message]);
-    attr!(timestamp, set_timestamp, DateTime<Utc>, Copy, [*]);
+    attr!(timestamp, set_timestamp, DateTime<Utc>, Clone, [*]);
 }
 
 #[derive(Debug)]
@@ -124,7 +124,7 @@ impl fmt::Display for EventError {
 }
 
 mod macros {
-    macro_rules! event_constructor {
+    macro_rules! constructor {
         ($name:ident, $($field:ident: $type:ty),*) => {
             impl Event {
                 #[allow(non_snake_case)]
@@ -138,47 +138,133 @@ mod macros {
         };
     }
 
-    macro_rules! attr {
-        ($getter:ident, $setter:ident, $type:ty, Into, $variants:tt) => {
-            getter_impl!($getter, $type, ($getter.clone()), $variants);
-            setter_impl!($getter, $setter, Into<$type>, $variants);
+    macro_rules! add_ref_mut {
+        // Entry point for the macro.
+        ($fields:tt) => {
+            { add_ref_mut!(@process_field $fields) }
         };
-        ($getter:ident, $setter:ident, $type:ty, Clone, $variants:tt) => {
-            getter_impl!($getter, $type, ($getter.clone()), $variants);
-            setter_impl!($getter, $setter, $type, $variants);
+
+        // Recursive case: Process the current field and continue with the rest.
+        (@process_field $field:ident, $($rest:tt)*) => {
+            ref mut $field, add_ref_mut!(@process_field $($rest)*)
         };
-        ($getter:ident, $setter:ident, $type:ty, Copy, $variants:tt) => {
-            getter_impl!($getter, $type, (*$getter), $variants);
-            setter_impl!($getter, $setter, $type, $variants);
+
+        // Base case: When there are no more fields to process.
+        (@process_field $field:ident) => {
+            ref mut $field
         };
+
+        // Don't add "ref mut" to ".." token.
+        (@process_field ..) => { .. };
     }
 
-    macro_rules! getter_impl {
-        ($getter:ident, $type:ty, $clone:tt, [*]) => {
+    macro_rules! method {
+        // Immutable method on all variants.
+        ($method:ident, $type:ty, $body:block, [*] $fields:tt) => {
             #[framed]
-            pub async fn $getter(&self) -> Result<$type, EventError> {
+            pub async fn $method(&self) -> Result<$type, EventError> {
                 let event = self.read().await;
                 match &*event {
-                    Event::Message { $getter, .. }
-                    | Event::EntryNotify { $getter, .. }
-                    | Event::ExitNotify { $getter, .. }
-                    | Event::Shutdown { $getter, .. }
-                    | Event::Restart { $getter, .. }
-                    | Event::LoginTimeout { $getter, .. } => Ok($clone),
+                    Event::Message $fields
+                    | Event::EntryNotify $fields
+                    | Event::ExitNotify $fields
+                    | Event::Shutdown $fields
+                    | Event::Restart $fields
+                    | Event::LoginTimeout $fields => $body,
                 }
             }
         };
-        ($getter:ident, $type:ty, $clone:tt, [$($variant:ident),*]) => {
+
+        // Immutable method on specific variants.
+        ($method:ident, $type:ty, $body:block, [$($variant:ident),*] $fields:tt) => {
             #[framed]
-            pub async fn $getter(&self) -> Result<$type, EventError> {
+            pub async fn $method(&self) -> Result<$type, EventError> {
                 let event = self.read().await;
                 match &*event {
                     $(
-                        Event::$variant { $getter, .. } => Ok($clone),
+                        Event::$variant $fields => $body,
                     )*
-                    _ => Err(EventError::invalid_getter(stringify!($getter), self.clone())),
+                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
                 }
             }
+        };
+
+        // Mutable method on all variants.
+        (mut $method:ident, $type:ty, $body:block, [*] $fields:tt) => {
+            #[framed]
+            pub async fn $method(&self) -> Result<$type, EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    Event::Message add_ref_mut!($fields)
+                    | Event::EntryNotify add_ref_mut!($fields)
+                    | Event::ExitNotify add_ref_mut!($fields)
+                    | Event::Shutdown add_ref_mut!($fields)
+                    | Event::Restart add_ref_mut!($fields)
+                    | Event::LoginTimeout add_ref_mut!($fields) => $body,
+                }
+            }
+        };
+
+        // Mutable method on specific variants.
+        (mut $method:ident, $type:ty, $body:block, [$($variant:ident),*] $fields:tt) => {
+            #[framed]
+            pub async fn $method(&self) -> Result<$type, EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    $(
+                        Event::$variant $fields => $body,
+                    )*
+                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
+                }
+            }
+        };
+    }
+
+    macro_rules! method {
+        // Mutable method on all variants with optional generics and arguments
+        (mut $method:ident<$($generics:tt)*>, $type:ty, |$($args:tt)*| $body:block, [*] $fields:tt) => {
+            #[framed]
+            pub async fn $method<$($generics)*>(&self, $($args)*) -> Result<$type, EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    Event::Message add_ref_mut!($fields)
+                    | Event::EntryNotify add_ref_mut!($fields)
+                    | Event::ExitNotify add_ref_mut!($fields)
+                    | Event::Shutdown add_ref_mut!($fields)
+                    | Event::Restart add_ref_mut!($fields)
+                    | Event::LoginTimeout add_ref_mut!($fields) => $body,
+                }
+            }
+        };
+
+        // Mutable method on specific variants with optional generics and arguments
+        (mut $method:ident<$($generics:tt)*>, $type:ty, |$($args:tt)*| $body:block, [$($variant:ident),*] $fields:tt) => {
+            #[framed]
+            pub async fn $method<$($generics)*>(&self, $($args)*) -> Result<$type, EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    $(
+                        Event::$variant $fields => $body,
+                    )*
+                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
+                }
+            }
+        };
+    }
+
+
+    macro_rules! attr {
+        ($getter:ident, $setter:ident, $type:ty, Into, $variants:tt) => {
+            method!($getter, $type, { Ok($getter.clone()) }, $variants { $getter, .. });
+            setter_impl!($getter, $setter, Into<$type>, $variants);
+        };
+        ($getter:ident, $setter:ident, $type:ty, Clone, $variants:tt) => {
+            method!($getter, $type, { Ok($getter.clone()) }, $variants { $getter, .. });
+            setter_impl!($getter, $setter, $type, $variants);
+        };
+        ($getter:ident, $setter:ident, $type:ty, Copy, $variants:tt) => {
+            method!($getter, $type, { Ok(*$getter) }, $variants { $getter, .. });
+            setter_impl!($getter, $setter, $type, $variants);
         };
     }
 
@@ -249,5 +335,5 @@ mod macros {
         };
     }
 
-    pub(crate) use {attr, event_constructor, getter_impl, setter_impl};
+    pub(crate) use {add_ref_mut, attr, constructor, method};
 }
