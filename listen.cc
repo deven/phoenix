@@ -1,7 +1,5 @@
 // -*- C++ -*-
 //
-// $Id$
-//
 // Listen class implementation.
 //
 // Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
