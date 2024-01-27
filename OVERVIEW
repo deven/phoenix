@@ -1,5 +1,3 @@
-$Id$
-
 This is a short overview of some coding conventions in the Phoenix source.
 
 String objects use a unary ~ (tilde) operator as a shorthand for casting the

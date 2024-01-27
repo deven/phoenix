@@ -1,5 +1,3 @@
-$Id$
-
 [original TODO list]
 
 *** When a session terminates, make sure to disconnect it from /send targets!
