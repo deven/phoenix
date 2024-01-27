@@ -1,5 +1,3 @@
-$Id$
-
 All help text for the /help command is currently hardcoded into the source
 code, as an expedient kludge to minimize file I/O.  This is important, since
 blocking on file I/O would cause the server to appear to freeze from the
