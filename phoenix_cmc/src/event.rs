@@ -32,6 +32,13 @@ pub enum Event {
     LoginTimeout { client: Client },
 }
 
+event_constructor!(Message, sender: Session, message: Arc<str>);
+event_constructor!(EntryNotify, name: Arc<str>);
+event_constructor!(ExitNotify, name: Arc<str>);
+event_constructor!(Shutdown, seconds: u16);
+event_constructor!(Restart, seconds: u16);
+event_constructor!(LoginTimeout, client: Client);
+
 impl EventRef {
     /// Create a new event handle.
     pub fn new(event: Event) -> Self {
@@ -96,6 +103,19 @@ impl fmt::Display for EventError {
 }
 
 mod macros {
+    macro_rules! event_constructor {
+        ($name:ident, $($field:ident: $type:ty),*) => {
+            impl Event {
+                #[allow(non_snake_case)]
+                pub fn $name($($field: $type),*) -> Self {
+                    Event::$name {
+                        $($field),*,
+                    }
+                }
+            }
+        };
+    }
+
     macro_rules! attr {
         ($getter:ident, $setter:ident, $type:ty, Into, [$($variant:ident),*]) => {
             getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
@@ -159,5 +179,5 @@ mod macros {
         };
     }
 
-    pub(crate) use {attr, getter_impl, setter_impl};
+    pub(crate) use {attr, event_constructor, getter_impl, setter_impl};
 }
