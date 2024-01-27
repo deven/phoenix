@@ -1,7 +1,5 @@
 // -*- C++ -*-
 //
-// $Id$
-//
 // Session class interface.
 //
 // Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

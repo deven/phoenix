@@ -1,7 +1,5 @@
 /* -*- C -*-
  *
- * $Id$
- *
  * Utility program to encrypt a single password in standard Unix "crypt" form.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>

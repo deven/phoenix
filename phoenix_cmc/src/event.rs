@@ -1,7 +1,5 @@
 // -*- Rust -*-
 //
-// $Id$
-//
 // Phoenix CMC library: event module
 //
 // Copyright 2021-2024 Deven T. Corzine <deven@ties.org>

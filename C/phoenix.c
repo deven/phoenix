@@ -1,7 +1,5 @@
 /* -*- C -*-
  *
- * $Id$
- *
  * Phoenix conferencing system server, main server code.
  *
  * Copyright 1992-2021 Deven T. Corzine <deven@ties.org>
