@@ -13,6 +13,7 @@ use async_backtrace::framed;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use std::time::SystemTime;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 // Use the macros defined in the "macros" module below.
@@ -24,12 +25,31 @@ pub struct EventRef(Arc<RwLock<Event>>);
 
 #[derive(Debug)]
 pub enum Event {
-    Message { sender: Session, message: Arc<str> },
-    EntryNotify { name: Arc<str> },
-    ExitNotify { name: Arc<str> },
-    Shutdown { seconds: u16 },
-    Restart { seconds: u16 },
-    LoginTimeout { client: Client },
+    Message {
+        timestamp: SystemTime,
+        sender: Session,
+        message: Arc<str>,
+    },
+    EntryNotify {
+        timestamp: SystemTime,
+        name: Arc<str>,
+    },
+    ExitNotify {
+        timestamp: SystemTime,
+        name: Arc<str>,
+    },
+    Shutdown {
+        timestamp: SystemTime,
+        seconds: u16,
+    },
+    Restart {
+        timestamp: SystemTime,
+        seconds: u16,
+    },
+    LoginTimeout {
+        timestamp: SystemTime,
+        client: Client,
+    },
 }
 
 event_constructor!(Message, sender: Session, message: Arc<str>);
@@ -62,6 +82,7 @@ impl EventRef {
     attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
     attr!(seconds, set_seconds, u16, Copy, [Shutdown, Restart]);
     attr!(sender, set_sender, Session, Clone, [Message]);
+    attr!(timestamp, set_timestamp, SystemTime, Copy, [*]);
 }
 
 #[derive(Debug)]
@@ -109,6 +130,7 @@ mod macros {
                 #[allow(non_snake_case)]
                 pub fn $name($($field: $type),*) -> Self {
                     Event::$name {
+                        timestamp: SystemTime::now(),
                         $($field),*,
                     }
                 }
@@ -117,21 +139,35 @@ mod macros {
     }
 
     macro_rules! attr {
-        ($getter:ident, $setter:ident, $type:ty, Into, [$($variant:ident),*]) => {
-            getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
-            setter_impl!($getter, $setter, Into<$type>, [$($variant),*]);
+        ($getter:ident, $setter:ident, $type:ty, Into, $variants:tt) => {
+            getter_impl!($getter, $type, ($getter.clone()), $variants);
+            setter_impl!($getter, $setter, Into<$type>, $variants);
         };
-        ($getter:ident, $setter:ident, $type:ty, Clone, [$($variant:ident),*]) => {
-            getter_impl!($getter, $type, ($getter.clone()), [$($variant),*]);
-            setter_impl!($getter, $setter, $type, [$($variant),*]);
+        ($getter:ident, $setter:ident, $type:ty, Clone, $variants:tt) => {
+            getter_impl!($getter, $type, ($getter.clone()), $variants);
+            setter_impl!($getter, $setter, $type, $variants);
         };
-        ($getter:ident, $setter:ident, $type:ty, Copy, [$($variant:ident),*]) => {
-            getter_impl!($getter, $type, (*$getter), [$($variant),*]);
-            setter_impl!($getter, $setter, $type, [$($variant),*]);
+        ($getter:ident, $setter:ident, $type:ty, Copy, $variants:tt) => {
+            getter_impl!($getter, $type, (*$getter), $variants);
+            setter_impl!($getter, $setter, $type, $variants);
         };
     }
 
     macro_rules! getter_impl {
+        ($getter:ident, $type:ty, $clone:tt, [*]) => {
+            #[framed]
+            pub async fn $getter(&self) -> Result<$type, EventError> {
+                let event = self.read().await;
+                match &*event {
+                    Event::Message { $getter, .. }
+                    | Event::EntryNotify { $getter, .. }
+                    | Event::ExitNotify { $getter, .. }
+                    | Event::Shutdown { $getter, .. }
+                    | Event::Restart { $getter, .. }
+                    | Event::LoginTimeout { $getter, .. } => Ok($clone),
+                }
+            }
+        };
         ($getter:ident, $type:ty, $clone:tt, [$($variant:ident),*]) => {
             #[framed]
             pub async fn $getter(&self) -> Result<$type, EventError> {
@@ -147,6 +183,23 @@ mod macros {
     }
 
     macro_rules! setter_impl {
+        ($field:ident, $setter:ident, Into<$type:ty>, [*]) => {
+            #[framed]
+            pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    Event::Message { ref mut $field, .. }
+                    | Event::EntryNotify { ref mut $field, .. }
+                    | Event::ExitNotify { ref mut $field, .. }
+                    | Event::Shutdown { ref mut $field, .. }
+                    | Event::Restart { ref mut $field, .. }
+                    | Event::LoginTimeout { ref mut $field, .. } => {
+                        *$field = $setter.into();
+                        Ok(())
+                    }
+                }
+            }
+        };
         ($field:ident, $setter:ident, Into<$type:ty>, [$($variant:ident),*]) => {
             #[framed]
             pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
@@ -159,6 +212,23 @@ mod macros {
                         }
                     ),*
                     _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
+                }
+            }
+        };
+        ($field:ident, $setter:ident, $type:ty, [*]) => {
+            #[framed]
+            pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
+                let mut event = self.write().await;
+                match *event {
+                    Event::Message { ref mut $field, .. }
+                    | Event::EntryNotify { ref mut $field, .. }
+                    | Event::ExitNotify { ref mut $field, .. }
+                    | Event::Shutdown { ref mut $field, .. }
+                    | Event::Restart { ref mut $field, .. }
+                    | Event::LoginTimeout { ref mut $field, .. } => {
+                        *$field = $setter;
+                        Ok(())
+                    }
                 }
             }
         };
