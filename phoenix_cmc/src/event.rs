@@ -35,42 +35,8 @@ pub enum Event {
 }
 
 impl EventRef {
-    /// Create a new message event.
-    pub fn new_message<T: Into<Arc<str>>>(sender: Session, message: T) -> Self {
-        let message = message.into();
-        let event = Event::Message { sender, message };
-        EventRef(Arc::new(RwLock::new(event)))
-    }
-
-    /// Create a new entry notification event.
-    pub fn new_entry_notify<T: Into<Arc<str>>>(name: T) -> Self {
-        let name = name.into();
-        let event = Event::EntryNotify { name };
-        EventRef(Arc::new(RwLock::new(event)))
-    }
-
-    /// Create a new exit notification event.
-    pub fn new_exit_notify<T: Into<Arc<str>>>(name: T) -> Self {
-        let name = name.into();
-        let event = Event::ExitNotify { name };
-        EventRef(Arc::new(RwLock::new(event)))
-    }
-
-    /// Create a new shutdown event.
-    pub fn new_shutdown_event(seconds: u16) -> Self {
-        let event = Event::Shutdown { seconds };
-        EventRef(Arc::new(RwLock::new(event)))
-    }
-
-    /// Create a new restart event.
-    pub fn new_restart_event(seconds: u16) -> Self {
-        let event = Event::Restart { seconds };
-        EventRef(Arc::new(RwLock::new(event)))
-    }
-
-    /// Create a new login timeout event.
-    pub fn new_login_timeout_event(client: Client) -> Self {
-        let event = Event::LoginTimeout { client };
+    /// Create a new event handle.
+    pub fn new(event: Event) -> Self {
         EventRef(Arc::new(RwLock::new(event)))
     }
 
