@@ -77,33 +77,25 @@ impl EventRef {
         self.0.write().await
     }
 
-    attr!(client, set_client, Client, Clone, [LoginTimeout]);
-    attr!(message, set_message, Arc<str>, Into, [Message]);
-    attr!(name, set_name, Arc<str>, Into, [EntryNotify, ExitNotify]);
-    attr!(seconds, set_seconds, u16, Copy, [Shutdown, Restart]);
-    attr!(sender, set_sender, Session, Clone, [Message]);
-    attr!(timestamp, set_timestamp, DateTime<Utc>, Clone, [*]);
+    attr!(client, set_client, Client, [LoginTimeout]);
+    attr!(message, set_message, Into<Arc<str>>, [Message]);
+    attr!(name, set_name, Into<Arc<str>>, [EntryNotify, ExitNotify]);
+    attr!(seconds, set_seconds, Copy u16, [Shutdown, Restart]);
+    attr!(sender, set_sender, Session, [Message]);
+    attr!(timestamp, set_timestamp, DateTime<Utc>, [*]);
 }
 
 #[derive(Debug)]
 pub enum EventError {
-    InvalidGetter {
-        getter: &'static str,
-        event: EventRef,
-    },
-    InvalidSetter {
-        setter: &'static str,
+    InvalidVariant {
+        method: &'static str,
         event: EventRef,
     },
 }
 
 impl EventError {
-    pub fn invalid_getter(getter: &'static str, event: EventRef) -> Self {
-        Self::InvalidGetter { getter, event }
-    }
-
-    pub fn invalid_setter(setter: &'static str, event: EventRef) -> Self {
-        Self::InvalidSetter { setter, event }
+    pub fn invalid_variant(method: &'static str, event: EventRef) -> Self {
+        Self::InvalidVariant { method, event }
     }
 }
 
@@ -117,13 +109,42 @@ impl fmt::Display for EventError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let called = "() called on invalid event variant: ";
         match self {
-            Self::InvalidGetter { getter, event } => write!(f, "Getter {getter}{called}{event:#?}"),
-            Self::InvalidSetter { setter, event } => write!(f, "Setter {setter}{called}{event:#?}"),
+            Self::InvalidVariant { method, event } => write!(f, "Method {method}{called}{event:#?}"),
         }
     }
 }
 
 mod macros {
+    macro_rules! add_ref_mut {
+        ($variant:ident { $($fields:ident),* }) => {
+            Event::$variant { $( $fields ),* }
+        };
+        ($variant:ident { $($fields:ident),*, .. }) => {
+            Event::$variant { $( $fields ),*, .. }
+        };
+        (mut $variant:ident { $($fields:ident),* }) => {
+            Event::$variant { $( ref mut $fields ),* }
+        };
+        (mut $variant:ident { $($fields:ident),*, .. }) => {
+            Event::$variant { $( ref mut $fields ),*, .. }
+        };
+    }
+
+    macro_rules! attr {
+        ($field:ident, $setter:ident, Into<$type:ty>, $variants:tt) => {
+            method!($field() -> $type { Ok($field.clone()) } => $variants { $field, .. });
+            method!(mut $setter[<T: Into<$type>>]($setter: T) -> () { *$field = $setter.into(); Ok(()) } => $variants { $field, .. });
+        };
+        ($field:ident, $setter:ident, $type:ty, $variants:tt) => {
+            method!($field() -> $type { Ok($field.clone()) } => $variants { $field, .. });
+            method!(mut $setter($setter: $type) -> () { *$field = $setter; Ok(()) } => $variants { $field, .. });
+        };
+        ($field:ident, $setter:ident, Copy $type:ty, $variants:tt) => {
+            method!($field() -> $type { Ok(*$field) } => $variants { $field, .. });
+            method!(mut $setter($setter: $type) -> () { *$field = $setter; Ok(()) } => $variants { $field, .. });
+        };
+    }
+
     macro_rules! constructor {
         ($name:ident, $($field:ident: $type:ty),*) => {
             impl Event {
@@ -138,202 +159,80 @@ mod macros {
         };
     }
 
-    macro_rules! add_ref_mut {
-        // Entry point for the macro.
-        ($fields:tt) => {
-            { add_ref_mut!(@process_field $fields) }
-        };
-
-        // Recursive case: Process the current field and continue with the rest.
-        (@process_field $field:ident, $($rest:tt)*) => {
-            ref mut $field, add_ref_mut!(@process_field $($rest)*)
-        };
-
-        // Base case: When there are no more fields to process.
-        (@process_field $field:ident) => {
-            ref mut $field
-        };
-
-        // Don't add "ref mut" to ".." token.
-        (@process_field ..) => { .. };
+    macro_rules! fix_alternations {
+        (| $($rest:tt)*) => { $($rest)* };
     }
 
     macro_rules! method {
-        // Immutable method on all variants.
-        ($method:ident, $type:ty, $body:block, [*] $fields:tt) => {
+        ($method:ident [$($generics:tt)*] ($($args:tt)*) -> $return:ty $body:block => $variants:tt $fields:tt) => {
+            method_impl!($method, [$($generics)*], ($($args)*), $return, $body, $variants $fields);
+        };
+        (mut $method:ident [$($generics:tt)*] ($($args:tt)*) -> $return:ty $body:block => $variants:tt $fields:tt) => {
+            method_impl!(mut $method, [$($generics)*], ($($args)*), $return, $body, $variants $fields);
+        };
+        ($method:ident ($($args:tt)*) -> $return:ty $body:block => $variants:tt $fields:tt) => {
+            method_impl!($method, [], ($($args)*), $return, $body, $variants $fields);
+        };
+        (mut $method:ident ($($args:tt)*) -> $return:ty $body:block => $variants:tt $fields:tt) => {
+            method_impl!(mut $method, [], ($($args)*), $return, $body, $variants $fields);
+        };
+    }
+
+    macro_rules! method_impl {
+        ($method:ident, [$($generics:tt)*], ($($args:tt)*), $return:ty, $body:block, [*] $fields:tt) => {
             #[framed]
-            pub async fn $method(&self) -> Result<$type, EventError> {
+            pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let event = self.read().await;
                 match &*event {
-                    Event::Message $fields
-                    | Event::EntryNotify $fields
-                    | Event::ExitNotify $fields
-                    | Event::Shutdown $fields
-                    | Event::Restart $fields
-                    | Event::LoginTimeout $fields => $body,
+                    add_ref_mut!(Message $fields)
+                        | add_ref_mut!(EntryNotify $fields)
+                        | add_ref_mut!(ExitNotify $fields)
+                        | add_ref_mut!(Shutdown $fields)
+                        | add_ref_mut!(Restart $fields)
+                        | add_ref_mut!(LoginTimeout $fields) => $body,
                 }
             }
         };
-
-        // Immutable method on specific variants.
-        ($method:ident, $type:ty, $body:block, [$($variant:ident),*] $fields:tt) => {
+        ($method:ident, [$($generics:tt)*], ($($args:tt)*), $return:ty, $body:block, [$($variant:ident),+] $fields:tt) => {
             #[framed]
-            pub async fn $method(&self) -> Result<$type, EventError> {
+            pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let event = self.read().await;
                 match &*event {
-                    $(
-                        Event::$variant $fields => $body,
-                    )*
-                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
+                    fix_alternations!($( | add_ref_mut!($variant $fields) )*) => $body,
+                    _ => Err(EventError::invalid_variant(stringify!($method), self.clone())),
                 }
             }
         };
-
-        // Mutable method on all variants.
-        (mut $method:ident, $type:ty, $body:block, [*] $fields:tt) => {
+        (mut $method:ident, [$($generics:tt)*], ($($args:tt)*), $return:ty, $body:block, [*] $fields:tt) => {
             #[framed]
-            pub async fn $method(&self) -> Result<$type, EventError> {
+            pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let mut event = self.write().await;
                 match *event {
-                    Event::Message add_ref_mut!($fields)
-                    | Event::EntryNotify add_ref_mut!($fields)
-                    | Event::ExitNotify add_ref_mut!($fields)
-                    | Event::Shutdown add_ref_mut!($fields)
-                    | Event::Restart add_ref_mut!($fields)
-                    | Event::LoginTimeout add_ref_mut!($fields) => $body,
+                    add_ref_mut!(mut Message $fields)
+                        | add_ref_mut!(mut EntryNotify $fields)
+                        | add_ref_mut!(mut ExitNotify $fields)
+                        | add_ref_mut!(mut Shutdown $fields)
+                        | add_ref_mut!(mut Restart $fields)
+                        | add_ref_mut!(mut LoginTimeout $fields) => $body,
                 }
             }
         };
-
-        // Mutable method on specific variants.
-        (mut $method:ident, $type:ty, $body:block, [$($variant:ident),*] $fields:tt) => {
+        (mut $method:ident, [$($generics:tt)*], ($($args:tt)*), $return:ty, $body:block, [$($variant:ident),+] $fields:tt) => {
             #[framed]
-            pub async fn $method(&self) -> Result<$type, EventError> {
+            pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let mut event = self.write().await;
                 match *event {
-                    $(
-                        Event::$variant $fields => $body,
-                    )*
-                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
+                    fix_alternations!($( | add_ref_mut!(mut $variant $fields) )*) => $body,
+                    _ => Err(EventError::invalid_variant(stringify!($method), self.clone())),
                 }
             }
         };
     }
 
-    macro_rules! method {
-        // Mutable method on all variants with optional generics and arguments
-        (mut $method:ident<$($generics:tt)*>, $type:ty, |$($args:tt)*| $body:block, [*] $fields:tt) => {
-            #[framed]
-            pub async fn $method<$($generics)*>(&self, $($args)*) -> Result<$type, EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    Event::Message add_ref_mut!($fields)
-                    | Event::EntryNotify add_ref_mut!($fields)
-                    | Event::ExitNotify add_ref_mut!($fields)
-                    | Event::Shutdown add_ref_mut!($fields)
-                    | Event::Restart add_ref_mut!($fields)
-                    | Event::LoginTimeout add_ref_mut!($fields) => $body,
-                }
-            }
-        };
-
-        // Mutable method on specific variants with optional generics and arguments
-        (mut $method:ident<$($generics:tt)*>, $type:ty, |$($args:tt)*| $body:block, [$($variant:ident),*] $fields:tt) => {
-            #[framed]
-            pub async fn $method<$($generics)*>(&self, $($args)*) -> Result<$type, EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    $(
-                        Event::$variant $fields => $body,
-                    )*
-                    _ => Err(EventError::invalid_getter(stringify!($method), self.clone())),
-                }
-            }
-        };
-    }
-
-
-    macro_rules! attr {
-        ($getter:ident, $setter:ident, $type:ty, Into, $variants:tt) => {
-            method!($getter, $type, { Ok($getter.clone()) }, $variants { $getter, .. });
-            setter_impl!($getter, $setter, Into<$type>, $variants);
-        };
-        ($getter:ident, $setter:ident, $type:ty, Clone, $variants:tt) => {
-            method!($getter, $type, { Ok($getter.clone()) }, $variants { $getter, .. });
-            setter_impl!($getter, $setter, $type, $variants);
-        };
-        ($getter:ident, $setter:ident, $type:ty, Copy, $variants:tt) => {
-            method!($getter, $type, { Ok(*$getter) }, $variants { $getter, .. });
-            setter_impl!($getter, $setter, $type, $variants);
-        };
-    }
-
-    macro_rules! setter_impl {
-        ($field:ident, $setter:ident, Into<$type:ty>, [*]) => {
-            #[framed]
-            pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    Event::Message { ref mut $field, .. }
-                    | Event::EntryNotify { ref mut $field, .. }
-                    | Event::ExitNotify { ref mut $field, .. }
-                    | Event::Shutdown { ref mut $field, .. }
-                    | Event::Restart { ref mut $field, .. }
-                    | Event::LoginTimeout { ref mut $field, .. } => {
-                        *$field = $setter.into();
-                        Ok(())
-                    }
-                }
-            }
-        };
-        ($field:ident, $setter:ident, Into<$type:ty>, [$($variant:ident),*]) => {
-            #[framed]
-            pub async fn $setter<T: Into<$type>>(&self, $setter: T) -> Result<(), EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    $(
-                        Event::$variant { ref mut $field, .. } => {
-                            *$field = $setter.into();
-                            Ok(())
-                        }
-                    ),*
-                    _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
-                }
-            }
-        };
-        ($field:ident, $setter:ident, $type:ty, [*]) => {
-            #[framed]
-            pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    Event::Message { ref mut $field, .. }
-                    | Event::EntryNotify { ref mut $field, .. }
-                    | Event::ExitNotify { ref mut $field, .. }
-                    | Event::Shutdown { ref mut $field, .. }
-                    | Event::Restart { ref mut $field, .. }
-                    | Event::LoginTimeout { ref mut $field, .. } => {
-                        *$field = $setter;
-                        Ok(())
-                    }
-                }
-            }
-        };
-        ($field:ident, $setter:ident, $type:ty, [$($variant:ident),*]) => {
-            #[framed]
-            pub async fn $setter(&self, $setter: $type) -> Result<(), EventError> {
-                let mut event = self.write().await;
-                match *event {
-                    $(
-                        Event::$variant { ref mut $field, .. } => {
-                            *$field = $setter;
-                            Ok(())
-                        }
-                    ),*
-                    _ => Err(EventError::invalid_setter(stringify!($setter), self.clone())),
-                }
-            }
-        };
-    }
-
-    pub(crate) use {add_ref_mut, attr, constructor, method};
+    pub(crate) use add_ref_mut;
+    pub(crate) use attr;
+    pub(crate) use constructor;
+    pub(crate) use fix_alternations;
+    pub(crate) use method;
+    pub(crate) use method_impl;
 }
