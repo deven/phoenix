@@ -158,13 +158,17 @@ impl EventRef {
             } => {
                 self.shutdown_or_restart(server.clone(), by.clone(), *delay, false)
                     .await
-            },
+            }
             Event::Restart {
                 server, by, delay, ..
             } => {
                 self.shutdown_or_restart(server.clone(), by.clone(), *delay, true)
                     .await
-            },
+            }
+            Event::LoginTimeout { client, .. } => {
+                client.login_timeout().await;
+                Ok(())
+            }
             _ => Err(EventError::invalid_variant("execute", self.clone())),
         }
     }
