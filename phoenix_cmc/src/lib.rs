@@ -15,6 +15,7 @@ pub mod error;
 pub mod event;
 pub mod file;
 pub mod server;
+pub mod user;
 
 use crate::error::PhoenixError;
 use async_backtrace::taskdump_tree;
