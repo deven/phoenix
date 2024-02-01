@@ -32,18 +32,16 @@ pub struct EventRef(Arc<RwLock<Event>>);
 
 #[derive(Debug)]
 pub enum Event {
+    TextOutput {
+        timestamp: DateTime<Utc>,
+        text: Arc<str>,
+    },
     Message {
         timestamp: DateTime<Utc>,
-        sender: Session,
-        message: Arc<str>,
-    },
-    EntryNotify {
-        timestamp: DateTime<Utc>,
-        name: Arc<str>,
-    },
-    ExitNotify {
-        timestamp: DateTime<Utc>,
-        name: Arc<str>,
+        is_public: bool,
+        from: Name,
+        to: Sendlist,
+        text: Arc<str>,
     },
     Shutdown {
         timestamp: DateTime<Utc>,
@@ -61,14 +59,133 @@ pub enum Event {
         timestamp: DateTime<Utc>,
         client: Client,
     },
+    EntryNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    ExitNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    TransferNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    AttachNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    DetachNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        intentional: bool,
+    },
+    HereNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    AwayNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    BusyNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    GoneNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+    },
+    CreateNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+        title: Arc<str>,
+    },
+    DestroyNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+    },
+    JoinNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+    },
+    QuitNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+    },
+    PublicNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+    },
+    PrivateNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        discussion: Discussion,
+    },
+    PermitNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        whom: Name,
+        discussion: Discussion,
+        is_explicit: bool,
+    },
+    DepermitNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        whom: Name,
+        discussion: Discussion,
+        is_explicit: bool,
+        removed: bool,
+    },
+    AppointNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        whom: Name,
+        discussion: Discussion,
+    },
+    UnappointNotify {
+        timestamp: DateTime<Utc>,
+        who: Name,
+        whom: Name,
+        discussion: Discussion,
+    },
+    RenameNotify {
+        timestamp: DateTime<Utc>,
+        old_name: Name,
+        new_name: Name,
+    },
 }
 
-constructor!(Message, sender: Session, message: Arc<str>);
-constructor!(EntryNotify, name: Arc<str>);
-constructor!(ExitNotify, name: Arc<str>);
+constructor!(TextOutput, text: Arc<str>);
+constructor!(Message, is_public: bool, from: Name, to: Name, text: Arc<str>);
 constructor!(Shutdown, server: Server, by: Arc<str>, delay: Duration);
 constructor!(Restart, server: Server, by: Arc<str>, delay: Duration);
 constructor!(LoginTimeout, client: Client);
+constructor!(EntryNotify, who: Name);
+constructor!(ExitNotify, who: Name);
+constructor!(TransferNotify, who: Name);
+constructor!(AttachNotify, who: Name);
+constructor!(DetachNotify, who: Name, intentional: bool);
+constructor!(HereNotify, who: Name);
+constructor!(AwayNotify, who: Name);
+constructor!(BusyNotify, who: Name);
+constructor!(GoneNotify, who: Name);
+constructor!(CreateNotify, who: Name, discussion: Discussion, title: Arc<str>);
+constructor!(DestroyNotify, who: Name, discussion: Discussion);
+constructor!(JoinNotify, who: Name, discussion: Discussion);
+constructor!(QuitNotify, who: Name, discussion: Discussion);
+constructor!(PublicNotify, who: Name, discussion: Discussion);
+constructor!(PrivateNotify, who: Name, discussion: Discussion);
+constructor!(PermitNotify, who: Name, whom: Name, discussion: Discussion, is_explicit: bool);
+constructor!(DepermitNotify, who: Name, whom: Name, discussion: Discussion, is_explicit: bool, removed: bool);
+constructor!(AppointNotify, who: Name, whom: Name, discussion: Discussion);
+constructor!(UnappointNotify, who: Name, whom: Name, discussion: Discussion);
+constructor!(RenameNotify, old_name: Name, old_name: Name);
 
 impl EventRef {
     /// Create a new event handle.
@@ -88,12 +205,72 @@ impl EventRef {
         self.0.write().await
     }
 
+    attr!(by, set_by, Into<Arc<str>>, [Shutdown, Restart]);
     attr!(client, set_client, Client, [LoginTimeout]);
-    attr!(message, set_message, Into<Arc<str>>, [Message]);
-    attr!(name, set_name, Into<Arc<str>>, [EntryNotify, ExitNotify]);
     attr!(delay, set_delay, Copy Duration, [Shutdown, Restart]);
+    attr!(
+        discussion,
+        set_discussion,
+        Discussion,
+        [
+            CreateNotify,
+            DestroyNotify,
+            JoinNotify,
+            QuitNotify,
+            PublicNotify,
+            PrivateNotify,
+            PermitNotify,
+            DepermitNotify,
+            AppointNotify,
+            UnappointNotify
+        ]
+    );
+    attr!(from, set_from, Name, [Message]);
+    attr!(intentional, set_intentional, Copy bool, [DetachNotify]);
+    attr!(is_explicit, set_is_explicit, Copy bool, [PermitNotify, DepermitNotify]);
+    attr!(is_public, set_is_public, Copy bool, [Message]);
+    attr!(message, set_message, Into<Arc<str>>, [Message]);
+    attr!(old_name, set_old_name, Name, [RenameNotify]);
+    attr!(new_name, set_new_name, Name, [RenameNotify]);
+    attr!(removed, set_removed, Copy bool, [DepermitNotify]);
     attr!(sender, set_sender, Session, [Message]);
+    attr!(server, set_server, Server, [Shutdown, Restart]);
+    attr!(text, set_text, Into<Arc<str>>, [TextOutput, Message]);
     attr!(timestamp, set_timestamp, DateTime<Utc>, [*]);
+    attr!(title, set_title, Into<Arc<str>>, [CreateNotify]);
+    attr!(to, set_to, Sendlist, [Message]);
+    attr!(
+        who,
+        set_who,
+        Into<Arc<str>>,
+        [
+            EntryNotify,
+            ExitNotify,
+            TransferNotify,
+            AttachNotify,
+            DetachNotify,
+            HereNotify,
+            AwayNotify,
+            BusyNotify,
+            GoneNotify,
+            CreateNotify,
+            DestroyNotify,
+            JoinNotify,
+            QuitNotify,
+            PublicNotify,
+            PrivateNotify,
+            PermitNotify,
+            DepermitNotify,
+            AppointNotify,
+            UnappointNotify
+        ]
+    );
+    attr!(
+        whom,
+        set_whom,
+        Into<Arc<str>>,
+        [PermitNotify, DepermitNotify, AppointNotify, UnappointNotify]
+    );
 
     #[framed]
     pub async fn shutdown_or_restart(
@@ -171,6 +348,263 @@ impl EventRef {
             }
             _ => Err(EventError::invalid_variant("execute", self.clone())),
         }
+    }
+}
+
+impl Event {
+    pub fn fmt_for_recipient(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        recipient: Option<Session>,
+    ) -> fmt::Result {
+        match self {
+            Event::TextOutput { text, .. } => {
+                write!(f, "{text}")
+            }
+            Event::Message {
+                is_public,
+                from,
+                to,
+                text,
+                ..
+            } => {
+                let msg_type = if is_public {
+                    "Public message"
+                } else {
+                    "Message"
+                };
+                write!(f, "{msg_type} from {from} to {to}: {text}")
+            }
+            Event::Shutdown { by, .. } => {
+                write!(f, "Shutdown initiated by {by}.")
+            }
+            Event::Restart { by, .. } => {
+                write!(f, "Restart initiated by {by}.")
+            }
+            Event::LoginTimeout { client, .. } => {
+                write!(f, "Login timeout for {client}.")
+            }
+            Event::EntryNotify { who, .. } => {
+                write!(f, "{who} has entered Phoenix!")
+            }
+            Event::ExitNotify { who, .. } => {
+                write!(f, "{who} has left Phoenix!")
+            }
+            Event::TransferNotify { who, .. } => {
+                write!(f, "{who} has transferred to new connection.")
+            }
+            Event::AttachNotify { who, .. } => {
+                write!(f, "{who} is now attached.")
+            }
+            Event::DetachNotify {
+                who, intentional, ..
+            } => {
+                let how = if intentional {
+                    "intentionally"
+                } else {
+                    "accidentally"
+                };
+                write!(f, "{who} has {how} detached.")
+            }
+            Event::HereNotify { who, .. } => {
+                write!(f, "{who} is now here.")
+            }
+            Event::AwayNotify { who, .. } => {
+                write!(f, "{who} is now away.")
+            }
+            Event::BusyNotify { who, .. } => {
+                write!(f, "{who} is now busy.")
+            }
+            Event::GoneNotify { who, .. } => {
+                write!(f, "{who} is now gone.")
+            }
+            Event::CreateNotify {
+                who,
+                discussion,
+                title,
+                ..
+            } => {
+                let who = &discussion.who;
+                let title = &discussion.title;
+                let disc_type = if discussion.public {
+                    "discussion"
+                } else {
+                    "private discussion"
+                };
+
+                write!(
+                    f,
+                    "{who} has created {disc_type} {discussion}, \"{title}\"."
+                )
+            }
+            Event::DestroyNotify {
+                who, discussion, ..
+            } => {
+                write!(f, "{who} has destroyed discussion {discussion}.")
+            }
+            Event::JoinNotify {
+                who, discussion, ..
+            } => {
+                write!(f, "{who} has joined discussion {discussion}.")
+            }
+            Event::QuitNotify {
+                who, discussion, ..
+            } => {
+                write!(f, "{who} has quit discussion {discussion}.")
+            }
+            Event::PublicNotify {
+                who, discussion, ..
+            } => {
+                write!(f, "{who} has made discussion %s public.")
+            }
+            Event::PrivateNotify {
+                who, discussion, ..
+            } => {
+                write!(f, "{who} has made discussion %s private.")
+            }
+            Event::PermitNotify {
+                who,
+                whom,
+                discussion,
+                is_explicit,
+                ..
+            } => {
+                let what = if discussion.public {
+                    if is_explicit {
+                        "repermitted you to"
+                    } else {
+                        "explicitly permitted you to public"
+                    }
+                } else {
+                    if is_explicit {
+                        "repermitted you to private"
+                    } else {
+                        "permitted you to private"
+                    }
+                };
+
+                write!(f, "{who} has {what} discussion {discussion}.")
+            }
+            Event::DepermitNotify {
+                who,
+                whom,
+                discussion,
+                is_explicit,
+                removed,
+                ..
+            } => {
+                let is_you = if let recipient = Some(recipient) {
+                    Arc::ptr_eq(whom, recipient)
+                } else {
+                    false
+                };
+
+                let (who, what) = if discussion.public {
+                    if removed {
+                        if is_you {
+                            (who, "depermitted and removed you from")
+                        } else {
+                            (whom, "been removed from")
+                        }
+                    } else {
+                        (who, "depermitted you from")
+                    }
+                } else {
+                    if is_explicit {
+                        (who, "explicitly depermitted you from private")
+                    } else {
+                        if removed {
+                            if is_you {
+                                (who, "depermitted and removed you from private")
+                            } else {
+                                (whom, "been removed from")
+                            }
+                        } else {
+                            (who, "depermitted you from private")
+                        }
+                    }
+                };
+
+                write!(f, "{who} has {what} discussion {discussion}.")
+            }
+            Event::AppointNotify {
+                who,
+                whom,
+                discussion,
+                ..
+            } => {
+                let is_you = if let recipient = Some(recipient) {
+                    Arc::ptr_eq(whom, recipient)
+                } else {
+                    false
+                };
+
+                if is_you {
+                    write!(
+                        f,
+                        "{who} has appointed you as a moderator of discussion {discussion}"
+                    )
+                } else {
+                    write!(
+                        f,
+                        "{who} has appointed {whom} as a moderator of discussion {discussion}"
+                    )
+                }
+            }
+            Event::UnappointNotify {
+                who,
+                whom,
+                discussion,
+                ..
+            } => {
+                let is_you = if let recipient = Some(recipient) {
+                    Arc::ptr_eq(whom, recipient)
+                } else {
+                    false
+                };
+
+                if is_you {
+                    write!(
+                        f,
+                        "{who} has unappointed you as a moderator of discussion {discussion}"
+                    )
+                } else {
+                    write!(
+                        f,
+                        "{who} has unappointed {whom} as a moderator of discussion {discussion}"
+                    )
+                }
+            }
+            Event::RenameNotify {
+                old_name, new_name, ..
+            } => {
+                write!(f, "{old_name} has renamed to {new_name}.")
+            }
+        }
+    }
+}
+
+impl EventRef {
+    fn fmt_for_recipient(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        recipient: Option<Session>,
+    ) -> fmt::Result {
+        let event = self.read().await;
+        event.fmt_for_recipient(f, recipient)
+    }
+}
+
+impl fmt::Display for Event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_for_recipient(f, None);
+    }
+}
+
+impl fmt::Display for EventRef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let event = self.read().await;
+        event.fmt_for_recipient(f, None)
     }
 }
 
