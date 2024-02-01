@@ -9,12 +9,19 @@
 
 use crate::client::session::Session;
 use crate::client::Client;
+use crate::server::Server;
 use async_backtrace::framed;
 use chrono::{DateTime, Utc};
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::time::sleep;
+use tracing::{info, warn};
+
+const BELL: char = '\x07';
+const FINAL_WARNING_DELAY: Duration = Duration::from_secs(3);
 
 // Use the macros defined in the "macros" module below.
 use macros::*;
@@ -40,11 +47,15 @@ pub enum Event {
     },
     Shutdown {
         timestamp: DateTime<Utc>,
-        seconds: u16,
+        server: Server,
+        by: Arc<str>,
+        delay: Duration,
     },
     Restart {
         timestamp: DateTime<Utc>,
-        seconds: u16,
+        server: Server,
+        by: Arc<str>,
+        delay: Duration,
     },
     LoginTimeout {
         timestamp: DateTime<Utc>,
@@ -55,8 +66,8 @@ pub enum Event {
 constructor!(Message, sender: Session, message: Arc<str>);
 constructor!(EntryNotify, name: Arc<str>);
 constructor!(ExitNotify, name: Arc<str>);
-constructor!(Shutdown, seconds: u16);
-constructor!(Restart, seconds: u16);
+constructor!(Shutdown, server: Server, by: Arc<str>, delay: Duration);
+constructor!(Restart, server: Server, by: Arc<str>, delay: Duration);
 constructor!(LoginTimeout, client: Client);
 
 impl EventRef {
@@ -80,9 +91,83 @@ impl EventRef {
     attr!(client, set_client, Client, [LoginTimeout]);
     attr!(message, set_message, Into<Arc<str>>, [Message]);
     attr!(name, set_name, Into<Arc<str>>, [EntryNotify, ExitNotify]);
-    attr!(seconds, set_seconds, Copy u16, [Shutdown, Restart]);
+    attr!(delay, set_delay, Copy Duration, [Shutdown, Restart]);
     attr!(sender, set_sender, Session, [Message]);
     attr!(timestamp, set_timestamp, DateTime<Utc>, [*]);
+
+    #[framed]
+    pub async fn shutdown_or_restart(
+        &self,
+        server: Server,
+        by: Arc<str>,
+        delay: Duration,
+        restart: bool,
+    ) -> Result<(), EventError> {
+        let operation = if restart { "restart" } else { "shutdown" };
+
+        if delay.is_zero() {
+            warn!("Immediate server {operation} requested by {by}.");
+        } else {
+            let secs = delay.as_secs();
+            let nanos = delay.subsec_nanos();
+            let secs = if nanos == 0 {
+                format!("{secs}")
+            } else {
+                let nanos = format!("{nanos:0>9}");
+                format!("{secs}.{}", nanos.trim_end_matches('0'))
+            };
+
+            warn!("Server {operation} requested by {by} in {secs} seconds.");
+            server
+                .announce(format!(
+                    "{BELL}>>> This server will {operation} in {secs} seconds... <<<\n{BELL}"
+                ))
+                .await;
+            sleep(delay).await;
+        }
+
+        info!("Final {operation} warning.");
+
+        if restart {
+            server
+                .announce("{BELL}>>> Server restarting NOW!  Goodbye. <<<\n{BELL}")
+                .await;
+        } else {
+            server
+                .announce("{BELL}>>> Server shutting down NOW!  Goodbye. <<<\n{BELL}")
+                .await;
+        }
+
+        sleep(FINAL_WARNING_DELAY).await;
+
+        if restart {
+            server.restart().await;
+        } else {
+            server.shutdown().await;
+        }
+
+        Ok(())
+    }
+
+    #[framed]
+    pub async fn execute(&self) -> Result<(), EventError> {
+        let event = self.read().await;
+        match &*event {
+            Event::Shutdown {
+                server, by, delay, ..
+            } => {
+                self.shutdown_or_restart(server.clone(), by.clone(), *delay, false)
+                    .await
+            },
+            Event::Restart {
+                server, by, delay, ..
+            } => {
+                self.shutdown_or_restart(server.clone(), by.clone(), *delay, true)
+                    .await
+            },
+            _ => Err(EventError::invalid_variant("execute", self.clone())),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -109,7 +194,9 @@ impl fmt::Display for EventError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let called = "() called on invalid event variant: ";
         match self {
-            Self::InvalidVariant { method, event } => write!(f, "Method {method}{called}{event:#?}"),
+            Self::InvalidVariant { method, event } => {
+                write!(f, "Method {method}{called}{event:#?}")
+            }
         }
     }
 }

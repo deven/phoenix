@@ -83,6 +83,28 @@ impl Server {
         }
     }
 
+    /// Send an announcement to all clients.
+    pub async fn announce<T: Into<Arc<str>>>(&self, msg: T) {
+        let msg = msg.into();
+
+        // TODO: Send announcement to all clients.
+        todo!("Announce not implemented yet.");
+    }
+
+    /// Shut down the server.
+    pub async fn shutdown(&self) {
+        warn!("Server down.");
+        // TODO: Close all files/connections and exit.
+        todo!("Shutdown not implemented yet.");
+    }
+
+    /// Restart the server.
+    pub async fn restart(&self) {
+        warn!("Restarting server.");
+        // TODO: Close all files/connections and exec the server binary to restart.
+        todo!("Restart not implemented yet.");
+    }
+
     /// Obtain read lock on the server data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, ServerInner> {
