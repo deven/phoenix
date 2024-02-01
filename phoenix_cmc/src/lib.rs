@@ -16,6 +16,7 @@ pub mod error;
 pub mod event;
 pub mod file;
 pub mod name;
+pub mod sendlist;
 pub mod server;
 pub mod session;
 pub mod user;
