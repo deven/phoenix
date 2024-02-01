@@ -8,6 +8,9 @@
 //
 
 use crate::client::Client;
+use crate::discussion::Discussion;
+use crate::name::Name;
+use crate::sendlist::Sendlist;
 use crate::server::Server;
 use crate::session::Session;
 use async_backtrace::framed;
@@ -185,7 +188,7 @@ constructor!(PermitNotify, who: Name, whom: Name, discussion: Discussion, is_exp
 constructor!(DepermitNotify, who: Name, whom: Name, discussion: Discussion, is_explicit: bool, removed: bool);
 constructor!(AppointNotify, who: Name, whom: Name, discussion: Discussion);
 constructor!(UnappointNotify, who: Name, whom: Name, discussion: Discussion);
-constructor!(RenameNotify, old_name: Name, old_name: Name);
+constructor!(RenameNotify, old_name: Name, new_name: Name);
 
 impl EventRef {
     /// Create a new event handle.
@@ -229,11 +232,9 @@ impl EventRef {
     attr!(intentional, set_intentional, Copy bool, [DetachNotify]);
     attr!(is_explicit, set_is_explicit, Copy bool, [PermitNotify, DepermitNotify]);
     attr!(is_public, set_is_public, Copy bool, [Message]);
-    attr!(message, set_message, Into<Arc<str>>, [Message]);
     attr!(old_name, set_old_name, Name, [RenameNotify]);
     attr!(new_name, set_new_name, Name, [RenameNotify]);
     attr!(removed, set_removed, Copy bool, [DepermitNotify]);
-    attr!(sender, set_sender, Session, [Message]);
     attr!(server, set_server, Server, [Shutdown, Restart]);
     attr!(text, set_text, Into<Arc<str>>, [TextOutput, Message]);
     attr!(timestamp, set_timestamp, DateTime<Utc>, [*]);
@@ -585,7 +586,7 @@ impl Event {
 }
 
 impl EventRef {
-    fn fmt_for_recipient(
+    pub async fn fmt_for_recipient(
         &self,
         f: &mut fmt::Formatter<'_>,
         recipient: Option<Session>,
@@ -598,13 +599,6 @@ impl EventRef {
 impl fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.fmt_for_recipient(f, None);
-    }
-}
-
-impl fmt::Display for EventRef {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let event = self.read().await;
-        event.fmt_for_recipient(f, None)
     }
 }
 
@@ -709,12 +703,31 @@ mod macros {
             pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let event = self.read().await;
                 match &*event {
-                    add_ref_mut!(Message $fields)
-                        | add_ref_mut!(EntryNotify $fields)
-                        | add_ref_mut!(ExitNotify $fields)
+                    add_ref_mut!(TextOutput $fields)
+                        | add_ref_mut!(Message $fields)
                         | add_ref_mut!(Shutdown $fields)
                         | add_ref_mut!(Restart $fields)
-                        | add_ref_mut!(LoginTimeout $fields) => $body,
+                        | add_ref_mut!(LoginTimeout $fields)
+                        | add_ref_mut!(EntryNotify $fields)
+                        | add_ref_mut!(ExitNotify $fields)
+                        | add_ref_mut!(TransferNotify $fields)
+                        | add_ref_mut!(AttachNotify $fields)
+                        | add_ref_mut!(DetachNotify $fields)
+                        | add_ref_mut!(HereNotify $fields)
+                        | add_ref_mut!(AwayNotify $fields)
+                        | add_ref_mut!(BusyNotify $fields)
+                        | add_ref_mut!(GoneNotify $fields)
+                        | add_ref_mut!(CreateNotify $fields)
+                        | add_ref_mut!(DestroyNotify $fields)
+                        | add_ref_mut!(JoinNotify $fields)
+                        | add_ref_mut!(QuitNotify $fields)
+                        | add_ref_mut!(PublicNotify $fields)
+                        | add_ref_mut!(PrivateNotify $fields)
+                        | add_ref_mut!(PermitNotify $fields)
+                        | add_ref_mut!(DepermitNotify $fields)
+                        | add_ref_mut!(AppointNotify $fields)
+                        | add_ref_mut!(UnappointNotify $fields)
+                        | add_ref_mut!(RenameNotify $fields) => $body,
                 }
             }
         };
@@ -733,12 +746,31 @@ mod macros {
             pub async fn $method $($generics)* (&self, $($args)*) -> Result<$return, EventError> {
                 let mut event = self.write().await;
                 match *event {
-                    add_ref_mut!(mut Message $fields)
-                        | add_ref_mut!(mut EntryNotify $fields)
-                        | add_ref_mut!(mut ExitNotify $fields)
+                    add_ref_mut!(mut TextOutput $fields)
+                        | add_ref_mut!(mut Message $fields)
                         | add_ref_mut!(mut Shutdown $fields)
                         | add_ref_mut!(mut Restart $fields)
-                        | add_ref_mut!(mut LoginTimeout $fields) => $body,
+                        | add_ref_mut!(mut LoginTimeout $fields)
+                        | add_ref_mut!(mut EntryNotify $fields)
+                        | add_ref_mut!(mut ExitNotify $fields)
+                        | add_ref_mut!(mut TransferNotify $fields)
+                        | add_ref_mut!(mut AttachNotify $fields)
+                        | add_ref_mut!(mut DetachNotify $fields)
+                        | add_ref_mut!(mut HereNotify $fields)
+                        | add_ref_mut!(mut AwayNotify $fields)
+                        | add_ref_mut!(mut BusyNotify $fields)
+                        | add_ref_mut!(mut GoneNotify $fields)
+                        | add_ref_mut!(mut CreateNotify $fields)
+                        | add_ref_mut!(mut DestroyNotify $fields)
+                        | add_ref_mut!(mut JoinNotify $fields)
+                        | add_ref_mut!(mut QuitNotify $fields)
+                        | add_ref_mut!(mut PublicNotify $fields)
+                        | add_ref_mut!(mut PrivateNotify $fields)
+                        | add_ref_mut!(mut PermitNotify $fields)
+                        | add_ref_mut!(mut DepermitNotify $fields)
+                        | add_ref_mut!(mut AppointNotify $fields)
+                        | add_ref_mut!(mut UnappointNotify $fields)
+                        | add_ref_mut!(mut RenameNotify $fields) => $body,
                 }
             }
         };

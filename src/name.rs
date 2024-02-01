@@ -7,6 +7,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+use crate::session::Session;
+use crate::user::User;
 use async_backtrace::framed;
 use std::sync::Arc;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
