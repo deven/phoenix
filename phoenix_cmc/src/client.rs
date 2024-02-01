@@ -137,6 +137,15 @@ impl Client {
         }
     }
 
+    /// Disconnect client after login timeout.
+    #[framed]
+    pub async fn login_timeout(&self) {
+        // TODO: Send timeout message and disconnect.
+        todo!("Login timeout not implemented.");
+        //telnet->output("\nLogin timed out!\n");
+        //telnet->Close();
+    }
+
     /// Obtain read lock on the client data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, ClientInner> {
