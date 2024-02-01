@@ -7,10 +7,8 @@
 // SPDX-License-Identifier: MIT
 //
 
-pub mod session;
-
-use crate::client::session::Session;
 use crate::server::Server;
+use crate::session::Session;
 use async_backtrace::{frame, framed, taskdump_tree};
 use futures::SinkExt;
 use std::error::Error;

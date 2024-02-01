@@ -1,6 +1,6 @@
 // -*- Rust -*-
 //
-// Phoenix CMC library: client::session module
+// Phoenix CMC library: session module
 //
 // Copyright 2021-2024 Deven T. Corzine <deven@ties.org>
 //

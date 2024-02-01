@@ -7,9 +7,9 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::client::session::Session;
 use crate::client::Client;
 use crate::server::Server;
+use crate::session::Session;
 use async_backtrace::framed;
 use chrono::{DateTime, Utc};
 use std::error::Error;
