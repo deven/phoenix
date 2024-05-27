@@ -437,9 +437,11 @@ impl Event {
                     "{who} has created {disc_type} {discussion}, \"{title}\"."
                 )
                 */
-                write!(f, "[Event::fmt_for_recipient() not implemented yet for Event::CreateNotify.]")
+                write!(
+                    f,
+                    "[Event::fmt_for_recipient() not implemented yet for Event::CreateNotify.]"
+                )
             }
-            /*
             Event::DestroyNotify {
                 who, discussion, ..
             } => {
@@ -455,47 +457,38 @@ impl Event {
             } => {
                 write!(f, "{who} has quit discussion {discussion}.")
             }
-            Event::PublicNotify {
-                who, discussion, ..
-            } => {
+            Event::PublicNotify { who, .. } => {
                 write!(f, "{who} has made discussion %s public.")
             }
-            Event::PrivateNotify {
-                who, discussion, ..
-            } => {
+            Event::PrivateNotify { who, .. } => {
                 write!(f, "{who} has made discussion %s private.")
             }
             Event::PermitNotify {
-                who,
-                whom,
-                discussion,
-                is_explicit,
-                ..
+                who, discussion, ..
             } => {
+                /*
                 let what = if discussion.public {
-                    if is_explicit {
+                    if *is_explicit {
                         "repermitted you to"
                     } else {
                         "explicitly permitted you to public"
                     }
                 } else {
-                    if is_explicit {
+                    if *is_explicit {
                         "repermitted you to private"
                     } else {
                         "permitted you to private"
                     }
                 };
+                */
+                let what = "[not implemented yet]";
 
                 write!(f, "{who} has {what} discussion {discussion}.")
             }
             Event::DepermitNotify {
-                who,
-                whom,
-                discussion,
-                is_explicit,
-                removed,
-                ..
+                who, discussion, ..
             } => {
+                /*
                 let is_you = if let recipient = Some(recipient) {
                     Arc::ptr_eq(whom, recipient)
                 } else {
@@ -527,15 +520,13 @@ impl Event {
                         }
                     }
                 };
+                */
+                let what = "[not implemented yet]";
 
                 write!(f, "{who} has {what} discussion {discussion}.")
             }
-            Event::AppointNotify {
-                who,
-                whom,
-                discussion,
-                ..
-            } => {
+            Event::AppointNotify { .. } => {
+                /*
                 let is_you = if let recipient = Some(recipient) {
                     Arc::ptr_eq(whom, recipient)
                 } else {
@@ -553,13 +544,14 @@ impl Event {
                         "{who} has appointed {whom} as a moderator of discussion {discussion}"
                     )
                 }
+                */
+                write!(
+                    f,
+                    "[Event::fmt_for_recipient() not implemented yet for Event::AppointNotify.]"
+                )
             }
-            Event::UnappointNotify {
-                who,
-                whom,
-                discussion,
-                ..
-            } => {
+            Event::UnappointNotify { .. } => {
+                /*
                 let is_you = if let recipient = Some(recipient) {
                     Arc::ptr_eq(whom, recipient)
                 } else {
@@ -577,14 +569,17 @@ impl Event {
                         "{who} has unappointed {whom} as a moderator of discussion {discussion}"
                     )
                 }
+                */
+                write!(
+                    f,
+                    "[Event::fmt_for_recipient() not implemented yet for Event::UnappointNotify.]"
+                )
             }
             Event::RenameNotify {
                 old_name, new_name, ..
             } => {
                 write!(f, "{old_name} has renamed to {new_name}.")
             }
-            */
-            _ => todo!(),
         }
     }
 }

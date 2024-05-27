@@ -11,8 +11,8 @@ use crate::discussion::Discussion;
 use crate::session::Session;
 use async_backtrace::framed;
 use std::collections::HashSet;
-use std::sync::Arc;
 use std::fmt;
+use std::sync::Arc;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Sendlist handle.

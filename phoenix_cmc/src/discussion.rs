@@ -13,6 +13,7 @@ use crate::session::Session;
 use async_backtrace::framed;
 use chrono::{DateTime, Utc};
 use std::collections::{BTreeMap, HashSet};
+use std::fmt;
 use std::sync::Arc;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -191,5 +192,11 @@ impl Discussion {
     #[framed]
     pub async fn set_output(&self, value: BTreeMap<DateTime<Utc>, EventRef>) {
         self.write().await.output = value;
+    }
+}
+
+impl fmt::Display for Discussion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[Discussion::fmt() not implemented yet.]")
     }
 }
