@@ -205,6 +205,12 @@ impl Client {
     }
 }
 
+impl fmt::Display for Client {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!("[Client::fmt() not implemented.]");
+    }
+}
+
 #[derive(Debug)]
 pub enum ClientError {
     IoError(IoError),
