@@ -190,7 +190,6 @@ constructor!(AppointNotify, who: Name, whom: Name, discussion: Discussion);
 constructor!(UnappointNotify, who: Name, whom: Name, discussion: Discussion);
 constructor!(RenameNotify, old_name: Name, new_name: Name);
 
-/*
 impl EventRef {
     /// Create a new event handle.
     pub fn new(event: Event) -> Self {
@@ -273,7 +272,10 @@ impl EventRef {
         Into<Arc<str>>,
         [PermitNotify, DepermitNotify, AppointNotify, UnappointNotify]
     );
+}
 
+/*
+impl EventRef {
     #[framed]
     pub async fn shutdown_or_restart(
         &self,
@@ -602,6 +604,7 @@ impl fmt::Display for Event {
         self.fmt_for_recipient(f, None);
     }
 }
+*/
 
 #[derive(Debug)]
 pub enum EventError {
@@ -633,7 +636,6 @@ impl fmt::Display for EventError {
         }
     }
 }
-*/
 
 mod macros {
     macro_rules! add_ref_mut {
