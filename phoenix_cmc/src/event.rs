@@ -379,6 +379,7 @@ impl Event {
                 };
                 write!(f, "{msg_type} from {from} to {to}: {text}")
             }
+            */
             Event::Shutdown { by, .. } => {
                 write!(f, "Shutdown initiated by {by}.")
             }
@@ -388,6 +389,7 @@ impl Event {
             Event::LoginTimeout { client, .. } => {
                 write!(f, "Login timeout for {client}.")
             }
+            /*
             Event::EntryNotify { who, .. } => {
                 write!(f, "{who} has entered Phoenix!")
             }
