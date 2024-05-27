@@ -190,6 +190,7 @@ constructor!(AppointNotify, who: Name, whom: Name, discussion: Discussion);
 constructor!(UnappointNotify, who: Name, whom: Name, discussion: Discussion);
 constructor!(RenameNotify, old_name: Name, new_name: Name);
 
+/*
 impl EventRef {
     /// Create a new event handle.
     pub fn new(event: Event) -> Self {
@@ -632,6 +633,7 @@ impl fmt::Display for EventError {
         }
     }
 }
+*/
 
 mod macros {
     macro_rules! add_ref_mut {
