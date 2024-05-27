@@ -12,6 +12,7 @@ use crate::session::Session;
 use async_backtrace::framed;
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::fmt;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Sendlist handle.
@@ -98,5 +99,11 @@ impl Sendlist {
     #[framed]
     pub async fn set_discussions(&self, value: HashSet<Discussion>) {
         self.write().await.discussions = value;
+    }
+}
+
+impl fmt::Display for Sendlist {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!("[Sendlist::fmt() not implemented.]");
     }
 }

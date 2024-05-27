@@ -11,6 +11,7 @@ use crate::session::Session;
 use crate::user::User;
 use async_backtrace::framed;
 use std::sync::Arc;
+use std::fmt;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Name handle.
@@ -99,5 +100,11 @@ impl Name {
     #[framed]
     pub async fn set_blurb<T: Into<Arc<str>>>(&self, value: T) {
         self.write().await.blurb = value.into();
+    }
+}
+
+impl fmt::Display for Name {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!("[Name::fmt() not implemented.]");
     }
 }
