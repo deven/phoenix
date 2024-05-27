@@ -360,11 +360,11 @@ impl Event {
         f: &mut fmt::Formatter<'_>,
         recipient: Option<Session>,
     ) -> fmt::Result {
-/*
         match self {
             Event::TextOutput { text, .. } => {
                 write!(f, "{text}")
             }
+            /*
             Event::Message {
                 is_public,
                 from,
@@ -584,8 +584,8 @@ impl Event {
             } => {
                 write!(f, "{old_name} has renamed to {new_name}.")
             }
+            */
         }
-*/
         Ok(())
     }
 }
