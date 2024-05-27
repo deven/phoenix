@@ -104,6 +104,6 @@ impl Sendlist {
 
 impl fmt::Display for Sendlist {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!("[Sendlist::fmt() not implemented.]");
+        write!(f, "[Sendlist::fmt() not implemented yet.]")
     }
 }
