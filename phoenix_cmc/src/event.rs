@@ -603,7 +603,7 @@ impl EventRef {
 
 impl fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.fmt_for_recipient(f, None);
+        self.fmt_for_recipient(f, None)
     }
 }
 
