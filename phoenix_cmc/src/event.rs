@@ -358,13 +358,12 @@ impl Event {
     pub fn fmt_for_recipient(
         &self,
         f: &mut fmt::Formatter<'_>,
-        recipient: Option<Session>,
+        _recipient: Option<Session>,
     ) -> fmt::Result {
         match self {
             Event::TextOutput { text, .. } => {
                 write!(f, "{text}")
             }
-            /*
             Event::Message {
                 is_public,
                 from,
@@ -372,14 +371,13 @@ impl Event {
                 text,
                 ..
             } => {
-                let msg_type = if is_public {
+                let msg_type = if *is_public {
                     "Public message"
                 } else {
                     "Message"
                 };
                 write!(f, "{msg_type} from {from} to {to}: {text}")
             }
-            */
             Event::Shutdown { by, .. } => {
                 write!(f, "Shutdown initiated by {by}.")
             }
@@ -389,7 +387,6 @@ impl Event {
             Event::LoginTimeout { client, .. } => {
                 write!(f, "Login timeout for {client}.")
             }
-            /*
             Event::EntryNotify { who, .. } => {
                 write!(f, "{who} has entered Phoenix!")
             }
@@ -405,7 +402,7 @@ impl Event {
             Event::DetachNotify {
                 who, intentional, ..
             } => {
-                let how = if intentional {
+                let how = if *intentional {
                     "intentionally"
                 } else {
                     "accidentally"
@@ -424,14 +421,11 @@ impl Event {
             Event::GoneNotify { who, .. } => {
                 write!(f, "{who} is now gone.")
             }
-            Event::CreateNotify {
-                who,
-                discussion,
-                title,
-                ..
-            } => {
-                let who = &discussion.who;
-                let title = &discussion.title;
+            Event::CreateNotify { .. } => {
+                /*
+                let who = &discussion.name().await;
+                let title = &discussion.title().await;
+                let public = &discussion.public().await;
                 let disc_type = if discussion.public {
                     "discussion"
                 } else {
@@ -442,7 +436,10 @@ impl Event {
                     f,
                     "{who} has created {disc_type} {discussion}, \"{title}\"."
                 )
+                */
+                write!(f, "[Event::fmt_for_recipient() not implemented yet for Event::CreateNotify.]")
             }
+            /*
             Event::DestroyNotify {
                 who, discussion, ..
             } => {

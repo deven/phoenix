@@ -105,6 +105,6 @@ impl Name {
 
 impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!("[Name::fmt() not implemented.]");
+        write!(f, "[Name::fmt() not implemented yet.]")
     }
 }

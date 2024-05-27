@@ -85,7 +85,7 @@ impl Server {
 
     /// Send an announcement to all clients.
     pub async fn announce<T: Into<Arc<str>>>(&self, msg: T) {
-        let msg = msg.into();
+        let _msg = msg.into();
 
         // TODO: Send announcement to all clients.
         todo!("Announce not implemented yet.");

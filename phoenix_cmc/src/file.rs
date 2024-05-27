@@ -17,6 +17,7 @@ pub enum FileError {
     IoError { path: PathBuf, source: IoError },
 }
 
+#[allow(dead_code)]
 impl FileError {
     fn from_io_error(path: PathBuf, source: IoError) -> Self {
         Self::IoError { path, source }

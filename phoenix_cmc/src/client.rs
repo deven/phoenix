@@ -139,7 +139,7 @@ impl Client {
     #[framed]
     pub async fn login_timeout(&self) {
         // TODO: Send timeout message and disconnect.
-        todo!("Login timeout not implemented.");
+        todo!("Login timeout not implemented yet.");
         //telnet->output("\nLogin timed out!\n");
         //telnet->Close();
     }
@@ -207,7 +207,7 @@ impl Client {
 
 impl fmt::Display for Client {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!("[Client::fmt() not implemented.]");
+        write!(f, "[Client::fmt() not implemented yet.]")
     }
 }
 
