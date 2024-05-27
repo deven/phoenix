@@ -243,7 +243,7 @@ impl EventRef {
     attr!(
         who,
         set_who,
-        Into<Arc<str>>,
+        Name,
         [
             EntryNotify,
             ExitNotify,
@@ -269,7 +269,7 @@ impl EventRef {
     attr!(
         whom,
         set_whom,
-        Into<Arc<str>>,
+        Name,
         [PermitNotify, DepermitNotify, AppointNotify, UnappointNotify]
     );
 }
