@@ -165,7 +165,7 @@ pub enum Event {
 }
 
 constructor!(TextOutput, text: Arc<str>);
-constructor!(Message, is_public: bool, from: Name, to: Name, text: Arc<str>);
+constructor!(Message, is_public: bool, from: Name, to: Sendlist, text: Arc<str>);
 constructor!(Shutdown, server: Server, by: Arc<str>, delay: Duration);
 constructor!(Restart, server: Server, by: Arc<str>, delay: Duration);
 constructor!(LoginTimeout, client: Client);
