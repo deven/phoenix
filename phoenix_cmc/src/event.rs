@@ -585,8 +585,8 @@ impl Event {
                 write!(f, "{old_name} has renamed to {new_name}.")
             }
             */
+            _ => todo!(),
         }
-        Ok(())
     }
 }
 
