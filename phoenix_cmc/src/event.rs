@@ -274,7 +274,6 @@ impl EventRef {
     );
 }
 
-/*
 impl EventRef {
     #[framed]
     pub async fn shutdown_or_restart(
@@ -361,6 +360,7 @@ impl Event {
         f: &mut fmt::Formatter<'_>,
         recipient: Option<Session>,
     ) -> fmt::Result {
+/*
         match self {
             Event::TextOutput { text, .. } => {
                 write!(f, "{text}")
@@ -585,6 +585,7 @@ impl Event {
                 write!(f, "{old_name} has renamed to {new_name}.")
             }
         }
+*/
     }
 }
 
@@ -604,7 +605,6 @@ impl fmt::Display for Event {
         self.fmt_for_recipient(f, None);
     }
 }
-*/
 
 #[derive(Debug)]
 pub enum EventError {
