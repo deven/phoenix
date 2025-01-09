@@ -16,8 +16,7 @@ use std::fmt;
 use std::io::Error as IoError;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::io::AsyncWriteExt;
-use tokio::net::TcpStream;
+use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
@@ -29,7 +28,10 @@ use tracing::{info, trace, warn};
 pub struct Client(Arc<RwLock<ClientInner>>);
 
 #[derive(Debug, Clone)]
-pub struct ClientInner {
+pub struct ClientInner
+where
+    Self: Send + Sync + 'static,
+{
     pub server: Server,
     pub addr: SocketAddr,
     pub session: Option<Session>,
@@ -50,7 +52,10 @@ impl Client {
     }
 
     /// Run async task for `Client`.
-    pub async fn run(&mut self, stream: TcpStream) -> Result<(), ClientError> {
+    pub async fn run<T>(&mut self, stream: T) -> Result<(), ClientError>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
         // Create a LinesCodec to encode the stream as lines.
         let lines = Framed::new(stream, LinesCodec::new());
 
@@ -71,10 +76,10 @@ impl Client {
 
     /// Setup a new client connection.
     #[framed]
-    pub async fn setup(
-        &mut self,
-        mut lines: Framed<TcpStream, LinesCodec>,
-    ) -> Result<(), ClientError> {
+    pub async fn setup<T>(&mut self, mut lines: Framed<T, LinesCodec>) -> Result<(), ClientError>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
         let server = self.server().await;
 
         {
@@ -111,10 +116,13 @@ impl Client {
 
     /// Client main loop.
     #[framed]
-    pub async fn client_loop(
+    pub async fn client_loop<T>(
         &mut self,
-        mut lines: Framed<TcpStream, LinesCodec>,
-    ) -> Result<(), ClientError> {
+        mut lines: Framed<T, LinesCodec>,
+    ) -> Result<(), ClientError>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
         trace!("{}", taskdump_tree(false));
 
         // In a loop, read lines from the socket and write them back.
@@ -212,7 +220,10 @@ impl fmt::Display for Client {
 }
 
 #[derive(Debug)]
-pub enum ClientError {
+pub enum ClientError
+where
+    Self: Send + Sync + 'static,
+{
     IoError(IoError),
     LinesCodecError(LinesCodecError),
 }

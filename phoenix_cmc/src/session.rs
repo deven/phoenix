@@ -16,7 +16,10 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct Session(Arc<RwLock<SessionInner>>);
 
 #[derive(Debug)]
-pub struct SessionInner {
+pub struct SessionInner
+where
+    Self: Send + Sync + 'static,
+{
     pub username: Arc<str>,
 }
 

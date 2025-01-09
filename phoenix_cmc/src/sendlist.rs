@@ -20,7 +20,10 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct Sendlist(Arc<RwLock<SendlistInner>>);
 
 #[derive(Debug)]
-pub struct SendlistInner {
+pub struct SendlistInner
+where
+    Self: Send + Sync + 'static,
+{
     errors: Arc<str>,
     typed: Arc<str>,
     sessions: HashSet<Session>,

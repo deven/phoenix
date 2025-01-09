@@ -22,7 +22,10 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct Discussion(Arc<RwLock<DiscussionInner>>);
 
 #[derive(Debug)]
-pub struct DiscussionInner {
+pub struct DiscussionInner
+where
+    Self: Send + Sync + 'static,
+{
     name: Arc<str>,
     title: Arc<str>,
     public: bool,

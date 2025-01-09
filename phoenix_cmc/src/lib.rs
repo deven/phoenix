@@ -27,7 +27,10 @@ use clap::Parser;
 use tracing::{trace, warn};
 
 #[derive(Debug, Clone, Parser)]
-pub struct Options {
+pub struct Options
+where
+    Self: Send + Sync + 'static,
+{
     /// Running from cron to restart server
     #[arg(long)]
     pub cron: bool,

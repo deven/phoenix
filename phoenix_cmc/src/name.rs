@@ -19,7 +19,10 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct Name(Arc<RwLock<NameInner>>);
 
 #[derive(Debug)]
-pub struct NameInner {
+pub struct NameInner
+where
+    Self: Send + Sync + 'static,
+{
     /// Session this name refers to.
     pub session: Session,
 

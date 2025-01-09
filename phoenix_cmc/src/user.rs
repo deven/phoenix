@@ -16,7 +16,10 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct User(Arc<RwLock<UserInner>>);
 
 #[derive(Debug)]
-pub struct UserInner {
+pub struct UserInner
+where
+    Self: Send + Sync + 'static,
+{
     pub username: Arc<str>,
 }
 

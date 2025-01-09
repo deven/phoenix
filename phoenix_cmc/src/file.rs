@@ -13,12 +13,18 @@ use std::io::Error as IoError;
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub enum FileError {
+pub enum FileError
+where
+    Self: Send + Sync + 'static,
+{
     IoError { path: PathBuf, source: IoError },
 }
 
 #[allow(dead_code)]
-impl FileError {
+impl FileError
+where
+    Self: Send + Sync + 'static,
+{
     fn from_io_error(path: PathBuf, source: IoError) -> Self {
         Self::IoError { path, source }
     }
