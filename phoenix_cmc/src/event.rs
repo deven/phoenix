@@ -34,7 +34,10 @@ use macros::*;
 pub struct EventRef(Arc<RwLock<Event>>);
 
 #[derive(Debug)]
-pub enum Event {
+pub enum Event
+where
+    Self: Send + Sync + 'static,
+{
     TextOutput {
         timestamp: DateTime<Utc>,
         text: Arc<str>,
@@ -602,7 +605,10 @@ impl fmt::Display for Event {
 }
 
 #[derive(Debug)]
-pub enum EventError {
+pub enum EventError
+where
+    Self: Send + Sync + 'static,
+{
     InvalidVariant {
         method: &'static str,
         event: EventRef,

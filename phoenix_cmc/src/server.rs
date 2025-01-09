@@ -26,7 +26,10 @@ use tracing::{info, warn};
 pub struct Server(Arc<RwLock<ServerInner>>);
 
 #[derive(Debug, Clone)]
-pub struct ServerInner {
+pub struct ServerInner
+where
+    Self: Send + Sync + 'static,
+{
     pub options: Options,
     pub clients: Vec<Client>,
     pub sessions: Vec<Session>,
@@ -215,7 +218,10 @@ impl Server {
 }
 
 #[derive(Debug)]
-pub enum ServerError {
+pub enum ServerError
+where
+    Self: Send + Sync + 'static,
+{
     BindError { port: u16, source: IoError },
 }
 

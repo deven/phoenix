@@ -14,7 +14,10 @@ use std::error::Error;
 use std::fmt;
 
 #[derive(Debug)]
-pub enum PhoenixError {
+pub enum PhoenixError
+where
+    Self: Send + Sync + 'static,
+{
     ClientError(ClientError),
     FileError(FileError),
     ServerError(ServerError),
