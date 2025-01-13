@@ -9,8 +9,7 @@
 
 #![warn(rust_2018_idioms)]
 
-use clap::Parser;
-use phoenix_cmc::Options;
+use phoenix_cmc::config::Options;
 use std::error::Error;
 use std::process;
 use tracing::trace;
@@ -27,8 +26,8 @@ fn setup_tracing(directive: &str) -> Result<(), Box<dyn Error>> {
 fn run() -> Result<(), Box<dyn Error>> {
     setup_tracing("phoenix_cmc=trace")?;
 
-    let opts = Options::parse();
-    trace!("{opts:?}");
+    let opts = Options::load();
+    trace!("{opts:#?}");
     Ok(phoenix_cmc::run(opts)?)
 }
 
