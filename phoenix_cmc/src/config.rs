@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-use clap::{parser::ValueSource, Parser};
+use clap::{parser::ValueSource, CommandFactory, FromArgMatches, Parser};
 use config::Config;
 use serde::Deserialize;
 use std::net::SocketAddr;
@@ -24,7 +24,7 @@ macro_rules! define_config {
         define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            (env = stringify!($env_var), default_value = $default)
+            #[arg(long, env = stringify!($env_var), default_value = $default)]
             pub $field: $type,
         ));
     };
@@ -34,7 +34,7 @@ macro_rules! define_config {
         define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            (default_value = $default)
+            #[arg(long, default_value = $default)]
             pub $field: $type,
         ));
     };
@@ -44,7 +44,7 @@ macro_rules! define_config {
         define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            (env = stringify!($env_var), default_value_t = $default)
+            #[arg(long, env = stringify!($env_var), default_value_t = $default)]
             pub $field: $type,
         ));
     };
@@ -54,7 +54,7 @@ macro_rules! define_config {
         define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            (default_value_t = $default)
+            #[arg(long, default_value_t = $default)]
             pub $field: $type,
         ));
     };
@@ -82,7 +82,6 @@ macro_rules! define_config {
             $(
                 #[$attr:meta]
             )*
-            ( $($args:tt)* )
             pub $field:ident : $type:ty,
         )* $(,)?
     )) => {
@@ -94,7 +93,6 @@ macro_rules! define_config {
         {
             $(
                 $( #[$attr] )*
-                #[arg(long, $($args)*)]
                 pub $field: $type,
             )*
         }
