@@ -7,95 +7,134 @@
 // SPDX-License-Identifier: MIT
 //
 
-use clap::{parser::ValueSource, ArgMatches, Parser};
+use clap::{parser::ValueSource, Parser};
 use config::Config;
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
-macro_rules! define_config_field {
-    ( $field:ident: $type:ty => $default:literal => $env_var:ident) => {
-        #[arg(long, env = stringify!($env_var), default_value = $default)]
-        pub $field: $type,
-    };
-    ( $field:ident: $type:ty => $default:literal) => {
-        #[arg(long, default_value = $default)]
-        pub $field: $type,
-    };
-    ( $field:ident: $type:ty = $default:expr => $env_var:ident) => {
-        #[arg(long, env = stringify!($env_var), default_value_t = $default)]
-        pub $field: $type,
-    };
-    ( $field:ident: $type:ty = $default:expr) => {
-        #[arg(long, default_value_t = $default)]
-        pub $field: $type,
-    };
-}
-
 macro_rules! define_config {
-    (
-        $name:ident => {
-            $(
-                $field:ident: $type:tt $op:tt $default:expr $(=> $env_var:ident)?,
-            )* $(,)?
-        }
-    ) => {
+    // Entry point: Transform public syntax into internal recursive form.
+    ( $name:ident => { $($rest:tt)* } ) => {
+        define_config!(@ $name matches config partial { $($rest)* } -> () () ());
+    };
+
+    // Case 1: `=> "literal" => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt => $default:literal => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
+            $($result1)*
+            $( #[$attr] )*
+            #[arg(long, env = stringify!($env_var), default_value = $default)]
+            pub $field: $type,
+        ));
+    };
+
+    // Case 2: `=> "literal"`
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt => $default:literal, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
+            $($result1)*
+            $( #[$attr] )*
+            #[arg(long, default_value = $default)]
+            pub $field: $type,
+        ));
+    };
+
+    // Case 3: `= expr => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt = $default:expr => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
+            $($result1)*
+            $( #[$attr] )*
+            #[arg(long, env = stringify!($env_var), default_value_t = $default)]
+            pub $field: $type,
+        ));
+    };
+
+    // Case 4: `= expr`
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt = $default:expr, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
+            $($result1)*
+            $( #[$attr] )*
+            #[arg(long, default_value_t = $default)]
+            pub $field: $type,
+        ));
+    };
+
+    // Apply common transformation for all four cases.
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident $type:tt ($($result2:tt)*) ($($result3:tt)*) ($($result1:tt)*)) => {
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> (
+            $($result1)*
+        ) (
+            $($result2)*
+            pub $field: Option<$type>,
+        ) (
+            $($result3)*
+            if let Some(val) = $partial.$field {
+                if $matches.value_source(stringify!($field)) == Some(ValueSource::DefaultValue) {
+                    $config.$field = val;
+                }
+            }
+        ));
+    };
+
+    // Terminal rule: Emit the final code.
+    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
         pub struct $name
         where
             Self: Send + Sync + 'static,
         {
-            $(
-                define_config_field!(
-                    $field: $type $op $default $(=> $env_var)?
-                ),
-            )*
+            $($result1)*
         }
 
         #[derive(Debug, Default, Deserialize)]
         pub struct PartialConfig {
-            $(
-                pub $field: Option<$type>,
-            )*
+            $($result2)*
         }
 
         impl $name {
             pub fn load() -> $name {
                 // Parse command-line arguments and environment variables.
-                let matches = $name::command().get_matches();
-                let mut config = $name::from_arg_matches(&matches).expect("Clap parse failed");
+                let $matches = $name::command().get_matches();
+                let mut $config = $name::from_arg_matches(&$matches).expect("Clap parse failed");
 
                 // Load config file, if any.
-                let partial: PartialConfig = Config::builder()
-                    .add_source(config::File::from(config.config_file.clone()).required(false))
+                let $partial: PartialConfig = Config::builder()
+                    .add_source(config::File::from($config.config_file.clone()).required(false))
                     .build()
                     .unwrap_or_default()
                     .try_deserialize()
                     .unwrap_or_default();
 
                 // Override Clap default values with config file values.
-                $(
-                    if let Some(val) = partial.$field {
-                        if matches.value_source(stringify!($field)) == Some(ValueSource::DefaultValue) {
-                            config.$field = val;
-                        }
-                    }
-                )*
+                $($result3)*
 
-                config
+                $config
             }
         }
     };
 }
 
 define_config!(Options => {
+    /// Running from cron to restart server
     cron: bool = false => PHOENIX_CRON_MODE,
+
+    /// Enable debug mode
     debug: bool = false => PHOENIX_DEBUG,
+
+    /// Use IPv6 instead of IPv4
     ipv6: bool = false => PHOENIX_USE_IPV6,
+
+    /// Listening bind address
     bind_addr: SocketAddr => "0.0.0.0:9999" => PHOENIX_BIND_ADDR,
+
+    /// Set listening port number
     port: u16 = 9999 => PHOENIX_TELNET_PORT,
+
+    /// Library directory.
     lib_dir: PathBuf => "/var/lib/phoenix" => PHOENIX_LIB_DIR,
+
+    /// Path to the configuration file
     config_file: PathBuf => "config.toml" => PHOENIX_CONFIG_FILE,
 
     //telnet_enabled: bool => true,
