@@ -13,15 +13,15 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
-macro_rules! define_config {
+macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
     ( $name:ident => { $($rest:tt)* } ) => {
-        define_config!(@ $name matches config partial { $($rest)* } -> () () ());
+        config!(@ $name matches config partial { $($rest)* } -> () () ());
     };
 
     // Case 1: `=> "literal" => ENV`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
             #[arg(long, env = stringify!($env_var), default_value = $default)]
@@ -31,7 +31,7 @@ macro_rules! define_config {
 
     // Case 2: `=> "literal"`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
             #[arg(long, default_value = $default)]
@@ -41,7 +41,7 @@ macro_rules! define_config {
 
     // Case 3: `= expr => ENV`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
             #[arg(long, env = stringify!($env_var), default_value_t = $default)]
@@ -51,7 +51,7 @@ macro_rules! define_config {
 
     // Case 4: `= expr`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
             #[arg(long, default_value_t = $default)]
@@ -61,7 +61,7 @@ macro_rules! define_config {
 
     // Apply common transformation for all four cases.
     (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident ($type:ty) ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> (
+        config!(@ $name $matches $config $partial { $($rest)* } -> (
             $($result1)*
             pub $field: Option<$type>,
         ) (
@@ -125,7 +125,7 @@ macro_rules! define_config {
     };
 }
 
-define_config!(Options => {
+config!(Options => {
     /// Running from cron to restart server
     cron: bool = false => PHOENIX_CRON_MODE,
 
