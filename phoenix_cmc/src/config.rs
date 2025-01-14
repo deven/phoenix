@@ -21,75 +21,87 @@ macro_rules! define_config {
 
     // Case 1: `=> "literal" => ENV`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt => $default:literal => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
-            $($result1)*
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
+            $($result3)*
             $( #[$attr] )*
-            #[arg(long, env = stringify!($env_var), default_value = $default)]
+            (env = stringify!($env_var), default_value = $default)
             pub $field: $type,
         ));
     };
 
     // Case 2: `=> "literal"`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt => $default:literal, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
-            $($result1)*
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
+            $($result3)*
             $( #[$attr] )*
-            #[arg(long, default_value = $default)]
+            (default_value = $default)
             pub $field: $type,
         ));
     };
 
     // Case 3: `= expr => ENV`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt = $default:expr => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
-            $($result1)*
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
+            $($result3)*
             $( #[$attr] )*
-            #[arg(long, env = stringify!($env_var), default_value_t = $default)]
+            (env = stringify!($env_var), default_value_t = $default)
             pub $field: $type,
         ));
     };
 
     // Case 4: `= expr`
     (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:tt = $default:expr, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result2)*) ($($result3)*) (
-            $($result1)*
+        define_config!(@ $name $matches $config $partial { $($rest)* } -> @ $field $type ($($result1)*) ($($result2)*) (
+            $($result3)*
             $( #[$attr] )*
-            #[arg(long, default_value_t = $default)]
+            (default_value_t = $default)
             pub $field: $type,
         ));
     };
 
     // Apply common transformation for all four cases.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident $type:tt ($($result2:tt)*) ($($result3:tt)*) ($($result1:tt)*)) => {
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident $type:tt ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         define_config!(@ $name $matches $config $partial { $($rest)* } -> (
             $($result1)*
-        ) (
-            $($result2)*
             pub $field: Option<$type>,
         ) (
-            $($result3)*
+            $($result2)*
             if let Some(val) = $partial.$field {
                 if $matches.value_source(stringify!($field)) == Some(ValueSource::DefaultValue) {
                     $config.$field = val;
                 }
             }
+        ) (
+            $($result3)*
         ));
     };
 
     // Terminal rule: Emit the final code.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) (
+        $(
+            $(
+                #[$attr:meta]
+            )*
+            ( $($args:tt)* )
+            pub $field:ident : $type:ty,
+        )* $(,)?
+    )) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
         pub struct $name
         where
             Self: Send + Sync + 'static,
         {
-            $($result1)*
+            $(
+                $( #[$attr] )*
+                #[arg(long, $($args)*)]
+                pub $field: $type,
+            )*
         }
 
         #[derive(Debug, Default, Deserialize)]
         pub struct PartialConfig {
-            $($result2)*
+            $($result1)*
         }
 
         impl $name {
@@ -107,7 +119,7 @@ macro_rules! define_config {
                     .unwrap_or_default();
 
                 // Override Clap default values with config file values.
-                $($result3)*
+                $($result2)*
 
                 $config
             }
