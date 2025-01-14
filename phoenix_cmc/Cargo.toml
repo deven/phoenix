@@ -16,7 +16,7 @@ keywords      = ["cmc", "chat", "conferencing", "communication", "im", "instant 
 async-backtrace         = "0.2.6"
 bytes                   = "1.5.0"
 chrono                  = "0.4.33"
-clap                    = { version = "4.4.11", features = ["derive"] }
+clap                    = { version = "4.4.11", features = ["derive", "env"] }
 config                  = "0.15.5"
 errno                   = "0.3.8"
 futures                 = "0.3.30"
