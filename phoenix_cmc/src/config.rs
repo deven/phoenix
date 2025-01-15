@@ -102,10 +102,11 @@ macro_rules! config {
     (@ ($name:ident $($vars:tt)*) { } -> {
         $($output:tt)*
     } ($($fields:tt)*) ($($optional:tt)*) (@ ($($skip:tt)*) { $($output2:tt)* } $($overrides:tt)*)) => {
-        config!(@ ($name $($vars)*) -> {
-            $($output)*
-            $($output2)*
-            paste! {
+        paste! {
+            config!(@ ($name $($vars)*) -> {
+                $($output)*
+                $($output2)*
+
                 #[derive(Debug, Clone, Parser)]
                 #[command(author, version, about, long_about = None)]
                 pub struct $name
@@ -119,10 +120,10 @@ macro_rules! config {
                 pub struct [<Partial $name>] {
                     $($optional)*
                 }
-            }
-        } {
-            $($overrides)*
-        });
+            } {
+                $($overrides)*
+            });
+        }
     };
 
     // Terminal rule: Emit the final code.
@@ -131,6 +132,7 @@ macro_rules! config {
     } {
         $($overrides:tt)*
     }) => {
+        $($output)*
         paste! {
             impl $name {
                 pub fn load() -> $name {
