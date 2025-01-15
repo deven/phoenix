@@ -53,7 +53,12 @@ macro_rules! config {
         } (
             $($fields)*
             $(#[$attr])*
-            #[arg(long = concat!($(stringify!($path), "-",)* stringify!($field)), name = concat!($(stringify!($path), "_",)* stringify!($field)), $(env = stringify!($env),)? $($default)*)]
+            #[arg(
+                long = concat!($(stringify!($path), "-",)* stringify!($field)),
+                name = concat!($(stringify!($path), "_",)* stringify!($field)),
+                $(env = stringify!($env),)?
+                $($default)*
+            )]
             pub $field: $type,
         ) (
             $($optional)*
