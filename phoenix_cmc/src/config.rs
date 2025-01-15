@@ -38,9 +38,6 @@ macro_rules! config {
                 pub $section: Option<[<Partial $name $section:camel>]>,
             ) (
                 $($overrides)*
-                if let Some(val) = $partial$(.$path)*.$section {
-                    $config.$($path.)*$section = val;
-                }
             ));
         }
     };
@@ -60,11 +57,13 @@ macro_rules! config {
     };
 
     // Apply common transformations.
-    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { $($rest:tt)* } ->
+        @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)?
+        ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
             $($fields)*
             $(#[$attr])*
-            #[arg(long, $(env = stringify!($env),)? $($default)*)]
+            #[arg(long = concat!($(stringify!($path), "-",)* stringify!($field)), $(env = stringify!($env),)? $($default)*)]
             pub $field: $type,
         ) (
             $($optional)*
@@ -72,14 +71,14 @@ macro_rules! config {
         ) (
             $($overrides)*
             if let Some(val) = $partial$(.$path)*.$field {
-                if $matches.value_source(concat!($(stringify!($path), ".",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
+                if $matches.value_source(concat!($(stringify!($path), "-",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
                     $config.$($path.)*$field = val;
                 }
             }
         ));
     };
 
-    // Terminal rule: Emit the final code.
+    // Terminal rule for top-level config
     (@ ($name:ident () $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
@@ -118,7 +117,7 @@ macro_rules! config {
     };
 
     // Terminal rule for nested sections
-    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+    (@ ($name:ident ($($path:tt)+) $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         paste! {
             #[derive(Debug, Clone)]
             pub struct $name {
