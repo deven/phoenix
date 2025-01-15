@@ -26,23 +26,21 @@ macro_rules! config {
     } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         // Generate struct and partial struct for the nested section.
         paste! {
-            config!(@ ([<$name $section:camel>] ($($path)* . $section) $matches $config [<$partial $section:camel>]) { $($nested)* } -> () () ());
+            config!(@ ([<$name $section:camel>] ($($path)* $section) $matches $config $partial) { $($nested)* } -> () () ());
         }
 
         // Add the nested struct field to the parent.
-        paste! {
-            config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
-                $($fields)*
-                $(#[$attr])*
-                pub $section: [<$name $section:camel>],
-            ) (
-                $($optional)*
-                pub $section: Option<[<$partial $section:camel>]>,
-            ) (
-                $($overrides)*
-                $config.$($path)*.$section = [<$name $section:camel>]::load();
-            ));
-        }
+        config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
+            $($fields)*
+            $(#[$attr])*
+            pub $section: [<$name $section:camel>],
+        ) (
+            $($optional)*
+            pub $section: Option<[<$partial $section:camel>]>,
+        ) (
+            $($overrides)*
+            $config.$section = [<$name $section:camel>]::load();
+        ));
     };
 
     // Use "default_value" for `=> "literal"` syntax.
@@ -71,16 +69,16 @@ macro_rules! config {
             pub $field: Option<$type>,
         ) (
             $($overrides)*
-            if let Some(val) = $partial.$($path)*.$field {
-                if $matches.value_source(stringify!($($path)*.$field)) == Some(ValueSource::DefaultValue) {
-                    $config.$($path)*.$field = val;
+            if let Some(val) = $partial$(.$path)*.$field {
+                if $matches.value_source(concat!(stringify!($($path.)*), stringify!($field))) == Some(ValueSource::DefaultValue) {
+                    $config.$($path.)*.$field = val;
                 }
             }
         ));
     };
 
     // Terminal rule: Emit the final code.
-    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+    (@ ($name:ident () $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         paste! {
             #[derive(Debug, Clone, Parser)]
             #[command(author, version, about, long_about = None)]
