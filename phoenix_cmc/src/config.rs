@@ -187,12 +187,6 @@ config!(Options => {
     /// Enable debug mode
     debug: bool = false => PHOENIX_DEBUG,
 
-    /// Enable guest login
-    guest_enabled: bool = false,
-
-    /// Maximum login attempts
-    max_login_attempts: u16 = 3,
-
     /// Use IPv6 instead of IPv4
     ipv6: bool = false => PHOENIX_USE_IPV6,
 
@@ -230,5 +224,14 @@ config!(Options => {
 
         /// Terminal minimum width
         min_width: u16 = 10,
+    },
+
+    /// User options
+    users => {
+        /// Enable guest login
+        guest_enabled: bool = false,
+
+        /// Maximum login attempts
+        max_login_attempts: u16 = 3,
     },
 });
