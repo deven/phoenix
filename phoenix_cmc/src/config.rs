@@ -91,7 +91,7 @@ macro_rules! config {
             ) (
                 @ () {
                     // Generate nested section structs.
-                    config!(@ ([<$name $section:camel>] ($($path)* $section) $matches $config $partial) { $($nested)* } -> {} () () ({}));
+                    config!(@ ([<$name $section:camel>] ($($path)* $section) $matches $config $partial) { $($nested)* } -> {} () () (@ () {}));
                 }
                 $($overrides)*
             ));
@@ -133,6 +133,7 @@ macro_rules! config {
         $($overrides:tt)*
     }) => {
         $($output)*
+
         paste! {
             impl $name {
                 pub fn load() -> $name {
