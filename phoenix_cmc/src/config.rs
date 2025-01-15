@@ -77,24 +77,14 @@ macro_rules! config {
     };
 
     // Terminal rule: Emit the final code.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) (
-        $(
-            $(
-                #[$attr:meta]
-            )*
-            pub $field:ident : $type:ty,
-        )* $(,)?
-    )) => {
+    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
         pub struct $name
         where
             Self: Send + Sync + 'static,
         {
-            $(
-                $( #[$attr] )*
-                pub $field: $type,
-            )*
+            $($result3)*
         }
 
         #[derive(Debug, Default, Deserialize)]
