@@ -12,117 +12,109 @@ use config::Config;
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use paste::paste;
 
 macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
     ( $name:ident => { $($rest:tt)* } ) => {
-        config!(@ $name matches config partial { $($rest)* } -> () () ());
+        config!(@ ($name () matches config partial) { $($rest)* } -> () () ());
     };
 
-    // Nested section definition
-    (@ $name:ident $matches:ident $config:ident $partial:ident {
-        section $section:ident => { $($fields:tt)* }, $($rest:tt)*
-    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> (
-            $($partial_structs)*
-            #[derive(Debug, Default, Deserialize)]
-            pub struct $section {
+    // Handle nested sections.
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) {
+        $(#[$attr:meta])* $section:ident => { $($nested:tt)* }, $($rest:tt)*
+    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        // Generate struct and partial struct for the nested section.
+        paste! {
+            config!(@ ([<$name $section:camel>] ($($path)* . $section) $matches $config [<$partial $section:camel>]) { $($nested)* } -> () () ());
+        }
+
+        // Add the nested struct field to the parent.
+        paste! {
+            config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
                 $($fields)*
-            }
-        ) (
-            $($partial_assignments)*
-            if let Some(val) = $partial.$section {
-                $config.$section = val;
-            }
-        ) (
-            $($fields_out)*
-            pub $section: $section,
-        ));
+                $(#[$attr])*
+                pub $section: [<$name $section:camel>],
+            ) (
+                $($optional)*
+                pub $section: Option<[<$partial $section:camel>]>,
+            ) (
+                $($overrides)*
+                $config.$($path)*.$section = [<$name $section:camel>]::load();
+            ));
+        }
     };
 
-    // Case 1: `=> "literal"` or `=> "literal" => ENV`
-    (@ $name:ident $matches:ident $config:ident $partial:ident {
-        $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> ($($partial_structs)*) ($($partial_assignments)*) (
-            $($fields_out)*
-            $( #[$attr] )*
-            #[arg(long, $(env = stringify!($env),)? default_value = $default)]
+    // Use "default_value" for `=> "literal"` syntax.
+    (@ ($($vars:tt)*) {
+        $(#[$attr:meta])* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
+    };
+
+    // Use "default_value_t" for `= expr` syntax.
+    (@ ($($vars:tt)*) {
+        $(#[$attr:meta])* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
+    };
+
+    // Apply common transformations.
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
+            $($fields)*
+            $(#[$attr])*
+            #[arg(long, $(env = stringify!($env),)? $($default)*)]
             pub $field: $type,
-        ));
-    };
-
-
-        section $section:ident => { $( $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, )* },
-        $($rest:tt)*
-    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> (
-            $($partial_structs)*
-            #[derive(Debug, Default, Deserialize)]
-            pub struct $section {
-                $(
-                    $( #[$attr] )*
-                    #[serde(default)]
-                    pub $field: $type,
-                )*
-            }
         ) (
-            $($partial_assignments)*
-            if let Some(val) = $partial.$section {
-                $config.$section = val;
-            }
+            $($optional)*
+            pub $field: Option<$type>,
         ) (
-            $($fields_out)*
-            pub $section: $section,
-        ));
-    };
-
-
-    // Case 2: `= expr` or `= expr => ENV`
-    (@ $name:ident $matches:ident $config:ident $partial:ident {
-        $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> ($($partial_structs)*) ($($partial_assignments)*) (
-            $($fields_out)*
-            $( #[$attr] )*
-            #[arg(long, $(env = stringify!($env),)? default_value_t = $default)]
-            pub $field: $type,
+            $($overrides)*
+            if let Some(val) = $partial.$($path)*.$field {
+                if $matches.value_source(stringify!($($path)*.$field)) == Some(ValueSource::DefaultValue) {
+                    $config.$($path)*.$field = val;
+                }
+            }
         ));
     };
 
     // Terminal rule: Emit the final code.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
-        $($partial_structs)*
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        paste! {
+            #[derive(Debug, Clone, Parser)]
+            #[command(author, version, about, long_about = None)]
+            pub struct $name
+            where
+                Self: Send + Sync + 'static,
+            {
+                $($fields)*
+            }
 
-        #[derive(Debug, Default, Deserialize)]
-        pub struct PartialConfig {
-            $($fields_out)*
-        }
+            #[derive(Debug, Default, Deserialize)]
+            pub struct $partial {
+                $($optional)*
+            }
 
-        #[derive(Debug, Clone, Parser)]
-        #[command(author, version, about, long_about = None)]
-        pub struct $name {
-            $($fields_out)*
-        }
+            impl $name {
+                pub fn load() -> $name {
+                    // Parse command-line arguments and environment variables.
+                    let $matches = $name::command().get_matches();
+                    let mut $config = $name::from_arg_matches(&$matches).expect("Clap parse failed");
 
-        impl $name {
-            pub fn load() -> $name {
-                // Parse command-line arguments and environment variables.
-                let $matches = $name::command().get_matches();
-                let mut $config = $name::from_arg_matches(&$matches).expect("Clap parse failed");
+                    // Load config file, if any.
+                    let $partial: $partial = Config::builder()
+                        .add_source(config::File::from($config.config_file.clone()).required(false))
+                        .build()
+                        .unwrap_or_default()
+                        .try_deserialize()
+                        .unwrap_or_default();
 
-                // Load config file, if any.
-                let $partial: PartialConfig = Config::builder()
-                    .add_source(config::File::from($config.config_file.clone()).required(false))
-                    .build()
-                    .unwrap_or_default()
-                    .try_deserialize()
-                    .unwrap_or_default();
+                    // Override Clap default values with config file values.
+                    $($overrides)*
 
-                // Override Clap default values with config file values.
-                $($partial_assignments)*
-
-                $config
+                    $config
+                }
             }
         }
     };
@@ -157,7 +149,7 @@ config!(Options => {
     config_file: PathBuf => "config.toml" => PHOENIX_CONFIG_FILE,
 
     /// TELNET protocol options
-    section telnet => {
+    telnet => {
         /// Enable TELNET protocol
         enabled: bool = true => PHOENIX_TELNET_ENABLED,
 
@@ -169,7 +161,7 @@ config!(Options => {
     },
 
     /// Terminal options
-    section terminal => {
+    terminal => {
         /// Terminal width
         width: u16 => 80,
 
