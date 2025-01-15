@@ -16,26 +16,26 @@ use std::path::PathBuf;
 macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
     ( $name:ident => { $($rest:tt)* } ) => {
-        config!(@ $name matches config partial { $($rest)* } -> () () ());
+        config!(@ ($name matches config partial) { $($rest)* } -> () () ());
     };
 
     // Use "default_value" for `=> "literal"` syntax.
-    (@ $name:ident $matches:ident $config:ident $partial:ident {
+    (@ ($($vars:tt)*) {
         $(#[$attr:meta])* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
     } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
+        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
     // Use "default_value_t" for `= expr` syntax.
-    (@ $name:ident $matches:ident $config:ident $partial:ident {
+    (@ ($($vars:tt)*) {
         $(#[$attr:meta])* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
     } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
+        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
     // Apply common transformations.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> (
+    (@ ($name:ident $matches:ident $config:ident $partial:ident) { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($name $matches $config $partial) { $($rest)* } -> (
             $($fields)*
             $(#[$attr])*
             #[arg(long, $(env = stringify!($env),)? $($default)*)]
@@ -54,7 +54,7 @@ macro_rules! config {
     };
 
     // Terminal rule: Emit the final code.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+    (@ ($name:ident $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
         pub struct $name
