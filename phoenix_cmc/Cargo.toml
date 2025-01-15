@@ -20,6 +20,7 @@ clap                    = { version = "4.4.11", features = ["derive", "env"] }
 config                  = "0.15.5"
 errno                   = "0.3.8"
 futures                 = "0.3.30"
+paste                   = "1.0.15"
 serde                   = "1.0.217"
 socket2                 = "0.5.5"
 tokio                   = { version = "1.35.1", features = ["full"] }
