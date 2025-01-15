@@ -17,40 +17,38 @@ use std::path::PathBuf;
 macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
     ( $name:ident => { $($rest:tt)* } ) => {
-        config!(@ ($name () matches config partial) { $($rest)* } -> {} () () (@ () {}));
+        config!(@ ($name () matches config partial) () { $($rest)* } -> {} () () ());
     };
 
     // Use "default_value" for `=> "literal"` syntax.
-    (@ ($($vars:tt)*) {
+    (@ ($($vars:tt)*) ($($stack:tt)*) {
         $(#[$attr:meta])* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
     } -> {
         $($output:tt)*
-    } ($($fields:tt)*) ($($optional:tt)*) (@ ($($skip:tt)*) { $($output2:tt)* } $($overrides:tt)*)) => {
-        config!(@ ($($vars)*) { $($rest)* } -> @ { ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? } -> {
+    } ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($($vars)*) ($($stack)*) { $($rest)* } -> @ { ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? } -> {
             $($output)*
-            $($output2)*
         } ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
     // Use "default_value_t" for `= expr` syntax.
-    (@ ($($vars:tt)*) {
+    (@ ($($vars:tt)*) ($($stack:tt)*) {
         $(#[$attr:meta])* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
     } -> {
         $($output:tt)*
-    } ($($fields:tt)*) ($($optional:tt)*) (@ ($($skip:tt)*) { $($output2:tt)* } $($overrides:tt)*)) => {
-        config!(@ ($($vars)*) { $($rest)* } -> @ { ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? } -> {
+    } ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ ($($vars)*) ($($stack)*) { $($rest)* } -> @ { ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? } -> {
             $($output)*
-            $($output2)*
         } ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
     // Apply common transformations.
-    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { $($rest:tt)* } -> @ {
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) ($($stack:tt)*) { $($rest:tt)* } -> @ {
         ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)?
     } -> {
         $($output:tt)*
     } ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> {
+        config!(@ ($name ($($path)*) $matches $config $partial) ($($stack)*) { $($rest)* } -> {
             $($output)*
         } (
             $($fields)*
@@ -61,51 +59,53 @@ macro_rules! config {
             $($optional)*
             pub $field: Option<$type>,
         ) (
-            @ () {}
             $($overrides)*
             if let Some(val) = $partial$(.$path)*.$field {
                 if $matches.value_source(concat!($(stringify!($path), "-",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
-                    $config.$($path.)*$field = val;
+                    $config$(.$path)*.$field = val;
                 }
             }
         ));
     };
 
     // Handle nested sections.
-    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) {
+    (@ ($name:ident ($($path:tt)*) $($vars:tt)*) ($($stack:tt)*) {
         $(#[$attr:meta])* $section:ident => { $($nested:tt)* }, $($rest:tt)*
     } -> {
         $($output:tt)*
-    } ($($fields:tt)*) ($($optional:tt)*) (@ ($($skip:tt)*) { $($output2:tt)* } $($overrides:tt)*)) => {
+    } ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         paste! {
-            config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> {
+            config!(@ ([<$name $section:camel>] ($($path)* $section) $($vars)*) (
+                (
+                    $name ($($path)*) (
+                        $($fields)*
+                        $(#[$attr])*
+                        #[arg(skip)]
+                        pub $section: [<$name $section:camel>],
+                    ) (
+                        $($optional)*
+                        pub $section: Option<[<Partial $name $section:camel>]>,
+                    ) (
+                        $($rest)*
+                    )
+                ) $($stack)*
+            ) {
+                $($nested)*
+            } -> {
                 $($output)*
-                $($output2)*
-            } (
-                $($fields)*
-                $(#[$attr])*
-                pub $section: [<$name $section:camel>],
-            ) (
-                $($optional)*
-                pub $section: Option<[<Partial $name $section:camel>]>,
-            ) (
-                @ () {
-                    // Generate nested section structs.
-                    config!(@ ([<$name $section:camel>] ($($path)* $section) $matches $config $partial) { $($nested)* } -> {} () () (@ () {}));
-                }
+            } () () (
                 $($overrides)*
             ));
         }
     };
 
     // Generate completed structures.
-    (@ ($name:ident $($vars:tt)*) { } -> {
+    (@ ($name:ident ($($path:tt)*) $($vars:tt)*) ($($stack:tt)*) {} -> {
         $($output:tt)*
-    } ($($fields:tt)*) ($($optional:tt)*) (@ ($($skip:tt)*) { $($output2:tt)* } $($overrides:tt)*)) => {
+    } ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         paste! {
-            config!(@ ($name $($vars)*) -> {
+            config!(@ ($name ($($path)*) $($vars)*) ($($stack)*) -> {
                 $($output)*
-                $($output2)*
 
                 #[derive(Debug, Clone, Parser)]
                 #[command(author, version, about, long_about = None)]
@@ -126,8 +126,24 @@ macro_rules! config {
         }
     };
 
+    // Pop the stack if necessary.
+    (@ ($skip_name:ident ($($skip_path:tt)*) $($vars:tt)*) (
+        ($name:ident ($($path:tt)*) ($($fields:tt)*) ($($optional:tt)*) ($($rest:tt)*))
+        $($stack:tt)*
+    ) -> {
+        $($output:tt)*
+    } {
+        $($overrides:tt)*
+    }) => {
+        config!(@ ($name ($($path)*) $($vars)*) ($($stack)*) {
+            $($rest)*
+        } -> {
+            $($output)*
+        } ($($fields)*) ($($optional)*) ($($overrides)*));
+    };
+
     // Terminal rule: Emit the final code.
-    (@ ($name:ident () $matches:ident $config:ident $partial:ident) -> {
+    (@ ($name:ident () $matches:ident $config:ident $partial:ident) () -> {
         $($output:tt)*
     } {
         $($overrides:tt)*
