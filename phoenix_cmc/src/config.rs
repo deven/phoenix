@@ -24,13 +24,11 @@ macro_rules! config {
     (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) {
         $(#[$attr:meta])* $section:ident => { $($nested:tt)* }, $($rest:tt)*
     } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        // Generate struct and partial struct for the nested section.
         paste! {
+            // Generate nested section structs
             config!(@ ([<$name $section:camel>] ($($path)* $section) $matches $config $partial) { $($nested)* } -> () () ());
-        }
 
-        // Add the nested struct field to the parent.
-        paste! {
+            // Continue with parent
             config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
                 $($fields)*
                 $(#[$attr])*
@@ -115,6 +113,21 @@ macro_rules! config {
                 $($overrides)*
 
                 $config
+            }
+        }
+    };
+
+    // Terminal rule for nested sections
+    (@ ($name:ident ($($path:tt)*) $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        paste! {
+            #[derive(Debug, Clone)]
+            pub struct $name {
+                $($fields)*
+            }
+
+            #[derive(Debug, Default, Deserialize)]
+            pub struct [<Partial $name>] {
+                $($optional)*
             }
         }
     };
