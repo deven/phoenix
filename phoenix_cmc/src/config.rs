@@ -176,29 +176,6 @@ macro_rules! config {
 }
 
 config!(Options => {
-    debug: bool = false => PHOENIX_DEBUG,
-    network => {
-        telnet => {
-            enabled: bool = true => PHOENIX_TELNET_ENABLED,
-            port: u16 = 23,
-            terminal => {
-                width: u16 = 80,
-                height: u16 = 24,
-            },
-        },
-        ssh => {
-            enabled: bool = false => PHOENIX_SSH_ENABLED,
-            port: u16 = 22,
-            terminal => {
-                width: u16 = 135,
-                height: u16 = 38,
-            },
-        },
-    },
-});
-
-/*
-config!(Options => {
     /// Running from cron to restart server
     cron: bool = false => PHOENIX_CRON_MODE,
 
@@ -250,4 +227,3 @@ config!(Options => {
         min_width: u16 => 10,
     },
 });
-*/
