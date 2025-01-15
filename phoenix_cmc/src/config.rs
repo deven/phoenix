@@ -19,61 +19,54 @@ macro_rules! config {
         config!(@ $name matches config partial { $($rest)* } -> () () ());
     };
 
-    // Case 1: `=> "literal"` or `=> "literal" => ENV`
+    // Use "default_value" for `=> "literal"` syntax.
     (@ $name:ident $matches:ident $config:ident $partial:ident {
-        $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
-            $($result3)*
-            $( #[$attr] )*
-            #[arg(long, $(env = stringify!($env),)? default_value = $default)]
-            pub $field: $type,
-        ));
+        $(#[$attr:meta])* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
-    // Case 2: `= expr` or `= expr => ENV`
+    // Use "default_value_t" for `= expr` syntax.
     (@ $name:ident $matches:ident $config:ident $partial:ident {
-        $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
-            $($result3)*
-            $( #[$attr] )*
-            #[arg(long, $(env = stringify!($env),)? default_value_t = $default)]
-            pub $field: $type,
-        ));
+        $(#[$attr:meta])* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
     };
 
-    // Apply common transformation for all cases.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident ($type:ty) ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+    // Apply common transformations.
+    (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         config!(@ $name $matches $config $partial { $($rest)* } -> (
-            $($result1)*
+            $($fields)*
+            $(#[$attr])*
+            #[arg(long, $(env = stringify!($env),)? $($default)*)]
+            pub $field: $type,
+        ) (
+            $($optional)*
             pub $field: Option<$type>,
         ) (
-            $($result2)*
+            $($overrides)*
             if let Some(val) = $partial.$field {
                 if $matches.value_source(stringify!($field)) == Some(ValueSource::DefaultValue) {
                     $config.$field = val;
                 }
             }
-        ) (
-            $($result3)*
         ));
     };
 
     // Terminal rule: Emit the final code.
-    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
         #[derive(Debug, Clone, Parser)]
         #[command(author, version, about, long_about = None)]
         pub struct $name
         where
             Self: Send + Sync + 'static,
         {
-            $($result3)*
+            $($fields)*
         }
 
         #[derive(Debug, Default, Deserialize)]
         pub struct PartialConfig {
-            $($result1)*
+            $($optional)*
         }
 
         impl $name {
@@ -91,7 +84,7 @@ macro_rules! config {
                     .unwrap_or_default();
 
                 // Override Clap default values with config file values.
-                $($result2)*
+                $($overrides)*
 
                 $config
             }
