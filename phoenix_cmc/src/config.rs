@@ -16,57 +16,93 @@ use std::path::PathBuf;
 macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
     ( $name:ident => { $($rest:tt)* } ) => {
-        config!(@ ($name matches config partial) { $($rest)* } -> () () ());
+        config!(@ $name matches config partial { $($rest)* } -> () () ());
     };
 
-    // Use "default_value" for `=> "literal"` syntax.
-    (@ ($($vars:tt)*) {
-        $(#[$attr:meta])* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
-    };
-
-    // Use "default_value_t" for `= expr` syntax.
-    (@ ($($vars:tt)*) {
-        $(#[$attr:meta])* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
-    } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ ($($vars)*) { $($rest)* } -> @ ($(#[$attr])*) $field ($type) (default_value_t = $default) $($env)? ($($fields)*) ($($optional)*) ($($overrides)*));
-    };
-
-    // Apply common transformations.
-    (@ ($name:ident $matches:ident $config:ident $partial:ident) { $($rest:tt)* } -> @ ($(#[$attr:meta])*) $field:ident ($type:ty) ($($default:tt)*) $($env:ident)? ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        config!(@ ($name $matches $config $partial) { $($rest)* } -> (
-            $($fields)*
-            $(#[$attr])*
-            #[arg(long, $(env = stringify!($env),)? $($default)*)]
-            pub $field: $type,
-        ) (
-            $($optional)*
-            pub $field: Option<$type>,
-        ) (
-            $($overrides)*
-            if let Some(val) = $partial.$field {
-                if $matches.value_source(stringify!($field)) == Some(ValueSource::DefaultValue) {
-                    $config.$field = val;
-                }
+    // Nested section definition
+    (@ $name:ident $matches:ident $config:ident $partial:ident {
+        section $section:ident => { $($fields:tt)* }, $($rest:tt)*
+    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> (
+            $($partial_structs)*
+            #[derive(Debug, Default, Deserialize)]
+            pub struct $section {
+                $($fields)*
             }
+        ) (
+            $($partial_assignments)*
+            if let Some(val) = $partial.$section {
+                $config.$section = val;
+            }
+        ) (
+            $($fields_out)*
+            pub $section: $section,
+        ));
+    };
+
+    // Case 1: `=> "literal"` or `=> "literal" => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident {
+        $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> ($($partial_structs)*) ($($partial_assignments)*) (
+            $($fields_out)*
+            $( #[$attr] )*
+            #[arg(long, $(env = stringify!($env),)? default_value = $default)]
+            pub $field: $type,
+        ));
+    };
+
+
+        section $section:ident => { $( $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, )* },
+        $($rest:tt)*
+    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> (
+            $($partial_structs)*
+            #[derive(Debug, Default, Deserialize)]
+            pub struct $section {
+                $(
+                    $( #[$attr] )*
+                    #[serde(default)]
+                    pub $field: $type,
+                )*
+            }
+        ) (
+            $($partial_assignments)*
+            if let Some(val) = $partial.$section {
+                $config.$section = val;
+            }
+        ) (
+            $($fields_out)*
+            pub $section: $section,
+        ));
+    };
+
+
+    // Case 2: `= expr` or `= expr => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident {
+        $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
+        config!(@ $name $matches $config $partial { $($rest)* } -> ($($partial_structs)*) ($($partial_assignments)*) (
+            $($fields_out)*
+            $( #[$attr] )*
+            #[arg(long, $(env = stringify!($env),)? default_value_t = $default)]
+            pub $field: $type,
         ));
     };
 
     // Terminal rule: Emit the final code.
-    (@ ($name:ident $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        #[derive(Debug, Clone, Parser)]
-        #[command(author, version, about, long_about = None)]
-        pub struct $name
-        where
-            Self: Send + Sync + 'static,
-        {
-            $($fields)*
-        }
+    (@ $name:ident $matches:ident $config:ident $partial:ident { } -> ($($partial_structs:tt)*) ($($partial_assignments:tt)*) ($($fields_out:tt)*)) => {
+        $($partial_structs)*
 
         #[derive(Debug, Default, Deserialize)]
         pub struct PartialConfig {
-            $($optional)*
+            $($fields_out)*
+        }
+
+        #[derive(Debug, Clone, Parser)]
+        #[command(author, version, about, long_about = None)]
+        pub struct $name {
+            $($fields_out)*
         }
 
         impl $name {
@@ -84,7 +120,7 @@ macro_rules! config {
                     .unwrap_or_default();
 
                 // Override Clap default values with config file values.
-                $($overrides)*
+                $($partial_assignments)*
 
                 $config
             }
@@ -98,6 +134,12 @@ config!(Options => {
 
     /// Enable debug mode
     debug: bool = false => PHOENIX_DEBUG,
+
+    /// Enable guest login
+    guest_enabled: bool => false,
+
+    /// Maximum login attempts
+    max_login_attempts: u16 => 3,
 
     /// Use IPv6 instead of IPv4
     ipv6: bool = false => PHOENIX_USE_IPV6,
@@ -114,12 +156,27 @@ config!(Options => {
     /// Path to the configuration file
     config_file: PathBuf => "config.toml" => PHOENIX_CONFIG_FILE,
 
-    //telnet_enabled: bool => true,
-    //telnet_port: u16 => 9999,
-    //telnet_login_timeout: u64 => 60,
-    //terminal_width: u16 => 80,
-    //terminal_height: u16 => 24,
-    //terminal_min_width: u16 => 10,
-    //guest_enabled: bool => false,
-    //max_login_attempts: u32 => 3,
+    /// TELNET protocol options
+    section telnet => {
+        /// Enable TELNET protocol
+        enabled: bool = true => PHOENIX_TELNET_ENABLED,
+
+        /// Listening port for TELNET
+        port: u16 = 23,
+
+        /// Timeout for TELNET login
+        login_timeout: u16 = 60,
+    },
+
+    /// Terminal options
+    section terminal => {
+        /// Terminal width
+        width: u16 => 80,
+
+        /// Terminal height
+        height: u16 => 24,
+
+        /// Terminal minimum width
+        min_width: u16 => 10,
+    },
 });
