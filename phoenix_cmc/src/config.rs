@@ -165,16 +165,16 @@ config!(Options => {
             enabled: bool = true => PHOENIX_TELNET_ENABLED,
             port: u16 = 23,
             terminal => {
-                width: 80,
-                width: 24,
+                width: u16 = 80,
+                height: u16 = 24,
             },
         },
         ssh => {
             enabled: bool = false => PHOENIX_SSH_ENABLED,
             port: u16 = 22,
             terminal => {
-                width: 135,
-                width: 38,
+                width: u16 = 135,
+                height: u16 = 38,
             },
         },
     },
