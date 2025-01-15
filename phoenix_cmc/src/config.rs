@@ -54,7 +54,7 @@ macro_rules! config {
             $($fields)*
             $(#[$attr])*
             #[arg(
-                long = concat!($(stringify!($path), "-",)* stringify!($field)),
+                long = concat!($(stringify!($path), "_",)* stringify!($field)),
                 name = concat!($(stringify!($path), "_",)* stringify!($field)),
                 $(env = stringify!($env),)?
                 $($default)*
@@ -66,7 +66,7 @@ macro_rules! config {
         ) (
             $($overrides)*
             if let Some(val) = $partial$(.$path)*.$field {
-                if $matches.value_source(concat!($(stringify!($path), "-",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
+                if $matches.value_source(concat!($(stringify!($path), "_",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
                     $config$(.$path)*.$field = val;
                 }
             }
