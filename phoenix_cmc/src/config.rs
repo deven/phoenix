@@ -53,7 +53,7 @@ macro_rules! config {
         } (
             $($fields)*
             $(#[$attr])*
-            #[arg(long = concat!($(stringify!($path), "-",)* stringify!($field)), $(env = stringify!($env),)? $($default)*)]
+            #[arg(long = concat!($(stringify!($path), "-",)* stringify!($field)), name = concat!($(stringify!($path), "_",)* stringify!($field)), $(env = stringify!($env),)? $($default)*)]
             pub $field: $type,
         ) (
             $($optional)*
@@ -80,11 +80,11 @@ macro_rules! config {
                     $name ($($path)*) (
                         $($fields)*
                         $(#[$attr])*
-                        #[arg(skip)]
+                        #[command(flatten)]
                         pub $section: [<$name $section:camel>],
                     ) (
                         $($optional)*
-                        pub $section: Option<[<Partial $name $section:camel>]>,
+                        pub $section: [<Partial $name $section:camel>],
                     ) (
                         $($rest)*
                     )
@@ -107,7 +107,7 @@ macro_rules! config {
             config!(@ ($name ($($path)*) $($vars)*) ($($stack)*) -> {
                 $($output)*
 
-                #[derive(Debug, Clone, Parser)]
+                #[derive(Debug, Clone, Default, Parser)]
                 #[command(author, version, about, long_about = None)]
                 pub struct $name
                 where
