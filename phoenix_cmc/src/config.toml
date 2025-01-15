@@ -1,0 +1,21 @@
+cron = false
+debug = false
+ipv6 = false
+bind_addr = "0.0.0.0:9999"
+port = 9999
+lib_dir = "/var/lib/phoenix"
+config_file = "config.toml"
+
+[telnet]
+enabled = true
+port = 23
+login_timeout_secs = 60
+
+[terminal]
+default_width = 80
+default_height = 24
+min_width = 10
+
+[users]
+guest_enabled = false
+max_login_attempts = 3
