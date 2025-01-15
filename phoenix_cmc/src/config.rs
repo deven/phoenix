@@ -19,47 +19,31 @@ macro_rules! config {
         config!(@ $name matches config partial { $($rest)* } -> () () ());
     };
 
-    // Case 1: `=> "literal" => ENV`
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+    // Case 1: `=> "literal"` or `=> "literal" => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident {
+        $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            #[arg(long, env = stringify!($env_var), default_value = $default)]
+            #[arg(long, $(env = stringify!($env),)? default_value = $default)]
             pub $field: $type,
         ));
     };
 
-    // Case 2: `=> "literal"`
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty => $default:literal, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
+    // Case 2: `= expr` or `= expr => ENV`
+    (@ $name:ident $matches:ident $config:ident $partial:ident {
+        $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr $(=> $env:ident)?, $($rest:tt)*
+    } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
             $($result3)*
             $( #[$attr] )*
-            #[arg(long, default_value = $default)]
+            #[arg(long, $(env = stringify!($env),)? default_value_t = $default)]
             pub $field: $type,
         ));
     };
 
-    // Case 3: `= expr => ENV`
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr => $env_var:ident, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
-            $($result3)*
-            $( #[$attr] )*
-            #[arg(long, env = stringify!($env_var), default_value_t = $default)]
-            pub $field: $type,
-        ));
-    };
-
-    // Case 4: `= expr`
-    (@ $name:ident $matches:ident $config:ident $partial:ident { $( #[$attr:meta] )* $field:ident : $type:ty = $default:expr, $($rest:tt)* } -> ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
-        config!(@ $name $matches $config $partial { $($rest)* } -> @ $field ($type) ($($result1)*) ($($result2)*) (
-            $($result3)*
-            $( #[$attr] )*
-            #[arg(long, default_value_t = $default)]
-            pub $field: $type,
-        ));
-    };
-
-    // Apply common transformation for all four cases.
+    // Apply common transformation for all cases.
     (@ $name:ident $matches:ident $config:ident $partial:ident { $($rest:tt)* } -> @ $field:ident ($type:ty) ($($result1:tt)*) ($($result2:tt)*) ($($result3:tt)*)) => {
         config!(@ $name $matches $config $partial { $($rest)* } -> (
             $($result1)*
