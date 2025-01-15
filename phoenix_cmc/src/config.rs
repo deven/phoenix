@@ -192,7 +192,7 @@ config!(Options => {
     ipv6: bool = false => PHOENIX_USE_IPV6,
 
     /// Listening bind address
-    bind_addr: SocketAddr => "0.0.0.0:9999" => PHOENIX_BIND_ADDR,
+    bind_addr: Option<SocketAddr> => "0.0.0.0:9999" => PHOENIX_BIND_ADDR,
 
     /// Set listening port number
     port: u16 = 9999 => PHOENIX_TELNET_PORT,
