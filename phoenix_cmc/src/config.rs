@@ -9,10 +9,10 @@
 
 use clap::{parser::ValueSource, CommandFactory, FromArgMatches, Parser};
 use config::Config;
+use paste::paste;
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use paste::paste;
 
 macro_rules! config {
     // Entry point: Transform public syntax into internal recursive form.
@@ -30,17 +30,21 @@ macro_rules! config {
         }
 
         // Add the nested struct field to the parent.
-        config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
-            $($fields)*
-            $(#[$attr])*
-            pub $section: [<$name $section:camel>],
-        ) (
-            $($optional)*
-            pub $section: Option<[<$partial $section:camel>]>,
-        ) (
-            $($overrides)*
-            $config.$section = [<$name $section:camel>]::load();
-        ));
+        paste! {
+            config!(@ ($name ($($path)*) $matches $config $partial) { $($rest)* } -> (
+                $($fields)*
+                $(#[$attr])*
+                pub $section: [<$name $section:camel>],
+            ) (
+                $($optional)*
+                pub $section: Option<[<Partial $name $section:camel>]>,
+            ) (
+                $($overrides)*
+                if let Some(val) = $partial$(.$path)*.$section {
+                    $config.$($path.)*$section = val;
+                }
+            ));
+        }
     };
 
     // Use "default_value" for `=> "literal"` syntax.
@@ -70,8 +74,8 @@ macro_rules! config {
         ) (
             $($overrides)*
             if let Some(val) = $partial$(.$path)*.$field {
-                if $matches.value_source(concat!(stringify!($($path.)*), stringify!($field))) == Some(ValueSource::DefaultValue) {
-                    $config.$($path.)*.$field = val;
+                if $matches.value_source(concat!($(stringify!($path), ".",)* stringify!($field))) == Some(ValueSource::DefaultValue) {
+                    $config.$($path.)*$field = val;
                 }
             }
         ));
@@ -79,40 +83,38 @@ macro_rules! config {
 
     // Terminal rule: Emit the final code.
     (@ ($name:ident () $matches:ident $config:ident $partial:ident) { } -> ($($fields:tt)*) ($($optional:tt)*) ($($overrides:tt)*)) => {
-        paste! {
-            #[derive(Debug, Clone, Parser)]
-            #[command(author, version, about, long_about = None)]
-            pub struct $name
-            where
-                Self: Send + Sync + 'static,
-            {
-                $($fields)*
-            }
+        #[derive(Debug, Clone, Parser)]
+        #[command(author, version, about, long_about = None)]
+        pub struct $name
+        where
+            Self: Send + Sync + 'static,
+        {
+            $($fields)*
+        }
 
-            #[derive(Debug, Default, Deserialize)]
-            pub struct $partial {
-                $($optional)*
-            }
+        #[derive(Debug, Default, Deserialize)]
+        pub struct PartialConfig {
+            $($optional)*
+        }
 
-            impl $name {
-                pub fn load() -> $name {
-                    // Parse command-line arguments and environment variables.
-                    let $matches = $name::command().get_matches();
-                    let mut $config = $name::from_arg_matches(&$matches).expect("Clap parse failed");
+        impl $name {
+            pub fn load() -> $name {
+                // Parse command-line arguments and environment variables.
+                let $matches = $name::command().get_matches();
+                let mut $config = $name::from_arg_matches(&$matches).expect("Clap parse failed");
 
-                    // Load config file, if any.
-                    let $partial: $partial = Config::builder()
-                        .add_source(config::File::from($config.config_file.clone()).required(false))
-                        .build()
-                        .unwrap_or_default()
-                        .try_deserialize()
-                        .unwrap_or_default();
+                // Load config file, if any.
+                let $partial: PartialConfig = Config::builder()
+                    .add_source(config::File::from($config.config_file.clone()).required(false))
+                    .build()
+                    .unwrap_or_default()
+                    .try_deserialize()
+                    .unwrap_or_default();
 
-                    // Override Clap default values with config file values.
-                    $($overrides)*
+                // Override Clap default values with config file values.
+                $($overrides)*
 
-                    $config
-                }
+                $config
             }
         }
     };
