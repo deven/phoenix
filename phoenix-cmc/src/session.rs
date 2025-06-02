@@ -12,23 +12,21 @@ use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use tokio::sync::{Mutex, RwLock};
 
-lazy_static::lazy_static! {
-    static ref INITS: DashMap<usize, Arc<Session>> = DashMap::new();
-    static ref SESSIONS: DashMap<usize, Arc<Session>> = DashMap::new();
-    static ref DISCUSSIONS: DashMap<String, Arc<Discussion>> = DashMap::new();
-    static ref SESSION_COUNTER: AtomicUsize = AtomicUsize::new(0);
-    static ref DEFAULTS: RwLock<HashMap<String, String>> = {
-        let mut map = HashMap::new();
-        map.insert("time_format".to_string(), "verbose".to_string());
-        RwLock::new(map)
-    };
-    static ref USER_MANAGER: UserManager = UserManager::new();
-    static ref EVENT_QUEUE: EventQueue = EventQueue::new();
-    static ref SHUTDOWN_EVENT: RwLock<Option<Box<dyn Event + Send + Sync>>> = RwLock::new(None);
-}
+static INITS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
+static SESSIONS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
+static DISCUSSIONS: LazyLock<DashMap<String, Arc<Discussion>>> = LazyLock::new(DashMap::new);
+static SESSION_COUNTER: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+static DEFAULTS: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| {
+    let mut map = HashMap::new();
+    map.insert("time_format".to_string(), "verbose".to_string());
+    RwLock::new(map)
+});
+static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
+static EVENT_QUEUE: LazyLock<EventQueue> = LazyLock::new(EventQueue::new);
+static SHUTDOWN_EVENT: LazyLock<RwLock<Option<Box<dyn Event + Send + Sync>>>> = LazyLock::new(|| RwLock::new(None));
 
 pub struct Session {
     pub id: usize,
