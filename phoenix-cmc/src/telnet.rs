@@ -2118,7 +2118,7 @@ impl Telnet {
             *self.prompt.write().await = String::new();
 
             // Process the input
-            session.input(&line).await;
+            session.handle_input(&line).await;
         }
     }
 }
