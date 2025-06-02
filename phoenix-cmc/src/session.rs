@@ -119,12 +119,32 @@ impl Session {
         self.name.read().await.clone()
     }
 
+    pub async fn user_name(&self) -> ArcStr {
+        let guard = self.user.read().await;
+        match &*guard {
+            Some(u_arc) => u_arc.read().await.user.clone(),
+            None => ArcStr::from(""),
+        }
+    }
+
+    pub async fn name_user(&self) -> ArcStr {
+        let name = self.name().await;
+        let user_name = self.user_name().await;
+        ArcStr::from(format!("{name} ({user_name})"))
+    }
+
     pub async fn name_obj(&self) -> Arc<Name> {
         self.name_obj.read().await.clone()
     }
 
     pub async fn blurb(&self) -> ArcStr {
         self.blurb.read().await.clone()
+    }
+
+    pub async fn name_blurb(&self) -> ArcStr {
+        let name = self.name().await;
+        let blurb = self.blurb().await;
+        &name + &blurb
     }
 
     pub async fn signed_on(&self) -> bool {
@@ -201,16 +221,8 @@ impl Session {
         new_telnet.set_session(Some(self.clone())).await;
 
         if let Some(old) = old_telnet {
-            info!(
-                "Transfer: {} ({}) from fd to new connection",
-                self.name().await,
-                self.user
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|u| u.read().await.user.clone())
-                    .unwrap_or_default()
-            );
+            let who = self.name_user().await;
+            info!("Transfer: {who} from fd to new connection");
             old.output("*** This session has been transferred to a new connection. ***\n")
                 .await;
             old.close(true).await;
@@ -227,16 +239,8 @@ impl Session {
         *self.telnet.write().await = Some(telnet.clone());
         telnet.set_session(Some(self.clone())).await;
 
-        info!(
-            "Attach: {} ({}) on new connection",
-            self.name().await,
-            self.user
-                .read()
-                .await
-                .as_ref()
-                .map(|u| u.read().await.user.clone())
-                .unwrap_or_default()
-        );
+        let who = self.name_user().await;
+        info!("Attach: {who} on new connection");
 
         self.enqueue_others(Arc::new(AttachNotify::new(self.name_obj())))
             .await;
@@ -250,29 +254,13 @@ impl Session {
             let current_telnet = self.telnet.read().await;
             if let Some(t) = &*current_telnet {
                 if Arc::ptr_eq(t, telnet) {
-                    if intentional {
-                        info!(
-                            "Detach: {} ({}) (intentional)",
-                            self.name().await,
-                            self.user
-                                .read()
-                                .await
-                                .as_ref()
-                                .map(|u| u.read().await.user.clone())
-                                .unwrap_or_default()
-                        );
+                    let who = self.name_user().await;
+                    let detach_type = if intentional {
+                        info!("Detach: {who} (intentional)");
                     } else {
-                        info!(
-                            "Detach: {} ({}) (accidental)",
-                            self.name().await,
-                            self.user
-                                .read()
-                                .await
-                                .as_ref()
-                                .map(|u| u.read().await.user.clone())
-                                .unwrap_or_default()
-                        );
-                    }
+                        info!("Detach: {who} (accidental)");
+                    };
+
                     drop(current_telnet);
                     self.enqueue_others(Arc::new(DetachNotify::new(self.name_obj(), intentional)))
                         .await;
@@ -478,28 +466,11 @@ impl Session {
     }
 
     pub async fn notify_entry(&self) {
+        let who = self.name_user().await;
         if let Some(telnet) = &*self.telnet.read().await {
-            info!(
-                "Enter: {} ({}) on connection",
-                self.name().await,
-                self.user
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|u| u.read().await.user.clone())
-                    .unwrap_or_default()
-            );
+            info!("Enter: {who} on connection");
         } else {
-            info!(
-                "Enter: {} ({}), detached",
-                self.name().await,
-                self.user
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|u| u.read().await.user.clone())
-                    .unwrap_or_default()
-            );
+            info!("Enter: {who}, detached");
         }
 
         let now = Timestamp::new();
@@ -511,28 +482,11 @@ impl Session {
     }
 
     pub async fn notify_exit(&self) {
+        let who = self.name_user().await;
         if let Some(telnet) = &*self.telnet.read().await {
-            info!(
-                "Exit: {} ({}) on connection",
-                self.name().await,
-                self.user
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|u| u.read().await.user.clone())
-                    .unwrap_or_default()
-            );
+            info!("Exit: {who} on connection");
         } else {
-            info!(
-                "Exit: {} ({}), detached",
-                self.name().await,
-                self.user
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|u| u.read().await.user.clone())
-                    .unwrap_or_default()
-            );
+            info!("Exit: {who}, detached");
         }
 
         self.enqueue_others(Arc::new(ExitNotify::new(self.name_obj())))
@@ -1129,46 +1083,23 @@ impl Session {
     }
 
     async fn do_restart(&self, args: &str) {
-        let who = format!(
-            "{} ({})",
-            self.name().await,
-            self.user
-                .read()
-                .await
-                .as_ref()
-                .map(|u| u.read().await.user.clone())
-                .unwrap_or_default()
-        );
+        let who = self.name_user().await;
+        let name = self.name_blurb().await;
 
         if args == "!" {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
                 // Cancel existing shutdown
             }
-            Self::announce(&format!(
-                "*** {}{} has restarted Phoenix! ***\n",
-                self.name().await,
-                self.blurb().await
-            ))
-            .await;
+
+            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
             let event = Box::new(RestartEvent::immediate(who));
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
         } else if match_keyword(args, "cancel", 6).is_some() {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                info!(
-                    "Restart cancelled by {} ({})",
-                    self.name().await,
-                    self.user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default()
-                );
+                info!("Restart cancelled by {who}");
                 Self::announce(&format!(
-                    "*** {}{} has cancelled the server restart. ***\n",
-                    self.name().await,
-                    self.blurb().await
+                    "*** {name} has cancelled the server restart. ***\n"
                 ))
                 .await;
                 *SHUTDOWN_EVENT.write().await = None;
@@ -1181,12 +1112,8 @@ impl Session {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
                 // Cancel existing shutdown
             }
-            Self::announce(&format!(
-                "*** {}{} has restarted Phoenix! ***\n",
-                self.name().await,
-                self.blurb().await
-            ))
-            .await;
+
+            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
             let event = Box::new(RestartEvent::new(who, seconds));
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
@@ -1194,46 +1121,23 @@ impl Session {
     }
 
     async fn do_down(&self, args: &str) {
-        let who = format!(
-            "{} ({})",
-            self.name().await,
-            self.user
-                .read()
-                .await
-                .as_ref()
-                .map(|u| u.read().await.user.clone())
-                .unwrap_or_default()
-        );
+        let who = self.name_user().await;
+        let name = self.name_blurb().await;
 
         if args == "!" {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
                 // Cancel existing shutdown
             }
-            Self::announce(&format!(
-                "*** {}{} has shut down Phoenix! ***\n",
-                self.name().await,
-                self.blurb().await
-            ))
-            .await;
+
+            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
 
             let event = Box::new(ShutdownEvent::immediate(who));
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
         } else if match_keyword(args, "cancel", 6).is_some() {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                info!(
-                    "Shutdown cancelled by {} ({})",
-                    self.name().await,
-                    self.user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default()
-                );
+                info!("Shutdown cancelled by {who}");
                 Self::announce(&format!(
-                    "*** {}{} has cancelled the server shutdown. ***\n",
-                    self.name().await,
-                    self.blurb().await
+                    "*** {name} has cancelled the server shutdown. ***\n"
                 ))
                 .await;
                 *SHUTDOWN_EVENT.write().await = None;
@@ -1246,12 +1150,8 @@ impl Session {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
                 // Cancel existing shutdown
             }
-            Self::announce(&format!(
-                "*** {}{} has shut down Phoenix! ***\n",
-                self.name().await,
-                self.blurb().await
-            ))
-            .await;
+
+            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
 
             let event = Box::new(ShutdownEvent::new(who, seconds));
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
@@ -1265,66 +1165,31 @@ impl Session {
         let (session, matches, _, _) = self.find_sendable(args, false, false, true, false);
 
         if let Some(target) = session {
+            let who = target.name_user().await;
+            let name = target.name().await;
+            let by_who = self.name_user().await;
+            let by_name = self.name_blurb().await;
+
             if drain {
-                self.print(&format!("\"{}\" has been nuked.\n", target.name().await))
-                    .await;
+                self.print(&format!("\"{name}\" has been nuked.\n")).await;
             } else {
-                self.print(&format!(
-                    "\"{}\" has been nuked immediately.\n",
-                    target.name().await
-                ))
-                .await;
+                self.print(&format!("\"{name}\" has been nuked immediately.\n"))
+                    .await;
             }
 
             if let Some(telnet) = &*target.telnet.read().await {
                 *target.telnet.write().await = None;
-                info!(
-                    "{} ({}) has been nuked by {} ({})",
-                    target.name().await,
-                    target
-                        .user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default(),
-                    self.name().await,
-                    self.user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default()
-                );
+                info!("{who} has been nuked by {by_who}");
                 telnet.undraw_input().await;
                 telnet
                     .print(&format!(
-                        "\x07\x07\x07*** You have been nuked by {}{}. ***\n",
-                        self.name().await,
-                        self.blurb().await
+                        "\x07\x07\x07*** You have been nuked by {by_name}. ***\n"
                     ))
                     .await;
                 telnet.redraw_input().await;
                 telnet.close(drain).await;
             } else {
-                info!(
-                    "{} ({}), detached, has been nuked by {} ({})",
-                    target.name().await,
-                    target
-                        .user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default(),
-                    self.name().await,
-                    self.user
-                        .read()
-                        .await
-                        .as_ref()
-                        .map(|u| u.read().await.user.clone())
-                        .unwrap_or_default()
-                );
+                info!("{who}, detached, has been nuked by {by_who}");
                 target.close(true).await;
             }
         } else {
@@ -1361,11 +1226,11 @@ impl Session {
                 self.output("~").await;
             }
 
-            let name_blurb = format!("{}{}", session.name().await, session.blurb().await);
-            if name_blurb.len() > 33 {
-                self.print(&format!("{:<32.32}+ ", name_blurb)).await;
+            let name = session.name_blurb().await;
+            if name.len() > 33 {
+                self.print(&format!("{:<32.32}+ ", name)).await;
             } else {
-                self.print(&format!("{:<33} ", name_blurb)).await;
+                self.print(&format!("{:<33} ", name)).await;
             }
 
             // Login time
@@ -1451,11 +1316,11 @@ impl Session {
                 self.output("~").await;
             }
 
-            let name_blurb = format!("{}{}", session.name().await, session.blurb().await);
+            let name = session.name_blurb().await;
             self.print(&format!(
                 "{:<32.32}{} ",
-                name_blurb,
-                if name_blurb.len() > 32 { "+" } else { " " }
+                name,
+                if name.len() > 32 { "+" } else { " " }
             ))
             .await;
 
