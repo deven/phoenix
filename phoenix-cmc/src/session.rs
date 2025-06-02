@@ -1082,35 +1082,44 @@ impl Session {
 
         if args == "!" {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                // Cancel existing shutdown
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
             }
 
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
-            let event = Box::new(RestartEvent::immediate(who));
-            *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
-        } else if match_keyword(args, "cancel", 6).is_some() {
+            let event = Arc::new(RestartEvent::immediate(who));
+            EVENT_QUEUE.enqueue(event.clone()).await;
+            *SHUTDOWN_EVENT.write().await = Some(event);
+        } else if let Some(_) = match_keyword(args, "cancel", 6) {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                info!("Restart cancelled by {who}");
-                Self::announce(&format!(
-                    "*** {name} has cancelled the server restart. ***\n"
-                ))
-                .await;
+                match shutdown.event_type() {
+                    EventType::ShutdownEvent => {
+                        info!("Shutdown cancelled by {who}.");
+                        Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
+                    }
+                    EventType::RestartEvent => {
+                        info!("Restart cancelled by {who}.");
+                        Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
+                    }
+                    _ => {}
+                }
+
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
                 *SHUTDOWN_EVENT.write().await = None;
             } else {
-                self.output("The server was not about to shut down.\n")
-                    .await;
+                self.output("The server was not about to shut down.\n").await;
             }
         } else {
             let seconds = args.parse::<i64>().unwrap_or(30);
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                // Cancel existing shutdown
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
             }
 
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
-            let event = Box::new(RestartEvent::new(who, seconds));
-            *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
+            let event = Arc::new(RestartEvent::new(who, seconds));
+            EVENT_QUEUE.enqueue(event.clone()).await;
+            *SHUTDOWN_EVENT.write().await = Some(event);
         }
     }
 
@@ -1120,35 +1129,43 @@ impl Session {
 
         if args == "!" {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                // Cancel existing shutdown
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
             }
 
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
 
-            let event = Box::new(ShutdownEvent::immediate(who));
-            *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
-        } else if match_keyword(args, "cancel", 6).is_some() {
+            let event = Arc::new(ShutdownEvent::immediate(who));
+            EVENT_QUEUE.enqueue(event.clone()).await;
+            *SHUTDOWN_EVENT.write().await = Some(event);
+        } else if let Some(_) = match_keyword(args, "cancel", 6) {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                info!("Shutdown cancelled by {who}");
-                Self::announce(&format!(
-                    "*** {name} has cancelled the server shutdown. ***\n"
-                ))
-                .await;
+                match shutdown.event_type() {
+                    EventType::ShutdownEvent => {
+                        info!("Shutdown cancelled by {who}.");
+                        Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
+                    }
+                    EventType::RestartEvent => {
+                        info!("Restart cancelled by {who}.");
+                        Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
+                    }
+                    _ => {}
+                }
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
                 *SHUTDOWN_EVENT.write().await = None;
             } else {
-                self.output("The server was not about to shut down.\n")
-                    .await;
+                self.output("The server was not about to shut down.\n").await;
             }
         } else {
             let seconds = args.parse::<i64>().unwrap_or(30);
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                // Cancel existing shutdown
+                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
             }
 
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
 
-            let event = Box::new(ShutdownEvent::new(who, seconds).await);
-            *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
+            let event = Arc::new(ShutdownEvent::new(who, seconds).await);
+            EVENT_QUEUE.enqueue(event.clone()).await;
+            *SHUTDOWN_EVENT.write().await = Some(event);
         }
     }
 
