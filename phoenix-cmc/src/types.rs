@@ -33,7 +33,7 @@ impl From<&str> for ArcStr {
 
 impl From<String> for ArcStr {
     fn from(s: String) -> Self {
-        Self::new(s)
+        Self(Arc::from(s))
     }
 }
 
