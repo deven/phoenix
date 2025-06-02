@@ -14,8 +14,8 @@ pub enum Sendable {
 pub struct Sendlist {
     pub errors: String,
     pub typed: String,
-    pub sessions: OrderedSet<Session>,
-    pub discussions: OrderedSet<Discussion>,
+    pub sessions: OrderedSet<Arc<Session>>,
+    pub discussions: OrderedSet<Arc<Discussion>>,
 }
 
 impl Sendlist {
@@ -164,8 +164,8 @@ impl Sendlist {
 
     pub async fn expand(
         &self,
-        who: &mut OrderedSet<Session>,
-        sender: Option<&Arc<Session>>,
+        who: &mut OrderedSet<Arc<Session>>,
+        sender: Option<Arc<Session>>,
     ) -> usize {
         who.clear();
 

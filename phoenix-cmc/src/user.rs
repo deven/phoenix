@@ -7,7 +7,7 @@ use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct User {
-    pub sessions: OrderedSet<Session>,
+    pub sessions: OrderedSet<Arc<Session>>,
     pub user: ArcStr,
     pub password: Option<String>,
     pub reserved: Vec<ArcStr>,
