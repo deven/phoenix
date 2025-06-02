@@ -210,28 +210,6 @@ pub fn verify_password(input: &str, encrypted: &str) -> bool {
             .is_ok();
     }
 
-    // Fall back to legacy crypt() for compatibility
-    #[cfg(unix)]
-    {
-        use libc::{c_char, crypt};
-        use std::ffi::CString;
-
-        unsafe {
-            let password = CString::new(input).unwrap();
-            let salt = CString::new(encrypted).unwrap();
-            let result = crypt(
-                password.as_ptr() as *const c_char,
-                salt.as_ptr() as *const c_char,
-            );
-            if !result.is_null() {
-                let result_str = CString::from_raw(result as *mut c_char);
-                let result_string = result_str.to_string_lossy();
-                std::mem::forget(result_str); // Don't free the static result
-                return result_string == encrypted;
-            }
-        }
-    }
-
     false
 }
 
