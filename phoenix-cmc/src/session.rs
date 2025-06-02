@@ -1,13 +1,13 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
-use crate::event::{EventQueue, RestartEvent, ShutdownEvent};
+use crate::event::{RestartEvent, ShutdownEvent};
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
 use crate::telnet::{Telnet, TELNET_ENABLED};
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
-use crate::user::{hash_password, verify_password, User, UserManager};
+use crate::user::{verify_password, User, UserManager};
 use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
@@ -256,7 +256,7 @@ impl Session {
             if let Some(t) = &*current_telnet {
                 if Arc::ptr_eq(t, telnet) {
                     let who = self.name_user().await;
-                    let detach_type = if intentional {
+                    if intentional {
                         info!("Detach: {who} (intentional)");
                     } else {
                         info!("Detach: {who} (accidental)");
@@ -471,7 +471,7 @@ impl Session {
 
     pub async fn notify_entry(&self) {
         let who = self.name_user().await;
-        if let Some(telnet) = &*self.telnet.read().await {
+        if let Some(_telnet) = &*self.telnet.read().await {
             info!("Enter: {who} on connection");
         } else {
             info!("Enter: {who}, detached");
@@ -487,7 +487,7 @@ impl Session {
 
     pub async fn notify_exit(&self) {
         let who = self.name_user().await;
-        if let Some(telnet) = &*self.telnet.read().await {
+        if let Some(_telnet) = &*self.telnet.read().await {
             info!("Exit: {who} on connection");
         } else {
             info!("Exit: {who}, detached");
@@ -1625,11 +1625,11 @@ impl Session {
     pub async fn do_signal(&self, args: &str) {
         let mut args = args;
 
-        if let Some(rest) = match_keyword(args, "on", 2) {
+        if let Some(_rest) = match_keyword(args, "on", 2) {
             self.signal_public.store(true, Ordering::Relaxed);
             self.signal_private.store(true, Ordering::Relaxed);
             self.output("All signals are now on.\n").await;
-        } else if let Some(rest) = match_keyword(args, "off", 2) {
+        } else if let Some(_rest) = match_keyword(args, "off", 2) {
             self.signal_public.store(false, Ordering::Relaxed);
             self.signal_private.store(false, Ordering::Relaxed);
             self.output("All signals are now off.\n").await;

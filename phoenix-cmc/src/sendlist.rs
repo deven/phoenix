@@ -1,7 +1,7 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::session::Session;
-use crate::types::{ArcStr, OrderedSet};
+use crate::types::OrderedSet;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -44,8 +44,6 @@ impl Sendlist {
         do_sessions: bool,
         do_discussions: bool,
     ) {
-        use crate::types::{getword, match_keyword};
-
         if self.typed == sendlist {
             return; // Return if sendlist unchanged
         }
@@ -198,7 +196,7 @@ impl Sendlist {
 pub fn message_start(line: &str) -> (&str, String, String, bool) {
     let mut sendlist = String::new();
     let mut last_explicit_sendlist = String::new();
-    let mut is_explicit = false;
+    let mut _is_explicit = false;
 
     // Attempt to detect smileys that shouldn't be sendlists
     if !line
@@ -250,7 +248,7 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
                 }
             }
             ':' | ';' if !in_quotes => {
-                is_explicit = true;
+                _is_explicit = true;
                 last_explicit_sendlist = sendlist.clone();
                 let mut rest = &line[i + 1..];
                 if rest.starts_with(' ') {

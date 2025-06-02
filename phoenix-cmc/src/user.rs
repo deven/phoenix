@@ -1,7 +1,6 @@
 use crate::session::Session;
 use crate::types::{ArcStr, OrderedSet};
 use anyhow::Result;
-use log::debug;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -184,7 +183,7 @@ impl UserManager {
         self.update_all().await.ok()?;
 
         let users = self.users.read().await;
-        for (login, user_lock) in users.iter() {
+        for (_login, user_lock) in users.iter() {
             let user = user_lock.read().await;
             if let Some(reserved) = user.find_reserved(name) {
                 return Some((reserved.clone(), Arc::clone(user_lock)));

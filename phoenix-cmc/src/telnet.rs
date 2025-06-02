@@ -1,6 +1,5 @@
 use crate::constants::*;
 use crate::name::Name;
-use crate::output::OutputStream;
 use crate::sendlist::Sendlist;
 use crate::session::Session;
 use crate::timestamp::Timestamp;
