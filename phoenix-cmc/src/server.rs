@@ -97,7 +97,7 @@ impl PhoenixServer {
         let telnet = Telnet::new(stream).await;
 
         // Create session
-        let session = Session::new(telnet.clone());
+        let session = Session::new(telnet.clone()).await;
 
         // Set up login timeout
         let timeout_event = Box::new(LoginTimeoutEvent::new(
