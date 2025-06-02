@@ -496,7 +496,7 @@ impl Session {
     pub async fn handle_input(&self, line: &str) {
         self.pending.dequeue().await;
 
-        match self.login_state.read().await {
+        match *self.login_state.read().await {
             LoginState::PreLogin => self.save_input_line(line).await,
             LoginState::AwaitingLogin => self.handle_login_input(line).await,
             LoginState::AwaitingPassword => self.handle_password_input(line).await,
