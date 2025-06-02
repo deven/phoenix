@@ -20,7 +20,11 @@ lazy_static::lazy_static! {
     static ref SESSIONS: DashMap<usize, Arc<Session>> = DashMap::new();
     static ref DISCUSSIONS: DashMap<String, Arc<Discussion>> = DashMap::new();
     static ref SESSION_COUNTER: AtomicUsize = AtomicUsize::new(0);
-    static ref DEFAULTS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
+    static ref DEFAULTS: RwLock<HashMap<String, String>> = {
+        let mut map = HashMap::new();
+        map.insert("time_format".to_string(), "verbose".to_string());
+        RwLock::new(map)
+    };
     static ref EVENT_QUEUE: EventQueue = EventQueue::new();
     static ref SHUTDOWN_EVENT: RwLock<Option<Arc<Box<dyn crate::event::Event + Send + Sync>>>> = RwLock::new(None);
 }
@@ -103,14 +107,6 @@ impl Session {
             oops_text: Arc::new(RwLock::new(
                 "Oops!  Sorry, that last message was intended for someone else...".to_string(),
             )),
-        });
-
-        // Initialize defaults if needed
-        tokio::spawn(async {
-            let mut defaults = DEFAULTS.write().await;
-            if defaults.is_empty() {
-                defaults.insert("time_format".to_string(), "verbose".to_string());
-            }
         });
 
         // Add to initializing sessions
