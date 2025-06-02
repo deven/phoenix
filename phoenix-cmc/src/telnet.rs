@@ -1111,7 +1111,11 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_subnegotiation(&self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
+    pub async fn process_subnegotiation(
+        &self,
+        state: TelnetState,
+        byte: u8,
+    ) -> tokio::io::Result<()> {
         if matches!(state, TelnetState::Subnegotiation) && byte == TelnetCommand::IAC as u8 {
             *self.state.write().await = TelnetState::SubnegotiationEnd;
             return Ok(());
