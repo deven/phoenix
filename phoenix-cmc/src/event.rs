@@ -20,9 +20,9 @@ pub trait Event: Send + Sync {
 
 #[derive(Debug, Clone)]
 pub struct ShutdownEvent {
-    time: Timestamp,
-    final_warning: bool,
-    by: String,
+    pub time: Timestamp,
+    pub final_warning: bool,
+    pub by: String,
 }
 
 impl ShutdownEvent {
@@ -104,9 +104,9 @@ impl Event for ShutdownEvent {
 
 #[derive(Debug, Clone)]
 pub struct RestartEvent {
-    time: Timestamp,
-    final_warning: bool,
-    by: String,
+    pub time: Timestamp,
+    pub final_warning: bool,
+    pub by: String,
 }
 
 impl RestartEvent {
@@ -188,8 +188,8 @@ impl Event for RestartEvent {
 
 #[derive(Debug, Clone)]
 pub struct LoginTimeoutEvent {
-    time: Timestamp,
-    telnet: Arc<RwLock<Telnet>>,
+    pub time: Timestamp,
+    pub telnet: Arc<RwLock<Telnet>>,
 }
 
 impl LoginTimeoutEvent {
@@ -232,7 +232,7 @@ impl Event for LoginTimeoutEvent {
 // Event wrapper for heap ordering
 #[derive(Debug, Clone)]
 struct EventWrapper {
-    event: Box<dyn Event>,
+    pub event: Box<dyn Event>,
 }
 
 impl PartialEq for EventWrapper {
@@ -259,7 +259,7 @@ impl Ord for EventWrapper {
 
 #[derive(Debug, Clone)]
 pub struct EventQueue {
-    queue: Arc<RwLock<BinaryHeap<EventWrapper>>>,
+    pub queue: Arc<RwLock<BinaryHeap<EventWrapper>>>,
 }
 
 impl EventQueue {

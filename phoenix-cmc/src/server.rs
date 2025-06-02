@@ -10,12 +10,12 @@ use tokio::time::{sleep, Duration};
 
 #[derive(Debug, Clone)]
 pub struct PhoenixServer {
-    listener: TcpListener,
-    port: u16,
-    debug: bool,
-    event_queue: Arc<EventQueue>,
-    shutdown_tx: broadcast::Sender<()>,
-    shutdown_rx: broadcast::Receiver<()>,
+    pub listener: TcpListener,
+    pub port: u16,
+    pub debug: bool,
+    pub event_queue: Arc<EventQueue>,
+    pub shutdown_tx: broadcast::Sender<()>,
+    pub shutdown_rx: broadcast::Receiver<()>,
 }
 
 impl PhoenixServer {
