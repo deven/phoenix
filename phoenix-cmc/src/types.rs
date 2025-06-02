@@ -1,5 +1,6 @@
 use indexmap::IndexSet;
 use std::hash::{Hash, Hasher};
+use std::ops::Add;
 use std::sync::Arc;
 
 // Arc<str> wrapper that implements case-insensitive comparison
@@ -73,6 +74,23 @@ impl Eq for ArcStr {}
 impl Hash for ArcStr {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.to_lowercase().hash(state);
+    }
+}
+
+impl ArcStr {
+    pub fn concat(left: &ArcStr, right: &ArcStr) -> Self {
+        let mut s = String::with_capacity(left.len() + right.len());
+        s.push_str(left.as_ref());
+        s.push_str(right.as_ref());
+        ArcStr::from(s)
+    }
+}
+
+impl Add<&ArcStr> for &ArcStr {
+    type Output = ArcStr;
+
+    fn add(self, rhs: &ArcStr) -> ArcStr {
+        ArcStr::concat(self, rhs)
     }
 }
 
