@@ -1,6 +1,6 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
-use crate::event::{RestartEvent, ShutdownEvent};
+use crate::event::{Event, RestartEvent, ShutdownEvent};
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
@@ -21,6 +21,7 @@ lazy_static::lazy_static! {
     static ref DISCUSSIONS: DashMap<String, Arc<Discussion>> = DashMap::new();
     static ref SESSION_COUNTER: AtomicUsize = AtomicUsize::new(0);
     static ref DEFAULTS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
+    static ref EVENT_QUEUE: EventQueue = EventQueue::new();
     static ref SHUTDOWN_EVENT: RwLock<Option<Arc<Box<dyn crate::event::Event + Send + Sync>>>> = RwLock::new(None);
 }
 
