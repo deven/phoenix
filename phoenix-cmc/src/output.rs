@@ -1194,12 +1194,10 @@ impl OutputStream {
         let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
 
         if sent >= queue.len() {
-            drop(queue);
             telnet.redraw_input().await;
             false
         } else {
             let out = queue[sent].clone();
-            drop(queue);
 
             telnet.undraw_input().await;
             out.output(telnet).await;

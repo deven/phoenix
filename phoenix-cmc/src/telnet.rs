@@ -1721,13 +1721,11 @@ impl Telnet {
         let kill_ring = self.kill_ring.lock().await;
         if let Some(text) = kill_ring.back() {
             let text = text.clone();
-            drop(kill_ring);
 
             for ch in text.bytes() {
                 self.insert_char(ch).await;
             }
         } else {
-            drop(kill_ring);
             self.output(BELL_STR).await;
         }
     }
@@ -1776,16 +1774,12 @@ impl Telnet {
 
         // Skip non-alpha characters
         while *point < data.len() && !data[*point].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.forward_char().await;
             point = self.point.write().await;
         }
 
         // Skip alpha characters
         while *point < data.len() && data[*point].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.forward_char().await;
             point = self.point.write().await;
         }
@@ -1797,16 +1791,12 @@ impl Telnet {
 
         // Skip non-alpha characters
         while *point > 0 && !data[*point - 1].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.backward_char().await;
             point = self.point.write().await;
         }
 
         // Skip alpha characters
         while *point > 0 && data[*point - 1].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.backward_char().await;
             point = self.point.write().await;
         }
@@ -1828,8 +1818,6 @@ impl Telnet {
         while end < data.len() && data[end].is_ascii_alphabetic() {
             end += 1;
         }
-
-        drop(data);
 
         // Delete the characters
         for _ in point..end {
@@ -1854,8 +1842,6 @@ impl Telnet {
             start -= 1;
         }
 
-        drop(data);
-
         // Erase the characters
         for _ in start..point {
             self.erase_char().await;
@@ -1868,8 +1854,6 @@ impl Telnet {
 
         // Skip non-alpha characters
         while *point < data.len() && !data[*point].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.forward_char().await;
             data = self.data.lock().await;
             point = self.point.write().await;
@@ -1909,8 +1893,6 @@ impl Telnet {
 
         // Skip non-alpha characters
         while *point < data.len() && !data[*point].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.forward_char().await;
             data = self.data.lock().await;
             point = self.point.write().await;
@@ -1950,8 +1932,6 @@ impl Telnet {
 
         // Skip non-alpha characters
         while *point < data.len() && !data[*point].is_ascii_alphabetic() {
-            drop(data);
-            drop(point);
             self.forward_char().await;
             data = self.data.lock().await;
             point = self.point.write().await;
@@ -2018,8 +1998,6 @@ impl Telnet {
                 *history_pos = Some(history.len() - 1);
                 if let Some(line) = history.get(history.len() - 1) {
                     let line = line.clone();
-                    drop(history);
-                    drop(history_pos);
 
                     for ch in line.bytes() {
                         self.insert_char(ch).await;
@@ -2030,8 +2008,6 @@ impl Telnet {
                 *history_pos = Some(pos - 1);
                 if let Some(line) = history.get(pos - 1) {
                     let line = line.clone();
-                    drop(history);
-                    drop(history_pos);
 
                     for ch in line.bytes() {
                         self.insert_char(ch).await;
@@ -2055,8 +2031,6 @@ impl Telnet {
                 *history_pos = Some(pos + 1);
                 if let Some(line) = history.get(pos + 1) {
                     let line = line.clone();
-                    drop(history);
-                    drop(history_pos);
 
                     for ch in line.bytes() {
                         self.insert_char(ch).await;
