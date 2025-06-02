@@ -228,7 +228,7 @@ impl Session {
             old.close(true).await;
         }
 
-        self.enqueue_others(Arc::new(TransferNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(TransferNotify::new(self.name_obj().await)))
             .await;
         self.pending.attach(new_telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
@@ -242,7 +242,7 @@ impl Session {
         let who = self.name_user().await;
         info!("Attach: {who} on new connection");
 
-        self.enqueue_others(Arc::new(AttachNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(AttachNotify::new(self.name_obj().await)))
             .await;
         self.pending.attach(telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
@@ -262,8 +262,11 @@ impl Session {
                     };
 
                     drop(current_telnet);
-                    self.enqueue_others(Arc::new(DetachNotify::new(self.name_obj(), intentional)))
-                        .await;
+                    self.enqueue_others(Arc::new(DetachNotify::new(
+                        self.name_obj().await,
+                        intentional,
+                    )))
+                    .await;
                     *self.telnet.write().await = None;
                 }
             }
@@ -477,7 +480,7 @@ impl Session {
         *self.idle_since.write().await = now;
         *self.login_time.write().await = now;
 
-        self.enqueue_others(Arc::new(EntryNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(EntryNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -489,7 +492,7 @@ impl Session {
             info!("Exit: {who}, detached");
         }
 
-        self.enqueue_others(Arc::new(ExitNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(ExitNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -1428,7 +1431,7 @@ impl Session {
         }
         self.output("You are now \"here\".\n").await;
         *self.away.write().await = AwayState::Here;
-        self.enqueue_others(Arc::new(HereNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(HereNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -1439,7 +1442,7 @@ impl Session {
         }
         self.output("You are now \"away\".\n").await;
         *self.away.write().await = AwayState::Away;
-        self.enqueue_others(Arc::new(AwayNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(AwayNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -1450,7 +1453,7 @@ impl Session {
         }
         self.output("You are now \"busy\".\n").await;
         *self.away.write().await = AwayState::Busy;
-        self.enqueue_others(Arc::new(BusyNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(BusyNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -1461,7 +1464,7 @@ impl Session {
         }
         self.output("You are now \"gone\".\n").await;
         *self.away.write().await = AwayState::Gone;
-        self.enqueue_others(Arc::new(GoneNotify::new(self.name_obj())))
+        self.enqueue_others(Arc::new(GoneNotify::new(self.name_obj().await)))
             .await;
     }
 
@@ -1905,7 +1908,7 @@ impl Session {
             disc.name.clone(),
             disc.title.clone(),
             disc.is_public,
-            self.name_obj(),
+            self.name_obj().await,
         )))
         .await;
 
@@ -2407,7 +2410,7 @@ impl Session {
 
         let msg = Arc::new(Message::new(
             output_type,
-            self.name_obj(),
+            self.name_obj().await,
             sendlist.clone(),
             text,
         ));
