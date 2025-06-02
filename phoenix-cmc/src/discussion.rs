@@ -179,7 +179,7 @@ impl Discussion {
     pub async fn quit(&self, session: Arc<Session>) {
         let mut members = self.members.write().await;
         if members.contains(&session) {
-            members.remove(&session);
+            members.shift_remove(&session);
             if session.signed_on().await {
                 self.enqueue_others(
                     Arc::new(QuitNotify::new(self.name.clone(), session.name_obj())),
