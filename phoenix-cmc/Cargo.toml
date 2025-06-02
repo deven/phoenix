@@ -23,7 +23,6 @@ nix = { version = "0.27", features = ["user"] }
 argon2 = "0.5"
 rand = "0.8"
 async-trait = "0.1"
-lazy_static = "1.5.0"
 
 [profile.release]
 lto = true
