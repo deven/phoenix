@@ -76,8 +76,8 @@ pub struct Telnet {
     // Terminal settings
     pub width: Arc<RwLock<usize>>,
     pub height: Arc<RwLock<usize>>,
-    pub naws_width: usize,
-    pub naws_height: usize,
+    pub naws_width: RwLock<usize>,
+    pub naws_height: RwLock<usize>,
 
     // Input buffer and editing
     pub data: Arc<Mutex<Vec<u8>>>,
@@ -163,8 +163,8 @@ impl Telnet {
             session: Arc::new(RwLock::new(None)),
             width: Arc::new(RwLock::new(Self::DEFAULT_WIDTH)),
             height: Arc::new(RwLock::new(Self::DEFAULT_HEIGHT)),
-            naws_width: 0,
-            naws_height: 0,
+            naws_width: RwLock::new(0),
+            naws_height: RwLock::new(0),
             data: Arc::new(Mutex::new(Vec::with_capacity(Self::INPUT_SIZE))),
             point: Arc::new(RwLock::new(0)),
             mark: Arc::new(RwLock::new(None)),
@@ -572,7 +572,7 @@ impl Telnet {
     }
 
     pub async fn print_message(
-        &mut self,
+        &self,
         output_type: OutputType,
         time: Timestamp,
         from: &Arc<Name>,
@@ -1128,8 +1128,8 @@ impl Telnet {
                 // Subnegotiation complete
                 let sb_state = *self.sb_state.read().await;
                 if matches!(sb_state, TelnetSubnegotiationState::NAWSDone) {
-                    self.set_width(self.naws_width).await;
-                    self.set_height(self.naws_height).await;
+                    self.set_width(self.naws_width.read().await).await;
+                    self.set_height(self.naws_height.read().await).await;
                 }
                 *self.state.write().await = TelnetState::Data;
                 *self.sb_state.write().await = TelnetSubnegotiationState::Idle;
@@ -1154,19 +1154,19 @@ impl Telnet {
                 }
             },
             TelnetSubnegotiationState::NAWSWidthHigh => {
-                self.naws_width = (byte as usize) * 256;
+                *self.naws_width.write().await = (byte as usize) * 256;
                 *sb_state = TelnetSubnegotiationState::NAWSWidthLow;
             }
             TelnetSubnegotiationState::NAWSWidthLow => {
-                self.naws_width += byte as usize;
+                *self.naws_width.write().await += byte as usize;
                 *sb_state = TelnetSubnegotiationState::NAWSHeightHigh;
             }
             TelnetSubnegotiationState::NAWSHeightHigh => {
-                self.naws_height = (byte as usize) * 256;
+                *self.naws_height.write().await = (byte as usize) * 256;
                 *sb_state = TelnetSubnegotiationState::NAWSHeightLow;
             }
             TelnetSubnegotiationState::NAWSHeightLow => {
-                self.naws_height += byte as usize;
+                *self.naws_height.write().await += byte as usize;
                 *sb_state = TelnetSubnegotiationState::NAWSDone;
             }
             _ => {}
