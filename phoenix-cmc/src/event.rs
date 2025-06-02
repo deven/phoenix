@@ -27,7 +27,7 @@ pub struct ShutdownEvent {
 impl ShutdownEvent {
     pub const FINAL_WARNING_TIME: i64 = 3;
 
-    pub fn new(by: String, when: i64) -> Self {
+    pub async fn new(by: String, when: i64) -> Self {
         let mut event = Self {
             time: Timestamp::new(),
             final_warning: false,
@@ -49,7 +49,7 @@ impl ShutdownEvent {
         event
     }
 
-    async fn shutdown_warning(&self, when: i64) {
+    pub async fn shutdown_warning(&self, when: i64) {
         info!("Shutdown requested by {} in {} seconds.", self.by, when);
         Session::announce(&format!(
             "\x07>>> This server will shutdown in {} seconds... <<<\n\x07",
@@ -58,14 +58,14 @@ impl ShutdownEvent {
         .await;
     }
 
-    async fn final_warning(&mut self) {
+    pub async fn final_warning(&mut self) {
         self.final_warning = true;
         self.set_rel_time(Self::FINAL_WARNING_TIME);
         info!("Final shutdown warning.");
         Session::announce("\x07>>> Server shutting down NOW!  Goodbye. <<<\n\x07").await;
     }
 
-    async fn shutdown_server(&self) {
+    pub async fn shutdown_server(&self) {
         info!("Server down.");
         // In a real implementation, this would trigger graceful shutdown
         std::process::exit(0);
@@ -132,7 +132,7 @@ impl RestartEvent {
         event
     }
 
-    async fn restart_warning(&self, when: i64) {
+    pub async fn restart_warning(&self, when: i64) {
         info!("Restart requested by {} in {} seconds.", self.by, when);
         Session::announce(&format!(
             "\x07>>> This server will restart in {} seconds... <<<\n\x07",
@@ -141,14 +141,14 @@ impl RestartEvent {
         .await;
     }
 
-    async fn final_warning(&mut self) {
+    pub async fn final_warning(&mut self) {
         self.final_warning = true;
         self.set_rel_time(Self::FINAL_WARNING_TIME);
         info!("Final restart warning.");
         Session::announce("\x07>>> Server restarting NOW!  Goodbye. <<<\n\x07").await;
     }
 
-    async fn restart_server(&self) {
+    pub async fn restart_server(&self) {
         info!("Restarting server.");
         // In a real implementation, this would exec the server binary
         std::process::exit(0);

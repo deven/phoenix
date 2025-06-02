@@ -494,7 +494,7 @@ impl Session {
     }
 
     // Input handler functions
-    async fn login_input(session: &Arc<Session>, line: &str) {
+    pub async fn login_input(session: &Arc<Session>, line: &str) {
         let line = line.trim();
 
         if let Some(args) = match_keyword(line, "/bye", 4) {
@@ -539,7 +539,7 @@ impl Session {
         }
     }
 
-    async fn password_input(session: &Arc<Session>, line: &str) {
+    pub async fn password_input(session: &Arc<Session>, line: &str) {
         if let Some(telnet) = &*session.telnet.read().await {
             telnet.output("\n").await;
             telnet.set_do_echo(true).await;
@@ -580,7 +580,7 @@ impl Session {
             .await;
     }
 
-    async fn entered_name_input(session: &Arc<Session>, line: &str) {
+    pub async fn entered_name_input(session: &Arc<Session>, line: &str) {
         let line = line.trim();
         let name = if line.is_empty() {
             if let Some(user_lock) = &*session.user.read().await {
@@ -609,7 +609,7 @@ impl Session {
         }
     }
 
-    async fn entered_blurb_input(session: &Arc<Session>, line: &str) {
+    pub async fn entered_blurb_input(session: &Arc<Session>, line: &str) {
         if !session
             .check_name_availability(&session.name().await, true, false)
             .await
@@ -674,7 +674,7 @@ impl Session {
             .await;
     }
 
-    async fn process_input(session: &Arc<Session>, line: &str) {
+    pub async fn process_input(session: &Arc<Session>, line: &str) {
         let line = line.trim_end();
 
         if line.starts_with('!') {
@@ -771,7 +771,7 @@ impl Session {
         }
     }
 
-    async fn print_reserved_names(&self) {
+    pub async fn print_reserved_names(&self) {
         if let Some(user_lock) = &*self.user.read().await {
             let user = user_lock.read().await;
 
@@ -805,7 +805,7 @@ impl Session {
         }
     }
 
-    async fn check_name_availability(
+    pub async fn check_name_availability(
         &self,
         name: &str,
         double_check: bool,
@@ -911,7 +911,7 @@ impl Session {
         true
     }
 
-    async fn transfer_session_input(session: &Arc<Session>, line: &str) {
+    pub async fn transfer_session_input(session: &Arc<Session>, line: &str) {
         if match_keyword(line, "yes", 1).is_none() {
             session.output("Session not transferred.\n").await;
             session
@@ -932,7 +932,7 @@ impl Session {
     }
 
     // Command implementations
-    async fn reset_idle(&self, min: usize) -> i64 {
+    pub async fn reset_idle(&self, min: usize) -> i64 {
         let now = Timestamp::new();
         let idle = (now - *self.idle_since.read().await) / 60;
 
@@ -946,7 +946,7 @@ impl Session {
         idle
     }
 
-    async fn set_blurb(&self, new_blurb: Option<&str>) {
+    pub async fn set_blurb(&self, new_blurb: Option<&str>) {
         self.reset_idle(10).await;
 
         let blurb = if let Some(text) = new_blurb {
@@ -959,7 +959,7 @@ impl Session {
         *self.name_obj.write().await = Name::new(self.name().await, &blurb);
     }
 
-    async fn print_time_long(&self, minutes: i32) {
+    pub async fn print_time_long(&self, minutes: i32) {
         let format = if let Some(fmt) = self.sys_vars.read().await.get("time_format") {
             fmt.clone()
         } else {
@@ -1031,7 +1031,7 @@ impl Session {
         }
     }
 
-    async fn print_time_long_verbose(&self, days: i32, hours: i32, minutes: i32) {
+    pub async fn print_time_long_verbose(&self, days: i32, hours: i32, minutes: i32) {
         if days > 0 || hours > 0 || minutes > 0 {
             if minutes == 0 {
                 self.output(" exactly").await;
@@ -1073,7 +1073,7 @@ impl Session {
         }
     }
 
-    async fn print_time_long_terse(&self, days: i32, hours: i32, minutes: i32) {
+    pub async fn print_time_long_terse(&self, days: i32, hours: i32, minutes: i32) {
         if days > 0 {
             self.print(&format!("{}d{:02}:{:02}", days, hours, minutes))
                 .await;
@@ -1082,7 +1082,7 @@ impl Session {
         }
     }
 
-    async fn do_restart(&self, args: &str) {
+    pub async fn do_restart(&self, args: &str) {
         let who = self.name_user().await;
         let name = self.name_blurb().await;
 
@@ -1120,7 +1120,7 @@ impl Session {
         }
     }
 
-    async fn do_down(&self, args: &str) {
+    pub async fn do_down(&self, args: &str) {
         let who = self.name_user().await;
         let name = self.name_blurb().await;
 
@@ -1158,7 +1158,7 @@ impl Session {
         }
     }
 
-    async fn do_nuke(&self, args: &str) {
+    pub async fn do_nuke(&self, args: &str) {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
@@ -1198,11 +1198,11 @@ impl Session {
         }
     }
 
-    async fn do_bye(&self, _args: &str) {
+    pub async fn do_bye(&self, _args: &str) {
         self.close(true).await;
     }
 
-    async fn do_who(&self, args: &str) {
+    pub async fn do_who(&self, args: &str) {
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
             if !errors.is_empty() {
@@ -1283,7 +1283,7 @@ impl Session {
         }
     }
 
-    async fn do_idle(&self, args: &str) {
+    pub async fn do_idle(&self, args: &str) {
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
             if !errors.is_empty() {
@@ -1363,7 +1363,7 @@ impl Session {
         }
     }
 
-    async fn do_why(&self, args: &str) {
+    pub async fn do_why(&self, args: &str) {
         if self.priv_level().await < 50 {
             self.output("Why not?\n").await;
             return;
@@ -1373,7 +1373,7 @@ impl Session {
         self.do_who(args).await;
     }
 
-    async fn do_blurb(&self, args: &str, entry: bool) {
+    pub async fn do_blurb(&self, args: &str, entry: bool) {
         let args = args.trim();
 
         if !args.is_empty() {
@@ -1421,7 +1421,7 @@ impl Session {
         }
     }
 
-    async fn do_here(&self, args: &str) {
+    pub async fn do_here(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1432,7 +1432,7 @@ impl Session {
             .await;
     }
 
-    async fn do_away(&self, args: &str) {
+    pub async fn do_away(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1443,7 +1443,7 @@ impl Session {
             .await;
     }
 
-    async fn do_busy(&self, args: &str) {
+    pub async fn do_busy(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1454,7 +1454,7 @@ impl Session {
             .await;
     }
 
-    async fn do_gone(&self, args: &str) {
+    pub async fn do_gone(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1465,18 +1465,18 @@ impl Session {
             .await;
     }
 
-    async fn do_clear(&self, _args: &str) {
+    pub async fn do_clear(&self, _args: &str) {
         self.output("\x1b[H\x1b[J").await;
     }
 
-    async fn do_unidle(&self, _args: &str) {
+    pub async fn do_unidle(&self, _args: &str) {
         let idle = self.reset_idle(1).await;
         if idle == 0 {
             self.output("Your idle time has been reset.\n").await;
         }
     }
 
-    async fn do_detach(&self, _args: &str) {
+    pub async fn do_detach(&self, _args: &str) {
         if self.priv_level().await > 0 {
             self.reset_idle(10).await;
             self.output("You have been detached.\n").await;
@@ -1492,7 +1492,7 @@ impl Session {
         }
     }
 
-    async fn do_howmany(&self, _args: &str) {
+    pub async fn do_howmany(&self, _args: &str) {
         let mut here = 0;
         let mut away = 0;
         let mut busy = 0;
@@ -1535,7 +1535,7 @@ impl Session {
             .await;
     }
 
-    async fn do_what(&self, args: &str) {
+    pub async fn do_what(&self, args: &str) {
         if DISCUSSIONS.is_empty() {
             self.output("No discussions currently exist.\n").await;
             return;
@@ -1613,12 +1613,12 @@ impl Session {
         }
     }
 
-    async fn do_date(&self, _args: &str) {
+    pub async fn do_date(&self, _args: &str) {
         let t = Timestamp::new();
         self.print(&format!("{}\n", t.date(0, 0))).await;
     }
 
-    async fn do_signal(&self, args: &str) {
+    pub async fn do_signal(&self, args: &str) {
         let mut args = args;
 
         if let Some(rest) = match_keyword(args, "on", 2) {
@@ -1699,7 +1699,7 @@ impl Session {
         }
     }
 
-    async fn do_send(&self, args: &str) {
+    pub async fn do_send(&self, args: &str) {
         if args.is_empty() {
             if let Some(sendlist) = &*self.default_sendlist.read().await {
                 self.output("You are sending to ").await;
@@ -1752,7 +1752,7 @@ impl Session {
         self.output(".\n").await;
     }
 
-    async fn print_sendlist(&self, sendlist: &Sendlist) {
+    pub async fn print_sendlist(&self, sendlist: &Sendlist) {
         if !sendlist.sessions.is_empty() {
             let mut first = true;
             for session in &sendlist.sessions {
@@ -1798,7 +1798,7 @@ impl Session {
         }
     }
 
-    async fn do_join(&self, args: &str) {
+    pub async fn do_join(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /join <disc>[,<disc>...]\n").await;
             return;
@@ -1814,7 +1814,7 @@ impl Session {
         }
     }
 
-    async fn do_quit(&self, args: &str) {
+    pub async fn do_quit(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /quit <disc>[,<disc>...]\n").await;
             return;
@@ -1830,7 +1830,7 @@ impl Session {
         }
     }
 
-    async fn do_create(&self, args: &str) {
+    pub async fn do_create(&self, args: &str) {
         let mut args = args;
         let mut is_public = true;
 
@@ -1916,7 +1916,7 @@ impl Session {
         .await;
     }
 
-    async fn do_destroy(&self, args: &str) {
+    pub async fn do_destroy(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /destroy <disc>[,<disc>...]\n").await;
             return;
@@ -1932,7 +1932,7 @@ impl Session {
         }
     }
 
-    async fn do_permit(&self, args: &str) {
+    pub async fn do_permit(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /permit <disc> <person>[,<person>...]\n")
@@ -1949,7 +1949,7 @@ impl Session {
         }
     }
 
-    async fn do_depermit(&self, args: &str) {
+    pub async fn do_depermit(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /depermit <disc> <person>[,<person>...]\n")
@@ -1966,7 +1966,7 @@ impl Session {
         }
     }
 
-    async fn do_appoint(&self, args: &str) {
+    pub async fn do_appoint(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /appoint <disc> <person>[,<person>...]\n")
@@ -1983,7 +1983,7 @@ impl Session {
         }
     }
 
-    async fn do_unappoint(&self, args: &str) {
+    pub async fn do_unappoint(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /unappoint <disc> <person>[,<person>...]\n")
@@ -2000,7 +2000,7 @@ impl Session {
         }
     }
 
-    async fn do_rename(&self, args: &str) {
+    pub async fn do_rename(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /rename <name>\n").await;
             return;
@@ -2058,7 +2058,7 @@ impl Session {
         *self.name_obj.write().await = Name::new(args, self.blurb().await);
     }
 
-    async fn do_set(&self, args: &str) {
+    pub async fn do_set(&self, args: &str) {
         let (var, value) = getword(args, Some('='));
         if var.is_empty() || value.is_empty() {
             self.output("Usage: /set <variable>=<value>\n").await;
@@ -2143,13 +2143,13 @@ impl Session {
         }
     }
 
-    async fn set_idle(&self, args: &str) {
+    pub async fn set_idle(&self, args: &str) {
         // TODO: Implement idle time parsing and setting
         self.output("Idle time setting not yet implemented.\n")
             .await;
     }
 
-    async fn do_display(&self, args: &str) {
+    pub async fn do_display(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /display <variable>[,<variable>...]\n")
                 .await;
@@ -2251,7 +2251,7 @@ impl Session {
         }
     }
 
-    async fn do_also(&self, args: &str) {
+    pub async fn do_also(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /also <sendlist>\n").await;
             return;
@@ -2266,7 +2266,7 @@ impl Session {
         }
     }
 
-    async fn do_oops(&self, args: &str) {
+    pub async fn do_oops(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /oops <sendlist> OR /oops text [<message>]\n")
                 .await;
@@ -2302,7 +2302,7 @@ impl Session {
         }
     }
 
-    async fn do_help(&self, args: &str) {
+    pub async fn do_help(&self, args: &str) {
         // TODO: Load help from external file
         self.output("Help system not yet implemented. Known commands:\n\n")
             .await;
@@ -2320,11 +2320,11 @@ impl Session {
             .await;
     }
 
-    async fn do_reset(&self) {
+    pub async fn do_reset(&self) {
         self.reset_idle(1).await;
     }
 
-    async fn do_message(&self, line: &str) {
+    pub async fn do_message(&self, line: &str) {
         let (msg_start, sendlist_str, mut last_explicit, is_explicit) = message_start(line);
         let msg_start = msg_start.trim();
 
@@ -2383,7 +2383,7 @@ impl Session {
         self.send_message(&sendlist, msg_start).await;
     }
 
-    async fn send_message(&self, sendlist: &Arc<Sendlist>, text: &str) {
+    pub async fn send_message(&self, sendlist: &Arc<Sendlist>, text: &str) {
         if !sendlist.errors.is_empty() {
             self.output("\x07\x07").await;
             self.output(&sendlist.errors).await;
@@ -2431,7 +2431,7 @@ impl Session {
         self.output("\n").await;
     }
 
-    async fn get_who_set(&self, args: &str) -> (OrderedSet<Session>, String, String) {
+    pub async fn get_who_set(&self, args: &str) -> (OrderedSet<Session>, String, String) {
         let mut who = OrderedSet::new();
         let mut errors = String::new();
         let mut msg = String::new();
@@ -2467,7 +2467,7 @@ impl Session {
         (who, errors, msg)
     }
 
-    async fn session_matches(&self, name: &str, matches: &OrderedSet<Session>) {
+    pub async fn session_matches(&self, name: &str, matches: &OrderedSet<Session>) {
         if matches.is_empty() {
             self.print(&format!("No names matched \"{}\".\n", name))
                 .await;
@@ -2488,7 +2488,7 @@ impl Session {
         }
     }
 
-    async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Discussion>) {
+    pub async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Discussion>) {
         if matches.is_empty() {
             self.print(&format!("No discussions matched \"{}\".\n", name))
                 .await;

@@ -88,7 +88,7 @@ impl PhoenixServer {
         Ok(())
     }
 
-    async fn handle_connection(&self, stream: TcpStream) -> Result<()> {
+    pub async fn handle_connection(&self, stream: TcpStream) -> Result<()> {
         // Set TCP options
         stream.set_nodelay(true)?;
 
