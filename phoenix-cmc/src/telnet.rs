@@ -12,6 +12,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::{Mutex, RwLock};
 
+pub const BELL_STR: &str = "\x07";
+
 // Telnet commands
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -588,7 +590,7 @@ impl Telnet {
         match output_type {
             OutputType::PublicMessage => {
                 if session.signal_public().await {
-                    self.output(&[BELL as u8]).await;
+                    self.output(BELL_STR).await;
                 }
                 self.print(&format!(
                     "\n -> From {}{} to everyone:",
@@ -619,19 +621,19 @@ impl Telnet {
                     session.set_reply_sendlist(&from.name).await;
 
                     if session.signal_private().await {
-                        self.output(&[BELL as u8]).await;
+                        self.output(BELL_STR).await;
                     }
                     if to.sessions.contains(&session) {
                         self.output("\n >> Private message from ").await;
                     } else {
                         if !session.signal_private().await && session.signal_public().await {
-                            self.output(&[BELL as u8]).await;
+                            self.output(BELL_STR).await;
                         }
                         self.output("\n >> From ").await;
                     }
                 } else {
                     if session.signal_public().await {
-                        self.output(&[BELL as u8]).await;
+                        self.output(BELL_STR).await;
                     }
                     self.output("\n -> From ").await;
                 }
@@ -1218,7 +1220,7 @@ impl Telnet {
                 *self.state.write().await = TelnetState::Data;
             }
             _ => {
-                self.output(&[BELL]).await;
+                self.output(BELL_STR).await;
                 *self.state.write().await = TelnetState::Data;
             }
         }
@@ -1231,7 +1233,7 @@ impl Telnet {
             b'B' => self.next_line().await,
             b'C' => self.forward_char().await,
             b'D' => self.backward_char().await,
-            _ => self.output(&[BELL]).await,
+            _ => self.output(BELL_STR).await,
         }
         *self.state.write().await = TelnetState::Data;
         Ok(())
@@ -1245,7 +1247,7 @@ impl Telnet {
                 self.set_echo(echo != TELNET_ENABLED).await;
             }
             _ => {
-                self.output(&[BELL]).await;
+                self.output(BELL_STR).await;
             }
         }
         *self.state.write().await = TelnetState::Data;
@@ -1310,7 +1312,7 @@ impl Telnet {
                     b'y' => self.insert_char(Y_ACUTE_LOWER).await,
                     VERTICAL_BAR => self.insert_char(BROKEN_VERTICAL_BAR).await,
                     UNDERSCORE => self.insert_char(MACRON_ACCENT).await,
-                    _ => self.output(&[BELL]).await,
+                    _ => self.output(BELL_STR).await,
                 }
             }
             TelnetState::Umlaut => match byte {
@@ -1326,7 +1328,7 @@ impl Telnet {
                 b'o' => self.insert_char(O_UMLAUT_LOWER).await,
                 b'u' => self.insert_char(U_UMLAUT_LOWER).await,
                 b'y' => self.insert_char(Y_UMLAUT_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::Backquote => match byte {
                 BACKQUOTE => self.insert_char(BACKQUOTE).await,
@@ -1340,7 +1342,7 @@ impl Telnet {
                 b'i' => self.insert_char(I_GRAVE_LOWER).await,
                 b'o' => self.insert_char(O_GRAVE_LOWER).await,
                 b'u' => self.insert_char(U_GRAVE_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::AcuteAccent => match byte {
                 SINGLE_QUOTE => self.insert_char(ACUTE_ACCENT).await,
@@ -1356,7 +1358,7 @@ impl Telnet {
                 b'o' => self.insert_char(O_ACUTE_LOWER).await,
                 b'u' => self.insert_char(U_ACUTE_LOWER).await,
                 b'y' => self.insert_char(Y_ACUTE_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::Carat => match byte {
                 CARAT => self.insert_char(CARAT).await,
@@ -1370,7 +1372,7 @@ impl Telnet {
                 b'i' => self.insert_char(I_CIRCUMFLEX_LOWER).await,
                 b'o' => self.insert_char(O_CIRCUMFLEX_LOWER).await,
                 b'u' => self.insert_char(U_CIRCUMFLEX_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::Tilde => match byte {
                 TILDE => self.insert_char(TILDE).await,
@@ -1380,13 +1382,13 @@ impl Telnet {
                 b'a' => self.insert_char(A_TILDE_LOWER).await,
                 b'n' => self.insert_char(N_TILDE_LOWER).await,
                 b'o' => self.insert_char(O_TILDE_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::DegreeSign => match byte {
                 CONTROL_O | b'o' => self.insert_char(DEGREE_SIGN).await,
                 b'A' => self.insert_char(A_RING).await,
                 b'a' => self.insert_char(A_RING_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::Slash => match byte {
                 SLASH => self.insert_char(DIVISION_SIGN).await,
@@ -1395,26 +1397,26 @@ impl Telnet {
                 FOUR => self.insert_char(ONE_FOURTH).await,
                 b'O' => self.insert_char(O_SLASH).await,
                 b'o' => self.insert_char(O_SLASH_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::Cedilla => match byte {
                 COMMA => self.insert_char(CEDILLA).await,
                 b'C' => self.insert_char(C_CEDILLA).await,
                 b'c' => self.insert_char(C_CEDILLA_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::ControlI => match byte {
                 b'E' => self.insert_char(ETH_ICELANDIC).await,
                 b'T' => self.insert_char(THORN_ICELANDIC).await,
                 b'e' => self.insert_char(ETH_ICELANDIC_LOWER).await,
                 b't' => self.insert_char(THORN_ICELANDIC_LOWER).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             TelnetState::ControlL => match byte {
                 b'A' => self.insert_char(AE_LIGATURE).await,
                 b'a' => self.insert_char(AE_LIGATURE_LOWER).await,
                 b's' => self.insert_char(SZ_LIGATURE).await,
-                _ => self.output(&[BELL]).await,
+                _ => self.output(BELL_STR).await,
             },
             _ => {}
         }
@@ -1621,7 +1623,7 @@ impl Telnet {
                 }
             }
         } else {
-            self.output(&[BELL]).await;
+            self.output(BELL_STR).await;
         }
     }
 
@@ -1727,7 +1729,7 @@ impl Telnet {
             }
         } else {
             drop(kill_ring);
-            self.output(&[BELL]).await;
+            self.output(BELL_STR).await;
         }
     }
 
@@ -1736,7 +1738,7 @@ impl Telnet {
         let mut point = self.point.write().await;
 
         if *point == 0 || data.len() < 2 {
-            self.output(&[BELL]).await;
+            self.output(BELL_STR).await;
             return;
         }
 
@@ -1998,7 +2000,7 @@ impl Telnet {
     }
 
     pub async fn transpose_words(&self) {
-        self.output(&[BELL]).await;
+        self.output(BELL_STR).await;
     }
 
     pub async fn previous_line(&self) {
@@ -2006,7 +2008,7 @@ impl Telnet {
         let history = self.history.lock().await;
 
         if history.is_empty() {
-            self.output(&[BELL]).await;
+            self.output(BELL_STR).await;
             return;
         }
 
@@ -2038,7 +2040,7 @@ impl Telnet {
                 }
             }
             _ => {
-                self.output(&[BELL]).await;
+                self.output(BELL_STR).await;
             }
         }
     }
@@ -2066,7 +2068,7 @@ impl Telnet {
                 *history_pos = None;
             }
             None => {
-                self.output(&[BELL]).await;
+                self.output(BELL_STR).await;
             }
         }
     }
