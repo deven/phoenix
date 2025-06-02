@@ -2491,7 +2491,8 @@ impl Session {
             self.print(&format!("\"{}\" matches {} names: ", name, matches.len()))
                 .await;
 
-            let names: Vec<String> = matches.iter().map(|s| s.name().to_string()).collect();
+            //let names: Vec<String> = matches.iter().map(|s| s.name().to_string()).collect();
+            let names: Vec<ArcStr> = matches.iter().map(|s| s.name()).collect::<Vec<_>>().await;
             self.output(&names.join(", ")).await;
             self.output(".\n").await;
         }
