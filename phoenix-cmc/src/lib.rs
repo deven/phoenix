@@ -13,3 +13,6 @@ pub mod user;
 
 pub use server::PhoenixServer;
 pub use types::*;
+
+/// Phoenix server version.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
