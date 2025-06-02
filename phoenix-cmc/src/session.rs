@@ -25,6 +25,7 @@ lazy_static::lazy_static! {
         map.insert("time_format".to_string(), "verbose".to_string());
         RwLock::new(map)
     };
+    static ref USER_MANAGER: UserManager = UserManager::new();
     static ref EVENT_QUEUE: EventQueue = EventQueue::new();
     static ref SHUTDOWN_EVENT: RwLock<Option<Box<dyn Event + Send + Sync>>> = RwLock::new(None);
 }
@@ -521,8 +522,7 @@ impl Session {
             return;
         }
 
-        let user_manager = UserManager::new();
-        let user = user_manager.get_user(line).await;
+        let user = USER_MANAGER.get_user(line).await;
         *self.user.write().await = user.clone();
 
         if user.is_none() || user.as_ref().unwrap().read().await.password.is_some() {
@@ -555,8 +555,7 @@ impl Session {
             telnet.set_do_echo(true).await;
         }
 
-        let user_manager = UserManager::new();
-        user_manager.update_all().await.ok();
+        USER_MANAGER.update_all().await.ok();
 
         let valid = if let Some(user_lock) = &*self.user.read().await {
             let user = user_lock.read().await;
@@ -830,8 +829,6 @@ impl Session {
         double_check: bool,
         transferring: bool,
     ) -> bool {
-        let user_manager = UserManager::new();
-
         if name.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  Choose another name.\n")
                 .await;
@@ -840,7 +837,7 @@ impl Session {
             return false;
         }
 
-        if let Some((reserved, found_user)) = user_manager.find_reserved(name).await {
+        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
                 Arc::ptr_eq(my_user, &found_user)
             } else {
@@ -1860,8 +1857,7 @@ impl Session {
             return;
         }
 
-        let user_manager = UserManager::new();
-        if let Some((reserved, found_user)) = user_manager.find_reserved(name).await {
+        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
                 Arc::ptr_eq(my_user, &found_user)
             } else {
@@ -2011,8 +2007,7 @@ impl Session {
             return;
         }
 
-        let user_manager = UserManager::new();
-        if let Some((reserved, found_user)) = user_manager.find_reserved(args).await {
+        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(args).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
                 Arc::ptr_eq(my_user, &found_user)
             } else {
