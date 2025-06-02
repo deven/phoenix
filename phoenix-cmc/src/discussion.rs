@@ -12,10 +12,10 @@ pub struct Discussion {
     pub title: ArcStr,
     pub is_public: bool,
     pub creator: Option<Arc<Name>>,
-    pub members: Arc<RwLock<OrderedSet<Session>>>,
-    pub moderators: Arc<RwLock<OrderedSet<Name>>>,
-    pub allowed: Arc<RwLock<OrderedSet<Name>>>,
-    pub denied: Arc<RwLock<OrderedSet<Name>>>,
+    pub members: Arc<RwLock<OrderedSet<Arc<Session>>>>,
+    pub moderators: Arc<RwLock<OrderedSet<Arc<Name>>>>,
+    pub allowed: Arc<RwLock<OrderedSet<Arc<Name>>>>,
+    pub denied: Arc<RwLock<OrderedSet<Arc<Name>>>>,
     pub creation_time: Timestamp,
     pub idle_since: Arc<RwLock<Timestamp>>,
 }
@@ -47,7 +47,7 @@ impl Discussion {
 
         // Set creator and add initial member/moderator if provided
         if let Some(session) = creator_session {
-            let creator_name = session.name_obj();
+            let creator_name = session.name_obj().await;
             Arc::get_mut(&mut discussion.clone()).unwrap().creator = Some(creator_name.clone());
 
             tokio::spawn({
@@ -125,7 +125,7 @@ impl Discussion {
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
             Session::remove_discussion(self.name.clone()).await;
             self.enqueue_others(
-                Arc::new(DestroyNotify::new(self.name.clone(), session.name_obj())),
+                Arc::new(DestroyNotify::new(self.name.clone(), session.name_obj().await)),
                 &session,
             )
             .await;
@@ -154,7 +154,7 @@ impl Discussion {
         } else {
             if self.permitted(&session).await {
                 self.enqueue_others(
-                    Arc::new(JoinNotify::new(self.name.clone(), session.name_obj())),
+                    Arc::new(JoinNotify::new(self.name.clone(), session.name_obj().await)),
                     &session,
                 )
                 .await;
@@ -182,7 +182,7 @@ impl Discussion {
             members.shift_remove(&session);
             if session.signed_on().await {
                 self.enqueue_others(
-                    Arc::new(QuitNotify::new(self.name.clone(), session.name_obj())),
+                    Arc::new(QuitNotify::new(self.name.clone(), session.name_obj().await)),
                     &session,
                 )
                 .await;
@@ -233,7 +233,7 @@ impl Discussion {
                     session
                         .enqueue_others(Arc::new(PublicNotify::new(
                             self.name.clone(),
-                            session.name_obj(),
+                            session.name_obj().await,
                         )))
                         .await;
                     session
@@ -281,14 +281,14 @@ impl Discussion {
                     let mut allowed = self.allowed.write().await;
                     for member in members.iter() {
                         if self.allowed(&member).await.is_none() {
-                            allowed.insert(member.name_obj());
+                            allowed.insert(member.name_obj().await);
                         }
                     }
 
                     session
                         .enqueue_others(Arc::new(PrivateNotify::new(
                             self.name.clone(),
-                            session.name_obj(),
+                            session.name_obj().await,
                         )))
                         .await;
                     session

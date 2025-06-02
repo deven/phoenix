@@ -360,9 +360,9 @@ impl Session {
         do_discussions: bool,
     ) -> (
         Option<Arc<Session>>,
-        OrderedSet<Session>,
+        OrderedSet<Arc<Session>>,
         Option<Arc<Discussion>>,
-        OrderedSet<Discussion>,
+        OrderedSet<Arc<Discussion>>,
     ) {
         let mut session = None;
         let mut session_matches = OrderedSet::new();
@@ -1099,7 +1099,7 @@ impl Session {
 
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
-            let event = Box::new(RestartEvent::immediate(who));
+            let event = Box::new(RestartEvent::immediate(who).await);
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
         } else if match_keyword(args, "cancel", 6).is_some() {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
@@ -1159,7 +1159,7 @@ impl Session {
 
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
 
-            let event = Box::new(ShutdownEvent::new(who, seconds));
+            let event = Box::new(ShutdownEvent::new(who, seconds).await);
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
         }
     }
@@ -2437,7 +2437,7 @@ impl Session {
         self.output("\n").await;
     }
 
-    pub async fn get_who_set(&self, args: &str) -> (OrderedSet<Session>, String, String) {
+    pub async fn get_who_set(&self, args: &str) -> (OrderedSet<Arc<Session>>, String, String) {
         let mut who = OrderedSet::new();
         let mut errors = String::new();
         let mut msg = String::new();
@@ -2473,7 +2473,7 @@ impl Session {
         (who, errors, msg)
     }
 
-    pub async fn session_matches(&self, name: &str, matches: &OrderedSet<Session>) {
+    pub async fn session_matches(&self, name: &str, matches: &OrderedSet<Arc<Session>>) {
         if matches.is_empty() {
             self.print(&format!("No names matched \"{}\".\n", name))
                 .await;
@@ -2494,7 +2494,7 @@ impl Session {
         }
     }
 
-    pub async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Discussion>) {
+    pub async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Arc<Discussion>>) {
         if matches.is_empty() {
             self.print(&format!("No discussions matched \"{}\".\n", name))
                 .await;
