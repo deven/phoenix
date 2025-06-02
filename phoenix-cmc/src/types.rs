@@ -173,7 +173,7 @@ pub fn getword(input: &str, separator: Option<char>) -> (&str, &str) {
     match end {
         Some(pos) => {
             let word = &input[..pos];
-            let mut rest = &input[pos..].trim_start();
+            let mut rest = input[pos..].trim_start();
 
             if let Some(sep) = separator {
                 if let Some(stripped) = rest.strip_prefix(sep) {
