@@ -2,6 +2,7 @@
 name = "phoenix-cmc"
 version = "2.0.0"
 edition = "2021"
+rust-version  = "1.80"
 authors = ["Phoenix CMC Contributors"]
 license = "MIT"
 description = "Phoenix Computer-Mediated Communication system"

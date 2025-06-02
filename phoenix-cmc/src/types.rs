@@ -1,11 +1,13 @@
 use indexmap::IndexSet;
 use std::hash::{Hash, Hasher};
 use std::ops::Add;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 // Arc<str> wrapper that implements case-insensitive comparison
 #[derive(Debug, Clone)]
 pub struct ArcStr(Arc<str>);
+
+static EMPTY_ARCSTR: LazyLock<ArcStr> = LazyLock::new(|| ArcStr::from(""));
 
 impl ArcStr {
     pub fn new(s: impl AsRef<str>) -> Self {
@@ -22,6 +24,12 @@ impl ArcStr {
 
     pub fn to_lowercase(&self) -> String {
         self.0.to_lowercase()
+    }
+}
+
+impl Default for ArcStr {
+    fn default() -> Self {
+        EMPTY_ARCSTR.clone()
     }
 }
 
