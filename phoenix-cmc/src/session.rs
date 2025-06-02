@@ -4,7 +4,7 @@ use crate::event::{EventQueue, RestartEvent, ShutdownEvent};
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
-use crate::telnet::Telnet;
+use crate::telnet::{Telnet, TELNET_ENABLED};
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
 use crate::user::{hash_password, verify_password, User, UserManager};
