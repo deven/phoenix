@@ -11,8 +11,6 @@ use crate::user::{verify_password, User, UserManager};
 use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
