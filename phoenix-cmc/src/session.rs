@@ -62,7 +62,7 @@ pub struct Session {
 impl Session {
     pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 
-    pub fn new(telnet: Arc<Telnet>) -> Arc<Self> {
+    pub async fn new(telnet: Arc<Telnet>) -> Arc<Self> {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
         let now = Timestamp::new();
 
@@ -115,15 +115,15 @@ impl Session {
         session
     }
 
-    pub fn name(&self) -> ArcStr {
+    pub async fn name(&self) -> ArcStr {
         self.name.read().await.clone()
     }
 
-    pub fn name_obj(&self) -> Arc<Name> {
+    pub async fn name_obj(&self) -> Arc<Name> {
         self.name_obj.read().await.clone()
     }
 
-    pub fn blurb(&self) -> ArcStr {
+    pub async fn blurb(&self) -> ArcStr {
         self.blurb.read().await.clone()
     }
 
@@ -395,7 +395,7 @@ impl Session {
         self.pending.send_next(telnet).await
     }
 
-    pub fn find_sendable(
+    pub async fn find_sendable(
         &self,
         sendlist: &str,
         exact: bool,

@@ -20,7 +20,7 @@ pub struct Discussion {
 }
 
 impl Discussion {
-    pub fn new(
+    pub async fn new(
         creator_session: Option<Arc<Session>>,
         name: impl Into<ArcStr>,
         title: impl Into<ArcStr>,

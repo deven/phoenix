@@ -241,7 +241,7 @@ impl Telnet {
         }
     }
 
-    pub fn acknowledge(&self) -> bool {
+    pub async fn acknowledge(&self) -> bool {
         *self.acknowledge.read().await
     }
 
