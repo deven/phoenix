@@ -17,9 +17,6 @@ use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
-pub type InputFunc =
-    for<'a> fn(&'a Arc<Session>, &'a str) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>>;
-
 lazy_static::lazy_static! {
     static ref INITS: DashMap<usize, Arc<Session>> = DashMap::new();
     static ref SESSIONS: DashMap<usize, Arc<Session>> = DashMap::new();
@@ -34,7 +31,7 @@ pub struct Session {
     id: usize,
     user: Arc<RwLock<Option<Arc<RwLock<User>>>>>,
     telnet: Arc<RwLock<Option<Arc<Telnet>>>>,
-    input_func: Arc<RwLock<Option<InputFunc>>>,
+    login_state: Arc<RwLock<LoginState>>,
     lines: Arc<Mutex<Vec<String>>>,
     output_buffer: Arc<Mutex<String>>,
     pending: Arc<OutputStream>,
@@ -60,6 +57,17 @@ pub struct Session {
     oops_text: Arc<RwLock<String>>,
 }
 
+#[derive(Debug, Clone)]
+pub enum LoginState {
+    PreLogin,
+    AwaitingLogin,
+    AwaitingPassword,
+    AwaitingName,
+    AwaitingBlurb,
+    AwaitingTransferConfirmation,
+    LoggedIn,
+}
+
 impl Session {
     pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 
@@ -71,7 +79,7 @@ impl Session {
             id,
             user: Arc::new(RwLock::new(None)),
             telnet: Arc::new(RwLock::new(Some(telnet.clone()))),
-            input_func: Arc::new(RwLock::new(None)),
+            login_state: Arc::new(RwLock::new(LoginState::PreLogin)),
             lines: Arc::new(Mutex::new(Vec::new())),
             output_buffer: Arc::new(Mutex::new(String::new())),
             pending: Arc::new(OutputStream::new()),
@@ -276,50 +284,6 @@ impl Session {
         }
     }
 
-    pub async fn save_input_line(&self, line: &str) {
-        self.lines.lock().await.push(line.to_string());
-    }
-
-    pub async fn set_input_function(&self, input: Option<InputFunc>, prompt: Option<&str>) {
-        *self.input_func.write().await = input;
-
-        if let Some(p) = prompt {
-            if let Some(telnet) = &*self.telnet.read().await {
-                telnet.prompt(p).await;
-            }
-        }
-
-        // Process any pending lines
-        while let Some(func) = *self.input_func.read().await {
-            let line = {
-                let mut lines = self.lines.lock().await;
-                if lines.is_empty() {
-                    break;
-                }
-                lines.remove(0)
-            };
-
-            func(&self.clone(), &line).await;
-            self.enqueue_output().await;
-        }
-    }
-
-    pub async fn init_input_function(&self) {
-        self.set_input_function(Some(Self::login_input), Some("login: "))
-            .await;
-    }
-
-    pub async fn input(&self, line: &str) {
-        self.pending.dequeue().await;
-
-        if let Some(func) = *self.input_func.read().await {
-            func(&self.clone(), line).await;
-            self.enqueue_output().await;
-        } else {
-            self.save_input_line(line).await;
-        }
-    }
-
     pub async fn output(&self, text: &str) {
         self.output_buffer.lock().await.push_str(text);
     }
@@ -497,17 +461,68 @@ impl Session {
             .await;
     }
 
-    // Input handler functions
-    pub async fn login_input(session: &Arc<Session>, line: &str) {
+    pub async fn init_login_sequence(&self) {
+        self.set_login_state(LoginState::AwaitingLogin, Some("login: "))
+            .await;
+    }
+
+    pub async fn set_login_state(&self, state: LoginState, prompt: Option<&str>) {
+        *self.login_state.write().await = state;
+
+        if let Some(p) = prompt {
+            if let Some(telnet) = &*self.telnet.read().await {
+                telnet.prompt(p).await;
+            }
+        }
+
+        // Process any pending lines
+        self.process_pending_lines().await;
+    }
+
+    pub async fn process_pending_lines(&self) {
+        loop {
+            let line = {
+                let mut lines = self.lines.lock().await;
+                if lines.is_empty() {
+                    break;
+                }
+                lines.remove(0)
+            };
+
+            self.handle_input(&line).await;
+        }
+    }
+
+    pub async fn handle_input(&self, line: &str) {
+        self.pending.dequeue().await;
+
+        match self.login_state.read().await {
+            LoginState::PreLogin => self.save_input_line(line).await,
+            LoginState::AwaitingLogin => self.handle_login_input(line).await,
+            LoginState::AwaitingPassword => self.handle_password_input(line).await,
+            LoginState::AwaitingName => self.handle_name_input(line).await,
+            LoginState::AwaitingBlurb => self.handle_blurb_input(line).await,
+            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(line).await,
+            LoginState::LoggedIn => self.process_input(line).await,
+        }
+
+        self.enqueue_output().await;
+    }
+
+    pub async fn save_input_line(&self, line: &str) {
+        self.lines.lock().await.push(line.to_string());
+    }
+
+    pub async fn handle_login_input(&self, line: &str) {
         let line = line.trim();
 
         if let Some(args) = match_keyword(line, "/bye", 4) {
-            session.do_bye(args).await;
+            self.do_bye(args).await;
             return;
         }
 
         if line.is_empty() {
-            if let Some(telnet) = &*session.telnet.read().await {
+            if let Some(telnet) = &*self.telnet.read().await {
                 telnet.prompt("login: ").await;
             }
             return;
@@ -515,11 +530,11 @@ impl Session {
 
         let user_manager = UserManager::new();
         let user = user_manager.get_user(line).await;
-        *session.user.write().await = user.clone();
+        *self.user.write().await = user.clone();
 
         if user.is_none() || user.as_ref().unwrap().read().await.password.is_some() {
             // Need password
-            if let Some(telnet) = &*session.telnet.read().await {
+            if let Some(telnet) = &*self.telnet.read().await {
                 let echo = telnet.get_echo().await;
                 if !echo {
                     telnet
@@ -530,21 +545,19 @@ impl Session {
                 }
 
                 telnet.set_do_echo(false).await;
-                session
-                    .set_input_function(Some(Session::password_input), Some("Password: "))
+                self.set_login_state(LoginState::AwaitingPassword, Some("Password: "))
                     .await;
             }
         } else {
             // No password required (guest account)
-            session.print_reserved_names().await;
-            session
-                .set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+            self.print_reserved_names().await;
+            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                 .await;
         }
     }
 
-    pub async fn password_input(session: &Arc<Session>, line: &str) {
-        if let Some(telnet) = &*session.telnet.read().await {
+    pub async fn handle_password_input(&self, line: &str) {
+        if let Some(telnet) = &*self.telnet.read().await {
             telnet.output("\n").await;
             telnet.set_do_echo(true).await;
         }
@@ -552,7 +565,7 @@ impl Session {
         let user_manager = UserManager::new();
         user_manager.update_all().await.ok();
 
-        let valid = if let Some(user_lock) = &*session.user.read().await {
+        let valid = if let Some(user_lock) = &*self.user.read().await {
             let user = user_lock.read().await;
             if let Some(password) = &user.password {
                 verify_password(line, password)
@@ -564,215 +577,22 @@ impl Session {
         };
 
         if !valid {
-            session.output("Login incorrect.\n").await;
-            let attempts = session.attempts.fetch_add(1, Ordering::Relaxed) + 1;
+            self.output("Login incorrect.\n").await;
+            let attempts = self.attempts.fetch_add(1, Ordering::Relaxed) + 1;
             if attempts >= Session::MAX_LOGIN_ATTEMPTS {
-                session.close(true).await;
+                self.close(true).await;
                 return;
             }
 
-            session
-                .set_input_function(Some(Session::login_input), Some("login: "))
+            self.set_login_state(LoginState::AwaitingLogin, Some("login: "))
                 .await;
-            *session.user.write().await = None;
+            *self.user.write().await = None;
             return;
         }
 
-        session.print_reserved_names().await;
-        session
-            .set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+        self.print_reserved_names().await;
+        self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
             .await;
-    }
-
-    pub async fn entered_name_input(session: &Arc<Session>, line: &str) {
-        let line = line.trim();
-        let name = if line.is_empty() {
-            if let Some(user_lock) = &*session.user.read().await {
-                let user = user_lock.read().await;
-                if let Some(reserved) = user.reserved.first() {
-                    reserved.clone()
-                } else {
-                    if let Some(telnet) = &*session.telnet.read().await {
-                        telnet.prompt("Enter name: ").await;
-                    }
-                    return;
-                }
-            } else {
-                return;
-            }
-        } else {
-            ArcStr::new(line)
-        };
-
-        *session.name.write().await = name.clone();
-
-        if session.check_name_availability(&name, false, false).await {
-            session
-                .set_input_function(Some(Session::entered_blurb_input), Some("Enter blurb: "))
-                .await;
-        }
-    }
-
-    pub async fn entered_blurb_input(session: &Arc<Session>, line: &str) {
-        if !session
-            .check_name_availability(&session.name().await, true, false)
-            .await
-        {
-            return;
-        }
-
-        let line = if line.is_empty() {
-            if let Some(user_lock) = &*session.user.read().await {
-                let user = user_lock.read().await;
-                user.blurb.as_ref().map(|b| b.as_str()).unwrap_or("")
-            } else {
-                ""
-            }
-        } else {
-            line
-        };
-
-        session.do_blurb(line, true).await;
-
-        if let Some(telnet) = &*session.telnet.read().await {
-            telnet.login_sequence_finished().await;
-        }
-
-        session.signed_on.store(true, Ordering::Relaxed);
-
-        if let Some(user_lock) = &*session.user.read().await {
-            let mut user = user_lock.write().await;
-            session.priv_level.store(user.priv_level, Ordering::Relaxed);
-            user.add_session(session.clone());
-        }
-
-        SESSIONS.insert(session.id, session.clone());
-        INITS.remove(&session.id);
-
-        session.notify_entry().await;
-
-        // Welcome message and automatic commands
-        session
-            .output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n")
-            .await;
-
-        // Make sure discussion A exists
-        let (_, _, discussion, _) = session.find_sendable("A", true, false, false, true).await;
-        if discussion.is_none() {
-            let disc = Discussion::new(None, "A", "General Discussion", true);
-            DISCUSSIONS.insert("A".to_string(), disc);
-        }
-
-        // Automatic commands
-        session.do_join("A").await;
-        session.do_send("A").await;
-        session.do_who("").await;
-        session.do_howmany("").await;
-
-        if let Some(telnet) = &*session.telnet.read().await {
-            telnet.reset_history().await;
-        }
-
-        session
-            .set_input_function(Some(Session::process_input), None)
-            .await;
-    }
-
-    pub async fn process_input(session: &Arc<Session>, line: &str) {
-        let line = line.trim_end();
-
-        if line.starts_with('!') {
-            let line = line[1..].trim();
-            if session.priv_level().await < 50 {
-                session
-                    .output("Sorry, all !commands are privileged.\n")
-                    .await;
-                return;
-            }
-
-            if let Some(args) = match_keyword(line, "!restart", 8) {
-                session.do_restart(args).await;
-            } else if let Some(args) = match_keyword(line, "!down", 5) {
-                session.do_down(args).await;
-            } else if let Some(args) = match_keyword(line, "!nuke", 5) {
-                session.do_nuke(args).await;
-            } else {
-                session.output("Unknown !command.\n").await;
-            }
-        } else if line.starts_with('/') {
-            let line = line[1..].trim();
-            if let Some(args) = match_keyword(line, "/who", 2) {
-                session.do_who(args).await;
-            } else if let Some(args) = match_keyword(line, "/idle", 2) {
-                session.do_idle(args).await;
-            } else if let Some(args) = match_keyword(line, "/blurb", 3) {
-                session.do_blurb(args, false).await;
-            } else if let Some(args) = match_keyword(line, "/here", 2) {
-                session.do_here(args).await;
-            } else if let Some(args) = match_keyword(line, "/away", 2) {
-                session.do_away(args).await;
-            } else if let Some(args) = match_keyword(line, "/busy", 2) {
-                session.do_busy(args).await;
-            } else if let Some(args) = match_keyword(line, "/gone", 2) {
-                session.do_gone(args).await;
-            } else if let Some(args) = match_keyword(line, "/help", 2) {
-                session.do_help(args).await;
-            } else if let Some(args) = match_keyword(line, "/send", 2) {
-                session.do_send(args).await;
-            } else if let Some(args) = match_keyword(line, "/bye", 4) {
-                session.do_bye(args).await;
-            } else if let Some(args) = match_keyword(line, "/what", 3) {
-                session.do_what(args).await;
-            } else if let Some(args) = match_keyword(line, "/join", 2) {
-                session.do_join(args).await;
-            } else if let Some(args) = match_keyword(line, "/quit", 2) {
-                session.do_quit(args).await;
-            } else if let Some(args) = match_keyword(line, "/create", 3) {
-                session.do_create(args).await;
-            } else if let Some(args) = match_keyword(line, "/destroy", 4) {
-                session.do_destroy(args).await;
-            } else if let Some(args) = match_keyword(line, "/permit", 4) {
-                session.do_permit(args).await;
-            } else if let Some(args) = match_keyword(line, "/depermit", 4) {
-                session.do_depermit(args).await;
-            } else if let Some(args) = match_keyword(line, "/appoint", 4) {
-                session.do_appoint(args).await;
-            } else if let Some(args) = match_keyword(line, "/unappoint", 10) {
-                session.do_unappoint(args).await;
-            } else if let Some(args) = match_keyword(line, "/rename", 7) {
-                session.do_rename(args).await;
-            } else if let Some(args) = match_keyword(line, "/clear", 3) {
-                session.do_clear(args).await;
-            } else if let Some(args) = match_keyword(line, "/unidle", 7) {
-                session.do_unidle(args).await;
-            } else if let Some(args) = match_keyword(line, "/detach", 4) {
-                session.do_detach(args).await;
-            } else if let Some(args) = match_keyword(line, "/howmany", 3) {
-                session.do_howmany(args).await;
-            } else if let Some(args) = match_keyword(line, "/why", 4) {
-                session.do_why(args).await;
-            } else if let Some(args) = match_keyword(line, "/date", 3) {
-                session.do_date(args).await;
-            } else if let Some(args) = match_keyword(line, "/signal", 3) {
-                session.do_signal(args).await;
-            } else if let Some(args) = match_keyword(line, "/set", 4) {
-                session.do_set(args).await;
-            } else if let Some(args) = match_keyword(line, "/display", 2) {
-                session.do_display(args).await;
-            } else if let Some(args) = match_keyword(line, "/also", 3) {
-                session.do_also(args).await;
-            } else if let Some(args) = match_keyword(line, "/oops", 3) {
-                session.do_oops(args).await;
-            } else {
-                session
-                    .output("Unknown /command.  Type /help for help.\n")
-                    .await;
-            }
-        } else if line == " " {
-            session.do_reset().await;
-        } else if !line.is_empty() {
-            session.do_message(line).await;
-        }
     }
 
     pub async fn print_reserved_names(&self) {
@@ -809,6 +629,208 @@ impl Session {
         }
     }
 
+    pub async fn handle_name_input(&self, line: &str) {
+        let line = line.trim();
+        let name = if line.is_empty() {
+            if let Some(user_lock) = &*self.user.read().await {
+                let user = user_lock.read().await;
+                if let Some(reserved) = user.reserved.first() {
+                    reserved.clone()
+                } else {
+                    if let Some(telnet) = &*self.telnet.read().await {
+                        telnet.prompt("Enter name: ").await;
+                    }
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else {
+            ArcStr::new(line)
+        };
+
+        *self.name.write().await = name.clone();
+
+        if self.check_name_availability(&name, false, false).await {
+            self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: "))
+                .await;
+        }
+    }
+
+    pub async fn handle_blurb_input(&self, line: &str) {
+        if !self
+            .check_name_availability(&self.name().await, true, false)
+            .await
+        {
+            return;
+        }
+
+        let line = if line.is_empty() {
+            if let Some(user_lock) = &*self.user.read().await {
+                let user = user_lock.read().await;
+                user.blurb.as_ref().map(|b| b.as_str()).unwrap_or("")
+            } else {
+                ""
+            }
+        } else {
+            line
+        };
+
+        self.do_blurb(line, true).await;
+
+        if let Some(telnet) = &*self.telnet.read().await {
+            telnet.login_sequence_finished().await;
+        }
+
+        self.signed_on.store(true, Ordering::Relaxed);
+
+        if let Some(user_lock) = &*self.user.read().await {
+            let mut user = user_lock.write().await;
+            self.priv_level.store(user.priv_level, Ordering::Relaxed);
+            user.add_session(self.clone());
+        }
+
+        SESSIONS.insert(self.id, self.clone());
+        INITS.remove(&self.id);
+
+        self.notify_entry().await;
+
+        // Welcome message and automatic commands
+        self.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n")
+            .await;
+
+        // Make sure discussion A exists
+        let (_, _, discussion, _) = self.find_sendable("A", true, false, false, true).await;
+        if discussion.is_none() {
+            let disc = Discussion::new(None, "A", "General Discussion", true);
+            DISCUSSIONS.insert("A".to_string(), disc);
+        }
+
+        // Automatic commands
+        self.do_join("A").await;
+        self.do_send("A").await;
+        self.do_who("").await;
+        self.do_howmany("").await;
+
+        if let Some(telnet) = &*self.telnet.read().await {
+            telnet.reset_history().await;
+        }
+
+        self.set_login_state(LoginState::LoggedIn, None).await;
+    }
+
+    pub async fn handle_transfer_input(&self, line: &str) {
+        if match_keyword(line, "yes", 1).is_none() {
+            self.output("Session not transferred.\n").await;
+            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
+                .await;
+            return;
+        }
+
+        if self
+            .check_name_availability(&self.name().await, true, true)
+            .await
+        {
+            self.output("(That session is now gone.)\n").await;
+            self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: "))
+                .await;
+        }
+    }
+
+    pub async fn process_input(&self, line: &str) {
+        let line = line.trim_end();
+
+        if line.starts_with('!') {
+            let line = line[1..].trim();
+            if self.priv_level().await < 50 {
+                self.output("Sorry, all !commands are privileged.\n").await;
+                return;
+            }
+
+            if let Some(args) = match_keyword(line, "!restart", 8) {
+                self.do_restart(args).await;
+            } else if let Some(args) = match_keyword(line, "!down", 5) {
+                self.do_down(args).await;
+            } else if let Some(args) = match_keyword(line, "!nuke", 5) {
+                self.do_nuke(args).await;
+            } else {
+                self.output("Unknown !command.\n").await;
+            }
+        } else if line.starts_with('/') {
+            let line = line[1..].trim();
+            if let Some(args) = match_keyword(line, "/who", 2) {
+                self.do_who(args).await;
+            } else if let Some(args) = match_keyword(line, "/idle", 2) {
+                self.do_idle(args).await;
+            } else if let Some(args) = match_keyword(line, "/blurb", 3) {
+                self.do_blurb(args, false).await;
+            } else if let Some(args) = match_keyword(line, "/here", 2) {
+                self.do_here(args).await;
+            } else if let Some(args) = match_keyword(line, "/away", 2) {
+                self.do_away(args).await;
+            } else if let Some(args) = match_keyword(line, "/busy", 2) {
+                self.do_busy(args).await;
+            } else if let Some(args) = match_keyword(line, "/gone", 2) {
+                self.do_gone(args).await;
+            } else if let Some(args) = match_keyword(line, "/help", 2) {
+                self.do_help(args).await;
+            } else if let Some(args) = match_keyword(line, "/send", 2) {
+                self.do_send(args).await;
+            } else if let Some(args) = match_keyword(line, "/bye", 4) {
+                self.do_bye(args).await;
+            } else if let Some(args) = match_keyword(line, "/what", 3) {
+                self.do_what(args).await;
+            } else if let Some(args) = match_keyword(line, "/join", 2) {
+                self.do_join(args).await;
+            } else if let Some(args) = match_keyword(line, "/quit", 2) {
+                self.do_quit(args).await;
+            } else if let Some(args) = match_keyword(line, "/create", 3) {
+                self.do_create(args).await;
+            } else if let Some(args) = match_keyword(line, "/destroy", 4) {
+                self.do_destroy(args).await;
+            } else if let Some(args) = match_keyword(line, "/permit", 4) {
+                self.do_permit(args).await;
+            } else if let Some(args) = match_keyword(line, "/depermit", 4) {
+                self.do_depermit(args).await;
+            } else if let Some(args) = match_keyword(line, "/appoint", 4) {
+                self.do_appoint(args).await;
+            } else if let Some(args) = match_keyword(line, "/unappoint", 10) {
+                self.do_unappoint(args).await;
+            } else if let Some(args) = match_keyword(line, "/rename", 7) {
+                self.do_rename(args).await;
+            } else if let Some(args) = match_keyword(line, "/clear", 3) {
+                self.do_clear(args).await;
+            } else if let Some(args) = match_keyword(line, "/unidle", 7) {
+                self.do_unidle(args).await;
+            } else if let Some(args) = match_keyword(line, "/detach", 4) {
+                self.do_detach(args).await;
+            } else if let Some(args) = match_keyword(line, "/howmany", 3) {
+                self.do_howmany(args).await;
+            } else if let Some(args) = match_keyword(line, "/why", 4) {
+                self.do_why(args).await;
+            } else if let Some(args) = match_keyword(line, "/date", 3) {
+                self.do_date(args).await;
+            } else if let Some(args) = match_keyword(line, "/signal", 3) {
+                self.do_signal(args).await;
+            } else if let Some(args) = match_keyword(line, "/set", 4) {
+                self.do_set(args).await;
+            } else if let Some(args) = match_keyword(line, "/display", 2) {
+                self.do_display(args).await;
+            } else if let Some(args) = match_keyword(line, "/also", 3) {
+                self.do_also(args).await;
+            } else if let Some(args) = match_keyword(line, "/oops", 3) {
+                self.do_oops(args).await;
+            } else {
+                self.output("Unknown /command.  Type /help for help.\n")
+                    .await;
+            }
+        } else if line == " " {
+            self.do_reset().await;
+        } else if !line.is_empty() {
+            self.do_message(line).await;
+        }
+    }
+
     pub async fn check_name_availability(
         &self,
         name: &str,
@@ -820,7 +842,7 @@ impl Session {
         if name.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  Choose another name.\n")
                 .await;
-            self.set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                 .await;
             return false;
         }
@@ -839,7 +861,7 @@ impl Session {
                     if double_check { " now" } else { "" }
                 ))
                 .await;
-                self.set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+                self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                     .await;
                 return false;
             }
@@ -871,8 +893,8 @@ impl Session {
                             if double_check { " now" } else { "" }
                         ))
                         .await;
-                        self.set_input_function(
-                            Some(Session::transfer_session_input),
+                        self.set_login_state(
+                            LoginState::AwaitingTransferConfirmation,
                             Some("Transfer active session? [no] "),
                         )
                         .await;
@@ -894,7 +916,7 @@ impl Session {
                     if double_check { "now" } else { "already" }
                 ))
                 .await;
-                self.set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+                self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                     .await;
                 return false;
             }
@@ -907,32 +929,12 @@ impl Session {
                 found_discussion.name
             ))
             .await;
-            self.set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
+            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                 .await;
             return false;
         }
 
         true
-    }
-
-    pub async fn transfer_session_input(session: &Arc<Session>, line: &str) {
-        if match_keyword(line, "yes", 1).is_none() {
-            session.output("Session not transferred.\n").await;
-            session
-                .set_input_function(Some(Session::entered_name_input), Some("Enter name: "))
-                .await;
-            return;
-        }
-
-        if session
-            .check_name_availability(&session.name().await, true, true)
-            .await
-        {
-            session.output("(That session is now gone.)\n").await;
-            session
-                .set_input_function(Some(Session::entered_blurb_input), Some("Enter blurb: "))
-                .await;
-        }
     }
 
     // Command implementations

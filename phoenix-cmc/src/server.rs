@@ -106,8 +106,8 @@ impl PhoenixServer {
         ));
         self.event_queue.enqueue(timeout_event).await;
 
-        // Initialize login process
-        session.init_input_function().await;
+        // Initialize login sequence
+        session.init_login_sequence().await;
 
         // Handle telnet I/O
         let mut shutdown_rx = self.shutdown_tx.subscribe();
