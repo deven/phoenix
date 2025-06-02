@@ -8,7 +8,6 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{broadcast, RwLock};
 use tokio::time::{sleep, Duration};
 
-#[derive(Debug)]
 pub struct PhoenixServer {
     pub listener: TcpListener,
     pub port: u16,

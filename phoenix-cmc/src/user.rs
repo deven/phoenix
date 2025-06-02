@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct User {
     pub sessions: OrderedSet<Arc<Session>>,
     pub user: ArcStr,
@@ -64,7 +64,7 @@ impl User {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct UserManager {
     pub users: Arc<RwLock<HashMap<ArcStr, Arc<RwLock<User>>>>>,
     pub last_update: Arc<RwLock<Option<std::time::SystemTime>>>,
