@@ -28,3 +28,6 @@ lazy_static = "1.5.0"
 [profile.release]
 lto = true
 codegen-units = 1
+
+[features]
+guest-access = []

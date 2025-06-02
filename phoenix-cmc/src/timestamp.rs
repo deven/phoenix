@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, Local, TimeZone, Timelike};
+use chrono::{DateTime, Duration, Local, TimeZone};
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]

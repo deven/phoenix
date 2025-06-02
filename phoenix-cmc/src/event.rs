@@ -222,7 +222,7 @@ impl Event for LoginTimeoutEvent {
     }
 
     async fn execute(&mut self) -> bool {
-        let mut telnet = self.telnet.write().await;
+        let telnet = self.telnet.write().await;
         telnet.output("\nLogin timed out!\n").await;
         telnet.close(true).await;
         false
