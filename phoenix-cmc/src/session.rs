@@ -1095,7 +1095,7 @@ impl Session {
 
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
 
-            let event = Box::new(RestartEvent::immediate(who).await);
+            let event = Box::new(RestartEvent::immediate(who));
             *SHUTDOWN_EVENT.write().await = Some(Arc::new(event));
         } else if match_keyword(args, "cancel", 6).is_some() {
             if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
