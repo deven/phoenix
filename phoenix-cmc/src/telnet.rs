@@ -1128,8 +1128,8 @@ impl Telnet {
                 // Subnegotiation complete
                 let sb_state = *self.sb_state.read().await;
                 if matches!(sb_state, TelnetSubnegotiationState::NAWSDone) {
-                    self.set_width(self.naws_width.read().await).await;
-                    self.set_height(self.naws_height.read().await).await;
+                    self.set_width(*self.naws_width.read().await).await;
+                    self.set_height(*self.naws_height.read().await).await;
                 }
                 *self.state.write().await = TelnetState::Data;
                 *self.sb_state.write().await = TelnetSubnegotiationState::Idle;
