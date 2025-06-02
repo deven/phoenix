@@ -54,7 +54,7 @@ impl User {
     }
 
     pub fn remove_session(&mut self, session: &Arc<Session>) {
-        self.sessions.remove(session);
+        self.sessions.shift_remove(session);
     }
 
     pub fn find_reserved(&self, name: &str) -> Option<&ArcStr> {
