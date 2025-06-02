@@ -62,6 +62,7 @@ pub enum TelnetSubnegotiationState {
     Unknown,
 }
 
+#[derive(Debug, Clone)]
 pub struct Telnet {
     // Connection
     stream: Arc<Mutex<TcpStream>>,

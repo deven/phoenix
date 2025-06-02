@@ -10,6 +10,7 @@ pub enum Sendable {
     Discussion(Arc<Discussion>),
 }
 
+#[derive(Debug, Clone)]
 pub struct Sendlist {
     pub errors: String,
     pub typed: String,

@@ -29,6 +29,7 @@ lazy_static::lazy_static! {
     static ref SHUTDOWN_EVENT: RwLock<Option<Arc<Box<dyn crate::event::Event + Send + Sync>>>> = RwLock::new(None);
 }
 
+#[derive(Debug, Clone)]
 pub struct Session {
     id: usize,
     user: Arc<RwLock<Option<Arc<RwLock<User>>>>>,
