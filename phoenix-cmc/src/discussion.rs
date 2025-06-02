@@ -6,7 +6,7 @@ use crate::types::{ArcStr, OrderedSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Discussion {
     pub name: ArcStr,
     pub title: ArcStr,

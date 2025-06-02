@@ -230,7 +230,6 @@ impl Event for LoginTimeoutEvent {
 }
 
 // Event wrapper for heap ordering
-#[derive(Debug, Clone)]
 struct EventWrapper {
     pub event: Box<dyn Event>,
 }
@@ -257,7 +256,7 @@ impl Ord for EventWrapper {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct EventQueue {
     pub queue: Arc<RwLock<BinaryHeap<EventWrapper>>>,
 }

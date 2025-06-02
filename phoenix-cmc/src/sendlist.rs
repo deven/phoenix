@@ -4,13 +4,13 @@ use crate::session::Session;
 use crate::types::OrderedSet;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Sendable {
     Session(Arc<Session>),
     Discussion(Arc<Discussion>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Sendlist {
     pub errors: String,
     pub typed: String,
