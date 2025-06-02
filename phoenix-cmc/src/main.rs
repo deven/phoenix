@@ -10,7 +10,7 @@ const DEFAULT_PORT: u16 = 9999;
 const LIBDIR: &str = "phoenix";
 
 #[tokio::main]
-async fn main() -> Result<()> {
+pub async fn main() -> Result<()> {
     env_logger::init();
 
     let args: Vec<String> = env::args().collect();
