@@ -291,7 +291,6 @@ impl EventQueue {
             if let Some(mut wrapper) = queue.peek_mut() {
                 if wrapper.event.time() <= now {
                     let mut event = queue.pop().unwrap().event;
-                    drop(queue); // Release lock before executing
 
                     if event.execute().await {
                         self.enqueue(event).await;

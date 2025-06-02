@@ -267,7 +267,6 @@ impl Session {
                         info!("Detach: {who} (accidental)");
                     };
 
-                    drop(current_telnet);
                     self.enqueue_others(Arc::new(DetachNotify::new(
                         self.name_obj().await,
                         intentional,
