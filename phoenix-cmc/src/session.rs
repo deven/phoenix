@@ -653,7 +653,7 @@ impl Session {
             .await;
 
         // Make sure discussion A exists
-        let (_, _, discussion, _) = session.find_sendable("A", true, false, false, true);
+        let (_, _, discussion, _) = session.find_sendable("A", true, false, false, true).await;
         if discussion.is_none() {
             let disc = Discussion::new(None, "A", "General Discussion", true);
             DISCUSSIONS.insert("A".to_string(), disc);
@@ -841,7 +841,7 @@ impl Session {
             }
         }
 
-        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true);
+        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true).await;
 
         if let Some(found_session) = session {
             let same_user = if let (Some(my_user), Some(their_user)) =
@@ -1162,7 +1162,7 @@ impl Session {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
-        let (session, matches, _, _) = self.find_sendable(args, false, false, true, false);
+        let (session, matches, _, _) = self.find_sendable(args, false, false, true, false).await;
 
         if let Some(target) = session {
             let who = target.name_user().await;
@@ -1805,7 +1805,7 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, false, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, false, false, true).await;
 
         if let Some(disc) = discussion {
             disc.join(self.clone()).await;
@@ -1821,7 +1821,7 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.quit(self.clone()).await;
@@ -1878,7 +1878,7 @@ impl Session {
             return;
         }
 
-        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true);
+        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true).await;
 
         if let Some(s) = session {
             self.print(&format!(
@@ -1923,7 +1923,7 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.destroy(self.clone()).await;
@@ -1940,7 +1940,7 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.permit(self.clone(), rest).await;
@@ -1957,7 +1957,7 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.depermit(self.clone(), rest).await;
@@ -1974,7 +1974,7 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.appoint(self.clone(), rest).await;
@@ -1991,7 +1991,7 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true);
+        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
 
         if let Some(disc) = discussion {
             disc.unappoint(self.clone(), rest).await;
@@ -2030,7 +2030,7 @@ impl Session {
             }
         }
 
-        let (session, _, discussion, _) = self.find_sendable(args, true, false, true, true);
+        let (session, _, discussion, _) = self.find_sendable(args, true, false, true, true).await;
 
         if let Some(s) = session {
             if s.id != self.id {

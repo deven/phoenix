@@ -68,7 +68,7 @@ impl Sendlist {
             }
 
             let (found_session, session_matches, found_discussion, discussion_matches) =
-                sender.find_sendable(part, !multi, false, do_sessions, do_discussions);
+                sender.find_sendable(part, !multi, false, do_sessions, do_discussions).await;
 
             if let Some(session) = found_session {
                 self.sessions.insert(session);
