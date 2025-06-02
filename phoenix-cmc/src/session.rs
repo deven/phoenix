@@ -26,7 +26,7 @@ lazy_static::lazy_static! {
         RwLock::new(map)
     };
     static ref EVENT_QUEUE: EventQueue = EventQueue::new();
-    static ref SHUTDOWN_EVENT: RwLock<Option<Arc<Box<dyn crate::event::Event + Send + Sync>>>> = RwLock::new(None);
+    static ref SHUTDOWN_EVENT: RwLock<Option<Box<dyn Event + Send + Sync>>> = RwLock::new(None);
 }
 
 pub struct Session {
