@@ -66,54 +66,54 @@ pub enum TelnetSubnegotiationState {
 #[derive(Debug, Clone)]
 pub struct Telnet {
     // Connection
-    stream: Arc<Mutex<TcpStream>>,
-    closing: Arc<RwLock<bool>>,
-    close_on_eof: Arc<RwLock<bool>>,
+    pub stream: Arc<Mutex<TcpStream>>,
+    pub closing: Arc<RwLock<bool>>,
+    pub close_on_eof: Arc<RwLock<bool>>,
 
     // Session
-    session: Arc<RwLock<Option<Arc<Session>>>>,
+    pub session: Arc<RwLock<Option<Arc<Session>>>>,
 
     // Terminal settings
-    width: Arc<RwLock<usize>>,
-    height: Arc<RwLock<usize>>,
-    naws_width: usize,
-    naws_height: usize,
+    pub width: Arc<RwLock<usize>>,
+    pub height: Arc<RwLock<usize>>,
+    pub naws_width: usize,
+    pub naws_height: usize,
 
     // Input buffer and editing
-    data: Arc<Mutex<Vec<u8>>>,
-    point: Arc<RwLock<usize>>,
-    mark: Arc<RwLock<Option<usize>>>,
-    prompt: Arc<RwLock<String>>,
+    pub data: Arc<Mutex<Vec<u8>>>,
+    pub point: Arc<RwLock<usize>>,
+    pub mark: Arc<RwLock<Option<usize>>>,
+    pub prompt: Arc<RwLock<String>>,
 
     // History and kill ring
-    history: Arc<Mutex<VecDeque<String>>>,
-    history_position: Arc<RwLock<Option<usize>>>,
-    kill_ring: Arc<Mutex<VecDeque<String>>>,
+    pub history: Arc<Mutex<VecDeque<String>>>,
+    pub history_position: Arc<RwLock<Option<usize>>>,
+    pub kill_ring: Arc<Mutex<VecDeque<String>>>,
 
     // Reply tracking
-    reply_to: Arc<RwLock<Option<Arc<Name>>>>,
+    pub reply_to: Arc<RwLock<Option<Arc<Name>>>>,
 
     // Output buffers
-    output_buffer: Arc<Mutex<BytesMut>>,
-    command_buffer: Arc<Mutex<BytesMut>>,
+    pub output_buffer: Arc<Mutex<BytesMut>>,
+    pub command_buffer: Arc<Mutex<BytesMut>>,
 
     // Telnet state
-    state: Arc<RwLock<TelnetState>>,
-    undrawn: Arc<RwLock<bool>>,
-    do_echo: Arc<RwLock<bool>>,
-    acknowledge: Arc<RwLock<bool>>,
-    outstanding: Arc<RwLock<usize>>,
+    pub state: Arc<RwLock<TelnetState>>,
+    pub undrawn: Arc<RwLock<bool>>,
+    pub do_echo: Arc<RwLock<bool>>,
+    pub acknowledge: Arc<RwLock<bool>>,
+    pub outstanding: Arc<RwLock<usize>>,
 
     // Telnet options
-    echo: Arc<RwLock<u8>>,
-    lsga: Arc<RwLock<u8>>,
-    rsga: Arc<RwLock<u8>>,
-    lbin: Arc<RwLock<u8>>,
-    rbin: Arc<RwLock<u8>>,
-    naws: Arc<RwLock<u8>>,
+    pub echo: Arc<RwLock<u8>>,
+    pub lsga: Arc<RwLock<u8>>,
+    pub rsga: Arc<RwLock<u8>>,
+    pub lbin: Arc<RwLock<u8>>,
+    pub rbin: Arc<RwLock<u8>>,
+    pub naws: Arc<RwLock<u8>>,
 
     // Subnegotiation state
-    sb_state: Arc<RwLock<TelnetSubnegotiationState>>,
+    pub sb_state: Arc<RwLock<TelnetSubnegotiationState>>,
 }
 
 #[derive(Debug, Clone, Copy)]

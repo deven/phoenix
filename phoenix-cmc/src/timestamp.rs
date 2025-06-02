@@ -3,7 +3,7 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Timestamp {
-    time: DateTime<Local>,
+    pub time: DateTime<Local>,
 }
 
 impl Timestamp {

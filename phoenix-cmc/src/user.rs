@@ -66,8 +66,8 @@ impl User {
 
 #[derive(Debug, Clone)]
 pub struct UserManager {
-    users: Arc<RwLock<HashMap<ArcStr, Arc<RwLock<User>>>>>,
-    last_update: Arc<RwLock<Option<std::time::SystemTime>>>,
+    pub users: Arc<RwLock<HashMap<ArcStr, Arc<RwLock<User>>>>>,
+    pub last_update: Arc<RwLock<Option<std::time::SystemTime>>>,
 }
 
 impl UserManager {
