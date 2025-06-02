@@ -11,12 +11,14 @@ use crate::user::{hash_password, verify_password, User, UserManager};
 use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
 pub type InputFunc =
-    fn(&Arc<Session>, &str) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>>;
+    for<'a> fn(&'a Arc<Session>, &'a str) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>>;
 
 lazy_static::lazy_static! {
     static ref INITS: DashMap<usize, Arc<Session>> = DashMap::new();
