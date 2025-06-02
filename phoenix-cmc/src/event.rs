@@ -18,6 +18,7 @@ pub trait Event: Send + Sync {
     async fn execute(&mut self) -> bool; // Returns true to reschedule
 }
 
+#[derive(Debug, Clone)]
 pub struct ShutdownEvent {
     time: Timestamp,
     final_warning: bool,
@@ -101,6 +102,7 @@ impl Event for ShutdownEvent {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct RestartEvent {
     time: Timestamp,
     final_warning: bool,
@@ -184,6 +186,7 @@ impl Event for RestartEvent {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct LoginTimeoutEvent {
     time: Timestamp,
     telnet: Arc<RwLock<Telnet>>,
@@ -227,6 +230,7 @@ impl Event for LoginTimeoutEvent {
 }
 
 // Event wrapper for heap ordering
+#[derive(Debug, Clone)]
 struct EventWrapper {
     event: Box<dyn Event>,
 }
@@ -253,6 +257,7 @@ impl Ord for EventWrapper {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct EventQueue {
     queue: Arc<RwLock<BinaryHeap<EventWrapper>>>,
 }

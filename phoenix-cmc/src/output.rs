@@ -14,6 +14,7 @@ pub trait OutputObj: Send + Sync {
     async fn output(&self, telnet: &mut Telnet);
 }
 
+#[derive(Debug, Clone)]
 pub struct Text {
     text: String,
     time: Timestamp,
@@ -47,6 +48,7 @@ impl OutputObj for Text {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Message {
     output_type: OutputType,
     from: Arc<Name>,
@@ -99,6 +101,7 @@ impl OutputObj for Message {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct EntryNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -139,6 +142,7 @@ impl OutputObj for EntryNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ExitNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -179,6 +183,7 @@ impl OutputObj for ExitNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TransferNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -219,6 +224,7 @@ impl OutputObj for TransferNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct AttachNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -259,6 +265,7 @@ impl OutputObj for AttachNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DetachNotify {
     name: Arc<Name>,
     intentional: bool,
@@ -312,6 +319,7 @@ impl OutputObj for DetachNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct HereNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -352,6 +360,7 @@ impl OutputObj for HereNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct AwayNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -392,6 +401,7 @@ impl OutputObj for AwayNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct BusyNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -432,6 +442,7 @@ impl OutputObj for BusyNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct GoneNotify {
     name: Arc<Name>,
     time: Timestamp,
@@ -472,6 +483,7 @@ impl OutputObj for GoneNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct CreateNotify {
     discussion_name: ArcStr,
     discussion_title: ArcStr,
@@ -532,6 +544,7 @@ impl OutputObj for CreateNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DestroyNotify {
     discussion_name: ArcStr,
     name: Arc<Name>,
@@ -575,6 +588,7 @@ impl OutputObj for DestroyNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct JoinNotify {
     discussion_name: ArcStr,
     name: Arc<Name>,
@@ -618,6 +632,7 @@ impl OutputObj for JoinNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct QuitNotify {
     discussion_name: ArcStr,
     name: Arc<Name>,
@@ -661,6 +676,7 @@ impl OutputObj for QuitNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PublicNotify {
     discussion_name: ArcStr,
     name: Arc<Name>,
@@ -704,6 +720,7 @@ impl OutputObj for PublicNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PrivateNotify {
     discussion_name: ArcStr,
     name: Arc<Name>,
@@ -747,6 +764,7 @@ impl OutputObj for PrivateNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PermitNotify {
     discussion_name: ArcStr,
     discussion_is_public: bool,
@@ -830,6 +848,7 @@ impl OutputObj for PermitNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DepermitNotify {
     discussion_name: ArcStr,
     discussion_is_public: bool,
@@ -938,6 +957,7 @@ impl OutputObj for DepermitNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct AppointNotify {
     discussion_name: ArcStr,
     appointer: Arc<Name>,
@@ -999,6 +1019,7 @@ impl OutputObj for AppointNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct UnappointNotify {
     discussion_name: ArcStr,
     unappointer: Arc<Name>,
@@ -1060,6 +1081,7 @@ impl OutputObj for UnappointNotify {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct RenameNotify {
     oldname: ArcStr,
     newname: ArcStr,
@@ -1103,6 +1125,7 @@ impl OutputObj for RenameNotify {
 }
 
 // Output stream for queuing output objects
+#[derive(Debug, Clone)]
 pub struct OutputStream {
     queue: tokio::sync::Mutex<Vec<Arc<dyn OutputObj>>>,
     acknowledged: std::sync::atomic::AtomicUsize,
