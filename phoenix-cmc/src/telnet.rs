@@ -264,8 +264,7 @@ impl Telnet {
 
         for &byte in data.as_bytes() {
             match byte {
-                //TelnetCommand::IAC as u8 => {
-                TelnetCommand::IAC => {
+                x if x == TelnetCommand::IAC as u8 => {
                     output.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                 }
                 RETURN => {
@@ -515,8 +514,7 @@ impl Telnet {
                 // Echo the input data
                 for &byte in &data {
                     match byte {
-                        //TelnetCommand::IAC as u8 => {
-                        TelnetCommand::IAC => {
+                        x if x == TelnetCommand::IAC as u8 => {
                             self.output_buffer.lock().await.extend_from_slice(&[
                                 TelnetCommand::IAC as u8,
                                 TelnetCommand::IAC as u8,
@@ -834,8 +832,7 @@ impl Telnet {
 
     pub async fn process_data_byte(&self, byte: u8) -> tokio::io::Result<()> {
         match byte {
-            TelnetCommand::IAC => {
-                //TelnetCommand::IAC as u8 => {
+            x if x == TelnetCommand::IAC as u8 => {
                 *self.state.write().await = TelnetState::IAC;
             }
             CONTROL_A => self.beginning_of_line().await,
