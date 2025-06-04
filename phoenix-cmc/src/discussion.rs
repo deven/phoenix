@@ -116,7 +116,7 @@ impl Discussion {
     pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>, sender: &Arc<Session>) {
         let members = self.members.read().await;
         for member in members.iter() {
-            if !Arc::ptr_eq(member, sender) {
+            if member.id != sender.id {
                 member.enqueue(out.clone()).await;
             }
         }
