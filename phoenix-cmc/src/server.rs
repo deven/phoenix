@@ -3,12 +3,12 @@ use crate::telnet::Telnet;
 use crate::types::ArcStr;
 use anyhow::Result;
 use log::{error, info};
-use std::sync::{Arc, LazyLock};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{broadcast, RwLock};
 use tokio::task::JoinHandle;
-use tokio::time::{sleep, Duration};
+use tokio::time::Duration;
 
 pub struct PhoenixServer {
     pub listener: TcpListener,

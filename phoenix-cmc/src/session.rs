@@ -3,6 +3,7 @@ use crate::discussion::Discussion;
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
+use crate::server::PhoenixServer;
 use crate::telnet::{Telnet, TELNET_ENABLED};
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
@@ -1086,7 +1087,7 @@ impl Session {
         if args == "!" {
             // Immediate restart
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-            server.schedule_restart(who, 0).await;
+            self.server.schedule_restart(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel restart
             match cancel_shutdown().await {
@@ -1113,7 +1114,7 @@ impl Session {
             // Delayed restart
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-            server.schedule_restart(who.clone(), seconds).await;
+            self.server.schedule_restart(who.clone(), seconds).await;
         }
     }
 
@@ -1124,7 +1125,7 @@ impl Session {
         if args == "!" {
             // Immediate shutdown
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-            server.schedule_shutdown(who, 0).await;
+            self.server.schedule_shutdown(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel shutdown
             match cancel_shutdown().await {
@@ -1151,7 +1152,7 @@ impl Session {
             // Delayed shutdown
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-            server.schedule_shutdown(who.clone(), seconds).await;
+            self.server.schedule_shutdown(who.clone(), seconds).await;
         }
     }
 
@@ -1558,7 +1559,7 @@ impl Session {
 
             let members = disc.members.read().await;
             let member_count = members.len();
-            let is_member = if (members.contains(&self.clone())) {
+            let is_member = if members.contains(&self.clone()) {
                 '*'
             } else {
                 ' '
@@ -2029,11 +2030,8 @@ impl Session {
         self.enqueue_others(Arc::new(RenameNotify::new(self.name().await, args)))
             .await;
 
-        self.print(&format!(
-            "You have changed your name to \"{name}\".\n",
-            args
-        ))
-        .await;
+        self.print(&format!("You have changed your name to \"{args}\".\n"))
+            .await;
         *self.name.write().await = ArcStr::new(args);
         *self.name_obj.write().await = Name::new(args, self.blurb().await);
     }
