@@ -1549,7 +1549,7 @@ impl Session {
             return;
         }
 
-        let sendlist = Sendlist::new(&self.clone(), args, true, false, true);
+        let sendlist = Sendlist::new(&self.clone(), args, true, false, true).await;
 
         if !args.is_empty() && sendlist.discussions.is_empty() {
             self.output(&sendlist.errors).await;
@@ -1738,7 +1738,7 @@ impl Session {
             }
         }
 
-        let sendlist = Sendlist::new(&self.clone(), &slist, false, true, true);
+        let sendlist = Sendlist::new(&self.clone(), &slist, false, true, true).await;
 
         if !sendlist.errors.is_empty() {
             self.output("\x07\x07").await;
@@ -2289,7 +2289,7 @@ impl Session {
         }
 
         if let Some(last_msg) = &*self.last_message.read().await {
-            let sendlist = Sendlist::new(&self.clone(), args, false, true, true);
+            let sendlist = Sendlist::new(&self.clone(), args, false, true, true).await;
             self.send_message(&sendlist, &last_msg.text).await;
         } else {
             self.output("You have no previous message to resend.\n")
@@ -2317,7 +2317,7 @@ impl Session {
             }
         } else {
             if let Some(last_msg) = &*self.last_message.read().await {
-                let sendlist = Sendlist::new(&self.clone(), args, false, true, true);
+                let sendlist = Sendlist::new(&self.clone(), args, false, true, true).await;
                 let text = last_msg.text.clone();
                 let to = last_msg.to.clone();
 
@@ -2378,13 +2378,7 @@ impl Session {
                 return;
             }
         } else {
-            Arc::new(Sendlist::new(
-                &self.clone(),
-                &sendlist_str,
-                false,
-                true,
-                true,
-            ))
+            Arc::new(Sendlist::new(&self.clone(), &sendlist_str, false, true, true).await)
         };
 
         *self.last_sendlist.write().await = Some(sendlist.clone());
@@ -2474,7 +2468,7 @@ impl Session {
             let s = if count == 1 { "" } else { "s" };
             msg = format!("\n{count} user{s} signed on.\n");
         } else {
-            let sendlist = Sendlist::new(&self.clone(), args, true, true, true);
+            let sendlist = Sendlist::new(&self.clone(), args, true, true, true).await;
 
             let mut total = sendlist.expand(&mut who, None).await;
 
