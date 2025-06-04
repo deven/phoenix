@@ -227,7 +227,7 @@ impl Discussion {
                         .await;
                 }
             } else {
-                let (session, matches) = session.find_session(user);
+                let (session, matches) = session.find_session(user).await;
                 if let Some(s) = session {
                     let mut denied = self.denied.write().await;
                     let mut allowed = self.allowed.write().await;
@@ -352,7 +352,7 @@ impl Discussion {
                         .await;
                 }
             } else {
-                let (session, matches) = session.find_session(user);
+                let (session, matches) = session.find_session(user).await;
 
                 if let Some(s) = session {
                     let mut members = self.members.write().await;
@@ -362,11 +362,11 @@ impl Discussion {
                     let name = s.name().await;
 
                     if self.is_public.load(Ordering::Relaxed) {
-                        let name = self.allowed(&s);
+                        let name = self.allowed(&s).await;
                         if let Some(n) = name {
                             allowed.shift_remove(n);
                         }
-                        if self.denied(&s).is_some() {
+                        if self.denied(&s).await.is_some() {
                             session
                                 .print(&format!(
                                     "{name} is already depermitted from discussion {disc}.\n"
@@ -403,7 +403,7 @@ impl Discussion {
                             }
                         }
                     } else {
-                        let name = self.allowed(&s);
+                        let name = self.allowed(&s).await;
                         if let Some(n) = name {
                             allowed.shift_remove(n);
                             if members.contains(&s) {
@@ -432,7 +432,7 @@ impl Discussion {
                                     ))
                                     .await;
                             }
-                        } else if self.denied(&s).is_some() {
+                        } else if self.denied(&s).await.is_some() {
                             session.print(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
                         } else {
                             denied.insert(name_obj.clone());
