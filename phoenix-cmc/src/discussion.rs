@@ -127,11 +127,11 @@ impl Discussion {
 
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
             Session::remove_discussion(self.name.clone()).await;
-            self.enqueue_others(
-                Arc::new(DestroyNotify::new(self.name.clone(), session.name_obj().await)),
-                &session,
-            )
-            .await;
+            let notification = Arc::new(DestroyNotify::new(
+                self.name.clone(),
+                session.name_obj().await,
+            ));
+            self.enqueue_others(notification, &session).await;
             session
                 .print(&format!("You have destroyed discussion {name}.\n"))
                 .await;
@@ -152,11 +152,9 @@ impl Discussion {
                 .await;
         } else {
             if self.permitted(&session).await {
-                self.enqueue_others(
-                    Arc::new(JoinNotify::new(self.name.clone(), session.name_obj().await)),
-                    &session,
-                )
-                .await;
+                let notification =
+                    Arc::new(JoinNotify::new(self.name.clone(), session.name_obj().await));
+                self.enqueue_others(notification, &session).await;
                 members.insert(session.clone());
                 session
                     .print(&format!("You are now a member of discussion {name}.\n"))
@@ -178,11 +176,9 @@ impl Discussion {
         if members.contains(&session) {
             members.shift_remove(&session);
             if session.signed_on().await {
-                self.enqueue_others(
-                    Arc::new(QuitNotify::new(self.name.clone(), session.name_obj().await)),
-                    &session,
-                )
-                .await;
+                let notification =
+                    Arc::new(QuitNotify::new(self.name.clone(), session.name_obj().await));
+                self.enqueue_others(notification, &session).await;
                 session
                     .print(&format!(
                         "You are no longer a member of discussion {name}.\n"
@@ -219,12 +215,11 @@ impl Discussion {
                 } else {
                     let disc = Arc::get_mut(&mut session.clone()).unwrap();
                     disc.is_public = true;
-                    session
-                        .enqueue_others(Arc::new(PublicNotify::new(
-                            self.name.clone(),
-                            session.name_obj().await,
-                        )))
-                        .await;
+                    let notification = Arc::new(PublicNotify::new(
+                        self.name.clone(),
+                        session.name_obj().await,
+                    ));
+                    self.enqueue_others(notification, &session).await;
                     session
                         .print(&format!("You have made discussion {name} public.\n"))
                         .await;
@@ -269,12 +264,11 @@ impl Discussion {
                         }
                     }
 
-                    session
-                        .enqueue_others(Arc::new(PrivateNotify::new(
-                            self.name.clone(),
-                            session.name_obj().await,
-                        )))
-                        .await;
+                    let notification = Arc::new(PrivateNotify::new(
+                        self.name.clone(),
+                        session.name_obj().await,
+                    ));
+                    self.enqueue_others(notification, &session).await;
                     session
                         .print(&format!("You have made discussion {name} private.\n"))
                         .await;
