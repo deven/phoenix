@@ -1,6 +1,5 @@
 pub mod constants;
 pub mod discussion;
-pub mod event;
 pub mod name;
 pub mod output;
 pub mod sendlist;

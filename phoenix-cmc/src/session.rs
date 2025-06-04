@@ -1,6 +1,5 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
-use crate::event::{Event, RestartEvent, ShutdownEvent};
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
@@ -14,7 +13,11 @@ use log::info;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
+use std::time::Duration;
 use tokio::sync::{Mutex, RwLock};
+use tokio::task::AbortHandle;
+
+const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 
 static INITS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
 static SESSIONS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
@@ -27,12 +30,13 @@ static DEFAULTS: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| {
 });
 static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 static EVENT_QUEUE: LazyLock<EventQueue> = LazyLock::new(EventQueue::new);
-static SHUTDOWN_EVENT: LazyLock<RwLock<Option<Box<dyn Event + Send + Sync>>>> = LazyLock::new(|| RwLock::new(None));
 
 pub struct Session {
     pub id: usize,
+    pub server: Arc<PhoenixServer>,
     pub user: Arc<RwLock<Option<Arc<RwLock<User>>>>>,
     pub telnet: Arc<RwLock<Option<Arc<Telnet>>>>,
+    pub login_timeout: Arc<RwLock<Option<AbortHandle>>>,
     pub login_state: Arc<RwLock<LoginState>>,
     pub lines: Arc<Mutex<Vec<String>>>,
     pub output_buffer: Arc<Mutex<String>>,
@@ -73,14 +77,16 @@ pub enum LoginState {
 impl Session {
     pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 
-    pub async fn new(telnet: Arc<Telnet>) -> Arc<Self> {
+    pub async fn new(server: Arc<PhoenixServer>, telnet: Arc<Telnet>) -> Arc<Self> {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
         let now = Timestamp::new();
 
         let session = Arc::new(Self {
             id,
+            server,
             user: Arc::new(RwLock::new(None)),
             telnet: Arc::new(RwLock::new(Some(telnet.clone()))),
+            login_timeout: Arc::new(RwLock::new(None)),
             login_state: Arc::new(RwLock::new(LoginState::PreLogin)),
             lines: Arc::new(Mutex::new(Vec::new())),
             output_buffer: Arc::new(Mutex::new(String::new())),
@@ -455,11 +461,39 @@ impl Session {
     }
 
     pub async fn init_login_sequence(&self) {
+        self.start_login_timeout().await;
         self.set_login_state(LoginState::AwaitingLogin, Some("login: "))
             .await;
     }
 
+    pub async fn start_login_timeout(&self) {
+        let weak_self = Arc::downgrade(&self.clone());
+
+        let handle = tokio::spawn(async move {
+            tokio::time::sleep(LOGIN_TIMEOUT).await;
+
+            if let Some(session) = weak_self.upgrade() {
+                session.output("\nLogin timeout.\n").await;
+                session.enqueue_output().await;
+                session.close(true).await;
+            }
+        });
+
+        *self.login_timeout.write().await = Some(handle.abort_handle());
+    }
+
+    pub async fn cancel_login_timeout(&self) {
+        if let Some(handle) = self.login_timeout.write().await.take() {
+            handle.abort();
+        }
+    }
+
     pub async fn set_login_state(&self, state: LoginState, prompt: Option<&str>) {
+        // Cancel the login timeout if login is complete.
+        if (state == LoginState::LoggedIn) {
+            self.cancel_login_timeout().await;
+        }
+
         *self.login_state.write().await = state;
 
         if let Some(p) = prompt {
@@ -666,9 +700,7 @@ impl Session {
 
         self.do_blurb(line, true).await;
 
-        if let Some(telnet) = &*self.telnet.read().await {
-            telnet.login_sequence_finished().await;
-        }
+        self.set_login_state(LoginState::LoggedIn, None);
 
         self.signed_on.store(true, Ordering::Relaxed);
 
@@ -1053,45 +1085,36 @@ impl Session {
         let name = self.name_blurb().await;
 
         if args == "!" {
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-            }
-
+            // Immediate restart
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-
-            let event = Arc::new(RestartEvent::immediate(who));
-            EVENT_QUEUE.enqueue(event.clone()).await;
-            *SHUTDOWN_EVENT.write().await = Some(event);
-        } else if let Some(_) = match_keyword(args, "cancel", 6) {
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                match shutdown.event_type() {
-                    EventType::ShutdownEvent => {
-                        info!("Shutdown cancelled by {who}.");
-                        Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
-                    }
-                    EventType::RestartEvent => {
-                        info!("Restart cancelled by {who}.");
-                        Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
-                    }
-                    _ => {}
+            server.schedule_restart(who, 0).await;
+        } else if match_keyword(args, "cancel", 6).is_some() {
+            // Cancel restart
+            match cancel_shutdown().await {
+                Some(true) => {
+                    info!("Restart cancelled by {who}.");
+                    Self::announce(&format!(
+                        "*** {name} has cancelled the server restart. ***\n"
+                    ))
+                    .await;
                 }
-
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-                *SHUTDOWN_EVENT.write().await = None;
-            } else {
-                self.output("The server was not about to shut down.\n").await;
+                Some(false) => {
+                    info!("Shutdown cancelled by {who}.");
+                    Self::announce(&format!(
+                        "*** {name} has cancelled the server shutdown. ***\n"
+                    ))
+                    .await;
+                }
+                None => {
+                    self.output("The server was not about to shut down or restart.\n")
+                        .await
+                }
             }
         } else {
-            let seconds = args.parse::<i64>().unwrap_or(30);
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-            }
-
+            // Delayed restart
+            let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-
-            let event = Arc::new(RestartEvent::new(who, seconds));
-            EVENT_QUEUE.enqueue(event.clone()).await;
-            *SHUTDOWN_EVENT.write().await = Some(event);
+            server.schedule_restart(who.clone(), seconds).await;
         }
     }
 
@@ -1100,44 +1123,36 @@ impl Session {
         let name = self.name_blurb().await;
 
         if args == "!" {
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-            }
-
+            // Immediate shutdown
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-
-            let event = Arc::new(ShutdownEvent::immediate(who));
-            EVENT_QUEUE.enqueue(event.clone()).await;
-            *SHUTDOWN_EVENT.write().await = Some(event);
-        } else if let Some(_) = match_keyword(args, "cancel", 6) {
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                match shutdown.event_type() {
-                    EventType::ShutdownEvent => {
-                        info!("Shutdown cancelled by {who}.");
-                        Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
-                    }
-                    EventType::RestartEvent => {
-                        info!("Restart cancelled by {who}.");
-                        Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
-                    }
-                    _ => {}
+            server.schedule_shutdown(who, 0).await;
+        } else if match_keyword(args, "cancel", 6).is_some() {
+            // Cancel shutdown
+            match cancel_shutdown().await {
+                Some(true) => {
+                    info!("Restart cancelled by {who}.");
+                    Self::announce(&format!(
+                        "*** {name} has cancelled the server restart. ***\n"
+                    ))
+                    .await;
                 }
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-                *SHUTDOWN_EVENT.write().await = None;
-            } else {
-                self.output("The server was not about to shut down.\n").await;
+                Some(false) => {
+                    info!("Shutdown cancelled by {who}.");
+                    Self::announce(&format!(
+                        "*** {name} has cancelled the server shutdown. ***\n"
+                    ))
+                    .await;
+                }
+                None => {
+                    self.output("The server was not about to shut down or restart.\n")
+                        .await
+                }
             }
         } else {
-            let seconds = args.parse::<i64>().unwrap_or(30);
-            if let Some(shutdown) = &*SHUTDOWN_EVENT.read().await {
-                EVENT_QUEUE.dequeue(shutdown.event_type()).await;
-            }
-
+            // Delayed shutdown
+            let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-
-            let event = Arc::new(ShutdownEvent::new(who, seconds).await);
-            EVENT_QUEUE.enqueue(event.clone()).await;
-            *SHUTDOWN_EVENT.write().await = Some(event);
+            server.schedule_shutdown(who.clone(), seconds).await;
         }
     }
 
