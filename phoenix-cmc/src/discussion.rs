@@ -67,7 +67,7 @@ impl Discussion {
 
     pub async fn allowed(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
         let allowed = self.allowed.read().await;
-        let session_name = session.name();
+        let session_name = session.name().await;
         allowed
             .iter()
             .find(|name| name.name.eq_ignore_ascii_case(&session_name))
@@ -76,7 +76,7 @@ impl Discussion {
 
     pub async fn denied(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
         let denied = self.denied.read().await;
-        let session_name = session.name();
+        let session_name = session.name().await;
         denied
             .iter()
             .find(|name| name.name.eq_ignore_ascii_case(&session_name))
@@ -84,6 +84,7 @@ impl Discussion {
     }
 
     pub async fn is_creator(&self, session: &Arc<Session>) -> bool {
+        let session_name = session.name().await;
         if let Some(creator) = &self.creator {
             creator.name.eq_ignore_ascii_case(&session.name())
         } else {
@@ -93,7 +94,7 @@ impl Discussion {
 
     pub async fn is_moderator(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
         let moderators = self.moderators.read().await;
-        let session_name = session.name();
+        let session_name = session.name().await;
         moderators
             .iter()
             .find(|name| name.name.eq_ignore_ascii_case(&session_name))
