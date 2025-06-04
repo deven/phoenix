@@ -32,7 +32,9 @@ impl Sendlist {
             sessions: OrderedSet::new(),
             discussions: OrderedSet::new(),
         };
-        sendlist.set(session, sendlist, multi, do_sessions, do_discussions).await;
+        sendlist
+            .set(session, sendlist, multi, do_sessions, do_discussions)
+            .await;
         Arc::new(sendlist)
     }
 

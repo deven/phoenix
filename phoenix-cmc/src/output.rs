@@ -749,17 +749,17 @@ impl OutputObj for PrivateNotify {
 #[derive(Debug, Clone)]
 pub struct PermitNotify {
     pub discussion_name: ArcStr,
-    pub discussion_is_public: bool,
+    pub is_public: bool,
     pub name: Arc<Name>,
     pub is_explicit: bool,
     pub time: Timestamp,
 }
 
 impl PermitNotify {
-    pub fn new(disc_name: ArcStr, disc_public: bool, who: Arc<Name>, flag: bool) -> Self {
+    pub fn new(disc_name: ArcStr, public: bool, who: Arc<Name>, flag: bool) -> Self {
         Self {
             discussion_name: disc_name,
-            discussion_is_public: disc_public,
+            is_public: public,
             name: who,
             is_explicit: flag,
             time: Timestamp::new(),
@@ -786,7 +786,7 @@ impl OutputObj for PermitNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        if self.discussion_is_public {
+        if self.is_public {
             if self.is_explicit {
                 telnet.print(&format!("*** {name}{blurb} has repermitted you to discussion {disc}. [{stamp}] ***\n")).await;
             } else {
@@ -805,7 +805,7 @@ impl OutputObj for PermitNotify {
 #[derive(Debug, Clone)]
 pub struct DepermitNotify {
     pub discussion_name: ArcStr,
-    pub discussion_is_public: bool,
+    pub is_public: bool,
     pub name: Arc<Name>,
     pub is_explicit: bool,
     pub removed: Option<Arc<Name>>,
@@ -815,14 +815,14 @@ pub struct DepermitNotify {
 impl DepermitNotify {
     pub fn new(
         disc_name: ArcStr,
-        disc_public: bool,
+        public: bool,
         who: Arc<Name>,
         flag: bool,
         removed_who: Option<Arc<Name>>,
     ) -> Self {
         Self {
             discussion_name: disc_name,
-            discussion_is_public: disc_public,
+            is_public: public,
             name: who,
             is_explicit: flag,
             removed: removed_who,
@@ -854,7 +854,7 @@ impl OutputObj for DepermitNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
-        if self.discussion_is_public {
+        if self.is_public {
             if let Some(removed) = &self.removed {
                 if removed_name.eq_ignore_ascii_case(&session_name) {
                     telnet.print(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
