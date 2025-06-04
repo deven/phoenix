@@ -353,8 +353,8 @@ impl Session {
     pub async fn find_sendable(
         &self,
         sendlist: &str,
-        exact: bool,
         member: bool,
+        exact: bool,
         do_sessions: bool,
         do_discussions: bool,
     ) -> (
@@ -430,6 +430,27 @@ impl Session {
         }
 
         (session, session_matches, discussion, discussion_matches)
+    }
+
+    pub async fn find_session(
+        &self,
+        sendlist: &str,
+    ) -> (Option<Arc<Session>>, OrderedSet<Arc<Session>>) {
+        let (session, matches, _, _) = self
+            .find_sendable(sendlist, false, false, true, false)
+            .await;
+        (session, matches)
+    }
+
+    pub async fn find_discussion(
+        &self,
+        sendlist: &str,
+        member: bool,
+    ) -> (Option<Arc<Discussion>>, OrderedSet<Arc<Discussion>>) {
+        let (_, _, discussion, matches) = self
+            .find_sendable(sendlist, member, false, false, true)
+            .await;
+        (discussion, matches)
     }
 
     pub async fn notify_entry(&self) {
@@ -720,7 +741,7 @@ impl Session {
             .await;
 
         // Make sure discussion A exists
-        let (_, _, discussion, _) = self.find_sendable("A", true, false, false, true).await;
+        let (_, _, discussion, _) = self.find_sendable("A", false, true, true, true).await;
         if discussion.is_none() {
             let disc = Discussion::new(None, "A", "General Discussion", true);
             DISCUSSIONS.insert("A".to_string(), disc);
@@ -884,8 +905,7 @@ impl Session {
             }
         }
 
-        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true).await;
-
+        let (session, _, discussion, _) = self.find_sendable(name, false, true, true, true).await;
         if let Some(found_session) = session {
             let same_user = if let (Some(my_user), Some(their_user)) =
                 (&*self.user.read().await, &*found_session.user.read().await)
@@ -1160,7 +1180,7 @@ impl Session {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
-        let (session, matches, _, _) = self.find_sendable(args, false, false, true, false).await;
+        let (session, matches) = self.find_session(args).await;
 
         if let Some(target) = session {
             let who = target.name_user().await;
@@ -1786,7 +1806,7 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, false, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.join(self.clone()).await;
@@ -1802,12 +1822,18 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.quit(self.clone()).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.quit(self.clone()).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -1857,7 +1883,7 @@ impl Session {
             return;
         }
 
-        let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true).await;
+        let (session, _, discussion, _) = self.find_sendable(name, false, true, true, true).await;
 
         if let Some(s) = session {
             let name = s.name().await;
@@ -1877,7 +1903,7 @@ impl Session {
             return;
         }
 
-        let disc = Discussion::new(Some(self.clone()), name, title, is_public);
+        let disc = Arc::new(Discussion::new(Some(self.clone()), name, title, is_public));
         DISCUSSIONS.insert(name.to_string(), disc.clone());
 
         self.enqueue_others(Arc::new(CreateNotify::new(
@@ -1903,12 +1929,18 @@ impl Session {
         }
 
         let (name, _) = getword(args, Some(','));
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.destroy(self.clone()).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.destroy(self.clone()).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -1920,12 +1952,18 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.permit(self.clone(), rest).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.permit(self.clone(), rest).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -1937,12 +1975,18 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.depermit(self.clone(), rest).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.depermit(self.clone(), rest).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -1954,12 +1998,18 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.appoint(self.clone(), rest).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.appoint(self.clone(), rest).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -1971,12 +2021,18 @@ impl Session {
             return;
         }
 
-        let (_, _, discussion, matches) = self.find_sendable(name, false, true, false, true).await;
+        let (discussion, matches) = self.find_discussion(name, false).await;
 
         if let Some(disc) = discussion {
             disc.unappoint(self.clone(), rest).await;
         } else {
-            self.discussion_matches(name, &matches).await;
+            let (discussion, matches) = self.find_discussion(name, true).await;
+
+            if let Some(disc) = discussion {
+                disc.unappoint(self.clone(), rest).await;
+            } else {
+                self.discussion_matches(name, &matches).await;
+            }
         }
     }
 
@@ -2008,7 +2064,7 @@ impl Session {
             }
         }
 
-        let (session, _, discussion, _) = self.find_sendable(args, true, false, true, true).await;
+        let (session, _, discussion, _) = self.find_sendable(args, false, true, true, true).await;
 
         if let Some(s) = session {
             if s.id != self.id {
