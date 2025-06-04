@@ -3,6 +3,7 @@ use log::info;
 use phoenix_cmc::{server, VERSION};
 use std::env;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tokio::signal;
 
 const DEFAULT_PORT: u16 = 9999;
@@ -13,7 +14,7 @@ pub async fn main() -> Result<()> {
     env_logger::init();
 
     let args: Vec<String> = env::args().collect();
-    let program = args[0];
+    let program = &args[0];
     let mut port = DEFAULT_PORT;
     let mut cron = false;
     let mut debug = false;
@@ -92,7 +93,7 @@ pub async fn main() -> Result<()> {
         _ = sigterm.recv() => info!("Received SIGTERM, shutting down..."),
         _ = sigquit.recv() => {
             info!("Received SIGQUIT, initiating shutdown...");
-            server.initiate_shutdown("signal", 5).await;
+            server.schedule_shutdown("signal".to_string(), 5).await;
         }
     }
 

@@ -1,10 +1,10 @@
-use crate::event::{EventQueue, LoginTimeoutEvent};
 use crate::session::Session;
 use crate::telnet::Telnet;
-use crate::VERSION;
+use crate::types::ArcStr;
 use anyhow::Result;
 use log::{error, info};
 use std::sync::{Arc, LazyLock};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{broadcast, RwLock};
 use tokio::task::JoinHandle;
@@ -39,7 +39,7 @@ impl PhoenixServer {
     pub async fn run(self: Arc<Self>) -> Result<()> {
         // Accept loop
         loop {
-            let (stream, addr) = match listener.accept().await {
+            let (stream, addr) = match self.listener.accept().await {
                 Ok((stream, addr)) => {
                     info!("New connection from {addr}");
 
@@ -70,12 +70,6 @@ impl PhoenixServer {
         // Create session
         let session = Session::new(self.clone(), telnet.clone()).await;
 
-        // Set up login timeout
-        let timeout_event = Box::new(LoginTimeoutEvent::new(
-            Arc::new(RwLock::new(telnet.clone())),
-            Telnet::LOGIN_TIMEOUT_TIME as i64,
-        ));
-
         // Initialize login sequence
         session.init_login_sequence().await;
 
@@ -105,17 +99,6 @@ impl PhoenixServer {
         Ok(())
     }
 
-    pub async fn initiate_shutdown(self: &Arc<Self>, reason: &str, delay: u64) {
-        info!("Initiating shutdown: {reason} (delay: {delay}s)");
-
-        // Send shutdown signal after delay
-        let shutdown_tx = self.shutdown_tx.clone();
-        tokio::spawn(async move {
-            sleep(Duration::from_secs(delay)).await;
-            let _ = shutdown_tx.send(());
-        });
-    }
-
     pub async fn schedule_restart(self: &Arc<Self>, who: ArcStr, seconds: u64) {
         self.schedule_shutdown_or_restart(who, seconds, true).await;
     }
@@ -142,7 +125,7 @@ impl PhoenixServer {
         restart: bool,
     ) {
         // Cancel any existing shutdown
-        let _ = self.cancel_shutdown().await;
+        self.cancel_shutdown().await;
 
         let action = if restart { "restart" } else { "shutdown" };
         info!("Server {action} scheduled by {who} in {seconds} seconds.");
@@ -188,10 +171,14 @@ impl PhoenixServer {
             self.perform_shutdown_or_restart(restart).await;
         });
 
-        *shutdown_handle.write().await = Some(handle);
+        *self.shutdown_handle.write().await = Some(handle);
     }
 
     pub async fn perform_shutdown_or_restart(self: &Arc<Self>, restart: bool) {
+        // Signal all connections to shut down gracefully.
+        let _ = self.shutdown_tx.send(());
+
+        // Give connections time to close.
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         if restart {
