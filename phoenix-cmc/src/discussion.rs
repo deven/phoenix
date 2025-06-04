@@ -126,7 +126,7 @@ impl Discussion {
     }
 
     pub async fn destroy(&self, session: Arc<Session>) {
-        let name = &self.name;
+        let disc = &self.name;
 
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
             Session::remove_discussion(self.name.clone()).await;
@@ -136,22 +136,22 @@ impl Discussion {
             ));
             self.enqueue_others(notification, &session).await;
             session
-                .print(&format!("You have destroyed discussion {name}.\n"))
+                .print(&format!("You have destroyed discussion {disc}.\n"))
                 .await;
         } else {
             session
-                .print(&format!("You are not a moderator of discussion {name}.\n"))
+                .print(&format!("You are not a moderator of discussion {disc}.\n"))
                 .await;
         }
     }
 
     pub async fn join(&self, session: Arc<Session>) {
-        let name = &self.name;
+        let disc = &self.name;
 
         let mut members = self.members.write().await;
         if members.contains(&session) {
             session
-                .print(&format!("You are already a member of discussion {name}.\n"))
+                .print(&format!("You are already a member of discussion {disc}.\n"))
                 .await;
         } else {
             if self.permitted(&session).await {
@@ -160,12 +160,12 @@ impl Discussion {
                 self.enqueue_others(notification, &session).await;
                 members.insert(session.clone());
                 session
-                    .print(&format!("You are now a member of discussion {name}.\n"))
+                    .print(&format!("You are now a member of discussion {disc}.\n"))
                     .await;
             } else {
                 session
                     .print(&format!(
-                        "You are not permitted to join discussion {name}.\n"
+                        "You are not permitted to join discussion {disc}.\n"
                     ))
                     .await;
             }
@@ -173,7 +173,7 @@ impl Discussion {
     }
 
     pub async fn quit(&self, session: Arc<Session>) {
-        let name = &self.name;
+        let disc = &self.name;
 
         let mut members = self.members.write().await;
         if members.contains(&session) {
@@ -184,23 +184,23 @@ impl Discussion {
                 self.enqueue_others(notification, &session).await;
                 session
                     .print(&format!(
-                        "You are no longer a member of discussion {name}.\n"
+                        "You are no longer a member of discussion {disc}.\n"
                     ))
                     .await;
             }
         } else {
             session
-                .print(&format!("You are not a member of discussion {name}.\n"))
+                .print(&format!("You are not a member of discussion {disc}.\n"))
                 .await;
         }
     }
 
     pub async fn permit(&self, session: Arc<Session>, args: &str) {
-        let name = &self.name;
+        let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!("You are not a moderator of discussion {name}.\n"))
+                .print(&format!("You are not a moderator of discussion {disc}.\n"))
                 .await;
             return;
         }
@@ -213,7 +213,7 @@ impl Discussion {
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public.load(Ordering::Relaxed) {
                     session
-                        .print(&format!("Discussion {name} is already public.\n"))
+                        .print(&format!("Discussion {disc} is already public.\n"))
                         .await;
                 } else {
                     self.is_public.store(true, Ordering::Relaxed);
@@ -223,13 +223,11 @@ impl Discussion {
                     ));
                     self.enqueue_others(notification, &session).await;
                     session
-                        .print(&format!("You have made discussion {name} public.\n"))
+                        .print(&format!("You have made discussion {disc} public.\n"))
                         .await;
                 }
             } else {
                 let (session, matches) = session.find_session(user);
-                let name = session.name().await;
-
                 if let Some(s) = session {
                     let mut denied = self.denied.write().await;
                     let mut allowed = self.allowed.write().await;
@@ -310,11 +308,11 @@ impl Discussion {
     }
 
     pub async fn depermit(&self, session: Arc<Session>, args: &str) {
-        let name = &self.name;
+        let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!("You are not a moderator of discussion {name}.\n"))
+                .print(&format!("You are not a moderator of discussion {disc}.\n"))
                 .await;
             return;
         }
@@ -346,11 +344,11 @@ impl Discussion {
                     ));
                     self.enqueue_others(notification, &session).await;
                     session
-                        .print(&format!("You have made discussion {name} private.\n"))
+                        .print(&format!("You have made discussion {disc} private.\n"))
                         .await;
                 } else {
                     session
-                        .print(&format!("Discussion {name} is already private.\n"))
+                        .print(&format!("Discussion {disc} is already private.\n"))
                         .await;
                 }
             } else {
@@ -457,14 +455,14 @@ impl Discussion {
     }
 
     pub async fn appoint(&self, session: Arc<Session>, args: &str) {
-        let name = &self.name;
+        let disc = &self.name;
 
         if !(self.is_creator(&session).await
             || self.is_moderator(&session).await.is_some()
             || session.priv_level().await >= 50)
         {
             session
-                .print(&format!("You are not a moderator of discussion {name}.\n"))
+                .print(&format!("You are not a moderator of discussion {disc}.\n"))
                 .await;
             return;
         }
@@ -484,11 +482,11 @@ impl Discussion {
     }
 
     pub async fn unappoint(&self, session: Arc<Session>, args: &str) {
-        let name = &self.name;
+        let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!("You are not a moderator of discussion {name}.\n"))
+                .print(&format!("You are not a moderator of discussion {disc}.\n"))
                 .await;
             return;
         }
