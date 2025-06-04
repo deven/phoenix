@@ -1,8 +1,9 @@
+use crate::constants::COMMA;
 use crate::name::Name;
 use crate::output::*;
 use crate::session::Session;
 use crate::timestamp::Timestamp;
-use crate::types::{ArcStr, OrderedSet};
+use crate::types::{getword, match_keyword, ArcStr, OrderedSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -196,8 +197,6 @@ impl Discussion {
     }
 
     pub async fn permit(&self, session: Arc<Session>, args: &str) {
-        use crate::constants::COMMA;
-        use crate::types::{getword, match_keyword};
         let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
@@ -242,8 +241,6 @@ impl Discussion {
     }
 
     pub async fn depermit(&self, session: Arc<Session>, args: &str) {
-        use crate::constants::COMMA;
-        use crate::types::{getword, match_keyword};
         let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
@@ -298,8 +295,6 @@ impl Discussion {
     }
 
     pub async fn appoint(&self, session: Arc<Session>, args: &str) {
-        use crate::constants::COMMA;
-        use crate::types::getword;
         let name = &self.name;
 
         if !(self.is_creator(&session).await
@@ -327,8 +322,6 @@ impl Discussion {
     }
 
     pub async fn unappoint(&self, session: Arc<Session>, args: &str) {
-        use crate::constants::COMMA;
-        use crate::types::getword;
         let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
