@@ -29,7 +29,6 @@ static DEFAULTS: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| {
     RwLock::new(map)
 });
 static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
-static EVENT_QUEUE: LazyLock<EventQueue> = LazyLock::new(EventQueue::new);
 
 pub struct Session {
     pub id: usize,
@@ -490,7 +489,7 @@ impl Session {
 
     pub async fn set_login_state(&self, state: LoginState, prompt: Option<&str>) {
         // Cancel the login timeout if login is complete.
-        if (state == LoginState::LoggedIn) {
+        if state == LoginState::LoggedIn {
             self.cancel_login_timeout().await;
         }
 
