@@ -299,6 +299,19 @@ impl Telnet {
         self.command_buffer.lock().await.extend_from_slice(data);
     }
 
+    pub async fn get_echo(&self) -> bool {
+        *self.echo.read().await == TELNET_ENABLED
+    }
+
+    pub async fn set_do_echo(&self, enabled: bool) {
+        *self.do_echo.write().await = enabled;
+    }
+
+    pub async fn reset_history(&self) {
+        self.history.lock().await.clear();
+        *self.history_position.write().await = None;
+    }
+
     pub async fn set_echo(&self, enabled: bool) {
         let cmd = if enabled {
             [
