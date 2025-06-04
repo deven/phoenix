@@ -86,7 +86,7 @@ impl Discussion {
     pub async fn is_creator(&self, session: &Arc<Session>) -> bool {
         let session_name = session.name().await;
         if let Some(creator) = &self.creator {
-            creator.name.eq_ignore_ascii_case(&session.name())
+            creator.name == session_name
         } else {
             false
         }
