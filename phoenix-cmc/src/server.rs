@@ -1,6 +1,7 @@
 use crate::event::{EventQueue, LoginTimeoutEvent};
 use crate::session::Session;
 use crate::telnet::Telnet;
+use crate::VERSION;
 use anyhow::Result;
 use log::{error, info};
 use std::sync::Arc;
@@ -69,16 +70,16 @@ impl PhoenixServer {
                 result = self.listener.accept() => {
                     match result {
                         Ok((stream, addr)) => {
-                            info!("New connection from {}", addr);
+                            info!("New connection from {addr}");
                             let server = self.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = server.handle_connection(stream).await {
-                                    error!("Connection error: {}", e);
+                                    error!("Connection error: {e}");
                                 }
                             });
                         }
                         Err(e) => {
-                            error!("Accept error: {}", e);
+                            error!("Accept error: {e}");
                         }
                     }
                 }
@@ -118,7 +119,7 @@ impl PhoenixServer {
             result = telnet.handle_input() => {
                 if let Err(e) = result {
                     if e.kind() != std::io::ErrorKind::UnexpectedEof {
-                        error!("Telnet error: {}", e);
+                        error!("Telnet error: {e}");
                     }
                 }
 
@@ -135,7 +136,7 @@ impl PhoenixServer {
     }
 
     pub async fn initiate_shutdown(&self, reason: &str, delay: u64) {
-        info!("Initiating shutdown: {} (delay: {}s)", reason, delay);
+        info!("Initiating shutdown: {reason} (delay: {delay}s)");
 
         // Send shutdown signal after delay
         let shutdown_tx = self.shutdown_tx.clone();

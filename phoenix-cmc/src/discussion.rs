@@ -122,6 +122,8 @@ impl Discussion {
     }
 
     pub async fn destroy(&self, session: Arc<Session>) {
+        let name = &self.name;
+
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
             Session::remove_discussion(self.name.clone()).await;
             self.enqueue_others(
@@ -130,26 +132,22 @@ impl Discussion {
             )
             .await;
             session
-                .print(&format!("You have destroyed discussion {}.\n", self.name))
+                .print(&format!("You have destroyed discussion {name}.\n"))
                 .await;
         } else {
             session
-                .print(&format!(
-                    "You are not a moderator of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a moderator of discussion {name}.\n"))
                 .await;
         }
     }
 
     pub async fn join(&self, session: Arc<Session>) {
+        let name = &self.name;
+
         let mut members = self.members.write().await;
         if members.contains(&session) {
             session
-                .print(&format!(
-                    "You are already a member of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are already a member of discussion {name}.\n"))
                 .await;
         } else {
             if self.permitted(&session).await {
@@ -160,16 +158,12 @@ impl Discussion {
                 .await;
                 members.insert(session.clone());
                 session
-                    .print(&format!(
-                        "You are now a member of discussion {}.\n",
-                        self.name
-                    ))
+                    .print(&format!("You are now a member of discussion {name}.\n"))
                     .await;
             } else {
                 session
                     .print(&format!(
-                        "You are not permitted to join discussion {}.\n",
-                        self.name
+                        "You are not permitted to join discussion {name}.\n"
                     ))
                     .await;
             }
@@ -177,6 +171,8 @@ impl Discussion {
     }
 
     pub async fn quit(&self, session: Arc<Session>) {
+        let name = &self.name;
+
         let mut members = self.members.write().await;
         if members.contains(&session) {
             members.shift_remove(&session);
@@ -188,17 +184,13 @@ impl Discussion {
                 .await;
                 session
                     .print(&format!(
-                        "You are no longer a member of discussion {}.\n",
-                        self.name
+                        "You are no longer a member of discussion {name}.\n"
                     ))
                     .await;
             }
         } else {
             session
-                .print(&format!(
-                    "You are not a member of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a member of discussion {name}.\n"))
                 .await;
         }
     }
@@ -206,13 +198,11 @@ impl Discussion {
     pub async fn permit(&self, session: Arc<Session>, args: &str) {
         use crate::constants::COMMA;
         use crate::types::{getword, match_keyword};
+        let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!(
-                    "You are not a moderator of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a moderator of discussion {name}.\n"))
                 .await;
             return;
         }
@@ -225,7 +215,7 @@ impl Discussion {
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public {
                     session
-                        .print(&format!("Discussion {} is already public.\n", self.name))
+                        .print(&format!("Discussion {name} is already public.\n"))
                         .await;
                 } else {
                     let disc = Arc::get_mut(&mut session.clone()).unwrap();
@@ -237,15 +227,14 @@ impl Discussion {
                         )))
                         .await;
                     session
-                        .print(&format!("You have made discussion {} public.\n", self.name))
+                        .print(&format!("You have made discussion {name} public.\n"))
                         .await;
                 }
             } else {
                 // Handle individual user permissions - would need FindSession implementation
                 session
                     .print(&format!(
-                        "Permission handling for '{}' not yet implemented.\n",
-                        user
+                        "Permission handling for '{user}' not yet implemented.\n"
                     ))
                     .await;
             }
@@ -255,13 +244,11 @@ impl Discussion {
     pub async fn depermit(&self, session: Arc<Session>, args: &str) {
         use crate::constants::COMMA;
         use crate::types::{getword, match_keyword};
+        let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!(
-                    "You are not a moderator of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a moderator of discussion {name}.\n"))
                 .await;
             return;
         }
@@ -292,22 +279,18 @@ impl Discussion {
                         )))
                         .await;
                     session
-                        .print(&format!(
-                            "You have made discussion {} private.\n",
-                            self.name
-                        ))
+                        .print(&format!("You have made discussion {name} private.\n"))
                         .await;
                 } else {
                     session
-                        .print(&format!("Discussion {} is already private.\n", self.name))
+                        .print(&format!("Discussion {name} is already private.\n"))
                         .await;
                 }
             } else {
                 // Handle individual user depermissions - would need FindSession implementation
                 session
                     .print(&format!(
-                        "Depermission handling for '{}' not yet implemented.\n",
-                        user
+                        "Depermission handling for '{user}' not yet implemented.\n"
                     ))
                     .await;
             }
@@ -317,16 +300,14 @@ impl Discussion {
     pub async fn appoint(&self, session: Arc<Session>, args: &str) {
         use crate::constants::COMMA;
         use crate::types::getword;
+        let name = &self.name;
 
         if !(self.is_creator(&session).await
             || self.is_moderator(&session).await.is_some()
             || session.priv_level().await >= 50)
         {
             session
-                .print(&format!(
-                    "You are not a moderator of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a moderator of discussion {name}.\n"))
                 .await;
             return;
         }
@@ -339,8 +320,7 @@ impl Discussion {
             // Handle appointments - would need FindSession implementation
             session
                 .print(&format!(
-                    "Appointment handling for '{}' not yet implemented.\n",
-                    user
+                    "Appointment handling for '{user}' not yet implemented.\n"
                 ))
                 .await;
         }
@@ -349,13 +329,11 @@ impl Discussion {
     pub async fn unappoint(&self, session: Arc<Session>, args: &str) {
         use crate::constants::COMMA;
         use crate::types::getword;
+        let name = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
             session
-                .print(&format!(
-                    "You are not a moderator of discussion {}.\n",
-                    self.name
-                ))
+                .print(&format!("You are not a moderator of discussion {name}.\n"))
                 .await;
             return;
         }
@@ -368,8 +346,7 @@ impl Discussion {
             // Handle unappointments - would need FindSession implementation
             session
                 .print(&format!(
-                    "Unappointment handling for '{}' not yet implemented.\n",
-                    user
+                    "Unappointment handling for '{user}' not yet implemented.\n"
                 ))
                 .await;
         }

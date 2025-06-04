@@ -49,12 +49,10 @@ impl Timestamp {
 
         if self.time > now.time || now_year != self_year {
             // Different year or future timestamp, return "Mmm dd yyyy hh:mm" format
-            format!(
-                "{} {} {}",
-                self.date(4, 7),
-                self.date(20, 4),
-                self.date(10, 6)
-            )
+            let month_day = self.date(4, 7);
+            let year = self.date(20, 4);
+            let time = self.date(10, 6);
+            format!("{month_day} {year} {time}")
         } else {
             // Check for different week
             let lastweek = now.time - Duration::days(7);
@@ -69,7 +67,9 @@ impl Timestamp {
                 let now_date = now.time.format("%b %e").to_string();
                 if now_date != self_date {
                     // Different day, within past week, return "Ddd hh:mm" format
-                    format!("{} {}", self.date(0, 4), self.date(11, 5))
+                    let day = self.date(0, 4);
+                    let time = self.date(11, 5);
+                    format!("{day} {time}")
                 } else {
                     // Same day, return "hh:mm" format
                     self.date(11, 5)
@@ -87,6 +87,7 @@ impl Default for Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let date = self.date(0, 0);
         write!(f, "{}", self.date(0, 0))
     }
 }

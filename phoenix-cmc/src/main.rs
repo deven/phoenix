@@ -1,11 +1,10 @@
 use anyhow::Result;
 use log::info;
-use phoenix_cmc::server;
+use phoenix_cmc::{server, VERSION};
 use std::env;
 use std::path::PathBuf;
 use tokio::signal;
 
-const VERSION: &str = "2.0.0";
 const DEFAULT_PORT: u16 = 9999;
 const LIBDIR: &str = "phoenix";
 
@@ -14,23 +13,23 @@ pub async fn main() -> Result<()> {
     env_logger::init();
 
     let args: Vec<String> = env::args().collect();
+    let program = args[0];
     let mut port = DEFAULT_PORT;
     let mut cron = false;
     let mut debug = false;
+
+    let usage = format!("Usage: {program} [--cron] [--debug] [--port {DEFAULT_PORT}]");
 
     // Parse command-line arguments
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
             "--help" => {
-                println!(
-                    "Usage: {} [--cron] [--debug] [--port {}]",
-                    args[0], DEFAULT_PORT
-                );
+                println!("{usage}");
                 return Ok(());
             }
             "--version" => {
-                println!("Phoenix {} (Rust version)", VERSION);
+                println!("Phoenix {VERSION} (Rust version)");
                 return Ok(());
             }
             "--cron" => cron = true,
@@ -40,18 +39,12 @@ pub async fn main() -> Result<()> {
                 if i < args.len() {
                     port = args[i].parse()?;
                 } else {
-                    eprintln!(
-                        "Usage: {} [--cron] [--debug] [--port {}]",
-                        args[0], DEFAULT_PORT
-                    );
+                    eprintln!("{usage}");
                     std::process::exit(1);
                 }
             }
             _ => {
-                eprintln!(
-                    "Usage: {} [--cron] [--debug] [--port {}]",
-                    args[0], DEFAULT_PORT
-                );
+                eprintln!("{usage}");
                 std::process::exit(1);
             }
         }
@@ -78,12 +71,9 @@ pub async fn main() -> Result<()> {
 
     // Initialize server
     let server = server::PhoenixServer::new(port, debug).await?;
-    info!("Started Phoenix server, version {}.", VERSION);
-    info!(
-        "Listening for connections on TCP port {}. (pid {})",
-        port,
-        std::process::id()
-    );
+    let pid = std::process::id();
+    info!("Started Phoenix server, version {VERSION}.");
+    info!("Listening for connections on TCP port {port}. (pid {pid})");
 
     // Set up signal handlers
     let mut sigint = signal::ctrl_c();
@@ -94,16 +84,12 @@ pub async fn main() -> Result<()> {
     tokio::select! {
         result = server.run() => {
             if let Err(e) = result {
-                log::error!("Server error: {}", e);
+                log::error!("Server error: {e}");
                 return Err(e);
             }
         }
-        _ = sigint => {
-            info!("Received SIGINT, shutting down...");
-        }
-        _ = sigterm.recv() => {
-            info!("Received SIGTERM, shutting down...");
-        }
+        _ = sigint => info!("Received SIGINT, shutting down..."),
+        _ = sigterm.recv() => info!("Received SIGTERM, shutting down..."),
         _ = sigquit.recv() => {
             info!("Received SIGQUIT, initiating shutdown...");
             server.initiate_shutdown("signal", 5).await;

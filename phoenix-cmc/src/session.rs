@@ -8,6 +8,7 @@ use crate::telnet::{Telnet, TELNET_ENABLED};
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
 use crate::user::{verify_password, User, UserManager};
+use crate::VERSION;
 use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
@@ -182,7 +183,7 @@ impl Session {
             .chars()
             .any(|c| c == ' ' || c == ',' || c == ':' || c == ';' || c == '_')
         {
-            *reply = format!("\"{}\"", sendlist);
+            *reply = format!("\"{sendlist}\"");
         }
     }
 
@@ -590,11 +591,8 @@ impl Session {
             let user = user_lock.read().await;
 
             if let Some(first) = user.reserved.first() {
-                self.print(&format!(
-                    "\nYour default (reserved) name is \"{}\".\n",
-                    first
-                ))
-                .await;
+                self.print(&format!("\nYour default (reserved) name is \"{first}\".\n"))
+                    .await;
 
                 let count = user.reserved.len();
                 if count > 1 {
@@ -843,10 +841,9 @@ impl Session {
             };
 
             if !is_same_user {
+                let now = if double_check { " now" } else { "" };
                 self.print(&format!(
-                    "\"{}\" is{} a reserved name.  Choose another.\n",
-                    reserved,
-                    if double_check { " now" } else { "" }
+                    "\"{reserved}\" is{now} a reserved name.  Choose another.\n"
                 ))
                 .await;
                 self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
@@ -876,9 +873,9 @@ impl Session {
                         *self.telnet.write().await = None;
                         self.close(true).await;
                     } else {
+                        let now = if double_check { " now" } else { "" };
                         self.print(&format!(
-                            "You are{} attached elsewhere under that name.\n",
-                            if double_check { " now" } else { "" }
+                            "You are{now} attached elsewhere under that name.\n"
                         ))
                         .await;
                         self.set_login_state(
@@ -898,10 +895,10 @@ impl Session {
                     return false;
                 }
             } else {
+                let found_name = found_session.name().await;
+                let already = if double_check { "now" } else { "already" };
                 self.print(&format!(
-                    "The name \"{}\" is {} in use.  Choose another.\n",
-                    found_session.name().await,
-                    if double_check { "now" } else { "already" }
+                    "The name \"{found_name}\" is {already} in use.  Choose another.\n"
                 ))
                 .await;
                 self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
@@ -911,10 +908,10 @@ impl Session {
         }
 
         if let Some(found_discussion) = discussion {
+            let found_name = &found_discussion.name;
+            let already = if double_check { "now" } else { "already" };
             self.print(&format!(
-                "There is {} a discussion named \"{}\".  Choose another name.\n",
-                if double_check { "now" } else { "already" },
-                found_discussion.name
+                "There is {already} a discussion named \"{found_name}\".  Choose another name.\n"
             ))
             .await;
             self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
@@ -944,7 +941,7 @@ impl Session {
         self.reset_idle(10).await;
 
         let blurb = if let Some(text) = new_blurb {
-            format!(" [{}]", text)
+            format!(" [{text}]")
         } else {
             String::new()
         };
@@ -977,36 +974,24 @@ impl Session {
                         self.output(" exactly").await;
                     }
                     if days > 0 {
-                        self.print(&format!(
-                            " {} day{}{}",
-                            days,
-                            if days == 1 { "" } else { "s" },
-                            if hours > 0 && minutes > 0 {
-                                ","
-                            } else if hours > 0 || minutes > 0 {
-                                " and"
-                            } else {
-                                ""
-                            }
-                        ))
-                        .await;
+                        let s = if days == 1 { "" } else { "s" };
+                        let and = if hours > 0 && minutes > 0 {
+                            ","
+                        } else if hours > 0 || minutes > 0 {
+                            " and"
+                        } else {
+                            ""
+                        };
+                        self.print(&format!(" {days} day{s}{and}")).await;
                     }
                     if hours > 0 {
-                        self.print(&format!(
-                            " {} hour{}{}",
-                            hours,
-                            if hours == 1 { "" } else { "s" },
-                            if minutes > 0 { " and" } else { "" }
-                        ))
-                        .await;
+                        let s = if hours == 1 { "" } else { "s" };
+                        let and = if minutes > 0 { " and" } else { "" };
+                        self.print(&format!(" {hours} hour{s}{and}")).await;
                     }
                     if minutes > 0 {
-                        self.print(&format!(
-                            " {} minute{}",
-                            minutes,
-                            if minutes == 1 { "" } else { "s" }
-                        ))
-                        .await;
+                        let s = if minutes == 1 { "" } else { "s" };
+                        self.print(&format!(" {minutes} minute{s}")).await;
                     }
                 } else {
                     self.output(" under a minute").await;
@@ -1031,36 +1016,24 @@ impl Session {
                 self.output(" exactly").await;
             }
             if days > 0 {
-                self.print(&format!(
-                    " {} day{}{}",
-                    days,
-                    if days == 1 { "" } else { "s" },
-                    if hours > 0 && minutes > 0 {
-                        ","
-                    } else if hours > 0 || minutes > 0 {
-                        " and"
-                    } else {
-                        ""
-                    }
-                ))
-                .await;
+                let s = if days == 1 { "" } else { "s" };
+                let and = if hours > 0 && minutes > 0 {
+                    ","
+                } else if hours > 0 || minutes > 0 {
+                    " and"
+                } else {
+                    ""
+                };
+                self.print(&format!(" {days} day{s}{and}")).await;
             }
             if hours > 0 {
-                self.print(&format!(
-                    " {} hour{}{}",
-                    hours,
-                    if hours == 1 { "" } else { "s" },
-                    if minutes > 0 { " and" } else { "" }
-                ))
-                .await;
+                let s = if hours == 1 { "" } else { "s" };
+                let and = if minutes > 0 { " and" } else { "" };
+                self.print(&format!(" {hours} hour{s}{and}")).await;
             }
             if minutes > 0 {
-                self.print(&format!(
-                    " {} minute{}",
-                    minutes,
-                    if minutes == 1 { "" } else { "s" }
-                ))
-                .await;
+                let s = if minutes == 1 { "" } else { "s" };
+                self.print(&format!(" {minutes} minute{s}")).await;
             }
         } else {
             self.output(" under a minute").await;
@@ -1069,10 +1042,9 @@ impl Session {
 
     pub async fn print_time_long_terse(&self, days: i32, hours: i32, minutes: i32) {
         if days > 0 {
-            self.print(&format!("{}d{:02}:{:02}", days, hours, minutes))
-                .await;
+            self.print(&format!("{days}d{hours:02}:{minutes:02}")).await;
         } else {
-            self.print(&format!("{}:{:02}", hours, minutes)).await;
+            self.print(&format!("{hours}:{minutes:02}")).await;
         }
     }
 
@@ -1239,9 +1211,9 @@ impl Session {
 
             let name = session.name_blurb().await;
             if name.len() > 33 {
-                self.print(&format!("{:<32.32}+ ", name)).await;
+                self.print(&format!("{name:<32.32}+ ")).await;
             } else {
-                self.print(&format!("{:<33} ", name)).await;
+                self.print(&format!("{name:<33} ")).await;
             }
 
             // Login time
@@ -1266,13 +1238,12 @@ impl Session {
                 let hours = hours % 24;
 
                 if days > 0 {
-                    self.print(&format!(" {:>2}d{:02}:{:02}  ", days, hours, minutes))
+                    self.print(&format!(" {days:>2}d{hours:02}:{minutes:02}  "))
                         .await;
                 } else if hours > 0 {
-                    self.print(&format!("    {:>2}:{:02}  ", hours, minutes))
-                        .await;
+                    self.print(&format!("    {hours:>2}:{minutes:02}  ")).await;
                 } else {
-                    self.print(&format!("       {:>2}  ", minutes)).await;
+                    self.print(&format!("       {minutes:>2}  ")).await;
                 }
             } else {
                 self.output("           ").await;
@@ -1328,12 +1299,8 @@ impl Session {
             }
 
             let name = session.name_blurb().await;
-            self.print(&format!(
-                "{:<32.32}{} ",
-                name,
-                if name.len() > 32 { "+" } else { " " }
-            ))
-            .await;
+            let plus = if name.len() > 32 { "+" } else { " " };
+            self.print(&format!("{name:<32.32}{plus} ")).await;
 
             let idle = (now - *session.idle_since.read().await) / 60;
             if idle > 0 {
@@ -1343,13 +1310,13 @@ impl Session {
                 let hours = hours % 24;
 
                 if days > 9 {
-                    self.print(&format!("{:2}d{:02}", days, hours)).await;
+                    self.print(&format!("{days:2}d{hours:02}")).await;
                 } else if days > 0 {
-                    self.print(&format!("{}d{:02}h", days, hours)).await;
+                    self.print(&format!("{days}d{hours:02}h")).await;
                 } else if hours > 0 {
-                    self.print(&format!("{:2}:{:02}", hours, minutes)).await;
+                    self.print(&format!("{hours:2}:{minutes:02}")).await;
                 } else {
-                    self.print(&format!("   {:2}", minutes)).await;
+                    self.print(&format!("   {minutes:2}")).await;
                 }
             } else {
                 self.output("     ").await;
@@ -1411,21 +1378,17 @@ impl Session {
                 let blurb = &args[start..end];
                 self.set_blurb(Some(blurb)).await;
                 if !entry {
-                    self.print(&format!(
-                        "Your blurb has been set to{}.\n",
-                        self.blurb().await
-                    ))
-                    .await;
+                    let blurb = self.blurb().await;
+                    self.print(&format!("Your blurb has been set to{blurb}.\n"))
+                        .await;
                 }
             }
         } else if entry {
             self.set_blurb(None).await;
         } else if !self.blurb().await.is_empty() {
-            self.print(&format!(
-                "Your blurb is currently set to{}.\n",
-                self.blurb().await
-            ))
-            .await;
+            let blurb = self.blurb().await;
+            self.print(&format!("Your blurb is currently set to{blurb}.\n"))
+                .await;
         } else {
             self.output("You do not currently have a blurb set.\n")
                 .await;
@@ -1532,17 +1495,16 @@ impl Session {
             "  \"Here\"     \"Away\"     \"Busy\"     \"Gone\"    Attached   Detached    Total\n",
         )
         .await;
-        self.print(&format!(" {:3} {:3}%   {:3} {:3}%   {:3} {:3}%   {:3} {:3}%   {:3} {:3}%   {:3} {:3}%   {:3} 100%\n",
-            here, (here * 100 + total / 2) / total.max(1),
-            away, (away * 100 + total / 2) / total.max(1),
-            busy, (busy * 100 + total / 2) / total.max(1),
-            gone, (gone * 100 + total / 2) / total.max(1),
-            attached, (attached * 100 + total / 2) / total.max(1),
-            detached, (detached * 100 + total / 2) / total.max(1),
-            total
-        )).await;
+        let here_pct = (here * 100 + total / 2) / total.max(1);
+        let away_pct = (away * 100 + total / 2) / total.max(1);
+        let busy_pct = (busy * 100 + total / 2) / total.max(1);
+        let gone_pct = (gone * 100 + total / 2) / total.max(1);
+        let attached_pct = (attached * 100 + total / 2) / total.max(1);
+        let detached_pct = (detached * 100 + total / 2) / total.max(1);
+        self.print(&format!(" {here:3} {here_pct:3}%   {away:3} {away_pct:3}%   {busy:3} {busy_pct:3}%   {gone:3} {gone_pct:3}%   {attached:3} {attached_pct:3}%   {detached:3} {detached_pct:3}%   {total:3} 100%\n")).await;
 
-        self.print(&format!("\nDiscussions in use: {}\n\n", DISCUSSIONS.len()))
+        let disc_count = DISCUSSIONS.len();
+        self.print(&format!("\nDiscussions in use: {disc_count}\n\n"))
             .await;
     }
 
@@ -1571,22 +1533,23 @@ impl Session {
         let now = Timestamp::new();
 
         for disc in discussions {
+            let disc_name = &disc.name;
             self.output(" ").await;
             let name = if disc.name.len() > 15 {
-                format!("{:<14.14}+", disc.name)
+                format!("{disc_name:<14.14}+")
             } else {
-                format!("{:<15}", disc.name)
+                format!("{disc_name:<15}")
             };
             self.output(&name).await;
 
             let members = disc.members.read().await;
-            let is_member = members.contains(&self.clone());
-            self.print(&format!(
-                "{:>3}{} ",
-                members.len(),
-                if is_member { '*' } else { ' ' }
-            ))
-            .await;
+            let member_count = members.len();
+            let is_member = if (members.contains(&self.clone())) {
+                '*'
+            } else {
+                ' '
+            };
+            self.print(&format!("{member_count:>3}{is_member} ")).await;
 
             let idle = (now - *disc.idle_since.read().await) / 60;
             if idle > 0 {
@@ -1596,22 +1559,23 @@ impl Session {
                 let hours = hours % 24;
 
                 if days > 0 {
-                    self.print(&format!(" {}d{:02}:{:02}  ", days, hours, minutes))
+                    self.print(&format!(" {days}d{hours:02}:{minutes:02}  "))
                         .await;
                 } else if hours > 0 {
-                    self.print(&format!("    {}:{:02}  ", hours, minutes)).await;
+                    self.print(&format!("    {hours}:{minutes:02}  ")).await;
                 } else {
-                    self.print(&format!("      {:>2}  ", minutes)).await;
+                    self.print(&format!("      {minutes:>2}  ")).await;
                 }
             } else {
                 self.output("         ").await;
             }
 
             if disc.permitted(&self.clone()).await {
+                let title = &disc.title;
                 if disc.title.len() > 49 {
-                    self.print(&format!("{:<48.48}+\n", disc.title)).await;
+                    self.print(&format!("{title:<48.48}+\n")).await;
                 } else {
-                    self.print(&format!("{}\n", disc.title)).await;
+                    self.print(&format!("{title}\n")).await;
                 }
             } else {
                 self.output("<Private>\n").await;
@@ -1626,7 +1590,8 @@ impl Session {
 
     pub async fn do_date(&self, _args: &str) {
         let t = Timestamp::new();
-        self.print(&format!("{}\n", t.date(0, 0))).await;
+        let date = t.date(0, 0);
+        self.print(&format!("{date}\n")).await;
     }
 
     pub async fn do_signal(&self, args: &str) {
@@ -1651,15 +1616,13 @@ impl Session {
                 self.output("Signals for public messages are now off.\n")
                     .await;
             } else if args.is_empty() {
-                self.print(&format!(
-                    "Signals are {} for public messages.\n",
-                    if self.signal_public.load(Ordering::Relaxed) {
-                        "on"
-                    } else {
-                        "off"
-                    }
-                ))
-                .await;
+                let on = if self.signal_public.load(Ordering::Relaxed) {
+                    "on"
+                } else {
+                    "off"
+                };
+                self.print(&format!("Signals are {on} for public messages.\n"))
+                    .await;
             } else {
                 self.output("Usage: /signal public [on|off]\n").await;
             }
@@ -1674,15 +1637,13 @@ impl Session {
                 self.output("Signals for private messages are now off.\n")
                     .await;
             } else if args.is_empty() {
-                self.print(&format!(
-                    "Signals are {} for private messages.\n",
-                    if self.signal_private.load(Ordering::Relaxed) {
-                        "on"
-                    } else {
-                        "off"
-                    }
-                ))
-                .await;
+                let on = if self.signal_private.load(Ordering::Relaxed) {
+                    "on"
+                } else {
+                    "off"
+                };
+                self.print(&format!("Signals are {on} for private messages.\n"))
+                    .await;
             } else {
                 self.output("Usage: /signal private [on|off]\n").await;
             }
@@ -1691,18 +1652,15 @@ impl Session {
             let priv_sig = self.signal_private.load(Ordering::Relaxed);
 
             if pub_sig == priv_sig {
+                let on = if pub_sig { "on" } else { "off" };
                 self.print(&format!(
-                    "Signals are {} for both public and private messages.\n",
-                    if pub_sig { "on" } else { "off" }
+                    "Signals are {on} for both public and private messages.\n"
                 ))
                 .await;
             } else {
-                self.print(&format!(
-                    "Signals are {} for public messages and {} for private messages.\n",
-                    if pub_sig { "on" } else { "off" },
-                    if priv_sig { "on" } else { "off" }
-                ))
-                .await;
+                let pub_on = if pub_sig { "on" } else { "off" };
+                let priv_on = if priv_sig { "on" } else { "off" };
+                self.print(&format!("Signals are {pub_on} for public messages and {priv_on} for private messages.\n")).await;
             }
         } else {
             self.output("Usage: /signal [public|private] [on|off]\n")
@@ -1776,15 +1734,12 @@ impl Session {
             }
 
             if !sendlist.discussions.is_empty() {
-                self.print(&format!(
-                    " and discussion{} ",
-                    if sendlist.discussions.len() == 1 {
-                        ""
-                    } else {
-                        "s"
-                    }
-                ))
-                .await;
+                let s = if sendlist.discussions.len() == 1 {
+                    ""
+                } else {
+                    "s"
+                };
+                self.print(&format!(" and discussion{s} ")).await;
 
                 first = true;
                 for discussion in &sendlist.discussions {
@@ -1879,10 +1834,9 @@ impl Session {
                 false
             };
 
+            let a = if is_same_user { "your" } else { "a" };
             self.print(&format!(
-                "\"{}\" is {} reserved name. (not created)\n",
-                reserved,
-                if is_same_user { "your" } else { "a" }
+                "\"{reserved}\" is {a} reserved name. (not created)\n"
             ))
             .await;
             return;
@@ -1891,18 +1845,18 @@ impl Session {
         let (session, _, discussion, _) = self.find_sendable(name, true, false, true, true).await;
 
         if let Some(s) = session {
+            let name = s.name().await;
             self.print(&format!(
-                "There is already someone named \"{}\". (not created)\n",
-                s.name().await
+                "There is already someone named \"{name}\". (not created)\n"
             ))
             .await;
             return;
         }
 
         if let Some(d) = discussion {
+            let name = &d.name;
             self.print(&format!(
-                "There is already a discussion named \"{}\". (not created)\n",
-                d.name
+                "There is already a discussion named \"{name}\". (not created)\n"
             ))
             .await;
             return;
@@ -1919,9 +1873,10 @@ impl Session {
         )))
         .await;
 
+        let name = &disc.name;
+        let title = &disc.title;
         self.print(&format!(
-            "You have created discussion {}, \"{}\".\n",
-            disc.name, disc.title
+            "You have created discussion {name}, \"{title}\".\n"
         ))
         .await;
     }
@@ -2031,8 +1986,7 @@ impl Session {
 
             if !is_same_user {
                 self.print(&format!(
-                    "\"{}\" is a reserved name.  (name unchanged)\n",
-                    reserved
+                    "\"{reserved}\" is a reserved name.  (name unchanged)\n"
                 ))
                 .await;
                 return;
@@ -2050,9 +2004,9 @@ impl Session {
         }
 
         if let Some(d) = discussion {
+            let name = &d.name;
             self.print(&format!(
-                "There is already a discussion named \"{}\". (name unchanged)\n",
-                d.name
+                "There is already a discussion named \"{name}\". (name unchanged)\n"
             ))
             .await;
             return;
@@ -2061,8 +2015,11 @@ impl Session {
         self.enqueue_others(Arc::new(RenameNotify::new(self.name().await, args)))
             .await;
 
-        self.print(&format!("You have changed your name to \"{}\".\n", args))
-            .await;
+        self.print(&format!(
+            "You have changed your name to \"{name}\".\n",
+            args
+        ))
+        .await;
         *self.name.write().await = ArcStr::new(args);
         *self.name_obj.write().await = Name::new(args, self.blurb().await);
     }
@@ -2097,7 +2054,7 @@ impl Session {
                 if height > 0 {
                     if let Some(telnet) = &*self.telnet.read().await {
                         let h = telnet.set_height(height).await;
-                        self.print(&format!("Terminal height is now set to {}.\n", h))
+                        self.print(&format!("Terminal height is now set to {h}.\n"))
                             .await;
                     }
                 } else {
@@ -2137,7 +2094,7 @@ impl Session {
                 if width > 0 {
                     if let Some(telnet) = &*self.telnet.read().await {
                         let w = telnet.set_width(width).await;
-                        self.print(&format!("Terminal width is now set to {}.\n", w))
+                        self.print(&format!("Terminal width is now set to {w}.\n"))
                             .await;
                     }
                 } else {
@@ -2147,7 +2104,7 @@ impl Session {
                 self.output("Usage: /set width=<number of columns>\n").await;
             }
         } else {
-            self.print(&format!("Unknown system variable: \"{}\"\n", var))
+            self.print(&format!("Unknown system variable: \"{var}\"\n"))
                 .await;
         }
     }
@@ -2172,9 +2129,9 @@ impl Session {
 
             if var.starts_with('$') {
                 if let Some(value) = self.user_vars.read().await.get(var) {
-                    self.print(&format!("{} = \"{}\"\n", var, value)).await;
+                    self.print(&format!("{var} = \"{value}\"\n")).await;
                 } else {
-                    self.print(&format!("Unknown user variable: \"{}\"\n", var))
+                    self.print(&format!("Unknown user variable: \"{var}\"\n"))
                         .await;
                 }
             } else if let Some(_) = match_keyword(var, "echo", 4) {
@@ -2188,11 +2145,8 @@ impl Session {
             } else if let Some(_) = match_keyword(var, "height", 6) {
                 if let Some(telnet) = &*self.telnet.read().await {
                     let height = telnet.set_height(0).await;
-                    self.print(&format!(
-                        "Terminal height is currently set to {}.\n",
-                        height
-                    ))
-                    .await;
+                    self.print(&format!("Terminal height is currently set to {height}.\n"))
+                        .await;
                 }
             } else if let Some(_) = match_keyword(var, "idle", 4) {
                 let now = Timestamp::new();
@@ -2245,16 +2199,16 @@ impl Session {
                     self.output(".)\n").await;
                 }
             } else if let Some(_) = match_keyword(var, "version", 7) {
-                self.print(&format!("Phoenix server version: {}\n", crate::VERSION))
+                self.print(&format!("Phoenix server version: {VERSION}\n"))
                     .await;
             } else if let Some(_) = match_keyword(var, "width", 5) {
                 if let Some(telnet) = &*self.telnet.read().await {
                     let width = telnet.set_width(0).await;
-                    self.print(&format!("Terminal width is currently set to {}.\n", width))
+                    self.print(&format!("Terminal width is currently set to {width}.\n"))
                         .await;
                 }
             } else {
-                self.print(&format!("Unknown system variable: \"{}\"\n", var))
+                self.print(&format!("Unknown system variable: \"{var}\"\n"))
                     .await;
             }
         }
@@ -2286,14 +2240,12 @@ impl Session {
             let text = text_args.trim();
             if !text.is_empty() {
                 *self.oops_text.write().await = text.to_string();
-                self.print(&format!("Your /oops text is now \"{}\".\n", text))
+                self.print(&format!("Your /oops text is now \"{text}\".\n"))
                     .await;
             } else {
-                self.print(&format!(
-                    "Your /oops text is currently \"{}\".\n",
-                    self.oops_text.read().await
-                ))
-                .await;
+                let oops_text = self.oops_text.read().await;
+                self.print(&format!("Your /oops text is currently \"{oops_text}\".\n"))
+                    .await;
             }
         } else {
             if let Some(last_msg) = &*self.last_message.read().await {
@@ -2370,19 +2322,18 @@ impl Session {
         *self.last_sendlist.write().await = Some(sendlist.clone());
 
         if msg_start.is_empty() {
+            let sendlist_typed = &sendlist.typed;
             if sendlist_str == "default" {
                 self.output("\x07\x07There is no message after \"default\". (message not sent)\n")
                     .await;
             } else if is_explicit {
                 self.print(&format!(
-                    "\x07\x07There is no message after \"{}:\". (message not sent)\n",
-                    sendlist.typed
+                    "\x07\x07There is no message after \"{sendlist_typed}:\". (message not sent)\n"
                 ))
                 .await;
             } else {
                 self.print(&format!(
-                    "\x07\x07There is no message after \"{};\". (message not sent)\n",
-                    sendlist.typed
+                    "\x07\x07There is no message after \"{sendlist_typed};\". (message not sent)\n"
                 ))
                 .await;
             }
@@ -2435,7 +2386,7 @@ impl Session {
         self.output(")");
 
         if idle >= 30 {
-            self.output(&format!(" [idle {}]", idle)).await;
+            self.output(&format!(" [idle {idle}]")).await;
         }
         self.output("\n").await;
     }
@@ -2450,7 +2401,10 @@ impl Session {
             for session in SESSIONS.iter() {
                 who.insert(session.value().clone());
             }
-            msg = format!("\n{} signed on.\n", who.len());
+
+            let count = who.len();
+            let s = if count == 1 { "" } else { "s" };
+            msg = format!("\n{count} user{s} signed on.\n");
         } else {
             let sendlist = Sendlist::new(&self.clone(), args, true, true, true);
 
@@ -2465,11 +2419,9 @@ impl Session {
                     errors = "No one matched your request.\n".to_string();
                 }
             } else {
-                msg = format!(
-                    "\n{} user{} matched.\n",
-                    who.len(),
-                    if who.len() == 1 { "" } else { "s" }
-                );
+                let count = who.len();
+                let s = if count == 1 { "" } else { "s" };
+                msg = format!("\n{count} user{s} matched.\n",);
             }
         }
 
@@ -2478,17 +2430,14 @@ impl Session {
 
     pub async fn session_matches(&self, name: &str, matches: &OrderedSet<Arc<Session>>) {
         if matches.is_empty() {
-            self.print(&format!("No names matched \"{}\".\n", name))
-                .await;
+            self.print(&format!("No names matched \"{name}\".\n")).await;
         } else if matches.len() == 1 {
-            self.print(&format!(
-                "\"{}\" matches one name: {}.\n",
-                name,
-                matches.iter().next().unwrap().name().await
-            ))
-            .await;
+            let matched_name = matches.iter().next().unwrap().name().await;
+            self.print(&format!("\"{name}\" matches one name: {matched_name}.\n"))
+                .await;
         } else {
-            self.print(&format!("\"{}\" matches {} names: ", name, matches.len()))
+            let count = matches.len();
+            self.print(&format!("\"{name}\" matches {count} names: "))
                 .await;
 
             //let names: Vec<String> = matches.iter().map(|s| s.name().to_string()).collect();
@@ -2500,22 +2449,18 @@ impl Session {
 
     pub async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Arc<Discussion>>) {
         if matches.is_empty() {
-            self.print(&format!("No discussions matched \"{}\".\n", name))
+            self.print(&format!("No discussions matched \"{name}\".\n"))
                 .await;
         } else if matches.len() == 1 {
+            let matched_name = matches.iter().next().unwrap().name;
             self.print(&format!(
-                "\"{}\" matches one discussion: {}.\n",
-                name,
-                matches.iter().next().unwrap().name
+                "\"{name}\" matches one discussion: {matched_name}.\n"
             ))
             .await;
         } else {
-            self.print(&format!(
-                "\"{}\" matches {} discussions: ",
-                name,
-                matches.len()
-            ))
-            .await;
+            let count = matches.len();
+            self.print(&format!("\"{name}\" matches {count} discussions: "))
+                .await;
 
             let names: Vec<&str> = matches.iter().map(|d| d.name.as_ref()).collect();
             self.output(&names.join(", ")).await;
