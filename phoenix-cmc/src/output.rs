@@ -1055,7 +1055,7 @@ impl OutputStream {
         self.acknowledged
             .store(0, std::sync::atomic::Ordering::Relaxed);
 
-        if telnet.acknowledge() {
+        if telnet.acknowledge().await {
             while self.send_next(telnet).await {}
         }
     }
@@ -1064,7 +1064,7 @@ impl OutputStream {
         self.queue.lock().await.push(out);
 
         if let Some(telnet) = telnet {
-            if telnet.acknowledge() {
+            if telnet.acknowledge().await {
                 while self.send_next(telnet).await {}
             } else if self.queue.lock().await.len() == 1 {
                 self.send_next(telnet).await;
