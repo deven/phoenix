@@ -70,7 +70,7 @@ pub async fn main() -> Result<()> {
     }
 
     // Initialize server
-    let server = server::PhoenixServer::new(port, debug).await?;
+    let server = Arc::new(server::PhoenixServer::new(port, debug).await?);
     let pid = std::process::id();
     info!("Started Phoenix server, version {VERSION}.");
     info!("Listening for connections on TCP port {port}. (pid {pid})");
