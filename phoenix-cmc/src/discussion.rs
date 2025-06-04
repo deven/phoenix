@@ -214,8 +214,7 @@ impl Discussion {
                         .print(&format!("Discussion {name} is already public.\n"))
                         .await;
                 } else {
-                    let disc = Arc::get_mut(&mut session.clone()).unwrap();
-                    disc.is_public = true;
+                    self.is_public = true;
                     let notification = Arc::new(PublicNotify::new(
                         self.name.clone(),
                         session.name_obj().await,
@@ -226,12 +225,84 @@ impl Discussion {
                         .await;
                 }
             } else {
-                // Handle individual user permissions - would need FindSession implementation
-                session
-                    .print(&format!(
-                        "Permission handling for '{user}' not yet implemented.\n"
-                    ))
-                    .await;
+                let (session, matches) = session.find_session(user);
+                let name = session.name().await;
+
+                if let Some(s) = session {
+                    let mut denied = self.denied.write().await;
+                    let mut allowed = self.allowed.write().await;
+                    let name_obj = s.name_obj().await;
+                    let name = s.name().await;
+
+                    if self.is_public {
+                        if denied.contains(&name) {
+                            denied.shift_remove(&name);
+                            let notification = Arc::new(PermitNotify::new(
+                                self.name.clone(),
+                                self.is_public,
+                                name_obj(),
+                                true,
+                            ));
+                            self.enqueue_others(notification, &session).await;
+                            session
+                                .print(&format!(
+                                    "You have repermitted {name} to discussion {disc}.\n"
+                                ))
+                                .await;
+                        } else if allowed.contains(&name) {
+                            session.print(&format!("{name} is already explicitly permitted to public discussion {disc}.\n")).await;
+                        } else {
+                            allowed.insert(name_obj.clone());
+                            let notification = Arc::new(PermitNotify::new(
+                                self.name.clone(),
+                                self.is_public,
+                                session.name_obj().await,
+                                false,
+                            ));
+                            self.enqueue_others(notification, &session).await;
+                            session.print(&format!("You have explicitly permitted {name} to public discussion {disc}.\n")).await;
+                        }
+                    } else {
+                        if denied.contains(&name) {
+                            denied.shift_remove(&name);
+                            allowed.insert(name_obj.clone());
+                            let notification = Arc::new(PermitNotify::new(
+                                self.name.clone(),
+                                self.is_public,
+                                session.name_obj().await,
+                                true,
+                            ));
+                            self.enqueue_others(notification, &session).await;
+                            session
+                                .print(&format!(
+                                    "You have repermitted {name} to discussion {disc}.\n"
+                                ))
+                                .await;
+                        } else if allowed.contains(&name) {
+                            session
+                                .print(&format!(
+                                    "{name} is already permitted to discussion {disc}.\n"
+                                ))
+                                .await;
+                        } else {
+                            allowed.insert(name_obj.clone());
+                            let notification = Arc::new(PermitNotify::new(
+                                self.name.clone(),
+                                self.is_public,
+                                session.name_obj().await,
+                                false,
+                            ));
+                            self.enqueue_others(notification, &session).await;
+                            session
+                                .print(&format!(
+                                    "You have permitted {name} to discussion {disc}.\n"
+                                ))
+                                .await;
+                        }
+                    }
+                } else {
+                    session.session_matches(user, matches).await;
+                }
             }
         }
     }
@@ -246,6 +317,10 @@ impl Discussion {
             return;
         }
 
+        let mut members = self.members.write().await;
+        let mut denied = self.denied.write().await;
+        let mut allowed = self.allowed.write().await;
+
         let mut remaining = args;
         while !remaining.is_empty() {
             let (user, rest) = getword(remaining, Some(COMMA as char));
@@ -253,12 +328,10 @@ impl Discussion {
 
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public {
-                    let disc = Arc::get_mut(&mut session.clone()).unwrap();
-                    disc.is_public = false;
+                    self.is_public = false;
 
                     // Add current members to allowed list
                     let members = self.members.read().await;
-                    let mut allowed = self.allowed.write().await;
                     for member in members.iter() {
                         if self.allowed(&member).await.is_none() {
                             allowed.insert(member.name_obj().await);
@@ -279,12 +352,104 @@ impl Discussion {
                         .await;
                 }
             } else {
-                // Handle individual user depermissions - would need FindSession implementation
-                session
-                    .print(&format!(
-                        "Depermission handling for '{user}' not yet implemented.\n"
-                    ))
-                    .await;
+                let (session, matches) = session.find_session(user);
+
+                if let Some(s) = session {
+                    let mut members = self.members.write().await;
+                    let mut denied = self.denied.write().await;
+                    let mut allowed = self.allowed.write().await;
+                    let name_obj = s.name_obj().await;
+                    let name = s.name().await;
+
+                    if self.is_public {
+                        let name = self.allowed(&s);
+                        if let Some(n) = name {
+                            allowed.shift_remove(n);
+                        }
+                        if self.denied(&s).is_some() {
+                            session
+                                .print(&format!(
+                                    "{name} is already depermitted from discussion {disc}.\n"
+                                ))
+                                .await;
+                        } else {
+                            denied.insert(name_obj.clone());
+                            if self.members.contains(&name) {
+                                let removed = s;
+                                members.shift_remove(&s);
+                                let notification = Arc::new(DepermitNotify::new(
+                                    self.name.clone(),
+                                    self.is_public,
+                                    name_obj(),
+                                    true,
+                                    Some(name_obj),
+                                ));
+                                self.enqueue_others(notification, &session).await;
+                                session.print(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
+                            } else {
+                                let notification = Arc::new(DepermitNotify::new(
+                                    self.name.clone(),
+                                    self.is_public,
+                                    name_obj(),
+                                    true,
+                                    None,
+                                ));
+                                self.enqueue_others(notification, &session).await;
+                                session
+                                    .print(&format!(
+                                        "You have depermitted {name} from discussion {disc}.\n"
+                                    ))
+                                    .await;
+                            }
+                        }
+                    } else {
+                        let name = self.allowed(&s);
+                        if let Some(n) = name {
+                            allowed.shift_remove(n);
+                            if members.contains(&s) {
+                                members.shift_remove(s);
+                                let notification = Arc::new(DepermitNotify::new(
+                                    self.name.clone(),
+                                    self.is_public,
+                                    name_obj(),
+                                    false,
+                                    Some(name_obj),
+                                ));
+                                self.enqueue_others(notification, &session).await;
+                                session.print(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
+                            } else {
+                                let notification = Arc::new(DepermitNotify::new(
+                                    self.name.clone(),
+                                    self.is_public,
+                                    name_obj(),
+                                    false,
+                                    None,
+                                ));
+                                self.enqueue_others(notification, &session).await;
+                                session
+                                    .print(&format!(
+                                        "You have depermitted {name} from discussion {disc}.\n"
+                                    ))
+                                    .await;
+                            }
+                        } else if self.denied(&s).is_some() {
+                            session.print(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
+                        } else {
+                            denied.insert(name_obj.clone());
+                            let notification = Arc::new(DepermitNotify::new(
+                                self.name.clone(),
+                                self.is_public,
+                                name_obj(),
+                                true,
+                                None,
+                            ));
+                            self.enqueue_others(notification, &session).await;
+                            session.print(&format!("You have explicitly depermitted {name} from discussion {disc}.\n")).await;
+                        }
+                    }
+                } else {
+                    session.session_matches(user, matches).await;
+                }
             }
         }
     }
