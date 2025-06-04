@@ -228,6 +228,7 @@ impl Discussion {
                 }
             } else {
                 let (session, matches) = session.find_session(user).await;
+
                 if let Some(s) = session {
                     let mut denied = self.denied.write().await;
                     let mut allowed = self.allowed.write().await;
@@ -331,7 +332,6 @@ impl Discussion {
                     self.is_public.store(false, Ordering::Relaxed);
 
                     // Add current members to allowed list
-                    let members = self.members.read().await;
                     for member in members.iter() {
                         if self.allowed(&member).await.is_none() {
                             allowed.insert(member.name_obj().await);
@@ -374,7 +374,7 @@ impl Discussion {
                                 .await;
                         } else {
                             denied.insert(name_obj.clone());
-                            if self.members.contains(&name) {
+                            if members.contains(&name) {
                                 let removed = s;
                                 members.shift_remove(&s);
                                 let notification = Arc::new(DepermitNotify::new(
