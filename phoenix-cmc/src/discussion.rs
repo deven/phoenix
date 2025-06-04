@@ -4,6 +4,7 @@ use crate::output::*;
 use crate::session::Session;
 use crate::timestamp::Timestamp;
 use crate::types::{getword, match_keyword, ArcStr, OrderedSet};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -11,7 +12,7 @@ use tokio::sync::RwLock;
 pub struct Discussion {
     pub name: ArcStr,
     pub title: ArcStr,
-    pub is_public: bool,
+    pub is_public: Arc<AtomicBool>,
     pub creator: Option<Arc<Name>>,
     pub members: Arc<RwLock<OrderedSet<Arc<Session>>>>,
     pub moderators: Arc<RwLock<OrderedSet<Arc<Name>>>>,
@@ -30,6 +31,7 @@ impl Discussion {
     ) -> Arc<Self> {
         let name = name.into();
         let title = title.into();
+        let is_public = Arc::new(AtomicBool::new(is_public));
         let creation_time = Timestamp::new();
         let idle_since = Arc::new(RwLock::new(creation_time));
 
@@ -105,7 +107,7 @@ impl Discussion {
         if self.is_creator(session).await || self.is_moderator(session).await.is_some() {
             return true;
         }
-        if !self.is_public && self.allowed(session).await.is_none() {
+        if !self.is_public.load(Ordering::Relaxed) && self.allowed(session).await.is_none() {
             return false;
         }
         if self.denied(session).await.is_some() {
@@ -209,12 +211,12 @@ impl Discussion {
             remaining = rest;
 
             if let Some(_) = match_keyword(user, "others", 6) {
-                if self.is_public {
+                if self.is_public.load(Ordering::Relaxed) {
                     session
                         .print(&format!("Discussion {name} is already public.\n"))
                         .await;
                 } else {
-                    self.is_public = true;
+                    self.is_public.store(true, Ordering::Relaxed);
                     let notification = Arc::new(PublicNotify::new(
                         self.name.clone(),
                         session.name_obj().await,
@@ -234,13 +236,13 @@ impl Discussion {
                     let name_obj = s.name_obj().await;
                     let name = s.name().await;
 
-                    if self.is_public {
+                    if self.is_public.load(Ordering::Relaxed) {
                         if denied.contains(&name) {
                             denied.shift_remove(&name);
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
-                                self.is_public,
-                                name_obj(),
+                                true,
+                                name_obj,
                                 true,
                             ));
                             self.enqueue_others(notification, &session).await;
@@ -255,8 +257,8 @@ impl Discussion {
                             allowed.insert(name_obj.clone());
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
-                                self.is_public,
-                                session.name_obj().await,
+                                true,
+                                name_obj,
                                 false,
                             ));
                             self.enqueue_others(notification, &session).await;
@@ -268,8 +270,8 @@ impl Discussion {
                             allowed.insert(name_obj.clone());
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
-                                self.is_public,
-                                session.name_obj().await,
+                                false,
+                                name_obj,
                                 true,
                             ));
                             self.enqueue_others(notification, &session).await;
@@ -288,8 +290,8 @@ impl Discussion {
                             allowed.insert(name_obj.clone());
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
-                                self.is_public,
-                                session.name_obj().await,
+                                false,
+                                name_obj,
                                 false,
                             ));
                             self.enqueue_others(notification, &session).await;
@@ -327,8 +329,8 @@ impl Discussion {
             remaining = rest;
 
             if let Some(_) = match_keyword(user, "others", 6) {
-                if self.is_public {
-                    self.is_public = false;
+                if self.is_public.load(Ordering::Relaxed) {
+                    self.is_public.store(false, Ordering::Relaxed);
 
                     // Add current members to allowed list
                     let members = self.members.read().await;
@@ -361,7 +363,7 @@ impl Discussion {
                     let name_obj = s.name_obj().await;
                     let name = s.name().await;
 
-                    if self.is_public {
+                    if self.is_public.load(Ordering::Relaxed) {
                         let name = self.allowed(&s);
                         if let Some(n) = name {
                             allowed.shift_remove(n);
@@ -379,8 +381,8 @@ impl Discussion {
                                 members.shift_remove(&s);
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
-                                    self.is_public,
-                                    name_obj(),
+                                    true,
+                                    name_obj,
                                     true,
                                     Some(name_obj),
                                 ));
@@ -389,8 +391,8 @@ impl Discussion {
                             } else {
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
-                                    self.is_public,
-                                    name_obj(),
+                                    true,
+                                    name_obj,
                                     true,
                                     None,
                                 ));
@@ -410,8 +412,8 @@ impl Discussion {
                                 members.shift_remove(s);
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
-                                    self.is_public,
-                                    name_obj(),
+                                    false,
+                                    name_obj,
                                     false,
                                     Some(name_obj),
                                 ));
@@ -420,8 +422,8 @@ impl Discussion {
                             } else {
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
-                                    self.is_public,
-                                    name_obj(),
+                                    false,
+                                    name_obj,
                                     false,
                                     None,
                                 ));
@@ -438,8 +440,8 @@ impl Discussion {
                             denied.insert(name_obj.clone());
                             let notification = Arc::new(DepermitNotify::new(
                                 self.name.clone(),
-                                self.is_public,
-                                name_obj(),
+                                false,
+                                name_obj,
                                 true,
                                 None,
                             ));

@@ -1110,7 +1110,7 @@ impl Session {
             self.server.schedule_restart(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel restart
-            match cancel_shutdown().await {
+            match self.server.cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
                     Self::announce(&format!(
@@ -1148,7 +1148,7 @@ impl Session {
             self.server.schedule_shutdown(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel shutdown
-            match cancel_shutdown().await {
+            match self.server.cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
                     Self::announce(&format!(
