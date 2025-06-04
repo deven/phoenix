@@ -19,24 +19,24 @@ pub struct Sendlist {
 }
 
 impl Sendlist {
-    pub fn new(
+    pub async fn new(
         session: &Arc<Session>,
         sendlist: &str,
         multi: bool,
         do_sessions: bool,
         do_discussions: bool,
     ) -> Arc<Self> {
-        let mut sl = Self {
+        let mut sendlist = Self {
             errors: String::new(),
             typed: String::new(),
             sessions: OrderedSet::new(),
             discussions: OrderedSet::new(),
         };
-        sl.set(session, sendlist, multi, do_sessions, do_discussions);
-        Arc::new(sl)
+        sendlist.set(session, sendlist, multi, do_sessions, do_discussions).await;
+        Arc::new(sendlist)
     }
 
-    pub fn set(
+    pub async fn set(
         &mut self,
         sender: &Arc<Session>,
         sendlist: &str,
