@@ -137,6 +137,8 @@ impl PhoenixServer {
         } else {
             "shutting down"
         };
+
+        let server = self.clone();
         let handle = tokio::spawn(async move {
             let mut remaining = seconds;
             while remaining > 0 {
@@ -153,7 +155,7 @@ impl PhoenixServer {
                     60 => {
                         Session::announce(&format!("*** Server {action} in 1 minute ***\n")).await
                     }
-                    30 | 10 | 5..1 => {
+                    30 | 10 | 2..=5 => {
                         Session::announce(&format!(
                             "*** Server {action} in {remaining} seconds ***\n"
                         ))
@@ -168,7 +170,7 @@ impl PhoenixServer {
             }
 
             Session::announce(&format!("*** Server {action} NOW ***\n")).await;
-            self.perform_shutdown_or_restart(restart).await;
+            server.perform_shutdown_or_restart(restart).await;
         });
 
         *self.shutdown_handle.write().await = Some(handle);
