@@ -1870,7 +1870,7 @@ impl Session {
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                Arc::ptr_eq(my_user, &found_user)
+                my_user.user == found_user.user
             } else {
                 false
             };
@@ -2050,7 +2050,7 @@ impl Session {
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(args).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                Arc::ptr_eq(my_user, &found_user)
+                my_user.user == found_user.user
             } else {
                 false
             };
