@@ -39,7 +39,7 @@ impl PhoenixServer {
     pub async fn run(self: Arc<Self>) -> Result<()> {
         // Accept loop
         loop {
-            let (stream, addr) = match self.listener.accept().await {
+            match self.listener.accept().await {
                 Ok((stream, addr)) => {
                     info!("New connection from {addr}");
 
@@ -54,7 +54,7 @@ impl PhoenixServer {
                     error!("Failed to accept connection: {e}");
                     continue;
                 }
-            };
+            }
         }
 
         Ok(())
