@@ -89,12 +89,10 @@ impl Sendlist {
                             self.sessions.insert(s);
                         }
                     } else {
-                        self.errors.push_str(&format!(
-                            "\"{}\" matches {} name{}: ",
-                            display_part,
-                            session_matches.len(),
-                            if session_matches.len() == 1 { "" } else { "s" }
-                        ));
+                        let count = session_matches.len();
+                        let s = if session_matches.len() == 1 { "" } else { "s" };
+                        self.errors
+                            .push_str(&format!("\"{display_part}\" matches {count} name{s}: "));
 
                         let names: Vec<String> = session_matches
                             .iter()
@@ -118,17 +116,16 @@ impl Sendlist {
                     } else {
                         if session_matches.is_empty() {
                             self.errors
-                                .push_str(&format!("\"{}\" matches ", display_part));
+                                .push_str(&format!("\"{display_part}\" matches "));
                         }
-                        self.errors.push_str(&format!(
-                            "{} discussion{}: ",
-                            discussion_matches.len(),
-                            if discussion_matches.len() == 1 {
-                                ""
-                            } else {
-                                "s"
-                            }
-                        ));
+
+                        let count = discussion_matches.len();
+                        let s = if discussion_matches.len() == 1 {
+                            ""
+                        } else {
+                            "s"
+                        };
+                        self.errors.push_str(&format!("{count} discussion{s}: "));
 
                         let names: Vec<&str> =
                             discussion_matches.iter().map(|d| d.name.as_ref()).collect();

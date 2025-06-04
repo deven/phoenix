@@ -474,7 +474,7 @@ impl Telnet {
 
             // ANSI escape sequences to move cursor and clear
             if lines > 0 {
-                self.print(&format!("\r\x1b[{}A\x1b[J", lines)).await;
+                self.print(&format!("\r\x1b[{lines}A\x1b[J")).await;
             } else {
                 self.output("\r\x1b[J").await;
             }
@@ -488,7 +488,7 @@ impl Telnet {
 
             // ANSI escape sequences
             if lines > 0 {
-                self.print(&format!("\r\x1b[{}A\x1b[J", lines)).await;
+                self.print(&format!("\r\x1b[{lines}A\x1b[J")).await;
             } else {
                 self.output("\r\x1b[J").await;
             }
@@ -559,12 +559,13 @@ impl Telnet {
                     let cols = end_col as i32 - point_col as i32;
 
                     if lines > 0 {
-                        self.print(&format!("\x1b[{}A", lines)).await;
+                        self.print(&format!("\x1b[{lines}A")).await;
                     }
                     if cols > 0 {
-                        self.print(&format!("\x1b[{}D", cols)).await;
+                        self.print(&format!("\x1b[{cols}D")).await;
                     } else if cols < 0 {
-                        self.print(&format!("\x1b[{}C", -cols)).await;
+                        let cols = -cols;
+                        self.print(&format!("\x1b[{cols}C")).await;
                     }
                 }
             }
@@ -585,17 +586,16 @@ impl Telnet {
 
         let session = self.session.read().await.as_ref().unwrap().clone();
         let width = *self.width.read().await;
+        let from_name = &from.name;
+        let from_blurb = &from.blurb;
 
         match output_type {
             OutputType::PublicMessage => {
                 if session.signal_public().await {
                     self.output(BELL_STR).await;
                 }
-                self.print(&format!(
-                    "\n -> From {}{} to everyone:",
-                    from.name, from.blurb
-                ))
-                .await;
+                self.print(&format!("\n -> From {from_name}{from_blurb} to everyone:"))
+                    .await;
             }
             OutputType::PrivateMessage => {
                 // Save name to reply to
@@ -657,11 +657,8 @@ impl Telnet {
                         if !first {
                             self.output("; ").await;
                         }
-                        self.print(&format!(
-                            "discussion{} ",
-                            if to.discussions.len() == 1 { "" } else { "s" }
-                        ))
-                        .await;
+                        let s = if to.discussions.len() == 1 { "" } else { "s" };
+                        self.print(&format!("discussion{s} ")).await;
                         first = true;
 
                         for discussion in &to.discussions {
@@ -677,13 +674,14 @@ impl Telnet {
                 self.output(":").await;
             }
             _ => {
-                log::error!("Internal error! Unexpected output type: {:?}", output_type);
+                log::error!("Internal error! Unexpected output type: {output_type:?}");
                 return;
             }
         }
 
         // Print timestamp
-        self.print(&format!(" [{}]\n - ", time.stamp())).await;
+        let stamp = time.stamp();
+        self.print(&format!(" [{stamp}]\n - ")).await;
 
         // Word wrap the message
         let mut remaining = start;
@@ -1472,12 +1470,13 @@ impl Telnet {
             let cols = point_col as i32 - start_col as i32;
 
             if lines > 0 {
-                self.print(&format!("\x1b[{}A", lines)).await;
+                self.print(&format!("\x1b[{lines}A")).await;
             }
             if cols > 0 {
-                self.print(&format!("\x1b[{}D", cols)).await;
+                self.print(&format!("\x1b[{cols}D")).await;
             } else if cols < 0 {
-                self.print(&format!("\x1b[{}C", -cols)).await;
+                let cols = -cols;
+                self.print(&format!("\x1b[{cols}C")).await;
             }
 
             *self.point.write().await = 0;
@@ -1501,12 +1500,13 @@ impl Telnet {
             let cols = end_col as i32 - point_col as i32;
 
             if lines > 0 {
-                self.print(&format!("\x1b[{}B", lines)).await;
+                self.print(&format!("\x1b[{lines}B")).await;
             }
             if cols > 0 {
-                self.print(&format!("\x1b[{}C", cols)).await;
+                self.print(&format!("\x1b[{cols}C")).await;
             } else if cols < 0 {
-                self.print(&format!("\x1b[{}D", -cols)).await;
+                let cols = -cols;
+                self.print(&format!("\x1b[{cols}D")).await;
             }
 
             *self.point.write().await = data_len;
@@ -1541,7 +1541,8 @@ impl Telnet {
             let point_col = (prompt_len + *point) % width;
 
             if point_col == 0 {
-                self.print(&format!("\x1b[A\x1b[{}C", width - 1)).await;
+                let cols = width - 1;
+                self.print(&format!("\x1b[A\x1b[{cols}C")).await;
             } else {
                 self.output("\x08").await;
             }
@@ -1603,13 +1604,14 @@ impl Telnet {
                     }
 
                     if end_line > point_line {
-                        let columns = 1 - ((prompt_len + *point) % width) as i32;
-                        self.print(&format!("\x1b[{}A", end_line - point_line))
-                            .await;
-                        if columns > 0 {
-                            self.print(&format!("\x1b[{}D", columns)).await;
-                        } else if columns < 0 {
-                            self.print(&format!("\x1b[{}C", -columns)).await;
+                        let cols = 1 - ((prompt_len + *point) % width) as i32;
+                        let lines = end_line - point_line;
+                        self.print(&format!("\x1b[{lines}A")).await;
+                        if cols > 0 {
+                            self.print(&format!("\x1b[{cols}D")).await;
+                        } else if cols < 0 {
+                            let cols = -cols;
+                            self.print(&format!("\x1b[{cols}C")).await;
                         }
                     }
 
@@ -1648,7 +1650,8 @@ impl Telnet {
                 let mut wrap = point - ((prompt_len + point) % width);
 
                 while lines > 0 {
-                    self.print(&format!("\r\x1b[{}C", width - 1)).await;
+                    let cols = width - 1;
+                    self.print(&format!("\r\x1b[{cols}C")).await;
                     wrap += width;
                     if wrap < data.len() {
                         self.output_buffer.lock().await.push(data[wrap]);
@@ -1660,13 +1663,14 @@ impl Telnet {
                 }
 
                 if end_line > point_line {
-                    let columns = -((prompt_len + point) % width) as i32;
-                    self.print(&format!("\x1b[{}A", end_line - point_line))
-                        .await;
-                    if columns > 0 {
-                        self.print(&format!("\x1b[{}D", columns)).await;
-                    } else if columns < 0 {
-                        self.print(&format!("\x1b[{}C", -columns)).await;
+                    let cols = -((prompt_len + point) % width) as i32;
+                    let lines = end_line - point_line;
+                    self.print(&format!("\x1b[{lines}A")).await;
+                    if cols > 0 {
+                        self.print(&format!("\x1b[{cols}D")).await;
+                    } else if cols < 0 {
+                        let cols = -cols;
+                        self.print(&format!("\x1b[{cols}C")).await;
                     }
                 }
             }
