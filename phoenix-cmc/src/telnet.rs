@@ -1574,7 +1574,7 @@ impl Telnet {
                 let echo = *self.echo.read().await;
                 let do_echo = *self.do_echo.read().await;
                 if echo == TELNET_ENABLED && do_echo {
-                    self.output_buffer.lock().await.push(ch);
+                    self.output_buffer.lock().await.extend_from_slice(&[ch]);
 
                     let prompt_len = self.prompt.read().await.len();
                     let width = *self.width.read().await;
@@ -1591,7 +1591,7 @@ impl Telnet {
                 let do_echo = *self.do_echo.read().await;
                 if echo == TELNET_ENABLED && do_echo {
                     self.output("\x1b[@").await; // Insert character
-                    self.output_buffer.lock().await.push(ch);
+                    self.output_buffer.lock().await.extend_from_slice(&[ch]);
 
                     // Handle line wrapping for inserted character
                     let prompt_len = self.prompt.read().await.len();
@@ -1606,7 +1606,10 @@ impl Telnet {
                         self.output("\r\n\x1b[@").await;
                         wrap += width;
                         if wrap < data.len() {
-                            self.output_buffer.lock().await.push(data[wrap]);
+                            self.output_buffer
+                                .lock()
+                                .await
+                                .extend_from_slice(&data[wrap..=wrap]);
                         } else {
                             self.output(" ").await;
                         }
@@ -1627,7 +1630,10 @@ impl Telnet {
 
                     if (prompt_len + *point) % width == 0 {
                         if *point < data.len() {
-                            self.output_buffer.lock().await.push(data[*point]);
+                            self.output_buffer
+                                .lock()
+                                .await
+                                .extend_from_slice(&data[*point..=*point]);
                             self.output("\x08").await;
                         }
                     }
@@ -1664,7 +1670,10 @@ impl Telnet {
                     self.print(&format!("\r\x1b[{cols}C")).await;
                     wrap += width;
                     if wrap < data.len() {
-                        self.output_buffer.lock().await.push(data[wrap]);
+                        self.output_buffer
+                            .lock()
+                            .await
+                            .extend_from_slice(&data[wrap..=wrap]);
                     } else {
                         self.output(" ").await;
                     }
@@ -1764,8 +1773,10 @@ impl Telnet {
         let do_echo = *self.do_echo.read().await;
         if echo == TELNET_ENABLED && do_echo {
             self.output("\x08").await;
-            self.output_buffer.lock().await.push(data[*point - 1]);
-            self.output_buffer.lock().await.push(data[*point]);
+            self.output_buffer
+                .lock()
+                .await
+                .extend_from_slice(&data[point - 1..=point]);
         }
 
         *point += 1;
@@ -1774,7 +1785,10 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1883,7 +1897,10 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1893,7 +1910,10 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1922,7 +1942,10 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1932,7 +1955,10 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1961,7 +1987,10 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1974,7 +2003,10 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1984,7 +2016,10 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer.lock().await.push(data[*point]);
+                self.output_buffer
+                    .lock()
+                    .await
+                    .extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
