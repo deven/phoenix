@@ -869,8 +869,8 @@ impl OutputObj for DepermitNotify {
                 telnet.output(&format!("*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
-                    let removed_name = &self.removed.name;
-                    let removed_blurb = &self.removed.blurb;
+                    let removed_name = &removed.name;
+                    let removed_blurb = &removed.blurb;
                     if removed_name.eq_ignore_ascii_case(&session_name) {
                         telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
                     } else {
@@ -1028,7 +1028,7 @@ impl OutputObj for RenameNotify {
 }
 
 // Output stream for queuing output objects
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct OutputStream {
     pub queue: tokio::sync::Mutex<Vec<Arc<dyn OutputObj>>>,
     pub acknowledged: std::sync::atomic::AtomicUsize,
