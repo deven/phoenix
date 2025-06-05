@@ -744,7 +744,7 @@ impl Session {
         // Make sure discussion A exists
         let (_, _, discussion, _) = self.find_sendable("A", false, true, true, true).await;
         if discussion.is_none() {
-            let disc = Discussion::new(None, "A", "General Discussion", true);
+            let disc = Discussion::new(None, "A", "General Discussion", true).await;
             DISCUSSIONS.insert("A".to_string(), disc);
         }
 
@@ -1904,7 +1904,7 @@ impl Session {
             return;
         }
 
-        let disc = Arc::new(Discussion::new(Some(self.clone()), name, title, is_public));
+        let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
         DISCUSSIONS.insert(name.to_string(), disc.clone());
 
         self.enqueue_others(Arc::new(CreateNotify::new(
