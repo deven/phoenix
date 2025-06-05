@@ -36,7 +36,7 @@ impl PhoenixServer {
         }))
     }
 
-    pub async fn run(self: Arc<Self>) -> Result<()> {
+    pub async fn run(self: Arc<Self>) -> ! {
         // Accept loop
         loop {
             match self.listener.accept().await {
@@ -56,8 +56,6 @@ impl PhoenixServer {
                 }
             }
         }
-
-        Ok(())
     }
 
     pub async fn handle_connection(self: Arc<Self>, stream: TcpStream) -> Result<()> {
