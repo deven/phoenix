@@ -7,10 +7,10 @@ use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct User {
-    pub sessions: OrderedSet<Arc<Session>>,
+    pub sessions: RwLock<OrderedSet<Arc<Session>>>,
     pub user: ArcStr,
     pub password: Option<String>,
-    pub reserved: Vec<ArcStr>,
+    pub reserved: RwLock<Vec<ArcStr>>,
     pub blurb: Option<ArcStr>,
     pub priv_level: i32,
 }
@@ -18,7 +18,7 @@ pub struct User {
 impl User {
     const BUF_SIZE: usize = 1024;
 
-    pub fn new(
+    pub async fn new(
         login: impl Into<ArcStr>,
         pass: Option<String>,
         names: Option<&str>,
@@ -26,39 +26,40 @@ impl User {
         p: i32,
     ) -> Arc<Self> {
         let mut user = Self {
-            sessions: OrderedSet::new(),
+            sessions: RwLock::new(OrderedSet::new()),
             user: login.into(),
             password: pass,
-            reserved: Vec::new(),
+            reserved: RwLock::new(Vec::new()),
             blurb: bl.map(|b| b.into()),
             priv_level: p,
         };
-        user.set_reserved(names);
+        user.set_reserved(names).await;
         Arc::new(user)
     }
 
-    pub fn set_reserved(&mut self, names: Option<&str>) {
-        self.reserved.clear();
+    pub async fn set_reserved(self: &Arc<Self>, names: Option<&str>) {
+        let reserved = *self.reserved.write().await;
+        reserved.clear();
         if let Some(names) = names {
             for name in names.split(',') {
                 let trimmed = name.trim();
                 if !trimmed.is_empty() {
-                    self.reserved.push(trimmed.into());
+                    reserved.push(trimmed.into());
                 }
             }
         }
     }
 
-    pub fn add_session(&mut self, session: Arc<Session>) {
-        self.sessions.insert(session);
+    pub async fn add_session(self: &Arc<Self>, session: Arc<Session>) {
+        self.sessions.write().await.insert(session);
     }
 
-    pub fn remove_session(&mut self, session: &Arc<Session>) {
-        self.sessions.shift_remove(session);
+    pub async fn remove_session(self: &Arc<Self>, session: &Arc<Session>) {
+        self.sessions.write().await.shift_remove(session);
     }
 
-    pub fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&ArcStr> {
-        self.reserved
+    pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&ArcStr> {
+        self.reserved.read().await
             .iter()
             .find(|&reserved| reserved.eq_ignore_ascii_case(name))
     }
@@ -66,7 +67,7 @@ impl User {
 
 #[derive(Clone)]
 pub struct UserManager {
-    pub users: Arc<RwLock<HashMap<ArcStr, Arc<RwLock<User>>>>>,
+    pub users: Arc<RwLock<HashMap<ArcStr, Arc<User>>>>,
     pub last_update: Arc<RwLock<Option<std::time::SystemTime>>>,
 }
 
@@ -78,7 +79,7 @@ impl UserManager {
         }
     }
 
-    pub async fn get_user(self: &Arc<Self>, login: &str) -> Option<Arc<RwLock<User>>> {
+    pub async fn get_user(&self, login: &str) -> Option<Arc<User>> {
         self.update_all().await.ok()?;
         let users = self.users.read().await;
         users
@@ -88,7 +89,7 @@ impl UserManager {
     }
 
     pub async fn update(
-        self: &Arc<Self>,
+        &self,
         login: impl Into<ArcStr>,
         pass: Option<String>,
         names: Option<&str>,
@@ -101,7 +102,7 @@ impl UserManager {
         if let Some(user_lock) = users.get(&login_str) {
             let mut user = user_lock.write().await;
             user.password = pass;
-            user.set_reserved(names);
+            user.set_reserved(names).await;
             user.blurb = defblurb.map(|b| b.into());
             user.priv_level = p;
         } else {
@@ -112,7 +113,7 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn update_all(self: &Arc<Self>) -> Result<()> {
+    pub async fn update_all(&self) -> Result<()> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
         use std::path::Path;
@@ -176,16 +177,13 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn find_reserved(
-        self: &Arc<Self>,
-        name: &str,
-    ) -> Option<(ArcStr, Arc<RwLock<User>>)> {
+    pub async fn find_reserved(&self, name: &str) -> Option<(ArcStr, Arc<User>)> {
         self.update_all().await.ok()?;
 
         let users = self.users.read().await;
         for (_login, user_lock) in users.iter() {
             let user = user_lock.read().await;
-            if let Some(reserved) = user.find_reserved(name) {
+            if let Some(reserved) = user.find_reserved(name).await {
                 return Some((reserved.clone(), Arc::clone(user_lock)));
             }
         }
