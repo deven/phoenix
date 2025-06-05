@@ -67,7 +67,7 @@ impl Discussion {
         discussion
     }
 
-    pub async fn allowed(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
+    pub async fn allowed(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let allowed = self.allowed.read().await;
         let session_name = session.name().await;
         allowed
@@ -76,7 +76,7 @@ impl Discussion {
             .cloned()
     }
 
-    pub async fn denied(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
+    pub async fn denied(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let denied = self.denied.read().await;
         let session_name = session.name().await;
         denied
@@ -85,7 +85,7 @@ impl Discussion {
             .cloned()
     }
 
-    pub async fn is_creator(&self, session: &Arc<Session>) -> bool {
+    pub async fn is_creator(self: &Arc<Self>, session: &Arc<Session>) -> bool {
         let session_name = session.name().await;
         if let Some(creator) = &self.creator {
             creator.name == session_name
@@ -94,7 +94,7 @@ impl Discussion {
         }
     }
 
-    pub async fn is_moderator(&self, session: &Arc<Session>) -> Option<Arc<Name>> {
+    pub async fn is_moderator(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let moderators = self.moderators.read().await;
         let session_name = session.name().await;
         moderators
@@ -103,7 +103,7 @@ impl Discussion {
             .cloned()
     }
 
-    pub async fn permitted(&self, session: &Arc<Session>) -> bool {
+    pub async fn permitted(self: &Arc<Self>, session: &Arc<Session>) -> bool {
         if self.is_creator(session).await || self.is_moderator(session).await.is_some() {
             return true;
         }
@@ -116,7 +116,7 @@ impl Discussion {
         true
     }
 
-    pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>, sender: &Arc<Session>) {
+    pub async fn enqueue_others(self: &Arc<Self>, out: Arc<dyn OutputObj>, sender: &Arc<Session>) {
         let members = self.members.read().await;
         for member in members.iter() {
             if member.id != sender.id {
@@ -125,7 +125,7 @@ impl Discussion {
         }
     }
 
-    pub async fn destroy(&self, session: Arc<Session>) {
+    pub async fn destroy(self: &Arc<Self>, session: Arc<Session>) {
         let disc = &self.name;
 
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
@@ -145,7 +145,7 @@ impl Discussion {
         }
     }
 
-    pub async fn join(&self, session: Arc<Session>) {
+    pub async fn join(self: &Arc<Self>, session: Arc<Session>) {
         let disc = &self.name;
 
         let mut members = self.members.write().await;
@@ -172,7 +172,7 @@ impl Discussion {
         }
     }
 
-    pub async fn quit(&self, session: Arc<Session>) {
+    pub async fn quit(self: &Arc<Self>, session: Arc<Session>) {
         let disc = &self.name;
 
         let mut members = self.members.write().await;
@@ -195,7 +195,7 @@ impl Discussion {
         }
     }
 
-    pub async fn permit(&self, session: Arc<Session>, args: &str) {
+    pub async fn permit(self: &Arc<Self>, session: Arc<Session>, args: &str) {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
@@ -308,7 +308,7 @@ impl Discussion {
         }
     }
 
-    pub async fn depermit(&self, session: Arc<Session>, args: &str) {
+    pub async fn depermit(self: &Arc<Self>, session: Arc<Session>, args: &str) {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
@@ -457,7 +457,7 @@ impl Discussion {
         }
     }
 
-    pub async fn appoint(&self, session: Arc<Session>, args: &str) {
+    pub async fn appoint(self: &Arc<Self>, session: Arc<Session>, args: &str) {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await
@@ -484,7 +484,7 @@ impl Discussion {
         }
     }
 
-    pub async fn unappoint(&self, session: Arc<Session>, args: &str) {
+    pub async fn unappoint(self: &Arc<Self>, session: Arc<Session>, args: &str) {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {

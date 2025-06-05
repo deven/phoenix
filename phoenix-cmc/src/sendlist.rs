@@ -146,7 +146,7 @@ impl Sendlist {
     }
 
     pub async fn expand(
-        &self,
+        self: &Arc<Self>,
         who: &mut OrderedSet<Arc<Session>>,
         sender: Option<Arc<Session>>,
     ) -> usize {

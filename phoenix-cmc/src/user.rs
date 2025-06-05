@@ -57,7 +57,7 @@ impl User {
         self.sessions.shift_remove(session);
     }
 
-    pub fn find_reserved(&self, name: &str) -> Option<&ArcStr> {
+    pub fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&ArcStr> {
         self.reserved
             .iter()
             .find(|&reserved| reserved.eq_ignore_ascii_case(name))
@@ -78,7 +78,7 @@ impl UserManager {
         }
     }
 
-    pub async fn get_user(&self, login: &str) -> Option<Arc<RwLock<User>>> {
+    pub async fn get_user(self: &Arc<Self>, login: &str) -> Option<Arc<RwLock<User>>> {
         self.update_all().await.ok()?;
         let users = self.users.read().await;
         users
@@ -88,7 +88,7 @@ impl UserManager {
     }
 
     pub async fn update(
-        &self,
+        self: &Arc<Self>,
         login: impl Into<ArcStr>,
         pass: Option<String>,
         names: Option<&str>,
@@ -112,7 +112,7 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn update_all(&self) -> Result<()> {
+    pub async fn update_all(self: &Arc<Self>) -> Result<()> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
         use std::path::Path;
@@ -176,7 +176,7 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn find_reserved(&self, name: &str) -> Option<(ArcStr, Arc<RwLock<User>>)> {
+    pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<(ArcStr, Arc<RwLock<User>>)> {
         self.update_all().await.ok()?;
 
         let users = self.users.read().await;
