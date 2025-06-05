@@ -330,8 +330,6 @@ impl Discussion {
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public.load(Ordering::Relaxed) {
                     self.is_public.store(false, Ordering::Relaxed);
-                    let members = self.members.read().await;
-                    let mut allowed = self.allowed.write().await;
 
                     // Add current members to allowed list.
                     for member in members.iter() {
@@ -361,9 +359,6 @@ impl Discussion {
                 let (found_session, matches) = session.find_session(user).await;
 
                 if let Some(s) = found_session {
-                    let mut members = self.members.write().await;
-                    let mut denied = self.denied.write().await;
-                    let mut allowed = self.allowed.write().await;
                     let name_obj = s.name_obj().await;
                     let name = s.name().await;
 
@@ -380,7 +375,6 @@ impl Discussion {
                         } else {
                             denied.insert(name_obj.clone());
                             if members.contains(&s) {
-                                let removed = s;
                                 members.shift_remove(&s);
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
