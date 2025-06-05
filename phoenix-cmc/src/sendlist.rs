@@ -5,13 +5,13 @@ use crate::types::{ArcStr, OrderedSet};
 use std::fmt::Write;
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Sendable {
     Session(Arc<Session>),
     Discussion(Arc<Discussion>),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Sendlist {
     pub errors: String,
     pub typed: String,
