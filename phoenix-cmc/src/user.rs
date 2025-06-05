@@ -106,7 +106,7 @@ impl UserManager {
             user.priv_level = p;
         } else {
             let user = User::new(login_str.clone(), pass, names, defblurb, p);
-            users.insert(login_str, Arc::new(RwLock::new(user)));
+            users.insert(login_str, user);
         }
 
         Ok(())
@@ -176,7 +176,10 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<(ArcStr, Arc<RwLock<User>>)> {
+    pub async fn find_reserved(
+        self: &Arc<Self>,
+        name: &str,
+    ) -> Option<(ArcStr, Arc<RwLock<User>>)> {
         self.update_all().await.ok()?;
 
         let users = self.users.read().await;
