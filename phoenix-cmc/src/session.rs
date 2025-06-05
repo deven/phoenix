@@ -262,21 +262,19 @@ impl Session {
         if self.signed_on().await && self.priv_level().await > 0 {
             let current_telnet = self.telnet.read().await;
             if let Some(t) = &*current_telnet {
-                if Arc::ptr_eq(t, telnet) {
-                    let who = self.name_user().await;
-                    if intentional {
-                        info!("Detach: {who} (intentional)");
-                    } else {
-                        info!("Detach: {who} (accidental)");
-                    };
+                let who = self.name_user().await;
+                if intentional {
+                    info!("Detach: {who} (intentional)");
+                } else {
+                    info!("Detach: {who} (accidental)");
+                };
 
-                    self.enqueue_others(Arc::new(DetachNotify::new(
-                        self.name_obj().await,
-                        intentional,
-                    )))
-                    .await;
-                    *self.telnet.write().await = None;
-                }
+                self.enqueue_others(Arc::new(DetachNotify::new(
+                    self.name_obj().await,
+                    intentional,
+                )))
+                .await;
+                *self.telnet.write().await = None;
             }
         } else {
             self.close(true).await;
