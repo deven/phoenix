@@ -341,12 +341,12 @@ impl Session {
         self.pending.acknowledge().await;
     }
 
-    pub async fn output_next(self: &Arc<Self>, telnet: &Telnet) -> bool {
+    pub async fn output_next(self: &Arc<Self>, telnet: &Arc<Telnet>) -> bool {
         self.pending.send_next(telnet).await
     }
 
     pub async fn find_sendable(
-        &self,
+        self: &Arc<Self>,
         sendlist: &str,
         member: bool,
         exact: bool,
@@ -428,7 +428,7 @@ impl Session {
     }
 
     pub async fn find_session(
-        &self,
+        self: &Arc<Self>,
         sendlist: &str,
     ) -> (Option<Arc<Session>>, OrderedSet<Arc<Session>>) {
         let (session, matches, _, _) = self
@@ -438,7 +438,7 @@ impl Session {
     }
 
     pub async fn find_discussion(
-        &self,
+        self: &Arc<Self>,
         sendlist: &str,
         member: bool,
     ) -> (Option<Arc<Discussion>>, OrderedSet<Arc<Discussion>>) {
@@ -871,7 +871,7 @@ impl Session {
     }
 
     pub async fn check_name_availability(
-        &self,
+        self: &Arc<Self>,
         name: &str,
         double_check: bool,
         transferring: bool,
@@ -2542,7 +2542,7 @@ impl Session {
 }
 
 impl PartialEq for Session {
-    fn eq(self: &Arc<Self>, other: &Arc<Self>) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
@@ -2550,7 +2550,7 @@ impl PartialEq for Session {
 impl Eq for Session {}
 
 impl std::hash::Hash for Session {
-    fn hash<H: std::hash::Hasher>(self: &Arc<Self>, state: &mut H) {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id.hash(state);
     }
 }
