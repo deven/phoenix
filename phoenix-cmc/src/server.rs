@@ -10,6 +10,7 @@ use tokio::sync::{broadcast, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
+#[derive(Debug)]
 pub struct PhoenixServer {
     pub listener: TcpListener,
     pub port: u16,
