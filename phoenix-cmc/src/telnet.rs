@@ -1788,7 +1788,7 @@ impl Telnet {
             self.output_buffer
                 .lock()
                 .await
-                .extend_from_slice(&data[point - 1..=point]);
+                .extend_from_slice(&data[point_val - 1..=point_val]);
         }
 
         *point += 1;
