@@ -11,7 +11,7 @@ pub trait OutputObj: Send + Sync {
     fn output_type(&self) -> OutputType;
     fn output_class(&self) -> OutputClass;
     fn time(&self) -> Timestamp;
-    async fn output(&self, telnet: Arc<Telnet>);
+    async fn output(&self, telnet: &Arc<Telnet>);
 }
 
 #[derive(Debug, Clone)]
@@ -43,7 +43,7 @@ impl OutputObj for Text {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         telnet.output(&self.text).await;
     }
 }
@@ -88,7 +88,7 @@ impl OutputObj for Message {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         telnet
             .print_message(
                 self.output_type,
@@ -130,7 +130,7 @@ impl OutputObj for EntryNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -171,7 +171,7 @@ impl OutputObj for ExitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -212,7 +212,7 @@ impl OutputObj for TransferNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -253,7 +253,7 @@ impl OutputObj for AttachNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -296,7 +296,7 @@ impl OutputObj for DetachNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -342,7 +342,7 @@ impl OutputObj for HereNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -381,7 +381,7 @@ impl OutputObj for AwayNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -420,7 +420,7 @@ impl OutputObj for BusyNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -459,7 +459,7 @@ impl OutputObj for GoneNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
@@ -504,7 +504,7 @@ impl OutputObj for CreateNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.creator.name;
         let blurb = &self.creator.blurb;
         let disc = &self.discussion_name;
@@ -557,7 +557,7 @@ impl OutputObj for DestroyNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -601,7 +601,7 @@ impl OutputObj for JoinNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -645,7 +645,7 @@ impl OutputObj for QuitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -689,7 +689,7 @@ impl OutputObj for PublicNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -733,7 +733,7 @@ impl OutputObj for PrivateNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -781,7 +781,7 @@ impl OutputObj for PermitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -845,7 +845,7 @@ impl OutputObj for DepermitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let session_name = telnet.session_name().await;
         let name = &self.name.name;
         let blurb = &self.name.blurb;
@@ -917,7 +917,7 @@ impl OutputObj for AppointNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let session_name = telnet.session_name().await;
         let appointer_name = &self.appointer.name;
         let appointer_blurb = &self.appointer.blurb;
@@ -967,7 +967,7 @@ impl OutputObj for UnappointNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let session_name = telnet.session_name().await;
         let unappointer_name = &self.unappointer.name;
         let unappointer_blurb = &self.unappointer.blurb;
@@ -1015,7 +1015,7 @@ impl OutputObj for RenameNotify {
         self.time
     }
 
-    async fn output(&self, telnet: Arc<Telnet>) {
+    async fn output(&self, telnet: &Arc<Telnet>) {
         let oldname = &self.oldname;
         let newname = &self.newname;
         let stamp = &self.time.stamp();
@@ -1052,7 +1052,7 @@ impl OutputStream {
         }
     }
 
-    pub async fn attach(&self, telnet: Arc<Telnet>) {
+    pub async fn attach(&self, telnet: &Arc<Telnet>) {
         self.sent.store(0, std::sync::atomic::Ordering::Relaxed);
         self.acknowledged
             .store(0, std::sync::atomic::Ordering::Relaxed);
@@ -1062,7 +1062,7 @@ impl OutputStream {
         }
     }
 
-    pub async fn enqueue(&self, telnet: Option<Arc<Telnet>>, out: Arc<dyn OutputObj>) {
+    pub async fn enqueue(&self, telnet: Option<&Arc<Telnet>>, out: Arc<dyn OutputObj>) {
         self.queue.lock().await.push(out);
 
         if let Some(telnet) = telnet {
@@ -1092,7 +1092,7 @@ impl OutputStream {
         }
     }
 
-    pub async fn send_next(&self, telnet: Arc<Telnet>) -> bool {
+    pub async fn send_next(&self, telnet: &Arc<Telnet>) -> bool {
         let queue = self.queue.lock().await;
         let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
 
