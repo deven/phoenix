@@ -4,8 +4,10 @@ use crate::sendlist::Sendlist;
 use crate::session::Session;
 use crate::timestamp::Timestamp;
 use crate::types::*;
+use crate::VERSION;
 use bytes::{Bytes, BytesMut};
 use std::collections::VecDeque;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -220,7 +222,7 @@ impl Telnet {
 
         // Send welcome banner
         self.output("\nWelcome to Phoenix! (").await;
-        self.output(crate::VERSION).await;
+        self.output(VERSION).await;
         self.output(")\n\n").await;
     }
 
@@ -238,7 +240,8 @@ impl Telnet {
         }
 
         // Close the underlying stream
-        if let Ok(mut stream) = self.stream.lock().await.try_clone().await {
+        {
+            let mut stream = self.stream.lock().await;
             stream.shutdown().await.ok();
         }
     }
@@ -249,7 +252,7 @@ impl Telnet {
 
     pub async fn session_name(&self) -> String {
         if let Some(session) = &*self.session.read().await {
-            session.name()
+            session.name().await
         } else {
             String::new()
         }
@@ -619,7 +622,7 @@ impl Telnet {
                 } else {
                     for disc in &to.discussions {
                         let members = disc.members.read().await;
-                        if members.contains(&session) && !disc.is_public {
+                        if members.contains(&session) && !disc.is_public.load(Ordering::Relaxed) {
                             is_private = true;
                             break;
                         }
@@ -661,7 +664,7 @@ impl Telnet {
                         } else {
                             self.output(", ").await;
                         }
-                        self.output(&s.name()).await;
+                        self.output(&s.name().await).await;
                     }
 
                     if !to.discussions.is_empty() {
@@ -1617,7 +1620,7 @@ impl Telnet {
                     }
 
                     if end_line > point_line {
-                        let cols = 1 - ((prompt_len + *point) % width) as i32;
+                        let cols = 1 - (((prompt_len + *point) % width) as i32);
                         let lines = end_line - point_line;
                         self.print(&format!("\x1b[{lines}A")).await;
                         if cols > 0 {
@@ -1682,7 +1685,7 @@ impl Telnet {
                 }
 
                 if end_line > point_line {
-                    let cols = -((prompt_len + point) % width) as i32;
+                    let cols = -(((prompt_len + point) % width) as i32);
                     let lines = end_line - point_line;
                     self.print(&format!("\x1b[{lines}A")).await;
                     if cols > 0 {
