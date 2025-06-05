@@ -739,10 +739,12 @@ impl Session {
             .await;
 
         // Make sure discussion A exists
-        let (_, _, discussion, _) = self.find_sendable("A", false, true, true, true).await;
-        if discussion.is_none() {
-            let disc = Discussion::new(None, "A", "General Discussion", true).await;
-            DISCUSSIONS.insert("A".to_string(), disc);
+        match self.find_sendable("A", false, true, true, true).await {
+            (_, _, None, _) => {
+                let disc = Discussion::new(None, "A", "General Discussion", true).await;
+                DISCUSSIONS.insert("A".to_string(), disc);
+            }
+            _ => {}
         }
 
         // Automatic commands
@@ -885,93 +887,82 @@ impl Session {
         }
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
-            let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                let my_user = my_user.read().await;
-                let found_user = found_user.read().await;
-                my_user.user == found_user.user
-            } else {
-                false
-            };
-
-            if !is_same_user {
-                let now = if double_check { " now" } else { "" };
-                self.output(&format!(
-                    "\"{reserved}\" is{now} a reserved name.  Choose another.\n"
-                ))
-                .await;
-                self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
+            match (&*self.user.read().await, &*found_user.read().await) {
+                (Some(my_user), Some(found_user)) if my_user.user == found_user.user => {
+                    let now = if double_check { " now" } else { "" };
+                    self.output(&format!(
+                        "\"{reserved}\" is{now} a reserved name.  Choose another.\n"
+                    ))
                     .await;
-                return false;
-            }
-        }
-
-        let (session, _, discussion, _) = self.find_sendable(name, false, true, true, true).await;
-        if let Some(found_session) = session {
-            let is_same_user = if let (Some(my_user), Some(their_user)) =
-                (&*self.user.read().await, &*found_session.user.read().await)
-            {
-                my_user.user == their_user.user
-            } else {
-                false
-            };
-
-            if is_same_user && found_session.priv_level().await > 0 {
-                if let Some(their_telnet) = &*found_session.telnet.read().await {
-                    if transferring {
-                        self.output("Transferring active session...\n").await;
-                        found_session
-                            .transfer(self.telnet.read().await.as_ref().unwrap().clone())
-                            .await;
-                        *self.telnet.write().await = None;
-                        self.close(true).await;
-                    } else {
-                        let now = if double_check { " now" } else { "" };
-                        self.output(&format!(
-                            "You are{now} attached elsewhere under that name.\n"
-                        ))
+                    self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
                         .await;
-                        self.set_login_state(
-                            LoginState::AwaitingTransferConfirmation,
-                            Some("Transfer active session? [no] "),
-                        )
-                        .await;
-                    }
-                    return false;
-                } else {
-                    self.output("Attaching to detached session...\n").await;
-                    found_session
-                        .attach(self.telnet.read().await.as_ref().unwrap().clone())
-                        .await;
-                    *self.telnet.write().await = None;
-                    self.close(true).await;
                     return false;
                 }
-            } else {
-                let found_name = found_session.name().await;
-                let already = if double_check { "now" } else { "already" };
-                self.output(&format!(
-                    "The name \"{found_name}\" is {already} in use.  Choose another.\n"
-                ))
-                .await;
-                self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
-                    .await;
-                return false;
+                _ => {}
             }
         }
 
-        if let Some(found_discussion) = discussion {
-            let found_name = &found_discussion.name;
-            let already = if double_check { "now" } else { "already" };
-            self.output(&format!(
-                "There is {already} a discussion named \"{found_name}\".  Choose another name.\n"
-            ))
-            .await;
-            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
-                .await;
-            return false;
-        }
+        match self.find_sendable(name, false, true, true, true).await {
+            (Some(found_session), _, _, _) => {
+                match (&*self.user.read().await, &*found_session.user.read().await) {
+                    (Some(my_user), Some(their_user))
+                        if my_user.user == their_user.user
+                            && found_session.priv_level().await > 0 =>
+                    {
+                        if let Some(their_telnet) = &*found_session.telnet.read().await {
+                            if transferring {
+                                self.output("Transferring active session...\n").await;
+                                found_session
+                                    .transfer(self.telnet.read().await.as_ref().unwrap().clone())
+                                    .await;
+                                *self.telnet.write().await = None;
+                                self.close(true).await;
+                            } else {
+                                let now = if double_check { " now" } else { "" };
+                                self.output(&format!(
+                                    "You are{now} attached elsewhere under that name.\n"
+                                ))
+                                .await;
+                                self.set_login_state(
+                                    LoginState::AwaitingTransferConfirmation,
+                                    Some("Transfer active session? [no] "),
+                                )
+                                .await;
+                            }
+                        } else {
+                            self.output("Attaching to detached session...\n").await;
+                            found_session
+                                .attach(self.telnet.read().await.as_ref().unwrap().clone())
+                                .await;
+                            *self.telnet.write().await = None;
+                            self.close(true).await;
+                        }
+                    }
+                    _ => {
+                        let found_name = found_session.name().await;
+                        let already = if double_check { "now" } else { "already" };
+                        self.output(&format!(
+                            "The name \"{found_name}\" is {already} in use.  Choose another.\n"
+                        ))
+                        .await;
+                        self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
+                            .await;
+                    }
+                }
 
-        true
+                false
+            }
+            (_, _, Some(found_discussion), _) => {
+                let found_name = found_discussion.name.as_ref();
+                let already = if double_check { "now" } else { "already" };
+                self.output(&format!("There is {already} a discussion named \"{found_name}\".  Choose another name.\n")).await;
+                self.set_login_state(LoginState::AwaitingName, Some("Enter name: "))
+                    .await;
+
+                false
+            }
+            _ => true,
+        }
     }
 
     // Command implementations
@@ -1181,39 +1172,40 @@ impl Session {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
-        let (session, matches) = self.find_session(args).await;
+        match self.find_session(args).await {
+            (Some(target), _) => {
+                let who = target.name_user().await;
+                let name = target.name().await;
+                let by_who = self.name_user().await;
+                let by_name = self.name_blurb().await;
 
-        if let Some(target) = session {
-            let who = target.name_user().await;
-            let name = target.name().await;
-            let by_who = self.name_user().await;
-            let by_name = self.name_blurb().await;
+                if drain {
+                    self.output(&format!("\"{name}\" has been nuked.\n")).await;
+                } else {
+                    self.output(&format!("\"{name}\" has been nuked immediately.\n"))
+                        .await;
+                }
 
-            if drain {
-                self.output(&format!("\"{name}\" has been nuked.\n")).await;
-            } else {
-                self.output(&format!("\"{name}\" has been nuked immediately.\n"))
-                    .await;
+                if let Some(telnet) = &*target.telnet.read().await {
+                    *target.telnet.write().await = None;
+                    info!("{who} has been nuked by {by_who}");
+                    telnet.undraw_input().await;
+                    telnet
+                        .output(&format!(
+                            "\x07\x07\x07*** You have been nuked by {by_name}. ***\n"
+                        ))
+                        .await;
+                    telnet.redraw_input().await;
+                    telnet.close(drain).await;
+                } else {
+                    info!("{who}, detached, has been nuked by {by_who}");
+                    target.close(true).await;
+                }
             }
-
-            if let Some(telnet) = &*target.telnet.read().await {
-                *target.telnet.write().await = None;
-                info!("{who} has been nuked by {by_who}");
-                telnet.undraw_input().await;
-                telnet
-                    .output(&format!(
-                        "\x07\x07\x07*** You have been nuked by {by_name}. ***\n"
-                    ))
-                    .await;
-                telnet.redraw_input().await;
-                telnet.close(drain).await;
-            } else {
-                info!("{who}, detached, has been nuked by {by_who}");
-                target.close(true).await;
+            (_, matches) => {
+                self.output("\x07\x07").await;
+                self.session_matches(args, &matches).await;
             }
-        } else {
-            self.output("\x07\x07").await;
-            self.session_matches(args, &matches).await;
         }
     }
 
@@ -1569,9 +1561,9 @@ impl Session {
         let now = Timestamp::new();
 
         for disc in discussions {
-            let disc_name = &disc.name;
+            let disc_name = disc.name.as_ref();
             self.output(" ").await;
-            let name = if disc.name.len() > 15 {
+            let name = if disc_name.len() > 15 {
                 format!("{disc_name:<14.14}+")
             } else {
                 format!("{disc_name:<15}")
@@ -1806,13 +1798,15 @@ impl Session {
             return;
         }
 
-        let (name, _) = getword(args, Some(','));
-        let (discussion, matches) = self.find_discussion(name, false).await;
+        let mut remaining = args;
+        while !remaining.is_empty() {
+            let (name, rest) = getword(remaining, Some(','));
+            remaining = rest;
 
-        if let Some(disc) = discussion {
-            disc.join(self.clone()).await;
-        } else {
-            self.discussion_matches(name, &matches).await;
+            match self.find_discussion(name, false).await {
+                (Some(discussion), _) => discussion.join(self.clone()).await,
+                (_, matches) => self.discussion_matches(name, &matches).await,
+            }
         }
     }
 
@@ -1822,18 +1816,17 @@ impl Session {
             return;
         }
 
-        let (name, _) = getword(args, Some(','));
-        let (discussion, matches) = self.find_discussion(name, false).await;
+        let mut remaining = args;
+        while !remaining.is_empty() {
+            let (name, rest) = getword(remaining, Some(','));
+            remaining = rest;
 
-        if let Some(disc) = discussion {
-            disc.quit(self.clone()).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.quit(self.clone()).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
+            match self.find_discussion(name, false).await {
+                (Some(discussion), _) => discussion.quit(self.clone()).await,
+                _ => match self.find_discussion(name, true).await {
+                    (Some(discussion), _) => discussion.quit(self.clone()).await,
+                    (_, matches) => self.discussion_matches(name, &matches).await,
+                },
             }
         }
     }
@@ -1870,12 +1863,9 @@ impl Session {
         }
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
-            let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                let my_user = my_user.read().await;
-                let found_user = found_user.read().await;
-                my_user.user == found_user.user
-            } else {
-                false
+            let is_same_user = match (&*self.user.read().await, &*found_user.read().await) {
+                (Some(my_user), Some(found_user)) if my_user.user == found_user.user => true,
+                _ => false,
             };
 
             let a = if is_same_user { "your" } else { "a" };
@@ -1886,24 +1876,24 @@ impl Session {
             return;
         }
 
-        let (session, _, discussion, _) = self.find_sendable(name, false, true, true, true).await;
-
-        if let Some(s) = session {
-            let name = s.name().await;
-            self.output(&format!(
-                "There is already someone named \"{name}\". (not created)\n"
-            ))
-            .await;
-            return;
-        }
-
-        if let Some(d) = discussion {
-            let name = &d.name;
-            self.output(&format!(
-                "There is already a discussion named \"{name}\". (not created)\n"
-            ))
-            .await;
-            return;
+        match self.find_sendable(name, false, true, true, true).await {
+            (Some(session), _, _, _) => {
+                let name = session.name().await;
+                self.output(&format!(
+                    "There is already someone named \"{name}\". (not created)\n"
+                ))
+                .await;
+                return;
+            }
+            (_, _, Some(discussion), _) => {
+                let name = d.name.as_ref();
+                self.output(&format!(
+                    "There is already a discussion named \"{name}\". (not created)\n"
+                ))
+                .await;
+                return;
+            }
+            _ => {}
         }
 
         let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
@@ -1917,7 +1907,7 @@ impl Session {
         )))
         .await;
 
-        let name = &disc.name;
+        let name = disc.name.as_ref();
         let title = &disc.title;
         self.output(&format!(
             "You have created discussion {name}, \"{title}\".\n"
@@ -1931,18 +1921,17 @@ impl Session {
             return;
         }
 
-        let (name, _) = getword(args, Some(','));
-        let (discussion, matches) = self.find_discussion(name, false).await;
+        let mut remaining = args;
+        while !remaining.is_empty() {
+            let (name, rest) = getword(remaining, Some(','));
+            remaining = rest;
 
-        if let Some(disc) = discussion {
-            disc.destroy(self.clone()).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.destroy(self.clone()).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
+            match self.find_discussion(name, false).await {
+                (Some(discussion), _) => discussion.destroy(self.clone()).await,
+                _ => match self.find_discussion(name, true).await {
+                    (Some(discussion), _) => discussion.destroy(self.clone()).await,
+                    (_, matches) => self.discussion_matches(name, &matches).await,
+                },
             }
         }
     }
@@ -1955,18 +1944,12 @@ impl Session {
             return;
         }
 
-        let (discussion, matches) = self.find_discussion(name, false).await;
-
-        if let Some(disc) = discussion {
-            disc.permit(self.clone(), rest).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.permit(self.clone(), rest).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
-            }
+        match self.find_discussion(name, false).await {
+            (Some(discussion), _) => discussion.permit(self.clone(), rest).await,
+            _ => match self.find_discussion(name, true).await {
+                (Some(discussion), _) => discussion.permit(self.clone(), rest).await,
+                (_, matches) => self.discussion_matches(name, &matches).await,
+            },
         }
     }
 
@@ -1978,18 +1961,12 @@ impl Session {
             return;
         }
 
-        let (discussion, matches) = self.find_discussion(name, false).await;
-
-        if let Some(disc) = discussion {
-            disc.depermit(self.clone(), rest).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.depermit(self.clone(), rest).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
-            }
+        match self.find_discussion(name, false).await {
+            (Some(discussion), _) => discussion.depermit(self.clone(), rest).await,
+            _ => match self.find_discussion(name, true).await {
+                (Some(discussion), _) => discussion.depermit(self.clone(), rest).await,
+                (_, matches) => self.discussion_matches(name, &matches).await,
+            },
         }
     }
 
@@ -2001,18 +1978,12 @@ impl Session {
             return;
         }
 
-        let (discussion, matches) = self.find_discussion(name, false).await;
-
-        if let Some(disc) = discussion {
-            disc.appoint(self.clone(), rest).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.appoint(self.clone(), rest).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
-            }
+        match self.find_discussion(name, false).await {
+            (Some(discussion), _) => discussion.appoint(self.clone(), rest).await,
+            _ => match self.find_discussion(name, true).await {
+                (Some(discussion), _) => discussion.appoint(self.clone(), rest).await,
+                (_, matches) => self.discussion_matches(name, &matches).await,
+            },
         }
     }
 
@@ -2024,18 +1995,12 @@ impl Session {
             return;
         }
 
-        let (discussion, matches) = self.find_discussion(name, false).await;
-
-        if let Some(disc) = discussion {
-            disc.unappoint(self.clone(), rest).await;
-        } else {
-            let (discussion, matches) = self.find_discussion(name, true).await;
-
-            if let Some(disc) = discussion {
-                disc.unappoint(self.clone(), rest).await;
-            } else {
-                self.discussion_matches(name, &matches).await;
-            }
+        match self.find_discussion(name, false).await {
+            (Some(discussion), _) => discussion.unappoint(self.clone(), rest).await,
+            _ => match self.find_discussion(name, true).await {
+                (Some(discussion), _) => discussion.unappoint(self.clone(), rest).await,
+                (_, matches) => self.discussion_matches(name, &matches).await,
+            },
         }
     }
 
@@ -2052,38 +2017,34 @@ impl Session {
         }
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(args).await {
-            let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                my_user.user == found_user.user
-            } else {
-                false
-            };
+            match (&*self.user.read().await, &*found_user.read().await) {
+                (Some(my_user), Some(found_user)) if my_user.user == found_user.user => {
+                    self.output(&format!(
+                        "\"{reserved}\" is a reserved name.  (name unchanged)\n"
+                    ))
+                    .await;
+                    return;
+                }
+                _ => {}
+            }
+        }
 
-            if !is_same_user {
+        match self.find_sendable(args, false, true, true, true).await {
+            (Some(found_session), _, _, _) if found_session.id != self.id => {
+                let found_name = found_session.name().await;
                 self.output(&format!(
-                    "\"{reserved}\" is a reserved name.  (name unchanged)\n"
+                    "The name \"{found_name}\" is already in use.  (name unchanged)\n"
                 ))
                 .await;
-                return;
             }
-        }
-
-        let (session, _, discussion, _) = self.find_sendable(args, false, true, true, true).await;
-
-        if let Some(s) = session {
-            if s.id != self.id {
-                self.output("That name is already in use.  (name unchanged)\n")
-                    .await;
-                return;
+            (_, _, Some(found_discussion), _) => {
+                let found_name = found_discussion.name.as_ref();
+                self.output(&format!(
+                    "There is already a discussion named \"{found_name}\".  (name unchanged)\n"
+                ))
+                .await;
             }
-        }
-
-        if let Some(d) = discussion {
-            let name = &d.name;
-            self.output(&format!(
-                "There is already a discussion named \"{name}\". (name unchanged)\n"
-            ))
-            .await;
-            return;
+            _ => {}
         }
 
         self.enqueue_others(Arc::new(RenameNotify::new(self.name().await, args)))
@@ -2381,7 +2342,7 @@ impl Session {
                 return;
             }
         } else {
-            Arc::new(Sendlist::new(&self.clone(), &sendlist_str, false, true, true).await)
+            Sendlist::new(&self.clone(), &sendlist_str, false, true, true).await
         };
 
         *self.last_sendlist.write().await = Some(sendlist.clone());
@@ -2422,7 +2383,7 @@ impl Session {
         let idle = self.reset_idle(30).await;
 
         let mut who = OrderedSet::new();
-        let count = sendlist.expand(&mut who, Some(&self.clone())).await;
+        let count = sendlist.expand(&mut who, Some(self.clone())).await;
 
         let output_type = if count > 1 || !sendlist.discussions.is_empty() {
             OutputType::PublicMessage
@@ -2497,21 +2458,27 @@ impl Session {
     }
 
     pub async fn session_matches(self: &Arc<Self>, name: &str, matches: &OrderedSet<Arc<Session>>) {
-        if matches.is_empty() {
-            self.output(&format!("No names matched \"{name}\".\n")).await;
-        } else if matches.len() == 1 {
-            let matched_name = &matches.iter().next().unwrap().name().await;
-            self.output(&format!("\"{name}\" matches one name: {matched_name}.\n"))
-                .await;
-        } else {
+        if !matches.is_empty() {
             let count = matches.len();
-            self.output(&format!("\"{name}\" matches {count} names: "))
-                .await;
 
-            //let names: Vec<String> = matches.iter().map(|s| s.name().to_string()).collect();
-            let names: Vec<ArcStr> = matches.iter().map(|s| s.name()).collect::<Vec<_>>().await;
-            self.output(&names.join(", ")).await;
+            for (i, session) in matches.iter().enumerate() {
+                match i {
+                    0 if count == 1 => self.output(&format!("\"{name}\" matches one name: ")).await,
+                    0 => {
+                        self.output(&format!("\"{name}\" matches {count} names: "))
+                            .await
+                    }
+                    _ if i == count - 1 => self.output(" and "),
+                    _ => self.output(", "),
+                };
+
+                self.output(&session.name().await);
+            }
+
             self.output(".\n").await;
+        } else {
+            self.output(&format!("No names matched \"{name}\".\n"))
+                .await;
         }
     }
 
@@ -2520,23 +2487,30 @@ impl Session {
         name: &str,
         matches: &OrderedSet<Arc<Discussion>>,
     ) {
-        if matches.is_empty() {
+        if !matches.is_empty() {
+            let count = matches.len();
+
+            for (i, disc) in matches.iter().enumerate() {
+                match i {
+                    0 if count == 1 => {
+                        self.output(&format!("\"{name}\" matches one discussion: "))
+                            .await
+                    }
+                    0 => {
+                        self.output(&format!("\"{name}\" matches {count} discussions: "))
+                            .await
+                    }
+                    _ if i == count - 1 => self.output(" and "),
+                    _ => self.output(", "),
+                };
+
+                self.output(disc.name.as_ref());
+            }
+
+            self.output(".\n").await;
+        } else {
             self.output(&format!("No discussions matched \"{name}\".\n"))
                 .await;
-        } else if matches.len() == 1 {
-            let matched_name = matches.iter().next().unwrap().name;
-            self.output(&format!(
-                "\"{name}\" matches one discussion: {matched_name}.\n"
-            ))
-            .await;
-        } else {
-            let count = matches.len();
-            self.output(&format!("\"{name}\" matches {count} discussions: "))
-                .await;
-
-            let names: Vec<&str> = matches.iter().map(|d| d.name.as_ref()).collect();
-            self.output(&names.join(", ")).await;
-            self.output(".\n").await;
         }
     }
 }
