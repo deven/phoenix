@@ -163,7 +163,9 @@ impl Sendlist {
             for member in members.iter() {
                 match &sender {
                     Some(sender) if sender.id == member.id => {}
-                    _ => who.insert(member.clone()),
+                    _ => {
+                        who.insert(member.clone());
+                    }
                 }
             }
         }
