@@ -574,7 +574,7 @@ impl Session {
             return;
         }
 
-        let user = USER_MANAGER.get_user(&line).await;
+        let user = (*USER_MANAGER).get_user(&line).await;
         *self.user.write().await = user.clone();
 
         if user.is_none() || user.as_ref().unwrap().read().await.password.is_some() {
@@ -607,7 +607,7 @@ impl Session {
             telnet.set_do_echo(true).await;
         }
 
-        USER_MANAGER.update_all().await.ok();
+        (*USER_MANAGER).update_all().await.ok();
 
         let valid = if let Some(user_lock) = &*self.user.read().await {
             let user = user_lock.read().await;
@@ -891,7 +891,7 @@ impl Session {
             return false;
         }
 
-        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
+        if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
             match (&*self.user.read().await, &*found_user.read().await) {
                 (Some(my_user), Some(found_user)) if my_user.user == found_user.user => {
                     let now = if double_check { " now" } else { "" };
@@ -1867,7 +1867,7 @@ impl Session {
             return;
         }
 
-        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
+        if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
             let is_same_user = match (&*self.user.read().await, &*found_user.read().await) {
                 (Some(my_user), Some(found_user)) if my_user.user == found_user.user => true,
                 _ => false,
@@ -2021,7 +2021,7 @@ impl Session {
             return;
         }
 
-        if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(args).await {
+        if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(args).await {
             match (&*self.user.read().await, &*found_user.read().await) {
                 (Some(my_user), Some(found_user)) if my_user.user == found_user.user => {
                     self.output(&format!(
