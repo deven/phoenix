@@ -1,7 +1,8 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::session::Session;
-use crate::types::OrderedSet;
+use crate::types::{ArcStr, OrderedSet};
+use std::fmt::Write;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -21,7 +22,7 @@ pub struct Sendlist {
 impl Sendlist {
     pub async fn new(
         session: &Arc<Session>,
-        sendlist: &str,
+        typed: &str,
         multi: bool,
         do_sessions: bool,
         do_discussions: bool,
@@ -33,7 +34,7 @@ impl Sendlist {
             discussions: OrderedSet::new(),
         };
         sendlist
-            .set(session, sendlist, multi, do_sessions, do_discussions)
+            .set(session, typed, multi, do_sessions, do_discussions)
             .await;
         Arc::new(sendlist)
     }
@@ -59,15 +60,12 @@ impl Sendlist {
             return;
         }
 
-        let mut non_matches = Vec::new();
-        let parts: Vec<&str> = sendlist.split(SEPARATOR as char).collect();
-
-        for part in parts {
-            let part = part.trim();
-            if part.is_empty() {
-                continue;
-            }
-
+        let mut non_matches: OrderedSet<ArcStr> = OrderedSet::new();
+        for part in sendlist
+            .split(SEPARATOR as char)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
             let (found_session, session_matches, found_discussion, discussion_matches) = sender
                 .find_sendable(part, !multi, false, do_sessions, do_discussions)
                 .await;
@@ -76,88 +74,74 @@ impl Sendlist {
                 self.sessions.insert(session);
             } else if let Some(discussion) = found_discussion {
                 self.discussions.insert(discussion);
+            } else if multi {
+                for s in session_matches {
+                    self.sessions.insert(s);
+                }
+
+                for d in discussion_matches {
+                    self.discussions.insert(d);
+                }
             } else {
-                // Format the part for display
-                let mut display_part = part.to_string();
-                for (i, ch) in display_part.clone().char_indices() {
-                    if ch as u8 == UNQUOTED_UNDERSCORE {
-                        display_part.replace_range(i..i + 1, "_");
-                    }
-                }
+                self.errors.reserve(128);
 
-                if !session_matches.is_empty() {
-                    if multi {
-                        for s in session_matches {
-                            self.sessions.insert(s);
-                        }
-                    } else {
-                        let count = session_matches.len();
-                        let s = if session_matches.len() == 1 { "" } else { "s" };
-                        self.errors
-                            .push_str(&format!("\"{display_part}\" matches {count} name{s}: "));
+                let part = part.replace(UNQUOTED_UNDERSCORE as char, "_");
+                let sessions = session_matches.len();
+                let discussions = discussion_matches.len();
 
-                        let names: Vec<String> = session_matches
-                            .iter()
-                            .map(|s| s.name().to_string())
-                            .collect();
-                        self.errors.push_str(&names.join(", "));
-
-                        if !discussion_matches.is_empty() {
-                            self.errors.push_str("; ");
-                        } else {
-                            self.errors.push_str(".\n");
-                        }
-                    }
-                }
-
-                if !discussion_matches.is_empty() {
-                    if multi {
-                        for d in discussion_matches {
-                            self.discussions.insert(d);
-                        }
-                    } else {
-                        if session_matches.is_empty() {
-                            self.errors
-                                .push_str(&format!("\"{display_part}\" matches "));
-                        }
-
-                        let count = discussion_matches.len();
-                        let s = if discussion_matches.len() == 1 {
-                            ""
-                        } else {
-                            "s"
+                if sessions > 0 {
+                    for (i, s) in session_matches.iter().enumerate() {
+                        match i {
+                            0 => {
+                                let s = if sessions == 1 { "" } else { "s" };
+                                write!(self.errors, "\"{part}\" matches {sessions} name{s}: ");
+                            }
+                            _ if i == sessions - 1 => self.errors += " and ",
+                            _ => self.errors += ", ",
                         };
-                        self.errors.push_str(&format!("{count} discussion{s}: "));
 
-                        let names: Vec<&str> =
-                            discussion_matches.iter().map(|d| d.name.as_ref()).collect();
-                        self.errors.push_str(&names.join(", "));
-                        self.errors.push_str(".\n");
+                        self.errors += s.name().await;
                     }
+
+                    self.errors += if discussions > 0 { "; and " } else { ".\n" };
+                } else if discussions > 0 {
+                    write!(self.errors, "\"{part}\" matches ");
                 }
 
-                if session_matches.is_empty() && discussion_matches.is_empty() {
-                    if !non_matches.iter().any(|n| n == &display_part) {
-                        non_matches.push(display_part);
+                if discussions > 0 {
+                    for (i, d) in discussion_matches.iter().enumerate() {
+                        match i {
+                            0 => {
+                                let s = if discussions == 1 { "" } else { "s" };
+                                write!(self.errors, "{discussions} discussion{s}: ");
+                            }
+                            _ if i == discussions - 1 => self.errors += " and ",
+                            _ => self.errors += ", ",
+                        };
+
+                        self.errors += d.name.as_ref();
                     }
+
+                    self.errors += ".\n";
+                }
+
+                if sessions == 0 && discussions == 0 {
+                    non_matches.insert(part);
                 }
             }
         }
 
         if !non_matches.is_empty() {
-            self.errors.push_str("No names matched \"");
-            self.errors.push_str(&non_matches[0]);
+            for (i, s) in non_matches.iter().enumerate() {
+                self.errors += match i {
+                    0 => "No names matched \"",
+                    _ if i == non_matches.len() - 1 => "\" or \"",
+                    _ => "\", \"",
+                };
 
-            for i in 1..non_matches.len() {
-                if i == non_matches.len() - 1 {
-                    self.errors.push_str("\" or \"");
-                } else {
-                    self.errors.push_str("\", \"");
-                }
-                self.errors.push_str(&non_matches[i]);
+                self.errors += s;
             }
-
-            self.errors.push_str("\".\n");
+            self.errors += "\".\n";
         }
     }
 
