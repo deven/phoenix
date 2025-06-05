@@ -135,7 +135,7 @@ impl OutputObj for EntryNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has entered Phoenix! [{stamp}] ***\n"
             ))
             .await;
@@ -176,7 +176,7 @@ impl OutputObj for ExitNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has left Phoenix! [{stamp}] ***\n"
             ))
             .await;
@@ -217,7 +217,7 @@ impl OutputObj for TransferNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has transferred to new connection. [{stamp}] ***\n"
             ))
             .await;
@@ -258,7 +258,7 @@ impl OutputObj for AttachNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} is now attached. [{stamp}] ***\n"
             ))
             .await;
@@ -306,7 +306,7 @@ impl OutputObj for DetachNotify {
             "accidentally"
         };
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has {intentionally} detached. [{stamp}] ***\n"
             ))
             .await;
@@ -347,7 +347,7 @@ impl OutputObj for HereNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!("*** {name}{blurb} is now here. [{stamp}] ***\n"))
+            .output(&format!("*** {name}{blurb} is now here. [{stamp}] ***\n"))
             .await;
     }
 }
@@ -386,7 +386,7 @@ impl OutputObj for AwayNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!("*** {name}{blurb} is now away. [{stamp}] ***\n"))
+            .output(&format!("*** {name}{blurb} is now away. [{stamp}] ***\n"))
             .await;
     }
 }
@@ -425,7 +425,7 @@ impl OutputObj for BusyNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!("*** {name}{blurb} is now busy. [{stamp}] ***\n"))
+            .output(&format!("*** {name}{blurb} is now busy. [{stamp}] ***\n"))
             .await;
     }
 }
@@ -464,7 +464,7 @@ impl OutputObj for GoneNotify {
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!("*** {name}{blurb} is now gone. [{stamp}] ***\n"))
+            .output(&format!("*** {name}{blurb} is now gone. [{stamp}] ***\n"))
             .await;
     }
 }
@@ -512,13 +512,13 @@ impl OutputObj for CreateNotify {
         let stamp = &self.time.stamp();
         if self.is_public {
             telnet
-                .print(&format!(
+                .output(&format!(
                     "*** {name}{blurb} has created discussion {disc}, \"{title}\". [{stamp}] ***\n"
                 ))
                 .await;
         } else {
             telnet
-                .print(&format!(
+                .output(&format!(
                     "*** {name}{blurb} has created private discussion {disc}. [{stamp}] ***\n"
                 ))
                 .await;
@@ -563,7 +563,7 @@ impl OutputObj for DestroyNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has destroyed discussion {disc}. [{stamp}] ***\n"
             ))
             .await;
@@ -607,7 +607,7 @@ impl OutputObj for JoinNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has joined discussion {disc}. [{stamp}] ***\n"
             ))
             .await;
@@ -651,7 +651,7 @@ impl OutputObj for QuitNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has quit discussion {disc}. [{stamp}] ***\n"
             ))
             .await;
@@ -695,7 +695,7 @@ impl OutputObj for PublicNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has made discussion {disc} public. [{stamp}] ***\n"
             ))
             .await;
@@ -739,7 +739,7 @@ impl OutputObj for PrivateNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {name}{blurb} has made discussion {disc} private. [{stamp}] ***\n"
             ))
             .await;
@@ -788,15 +788,15 @@ impl OutputObj for PermitNotify {
         let stamp = &self.time.stamp();
         if self.is_public {
             if self.is_explicit {
-                telnet.print(&format!("*** {name}{blurb} has repermitted you to discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has repermitted you to discussion {disc}. [{stamp}] ***\n")).await;
             } else {
-                telnet.print(&format!("*** {name}{blurb} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n")).await;
             }
         } else {
             if self.is_explicit {
-                telnet.print(&format!("*** {name}{blurb} has repermitted you to private discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has repermitted you to private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
-                telnet.print(&format!("*** {name}{blurb} has permitted you to private discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has permitted you to private discussion {disc}. [{stamp}] ***\n")).await;
             }
         }
     }
@@ -857,27 +857,27 @@ impl OutputObj for DepermitNotify {
                 let removed_name = &self.removed.name;
                 let removed_blurb = &self.removed.blurb;
                 if removed_name.eq_ignore_ascii_case(&session_name) {
-                    telnet.print(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
                 } else {
-                    telnet.print(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet.output(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                 }
             } else {
-                telnet.print(&format!("*** {name}{blurb} has depermitted you from discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has depermitted you from discussion {disc}. [{stamp}] ***\n")).await;
             }
         } else {
             if self.is_explicit {
-                telnet.print(&format!("*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
+                telnet.output(&format!("*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
                     let removed_name = &self.removed.name;
                     let removed_blurb = &self.removed.blurb;
                     if removed_name.eq_ignore_ascii_case(&session_name) {
-                        telnet.print(&format!("*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
+                        telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
                     } else {
-                        telnet.print(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                        telnet.output(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                     }
                 } else {
-                    telnet.print(&format!("*** {name}{blurb} has depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet.output(&format!("*** {name}{blurb} has depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
                 }
             }
         }
@@ -927,9 +927,9 @@ impl OutputObj for AppointNotify {
         let stamp = &self.time.stamp();
 
         if self.appointee.name.eq_ignore_ascii_case(&session_name) {
-            telnet.print(&format!("*** {appointer_name}{appointer_blurb} has appointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
+            telnet.output(&format!("*** {appointer_name}{appointer_blurb} has appointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
         } else {
-            telnet.print(&format!("*** {appointer_name}{appointer_blurb} has appointed {appointee_name}{appointee_blurb} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
+            telnet.output(&format!("*** {appointer_name}{appointer_blurb} has appointed {appointee_name}{appointee_blurb} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
         }
     }
 }
@@ -977,9 +977,9 @@ impl OutputObj for UnappointNotify {
         let stamp = &self.time.stamp();
 
         if self.unappointee.name.eq_ignore_ascii_case(&session_name) {
-            telnet.print(&format!("*** {unappointer_name}{unappointer_blurb} has unappointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
+            telnet.output(&format!("*** {unappointer_name}{unappointer_blurb} has unappointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
         } else {
-            telnet.print(&format!("*** {unappointer_name}{unappointer_blurb} has unappointed {unappointee_name}{unappointee_blurb} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
+            telnet.output(&format!("*** {unappointer_name}{unappointer_blurb} has unappointed {unappointee_name}{unappointee_blurb} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
         }
     }
 }
@@ -1020,7 +1020,7 @@ impl OutputObj for RenameNotify {
         let newname = &self.newname;
         let stamp = &self.time.stamp();
         telnet
-            .print(&format!(
+            .output(&format!(
                 "*** {oldname} has renamed to {newname}. [{stamp}] ***\n"
             ))
             .await;
