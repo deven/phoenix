@@ -486,13 +486,16 @@ impl Session {
     }
 
     pub async fn start_login_timeout(self: &Arc<Self>) {
-        let weak_self = Arc::downgrade(&self.clone());
+        let session_id = self.id;
 
         let handle = tokio::spawn(async move {
             tokio::time::sleep(LOGIN_TIMEOUT).await;
 
-            if let Some(session) = weak_self.upgrade() {
-                session.output("\nLogin timeout.\n").await;
+            if let Some(session) = SESSIONS
+                .get(&session_id)
+                .map(|e| e.value().clone())
+                .or_else(|| INITS.get(&session_id).map(|e| e.value().clone()))
+            {
                 session.enqueue_output().await;
                 session.close(true).await;
             }
