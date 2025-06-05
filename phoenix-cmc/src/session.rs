@@ -535,31 +535,31 @@ impl Session {
                 lines.remove(0)
             };
 
-            self.handle_input(&line).await;
+            self.handle_input(line).await;
         }
     }
 
-    pub async fn handle_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_input(self: &Arc<Self>, line: String) {
         self.pending.dequeue().await;
 
         match *self.login_state.read().await {
             LoginState::PreLogin => self.save_input_line(line).await,
             LoginState::AwaitingLogin => self.handle_login_input(line).await,
-            LoginState::AwaitingPassword => self.handle_password_input(line).await,
-            LoginState::AwaitingName => self.handle_name_input(line).await,
-            LoginState::AwaitingBlurb => self.handle_blurb_input(line).await,
-            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(line).await,
-            LoginState::LoggedIn => self.process_input(line).await,
+            LoginState::AwaitingPassword => self.handle_password_input(&line).await,
+            LoginState::AwaitingName => self.handle_name_input(&line).await,
+            LoginState::AwaitingBlurb => self.handle_blurb_input(&line).await,
+            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(&line).await,
+            LoginState::LoggedIn => self.process_input(&line).await,
         }
 
         self.enqueue_output().await;
     }
 
-    pub async fn save_input_line(self: &Arc<Self>, line: &str) {
-        self.lines.lock().await.push(line.to_string());
+    pub async fn save_input_line(self: &Arc<Self>, line: String) {
+        self.lines.lock().await.push(line);
     }
 
-    pub async fn handle_login_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_login_input(self: &Arc<Self>, line: String) {
         let line = line.trim();
 
         if let Some(args) = match_keyword(line, "/bye", 4) {
@@ -574,14 +574,14 @@ impl Session {
             return;
         }
 
-        let user = USER_MANAGER.get_user(line).await;
+        let user = USER_MANAGER.get_user(&line).await;
         *self.user.write().await = user.clone();
 
         if user.is_none() || user.as_ref().unwrap().read().await.password.is_some() {
             // Need password
             if let Some(telnet) = &*self.telnet.read().await {
                 let echo = telnet.get_echo().await;
-                if !echo {
+                if echo == 0 {
                     telnet
                         .output("\n\x07Sorry, password probably WILL echo.\n\n")
                         .await;
@@ -707,17 +707,22 @@ impl Session {
         }
 
         let line = if line.is_empty() {
-            if let Some(user_lock) = &*self.user.read().await {
+            let user_guard = self.user.read().await;
+            if let Some(user_lock) = &*user_guard {
                 let user = user_lock.read().await;
-                user.blurb.as_ref().map(|b| b.as_str()).unwrap_or("")
+                user.blurb
+                    .as_ref()
+                    .map(|b| b.as_str())
+                    .unwrap_or("")
+                    .to_string()
             } else {
-                ""
+                String::new()
             }
         } else {
-            line
+            line.to_string()
         };
 
-        self.do_blurb(line, true).await;
+        self.do_blurb(&line, true).await;
 
         self.set_login_state(LoginState::LoggedIn, None);
 
@@ -2318,7 +2323,7 @@ impl Session {
     }
 
     pub async fn do_message(self: &Arc<Self>, line: &str) {
-        let (msg_start, sendlist_str, mut last_explicit, is_explicit) = message_start(line);
+        let (msg_start, sendlist_str, last_explicit, is_explicit) = message_start(line);
         let msg_start = msg_start.trim();
 
         if is_explicit {
@@ -2468,8 +2473,8 @@ impl Session {
                         self.output(&format!("\"{name}\" matches {count} names: "))
                             .await
                     }
-                    _ if i == count - 1 => self.output(" and "),
-                    _ => self.output(", "),
+                    _ if i == count - 1 => self.output(" and ").await,
+                    _ => self.output(", ").await,
                 };
 
                 self.output(&session.name().await);
@@ -2500,8 +2505,8 @@ impl Session {
                         self.output(&format!("\"{name}\" matches {count} discussions: "))
                             .await
                     }
-                    _ if i == count - 1 => self.output(" and "),
-                    _ => self.output(", "),
+                    _ if i == count - 1 => self.output(" and ").await,
+                    _ => self.output(", ").await,
                 };
 
                 self.output(disc.name.as_ref());

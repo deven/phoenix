@@ -336,7 +336,10 @@ impl Discussion {
                     // Add current members to allowed list.
                     for member in members.iter() {
                         let member_name = member.name().await;
-                        if !allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&member_name)) {
+                        if !allowed
+                            .iter()
+                            .any(|n| n.name.eq_ignore_ascii_case(&member_name))
+                        {
                             allowed.insert(member.name_obj().await);
                         }
                     }
