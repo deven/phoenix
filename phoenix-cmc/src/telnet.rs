@@ -250,11 +250,11 @@ impl Telnet {
         *self.acknowledge.read().await
     }
 
-    pub async fn session_name(self: &Arc<Self>) -> String {
+    pub async fn session_name(self: &Arc<Self>) -> ArcStr {
         if let Some(session) = &*self.session.read().await {
-            session.name().await
+            session.name().await.clone()
         } else {
-            String::new()
+            ArcStr::default()
         }
     }
 
@@ -944,7 +944,11 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_will_wont(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
+    pub async fn process_will_wont(
+        self: &Arc<Self>,
+        state: TelnetState,
+        byte: u8,
+    ) -> tokio::io::Result<()> {
         use TelnetOption::*;
 
         match byte {
@@ -1039,7 +1043,11 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_do_dont(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
+    pub async fn process_do_dont(
+        self: &Arc<Self>,
+        state: TelnetState,
+        byte: u8,
+    ) -> tokio::io::Result<()> {
         use TelnetOption::*;
 
         match byte {
@@ -1260,7 +1268,11 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_compose(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
+    pub async fn process_compose(
+        self: &Arc<Self>,
+        state: TelnetState,
+        byte: u8,
+    ) -> tokio::io::Result<()> {
         let mut new_state = TelnetState::Data;
 
         match state {
@@ -1766,7 +1778,8 @@ impl Telnet {
             *point -= 1;
         }
 
-        data.swap(*point - 1, *point);
+        let point_val = *point;
+        data.swap(point_val - 1, point_val);
 
         let echo = *self.echo.read().await;
         let do_echo = *self.do_echo.read().await;

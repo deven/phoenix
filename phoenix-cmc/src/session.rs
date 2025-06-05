@@ -1886,7 +1886,7 @@ impl Session {
                 return;
             }
             (_, _, Some(discussion), _) => {
-                let name = d.name.as_ref();
+                let name = discussion.name.as_ref();
                 self.output(&format!(
                     "There is already a discussion named \"{name}\". (not created)\n"
                 ))

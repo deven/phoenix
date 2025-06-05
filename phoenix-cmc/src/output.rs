@@ -854,8 +854,8 @@ impl OutputObj for DepermitNotify {
 
         if self.is_public {
             if let Some(removed) = &self.removed {
-                let removed_name = &self.removed.name;
-                let removed_blurb = &self.removed.blurb;
+                let removed_name = &removed.name;
+                let removed_blurb = &removed.blurb;
                 if removed_name.eq_ignore_ascii_case(&session_name) {
                     telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
                 } else {
