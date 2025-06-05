@@ -63,7 +63,7 @@ pub struct Session {
     pub oops_text: Arc<RwLock<String>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LoginState {
     PreLogin,
     AwaitingLogin,
