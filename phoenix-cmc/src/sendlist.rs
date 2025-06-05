@@ -100,7 +100,7 @@ impl Sendlist {
                             _ => self.errors += ", ",
                         };
 
-                        self.errors += s.name().await;
+                        self.errors += &s.name().await;
                     }
 
                     self.errors += if discussions > 0 { "; and " } else { ".\n" };
@@ -126,7 +126,7 @@ impl Sendlist {
                 }
 
                 if sessions == 0 && discussions == 0 {
-                    non_matches.insert(part);
+                    non_matches.insert(part.into());
                 }
             }
         }
@@ -161,7 +161,7 @@ impl Sendlist {
         for discussion in &self.discussions {
             let members = discussion.members.read().await;
             for member in members.iter() {
-                match sender {
+                match &sender {
                     Some(sender) if sender.id == member.id => {}
                     _ => who.insert(member.clone()),
                 }
