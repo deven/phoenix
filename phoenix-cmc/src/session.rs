@@ -9,6 +9,7 @@ use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
 use crate::user::{verify_password, User, UserManager};
 use crate::VERSION;
+use async_backtrace::framed;
 use dashmap::DashMap;
 use log::info;
 use std::collections::HashMap;
@@ -20,48 +21,55 @@ use tokio::task::AbortHandle;
 
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 
-static INITS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
-static SESSIONS: LazyLock<DashMap<usize, Arc<Session>>> = LazyLock::new(DashMap::new);
+static INITS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
+static SESSIONS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static DISCUSSIONS: LazyLock<DashMap<String, Arc<Discussion>>> = LazyLock::new(DashMap::new);
 static SESSION_COUNTER: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
-static DEFAULTS: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| {
+static DEFAULTS: LazyLock<RwLock<HashMap<ArcStr, ArcStr>>> = LazyLock::new(|| {
     let mut map = HashMap::new();
-    map.insert("time_format".to_string(), "verbose".to_string());
+    map.insert(ArcStr::from("time_format"), ArcStr::from("verbose"));
     RwLock::new(map)
 });
 static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 
+/// Session handle.
+#[derive(Debug, Clone)]
+pub struct Session(Arc<RwLock<SessionInner>>);
+
 #[derive(Debug)]
-pub struct Session {
+pub struct SessionInner
+where
+    Self: Send + Sync + 'static,
+{
     pub id: usize,
     pub server: Arc<PhoenixServer>,
-    pub user: Arc<RwLock<Option<Arc<RwLock<User>>>>>,
-    pub telnet: Arc<RwLock<Option<Arc<Telnet>>>>,
-    pub login_timeout: Arc<RwLock<Option<AbortHandle>>>,
-    pub login_state: Arc<RwLock<LoginState>>,
-    pub lines: Arc<Mutex<Vec<String>>>,
-    pub output_buffer: Arc<Mutex<String>>,
-    pub pending: Arc<OutputStream>,
-    pub user_vars: Arc<RwLock<HashMap<String, String>>>,
-    pub sys_vars: Arc<RwLock<HashMap<String, String>>>,
-    pub login_time: Arc<RwLock<Timestamp>>,
-    pub idle_since: Arc<RwLock<Timestamp>>,
-    pub away: Arc<RwLock<AwayState>>,
-    pub signal_public: Arc<AtomicBool>,
-    pub signal_private: Arc<AtomicBool>,
-    pub signed_on: Arc<AtomicBool>,
-    pub closing: Arc<AtomicBool>,
-    pub attempts: Arc<AtomicI32>,
-    pub priv_level: Arc<AtomicI32>,
-    pub name: Arc<RwLock<ArcStr>>,
-    pub blurb: Arc<RwLock<ArcStr>>,
-    pub name_obj: Arc<RwLock<Arc<Name>>>,
-    pub last_message: Arc<RwLock<Option<Arc<Message>>>>,
-    pub default_sendlist: Arc<RwLock<Option<Arc<Sendlist>>>>,
-    pub last_sendlist: Arc<RwLock<Option<Arc<Sendlist>>>>,
-    pub last_explicit: Arc<RwLock<String>>,
-    pub reply_sendlist: Arc<RwLock<String>>,
-    pub oops_text: Arc<RwLock<String>>,
+    pub user: Option<User>
+    pub telnet: Option<Telnet>,
+    pub login_timeout: Option<AbortHandle>,
+    pub login_state: LoginState,
+    pub lines: VecDeque<String>,
+    pub output_buffer: String,
+    pub pending: OutputStream,
+    pub user_vars: HashMap<ArcStr, ArcStr>,
+    pub sys_vars: HashMap<ArcStr, ArcStr>,
+    pub login_time: Timestamp,
+    pub idle_since: Timestamp,
+    pub away: AwayState,
+    pub signal_public: bool,
+    pub signal_private: bool,
+    pub signed_on: bool,
+    pub closing: bool,
+    pub attempts: i32,
+    pub priv_level: i32,
+    pub name: ArcStr,
+    pub blurb: ArcStr,
+    pub name_obj: Arc<Name>,
+    pub last_message: Option<Arc<Message>>,
+    pub default_sendlist: Option<Arc<Sendlist>>,
+    pub last_sendlist: Option<Arc<Sendlist>>,
+    pub last_explicit: ArcStr,
+    pub reply_sendlist: ArcStr,
+    pub oops_text: ArcStr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -78,43 +86,44 @@ pub enum LoginState {
 impl Session {
     pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 
-    pub async fn new(server: Arc<PhoenixServer>, telnet: Arc<Telnet>) -> Arc<Self> {
+    #[framed]
+    pub async fn new(server: Arc<PhoenixServer>, telnet: Arc<Telnet>) -> Self {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
         let now = Timestamp::new();
 
-        let session = Arc::new(Self {
+        let inner = SessionInner {
             id,
             server,
-            user: Arc::new(RwLock::new(None)),
-            telnet: Arc::new(RwLock::new(Some(telnet.clone()))),
-            login_timeout: Arc::new(RwLock::new(None)),
-            login_state: Arc::new(RwLock::new(LoginState::PreLogin)),
-            lines: Arc::new(Mutex::new(Vec::new())),
-            output_buffer: Arc::new(Mutex::new(String::new())),
-            pending: Arc::new(OutputStream::new()),
-            user_vars: Arc::new(RwLock::new(HashMap::new())),
-            sys_vars: Arc::new(RwLock::new(HashMap::new())),
-            login_time: Arc::new(RwLock::new(now)),
-            idle_since: Arc::new(RwLock::new(now)),
-            away: Arc::new(RwLock::new(AwayState::Here)),
-            signal_public: Arc::new(AtomicBool::new(true)),
-            signal_private: Arc::new(AtomicBool::new(true)),
-            signed_on: Arc::new(AtomicBool::new(false)),
-            closing: Arc::new(AtomicBool::new(false)),
-            attempts: Arc::new(AtomicI32::new(0)),
-            priv_level: Arc::new(AtomicI32::new(0)),
-            name: Arc::new(RwLock::new(ArcStr::new(""))),
-            blurb: Arc::new(RwLock::new(ArcStr::new(""))),
-            name_obj: Arc::new(RwLock::new(Name::with_name_only(""))),
-            last_message: Arc::new(RwLock::new(None)),
-            default_sendlist: Arc::new(RwLock::new(None)),
-            last_sendlist: Arc::new(RwLock::new(None)),
-            last_explicit: Arc::new(RwLock::new(String::new())),
-            reply_sendlist: Arc::new(RwLock::new(String::new())),
-            oops_text: Arc::new(RwLock::new(
-                "Oops!  Sorry, that last message was intended for someone else...".to_string(),
-            )),
-        });
+            user: None,
+            telnet: Some(telnet.clone()),
+            login_timeout: None,
+            login_state: LoginState::PreLogin,
+            lines: VecDeque::new(),
+            output_buffer: String::new(),
+            pending: OutputStream::new(),
+            user_vars: HashMap::new(),
+            sys_vars: HashMap::new(),
+            login_time: now,
+            idle_since: now,
+            away: AwayState::Here,
+            signal_public: true,
+            signal_private: true,
+            signed_on: false,
+            closing: false,
+            attempts: 0,
+            priv_level: 0,
+            name: ArcStr::new(""),
+            blurb: ArcStr::new(""),
+            name_obj: Name::with_name_only(""),
+            last_message: None,
+            default_sendlist: None,
+            last_sendlist: None,
+            last_explicit: ArcStr::default(),
+            reply_sendlist: ArcStr::default(),
+            oops_text: ArcStr::from("Oops!  Sorry, that last message was intended for someone else..."),
+        };
+
+        let session = Session(Arc::new(RwLock::new(inner)));
 
         // Add to initializing sessions
         INITS.insert(id, session.clone());
@@ -125,16 +134,453 @@ impl Session {
         session
     }
 
-    pub async fn name(self: &Arc<Self>) -> ArcStr {
-        self.name.read().await.clone()
+    /// Obtain read lock on the session data.
+    #[framed]
+    pub async fn read(&self) -> RwLockReadGuard<'_, SessionInner> {
+        self.0.read().await
     }
 
-    pub async fn user_name(self: &Arc<Self>) -> ArcStr {
-        let guard = self.user.read().await;
-        match &*guard {
-            Some(u_arc) => u_arc.read().await.user.clone(),
-            None => ArcStr::from(""),
+    /// Obtain write lock on the session data.
+    #[framed]
+    pub async fn write(&self) -> RwLockWriteGuard<'_, SessionInner> {
+        self.0.write().await
+    }
+
+    /// Get the session ID.
+    #[framed]
+    pub async fn id(&self) -> usize {
+        self.read().await.id
+    }
+
+    /// Get the `PhoenixServer` object.
+    #[framed]
+    pub async fn server(&self) -> Arc<PhoenixServer> {
+        self.read().await.server.clone()
+    }
+
+    /// Get the `User` object, if any.
+    #[framed]
+    pub async fn user(&self) -> Option<User> {
+        self.read().await.user.clone()
+    }
+
+    /// Set the `User` object, if any.
+    #[framed]
+    pub async fn set_user(&self, value: Option<User>) {
+        self.write().await.user = value;
+    }
+
+    /// Get the `Telnet` object, if any.
+    #[framed]
+    pub async fn telnet(&self) -> Option<Telnet> {
+        self.read().await.telnet.clone()
+    }
+
+    /// Set the `Telnet` object, if any.
+    #[framed]
+    pub async fn set_telnet(&self, value: Option<Telnet>) {
+        self.write().await.telnet = value;
+    }
+
+    /// Get the login timeout Tokio task `AbortHandle`, if any.
+    #[framed]
+    pub async fn login_timeout(&self) -> Option<AbortHandle> {
+        self.read().await.login_timeout.clone()
+    }
+
+    /// Set the login timeout Tokio task `AbortHandle`, if any.
+    #[framed]
+    pub async fn set_login_timeout(&self, value: Option<AbortHandle>) {
+        self.write().await.login_timeout = value;
+    }
+
+    /// Get the `LoginState`.
+    #[framed]
+    pub async fn login_state(&self) -> LoginState {
+        self.read().await.login_state.clone()
+    }
+
+    /// Set the `LoginState`.
+    #[framed]
+    pub async fn set_login_state(&self, value: LoginState) {
+        self.write().await.login_state = value;
+    }
+
+    /// Add a line to the pending input line queue.
+    #[framed]
+    pub async fn add_pending_line(&self, line: String) {
+        self.write().await.lines.push_back(line);
+    }
+
+    /// Take the next pending input line (FIFO).
+    #[framed]
+    pub async fn take_pending_line(&self) -> Option<String> {
+        self.write().await.lines.pop_front()
+    }
+
+    /// Check if there are pending input lines.
+    #[framed]
+    pub async fn has_pending_lines(&self) -> bool {
+        !self.read().await.lines.is_empty()
+    }
+
+    /// Get count of pending input lines.
+    #[framed]
+    pub async fn pending_line_count(&self) -> usize {
+        self.read().await.lines.len()
+    }
+
+    /// Clear all pending input lines.
+    #[framed]
+    pub async fn clear_pending_lines(&self) {
+        self.write().await.lines.clear();
+    }
+
+    /// Take all pending input lines at once.
+    #[framed]
+    pub async fn take_all_pending_lines(&self) -> VecDeque<String> {
+        let mut inner = self.write().await;
+        std::mem::take(&mut inner.lines)
+    }
+
+    /// Append text to output buffer.
+    pub async fn output(&self, text: impl AsRef<str>) {
+        self.write().await.output_buffer.push_str(text.as_ref());
+    }
+
+    /// Get the `OutputStream`.
+    #[framed]
+    pub async fn pending(&self) -> OutputStream {
+        self.read().await.pending.clone()
+    }
+
+    /// Set the `OutputStream`.
+    #[framed]
+    pub async fn set_pending(&self, value: OutputStream) {
+        self.write().await.pending = value;
+    }
+
+    /// Get a user variable.
+    #[framed]
+    pub async fn get_user_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+        self.read().await.user_vars.get(key.as_ref()).clone()
+    }
+
+    /// Set a user variable.
+    #[framed]
+    pub async fn set_user_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
+        let key: Arc<str> = key.into();
+        let value: Arc<str> = value.into();
+        self.write().await.user_vars.insert(ArcStr(key), ArcStr(value));
+    }
+
+    /// Remove a user variable.
+    #[framed]
+    pub async fn remove_user_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+        self.write().await.user_vars.remove(key.as_ref())
+    }
+
+    /// Clear all user variables.
+    #[framed]
+    pub async fn clear_user_vars(&self) {
+        self.write().await.user_vars.clear();
+    }
+
+    /// Get a system variable.
+    #[framed]
+    pub async fn get_sys_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+        self.read().await.sys_vars.get(key.as_ref()).clone()
+    }
+
+    /// Set a system variable.
+    #[framed]
+    pub async fn set_sys_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
+        let key: Arc<str> = key.into();
+        let value: Arc<str> = value.into();
+        self.write().await.sys_vars.insert(ArcStr(key), ArcStr(value));
+    }
+
+    /// Remove a system variable.
+    #[framed]
+    pub async fn remove_sys_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+        self.write().await.sys_vars.remove(key)
+    }
+
+    /// Clear all system variables.
+    #[framed]
+    pub async fn clear_sys_vars(&self) {
+        self.write().await.sys_vars.clear();
+    }
+
+    /// Get the login time.
+    #[framed]
+    pub async fn login_time(&self) -> Timestamp {
+        self.read().await.login_time
+    }
+
+    /// Set the login time.
+    #[framed]
+    pub async fn set_login_time(&self, value: Timestamp) {
+        self.write().await.login_time = value;
+    }
+
+    /// Get the idle-since timestamp.
+    #[framed]
+    pub async fn idle_since(&self) -> Timestamp {
+        self.read().await.idle_since
+    }
+
+    /// Set the idle-since timestamp.
+    #[framed]
+    pub async fn set_idle_since(&self, value: Timestamp) {
+        self.write().await.idle_since = value;
+    }
+
+    /// Reset idle time to now.
+    #[framed]
+    pub async fn reset_idle(&self) {
+        self.write().await.idle_since = Timestamp::new();
+    }
+
+    /// Get the away state.
+    #[framed]
+    pub async fn away_state(&self) -> AwayState {
+        self.read().await.away
+    }
+
+    /// Set the away state.
+    #[framed]
+    pub async fn set_away_state(&self, value: AwayState) {
+        self.write().await.away = value;
+    }
+
+    /// Get the public signal flag.
+    #[framed]
+    pub async fn signal_public(&self) -> bool {
+        self.read().await.signal_public
+    }
+
+    /// Set the public signal flag.
+    #[framed]
+    pub async fn set_signal_public(&self, value: bool) {
+        self.write().await.signal_public = value;
+    }
+
+    /// Get the private signal flag.
+    #[framed]
+    pub async fn signal_private(&self) -> bool {
+        self.read().await.signal_private
+    }
+
+    /// Set the private signal flag.
+    #[framed]
+    pub async fn set_signal_private(&self, value: bool) {
+        self.write().await.signal_private = value;
+    }
+
+    /// Get the signed-on flag.
+    #[framed]
+    pub async fn signed_on(&self) -> bool {
+        self.read().await.signed_on
+    }
+
+    /// Set the signed-on flag.
+    #[framed]
+    pub async fn set_signed_on(&self, value: bool) {
+        self.write().await.signed_on = value;
+    }
+
+    /// Get the closing flag.
+    #[framed]
+    pub async fn closing(&self) -> bool {
+        self.read().await.closing
+    }
+
+    /// Set the closing flag.
+    #[framed]
+    pub async fn set_closing(&self, value: bool) {
+        self.write().await.closing = value;
+    }
+
+    /// Get the login attempts count.
+    #[framed]
+    pub async fn attempts(&self) -> i32 {
+        self.read().await.attempts
+    }
+
+    /// Set the login attempts count.
+    #[framed]
+    pub async fn set_attempts(&self, value: i32) {
+        self.write().await.attempts = value;
+    }
+
+    /// Increment the login attempts count.
+    #[framed]
+    pub async fn increment_attempts(&self) -> i32 {
+        let mut inner = self.write().await;
+        inner.attempts += 1;
+        inner.attempts
+    }
+
+    /// Get the privilege level.
+    #[framed]
+    pub async fn priv_level(&self) -> i32 {
+        self.read().await.priv_level
+    }
+
+    /// Set the privilege level.
+    #[framed]
+    pub async fn set_priv_level(&self, value: i32) {
+        self.write().await.priv_level = value;
+    }
+
+    /// Get the name.
+    #[framed]
+    pub async fn name(&self) -> ArcStr {
+        self.read().await.name.clone()
+    }
+
+    /// Set the name.
+    #[framed]
+    pub async fn set_name(&self, value: impl Into<Arc<str>>) {
+        let value: Arc<str> = value.into();
+        let mut inner = self.write().await;
+        inner.name = ArcStr(value);
+        inner.name_obj = Name::new(&inner.name, &inner.blurb);
+    }
+
+    /// Get the blurb.
+    #[framed]
+    pub async fn blurb(&self) -> ArcStr {
+        self.read().await.blurb.clone()
+    }
+
+    /// Set the blurb.
+    #[framed]
+    pub async fn set_blurb(&self, value: impl Into<Arc<str>>) {
+        let value: Arc<str> = value.into();
+        let mut inner = self.write().await;
+        inner.blurb = ArcStr(value);
+        inner.name_obj = Name::new(&inner.name, &inner.blurb);
+    }
+
+    /// Set both name and blurb atomically.
+    #[framed]
+    pub async fn set_name_and_blurb(
+        &self,
+        name: impl Into<Arc<str>>,
+        blurb: impl Into<Arc<str>>
+    ) {
+        let name: Arc<str> = name.into();
+        let blurb: Arc<str> = blurb.into();
+        let mut inner = self.write().await;
+        inner.name = ArcStr(name);
+        inner.blurb = ArcStr(blurb);
+        inner.name_obj = Name::new(&inner.name, &inner.blurb);
+    }
+
+    /// Get the name object.
+    #[framed]
+    pub async fn name_obj(&self) -> Name {
+        self.read().await.name_obj.clone()
+    }
+
+    /// Set the name object.
+    #[framed]
+    pub async fn set_name_obj(&self, value: Name) {
+        self.write().await.name_obj = value;
+    }
+
+    /// Get the combined name and blurb.
+    #[framed]
+    pub async fn name_blurb(&self) -> ArcStr {
+        let inner = self.read().await;
+        &inner.name + &inner.blurb
+    }
+
+    /// Get the last message.
+    #[framed]
+    pub async fn last_message(&self) -> Option<Arc<Message>> {
+        self.read().await.last_message.clone()
+    }
+
+    /// Set the last message.
+    #[framed]
+    pub async fn set_last_message(&self, value: Option<Arc<Message>>) {
+        self.write().await.last_message = value;
+    }
+
+    /// Get the default sendlist.
+    #[framed]
+    pub async fn default_sendlist(&self) -> Option<Arc<Sendlist>> {
+        self.read().await.default_sendlist.clone()
+    }
+
+    /// Set the default sendlist.
+    #[framed]
+    pub async fn set_default_sendlist(&self, value: Option<Arc<Sendlist>>) {
+        self.write().await.default_sendlist = value;
+    }
+
+    /// Get the last sendlist.
+    #[framed]
+    pub async fn last_sendlist(&self) -> Option<Arc<Sendlist>> {
+        self.read().await.last_sendlist.clone()
+    }
+
+    /// Set the last sendlist.
+    #[framed]
+    pub async fn set_last_sendlist(&self, value: Option<Arc<Sendlist>>) {
+        self.write().await.last_sendlist = value;
+    }
+
+    /// Get the last explicit sendlist.
+    #[framed]
+    pub async fn last_explicit(&self) -> ArcStr {
+        self.read().await.last_explicit.clone()
+    }
+
+    /// Set the last explicit sendlist.
+    #[framed]
+    pub async fn set_last_explicit(&self, value: impl Into<Arc<str>>) {
+        let value: Arc<str> = value.into();
+        self.write().await.last_explicit = ArcStr(value);
+    }
+
+    /// Get the reply sendlist.
+    #[framed]
+    pub async fn reply_sendlist(&self) -> ArcStr {
+        self.read().await.reply_sendlist.clone()
+    }
+
+    /// Set the reply sendlist.
+    #[framed]
+    pub async fn set_reply_sendlist(&self, sendlist: Into<Arc<str>>) {
+        let sendlist: Arc<str> = sendlist.into();
+        let mut inner = self.write().await;
+
+        // Quote if necessary
+        if sendlist
+            .chars()
+            .any(|c| c == ' ' || c == ',' || c == ':' || c == ';' || c == '_')
+        {
+            inner.reply_sendlist = ArcStr::from(format!("\"{sendlist}\""));
+        } else {
+            inner.reply_sendlist = ArcStr(sendlist);
         }
+    }
+
+    /// Get the oops text.
+    #[framed]
+    pub async fn oops_text(&self) -> ArcStr {
+        self.read().await.oops_text.clone()
+    }
+
+    /// Set the oops text.
+    #[framed]
+    pub async fn set_oops_text(&self, value: impl Into<Arc<str>>) {
+        let value: Arc<str> = value.into();
+        self.write().await.oops_text = ArcStr(value);
     }
 
     pub async fn name_user(self: &Arc<Self>) -> ArcStr {
@@ -143,60 +589,10 @@ impl Session {
         ArcStr::from(format!("{name} ({user_name})"))
     }
 
-    pub async fn name_obj(self: &Arc<Self>) -> Arc<Name> {
-        self.name_obj.read().await.clone()
-    }
-
-    pub async fn blurb(self: &Arc<Self>) -> ArcStr {
-        self.blurb.read().await.clone()
-    }
-
-    pub async fn name_blurb(self: &Arc<Self>) -> ArcStr {
-        let name = self.name().await;
-        let blurb = self.blurb().await;
-        &name + &blurb
-    }
-
-    pub async fn signed_on(self: &Arc<Self>) -> bool {
-        self.signed_on.load(Ordering::Relaxed)
-    }
-
-    pub async fn priv_level(self: &Arc<Self>) -> i32 {
-        self.priv_level.load(Ordering::Relaxed)
-    }
-
-    pub async fn signal_public(self: &Arc<Self>) -> bool {
-        self.signal_public.load(Ordering::Relaxed)
-    }
-
-    pub async fn signal_private(self: &Arc<Self>) -> bool {
-        self.signal_private.load(Ordering::Relaxed)
-    }
-
-    pub async fn last_explicit(self: &Arc<Self>) -> String {
-        self.last_explicit.read().await.clone()
-    }
-
-    pub async fn reply_sendlist(self: &Arc<Self>) -> String {
-        self.reply_sendlist.read().await.clone()
-    }
-
-    pub async fn set_reply_sendlist(self: &Arc<Self>, sendlist: &str) {
-        let mut reply = self.reply_sendlist.write().await;
-        *reply = sendlist.to_string();
-
-        // Quote if necessary
-        if sendlist
-            .chars()
-            .any(|c| c == ' ' || c == ',' || c == ':' || c == ';' || c == '_')
-        {
-            *reply = format!("\"{sendlist}\"");
-        }
-    }
-
-    pub async fn close(self: &Arc<Self>, drain: bool) {
-        INITS.remove(&self.id);
-        SESSIONS.remove(&self.id);
+    pub async fn close(&self, drain: bool) {
+        let id = self.id();
+        INITS.remove(&id);
+        SESSIONS.remove(&id);
 
         if self.signed_on().await {
             self.notify_exit().await;
@@ -218,11 +614,10 @@ impl Session {
         *self.telnet.write().await = None;
 
         // Disassociate from user
-        if let Some(user_lock) = &*self.user.read().await {
-            let mut user = user_lock.write().await;
-            user.remove_session(&self.clone());
+        if let Some(user) = &*self.user.read().await {
+            user.remove_session(&self.clone()).await;
+            *self.user.write().await = None;
         }
-        *self.user.write().await = None;
     }
 
     pub async fn transfer(self: &Arc<Self>, new_telnet: Arc<Telnet>) {
@@ -280,10 +675,6 @@ impl Session {
         } else {
             self.close(true).await;
         }
-    }
-
-    pub async fn output(self: &Arc<Self>, text: &str) {
-        self.output_buffer.lock().await.push_str(text);
     }
 
     pub async fn announce(message: &str) {
@@ -731,7 +1122,7 @@ impl Session {
         if let Some(user_lock) = &*self.user.read().await {
             let mut user = user_lock.write().await;
             self.priv_level.store(user.priv_level, Ordering::Relaxed);
-            user.add_session(self.clone());
+            user.add_session(self.clone()).await;
         }
 
         SESSIONS.insert(self.id, self.clone());
