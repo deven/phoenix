@@ -283,10 +283,6 @@ impl Telnet {
         }
     }
 
-    pub async fn print(&self, format: &str) {
-        self.output(format).await;
-    }
-
     pub async fn timing_mark(&self) {
         if *self.acknowledge.read().await {
             *self.outstanding.write().await += 1;
@@ -489,7 +485,7 @@ impl Telnet {
 
             // ANSI escape sequences to move cursor and clear
             if lines > 0 {
-                self.print(&format!("\r\x1b[{lines}A\x1b[J")).await;
+                self.output(&format!("\r\x1b[{lines}A\x1b[J")).await;
             } else {
                 self.output("\r\x1b[J").await;
             }
@@ -503,7 +499,7 @@ impl Telnet {
 
             // ANSI escape sequences
             if lines > 0 {
-                self.print(&format!("\r\x1b[{lines}A\x1b[J")).await;
+                self.output(&format!("\r\x1b[{lines}A\x1b[J")).await;
             } else {
                 self.output("\r\x1b[J").await;
             }
@@ -573,13 +569,13 @@ impl Telnet {
                     let cols = end_col as i32 - point_col as i32;
 
                     if lines > 0 {
-                        self.print(&format!("\x1b[{lines}A")).await;
+                        self.output(&format!("\x1b[{lines}A")).await;
                     }
                     if cols > 0 {
-                        self.print(&format!("\x1b[{cols}D")).await;
+                        self.output(&format!("\x1b[{cols}D")).await;
                     } else if cols < 0 {
                         let cols = -cols;
-                        self.print(&format!("\x1b[{cols}C")).await;
+                        self.output(&format!("\x1b[{cols}C")).await;
                     }
                 }
             }
@@ -608,7 +604,7 @@ impl Telnet {
                 if session.signal_public().await {
                     self.output(BELL_STR).await;
                 }
-                self.print(&format!("\n -> From {from_name}{from_blurb} to everyone:"))
+                self.output(&format!("\n -> From {from_name}{from_blurb} to everyone:"))
                     .await;
             }
             OutputType::PrivateMessage => {
@@ -672,7 +668,7 @@ impl Telnet {
                             self.output("; ").await;
                         }
                         let s = if to.discussions.len() == 1 { "" } else { "s" };
-                        self.print(&format!("discussion{s} ")).await;
+                        self.output(&format!("discussion{s} ")).await;
                         first = true;
 
                         for discussion in &to.discussions {
@@ -695,7 +691,7 @@ impl Telnet {
 
         // Print timestamp
         let stamp = time.stamp();
-        self.print(&format!(" [{stamp}]\n - ")).await;
+        self.output(&format!(" [{stamp}]\n - ")).await;
 
         // Word wrap the message
         let mut remaining = start;
@@ -1483,13 +1479,13 @@ impl Telnet {
             let cols = point_col as i32 - start_col as i32;
 
             if lines > 0 {
-                self.print(&format!("\x1b[{lines}A")).await;
+                self.output(&format!("\x1b[{lines}A")).await;
             }
             if cols > 0 {
-                self.print(&format!("\x1b[{cols}D")).await;
+                self.output(&format!("\x1b[{cols}D")).await;
             } else if cols < 0 {
                 let cols = -cols;
-                self.print(&format!("\x1b[{cols}C")).await;
+                self.output(&format!("\x1b[{cols}C")).await;
             }
 
             *self.point.write().await = 0;
@@ -1513,13 +1509,13 @@ impl Telnet {
             let cols = end_col as i32 - point_col as i32;
 
             if lines > 0 {
-                self.print(&format!("\x1b[{lines}B")).await;
+                self.output(&format!("\x1b[{lines}B")).await;
             }
             if cols > 0 {
-                self.print(&format!("\x1b[{cols}C")).await;
+                self.output(&format!("\x1b[{cols}C")).await;
             } else if cols < 0 {
                 let cols = -cols;
-                self.print(&format!("\x1b[{cols}D")).await;
+                self.output(&format!("\x1b[{cols}D")).await;
             }
 
             *self.point.write().await = data_len;
@@ -1555,7 +1551,7 @@ impl Telnet {
 
             if point_col == 0 {
                 let cols = width - 1;
-                self.print(&format!("\x1b[A\x1b[{cols}C")).await;
+                self.output(&format!("\x1b[A\x1b[{cols}C")).await;
             } else {
                 self.output("\x08").await;
             }
@@ -1622,12 +1618,12 @@ impl Telnet {
                     if end_line > point_line {
                         let cols = 1 - (((prompt_len + *point) % width) as i32);
                         let lines = end_line - point_line;
-                        self.print(&format!("\x1b[{lines}A")).await;
+                        self.output(&format!("\x1b[{lines}A")).await;
                         if cols > 0 {
-                            self.print(&format!("\x1b[{cols}D")).await;
+                            self.output(&format!("\x1b[{cols}D")).await;
                         } else if cols < 0 {
                             let cols = -cols;
-                            self.print(&format!("\x1b[{cols}C")).await;
+                            self.output(&format!("\x1b[{cols}C")).await;
                         }
                     }
 
@@ -1670,7 +1666,7 @@ impl Telnet {
 
                 while lines > 0 {
                     let cols = width - 1;
-                    self.print(&format!("\r\x1b[{cols}C")).await;
+                    self.output(&format!("\r\x1b[{cols}C")).await;
                     wrap += width;
                     if wrap < data.len() {
                         self.output_buffer
@@ -1687,12 +1683,12 @@ impl Telnet {
                 if end_line > point_line {
                     let cols = -(((prompt_len + point) % width) as i32);
                     let lines = end_line - point_line;
-                    self.print(&format!("\x1b[{lines}A")).await;
+                    self.output(&format!("\x1b[{lines}A")).await;
                     if cols > 0 {
-                        self.print(&format!("\x1b[{cols}D")).await;
+                        self.output(&format!("\x1b[{cols}D")).await;
                     } else if cols < 0 {
                         let cols = -cols;
-                        self.print(&format!("\x1b[{cols}C")).await;
+                        self.output(&format!("\x1b[{cols}C")).await;
                     }
                 }
             }
