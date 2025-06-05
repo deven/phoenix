@@ -1914,7 +1914,7 @@ impl Session {
         self.enqueue_others(Arc::new(CreateNotify::new(
             disc.name.clone(),
             disc.title.clone(),
-            disc.is_public,
+            disc.is_public.load(Ordering::Relaxed),
             self.name_obj().await,
         )))
         .await;
@@ -2478,7 +2478,7 @@ impl Session {
         } else {
             let sendlist = Sendlist::new(&self.clone(), args, true, true, true).await;
 
-            let mut total = sendlist.expand(&mut who, None).await;
+            let total = sendlist.expand(&mut who, None).await;
 
             if !sendlist.errors.is_empty() {
                 errors = sendlist.errors.clone();
@@ -2502,7 +2502,7 @@ impl Session {
         if matches.is_empty() {
             self.print(&format!("No names matched \"{name}\".\n")).await;
         } else if matches.len() == 1 {
-            let matched_name = matches.iter().next().unwrap().name().await;
+            let matched_name = &matches.iter().next().unwrap().name().await;
             self.print(&format!("\"{name}\" matches one name: {matched_name}.\n"))
                 .await;
         } else {

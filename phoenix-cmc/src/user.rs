@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
     pub sessions: OrderedSet<Arc<Session>>,
     pub user: ArcStr,
@@ -106,10 +106,7 @@ impl UserManager {
             user.priv_level = p;
         } else {
             let user = User::new(login_str.clone(), pass, names, defblurb, p);
-            users.insert(
-                login_str,
-                Arc::new(RwLock::new(Arc::try_unwrap(user).unwrap())),
-            );
+            users.insert(login_str, Arc::new(RwLock::new(user)));
         }
 
         Ok(())
@@ -223,6 +220,8 @@ pub fn hash_password(password: &str) -> Result<String> {
 
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let password_hash = argon2.hash_password(password.as_bytes(), &salt)?;
+    let password_hash = argon2
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
     Ok(password_hash.to_string())
 }

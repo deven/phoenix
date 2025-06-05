@@ -87,8 +87,7 @@ impl Default for Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let date = self.date(0, 0);
-        write!(f, "{}", self.date(0, 0))
+        write!(f, "{date}", date = self.date(0, 0))
     }
 }
 
