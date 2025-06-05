@@ -227,17 +227,17 @@ impl Discussion {
                         .await;
                 }
             } else {
-                let (session, matches) = session.find_session(user).await;
+                let (found_session, matches) = session.find_session(user).await;
 
-                if let Some(s) = session {
+                if let Some(s) = found_session {
                     let mut denied = self.denied.write().await;
                     let mut allowed = self.allowed.write().await;
                     let name_obj = s.name_obj().await;
                     let name = s.name().await;
 
                     if self.is_public.load(Ordering::Relaxed) {
-                        if denied.contains(&name) {
-                            denied.shift_remove(&name);
+                        if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
+                            denied.retain(|n| !n.name.eq_ignore_ascii_case(&name));
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
                                 true,
@@ -250,7 +250,7 @@ impl Discussion {
                                     "You have repermitted {name} to discussion {disc}.\n"
                                 ))
                                 .await;
-                        } else if allowed.contains(&name) {
+                        } else if allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             session.print(&format!("{name} is already explicitly permitted to public discussion {disc}.\n")).await;
                         } else {
                             allowed.insert(name_obj.clone());
@@ -264,8 +264,8 @@ impl Discussion {
                             session.print(&format!("You have explicitly permitted {name} to public discussion {disc}.\n")).await;
                         }
                     } else {
-                        if denied.contains(&name) {
-                            denied.shift_remove(&name);
+                        if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
+                            denied.retain(|n| !n.name.eq_ignore_ascii_case(&name));
                             allowed.insert(name_obj.clone());
                             let notification = Arc::new(PermitNotify::new(
                                 self.name.clone(),
@@ -279,7 +279,7 @@ impl Discussion {
                                     "You have repermitted {name} to discussion {disc}.\n"
                                 ))
                                 .await;
-                        } else if allowed.contains(&name) {
+                        } else if allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             session
                                 .print(&format!(
                                     "{name} is already permitted to discussion {disc}.\n"
@@ -302,7 +302,7 @@ impl Discussion {
                         }
                     }
                 } else {
-                    session.session_matches(user, matches).await;
+                    session.session_matches(user, &matches).await;
                 }
             }
         }
@@ -330,10 +330,15 @@ impl Discussion {
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public.load(Ordering::Relaxed) {
                     self.is_public.store(false, Ordering::Relaxed);
+                    let members = self.members.read().await;
+                    let mut allowed = self.allowed.write().await;
 
                     // Add current members to allowed list
                     for member in members.iter() {
-                        if self.allowed(&member).await.is_none() {
+                        if !allowed
+                            .iter()
+                            .any(|n| n.name.eq_ignore_ascii_case(&member.name().await))
+                        {
                             allowed.insert(member.name_obj().await);
                         }
                     }
@@ -352,9 +357,9 @@ impl Discussion {
                         .await;
                 }
             } else {
-                let (session, matches) = session.find_session(user).await;
+                let (found_session, matches) = session.find_session(user).await;
 
-                if let Some(s) = session {
+                if let Some(s) = found_session {
                     let mut members = self.members.write().await;
                     let mut denied = self.denied.write().await;
                     let mut allowed = self.allowed.write().await;
@@ -362,11 +367,10 @@ impl Discussion {
                     let name = s.name().await;
 
                     if self.is_public.load(Ordering::Relaxed) {
-                        let name = self.allowed(&s).await;
-                        if let Some(n) = name {
-                            allowed.shift_remove(n);
-                        }
-                        if self.denied(&s).await.is_some() {
+                        // Remove from allowed if present
+                        allowed.retain(|n| !n.name.eq_ignore_ascii_case(&name));
+
+                        if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             session
                                 .print(&format!(
                                     "{name} is already depermitted from discussion {disc}.\n"
@@ -374,13 +378,13 @@ impl Discussion {
                                 .await;
                         } else {
                             denied.insert(name_obj.clone());
-                            if members.contains(&name) {
+                            if members.contains(&s) {
                                 let removed = s;
                                 members.shift_remove(&s);
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
                                     true,
-                                    name_obj,
+                                    name_obj.clone(),
                                     true,
                                     Some(name_obj),
                                 ));
@@ -403,15 +407,14 @@ impl Discussion {
                             }
                         }
                     } else {
-                        let name = self.allowed(&s).await;
-                        if let Some(n) = name {
-                            allowed.shift_remove(n);
+                        if allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
+                            allowed.retain(|n| !n.name.eq_ignore_ascii_case(&name));
                             if members.contains(&s) {
-                                members.shift_remove(s);
+                                members.shift_remove(&s);
                                 let notification = Arc::new(DepermitNotify::new(
                                     self.name.clone(),
                                     false,
-                                    name_obj,
+                                    name_obj.clone(),
                                     false,
                                     Some(name_obj),
                                 ));
@@ -432,7 +435,7 @@ impl Discussion {
                                     ))
                                     .await;
                             }
-                        } else if self.denied(&s).await.is_some() {
+                        } else if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             session.print(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
                         } else {
                             denied.insert(name_obj.clone());
@@ -448,7 +451,7 @@ impl Discussion {
                         }
                     }
                 } else {
-                    session.session_matches(user, matches).await;
+                    session.session_matches(user, &matches).await;
                 }
             }
         }
