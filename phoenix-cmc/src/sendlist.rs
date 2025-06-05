@@ -161,12 +161,9 @@ impl Sendlist {
         for discussion in &self.discussions {
             let members = discussion.members.read().await;
             for member in members.iter() {
-                if let Some(sender) = sender {
-                    if !Arc::ptr_eq(member, sender) {
-                        who.insert(member.clone());
-                    }
-                } else {
-                    who.insert(member.clone());
+                match sender {
+                    Some(sender) if sender.id == member.id => {}
+                    _ => who.insert(member.clone()),
                 }
             }
         }
