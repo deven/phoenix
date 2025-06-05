@@ -33,6 +33,18 @@ impl Default for ArcStr {
     }
 }
 
+impl From<Arc<str>> for ArcStr {
+    fn from(s: Arc<str>) -> Self {
+        Self(s)
+    }
+}
+
+impl From<ArcStr> for Arc<str> {
+    fn from(s: ArcStr) -> Self {
+        s.0
+    }
+}
+
 impl From<&str> for ArcStr {
     fn from(s: &str) -> Self {
         Self::new(s)
