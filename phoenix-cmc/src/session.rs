@@ -31,6 +31,7 @@ static DEFAULTS: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| {
 });
 static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 
+#[derive(Debug)]
 pub struct Session {
     pub id: usize,
     pub server: Arc<PhoenixServer>,
