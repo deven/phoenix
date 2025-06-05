@@ -847,8 +847,6 @@ impl OutputObj for DepermitNotify {
 
     async fn output(&self, telnet: &mut Telnet) {
         let session_name = telnet.session_name().await;
-        let removed_name = &self.removed.name;
-        let removed_blurb = &self.removed.blurb;
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
@@ -856,6 +854,8 @@ impl OutputObj for DepermitNotify {
 
         if self.is_public {
             if let Some(removed) = &self.removed {
+                let removed_name = &self.removed.name;
+                let removed_blurb = &self.removed.blurb;
                 if removed_name.eq_ignore_ascii_case(&session_name) {
                     telnet.print(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
                 } else {
@@ -869,6 +869,8 @@ impl OutputObj for DepermitNotify {
                 telnet.print(&format!("*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
+                    let removed_name = &self.removed.name;
+                    let removed_blurb = &self.removed.blurb;
                     if removed_name.eq_ignore_ascii_case(&session_name) {
                         telnet.print(&format!("*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
                     } else {
