@@ -298,8 +298,8 @@ impl Telnet {
         self.command_buffer.lock().await.extend_from_slice(data);
     }
 
-    pub async fn get_echo(self: &Arc<Self>) -> bool {
-        *self.echo.read().await == TELNET_ENABLED
+    pub async fn get_echo(self: &Arc<Self>) -> u8 {
+        *self.echo.read().await
     }
 
     pub async fn set_do_echo(self: &Arc<Self>, enabled: bool) {
