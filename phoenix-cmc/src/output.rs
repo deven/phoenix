@@ -48,7 +48,7 @@ impl OutputObj for Text {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Message {
     pub output_type: OutputType,
     pub from: Arc<Name>,
@@ -1028,6 +1028,7 @@ impl OutputObj for RenameNotify {
 }
 
 // Output stream for queuing output objects
+#[derive(Debug, Clone)]
 pub struct OutputStream {
     pub queue: tokio::sync::Mutex<Vec<Arc<dyn OutputObj>>>,
     pub acknowledged: std::sync::atomic::AtomicUsize,
