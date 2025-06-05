@@ -889,7 +889,9 @@ impl Session {
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
-                Arc::ptr_eq(my_user, &found_user)
+                let my_user = my_user.read().await;
+                let found_user = found_user.read().await;
+                my_user.user == found_user.user
             } else {
                 false
             };
@@ -908,15 +910,15 @@ impl Session {
 
         let (session, _, discussion, _) = self.find_sendable(name, false, true, true, true).await;
         if let Some(found_session) = session {
-            let same_user = if let (Some(my_user), Some(their_user)) =
+            let is_same_user = if let (Some(my_user), Some(their_user)) =
                 (&*self.user.read().await, &*found_session.user.read().await)
             {
-                Arc::ptr_eq(my_user, their_user)
+                my_user.user == their_user.user
             } else {
                 false
             };
 
-            if same_user && found_session.priv_level().await > 0 {
+            if is_same_user && found_session.priv_level().await > 0 {
                 if let Some(their_telnet) = &*found_session.telnet.read().await {
                     if transferring {
                         self.output("Transferring active session...\n").await;
@@ -1871,6 +1873,8 @@ impl Session {
 
         if let Some((reserved, found_user)) = USER_MANAGER.find_reserved(name).await {
             let is_same_user = if let Some(my_user) = &*self.user.read().await {
+                let my_user = my_user.read().await;
+                let found_user = found_user.read().await;
                 my_user.user == found_user.user
             } else {
                 false
