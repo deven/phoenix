@@ -2682,9 +2682,130 @@ impl Session {
     }
 
     pub async fn set_idle(self: &Arc<Self>, args: &str) {
-        // TODO: Implement idle time parsing and setting
-        self.output("Idle time setting not yet implemented.\n")
-            .await;
+        let now = Timestamp::new();
+        let current_idle = (now - self.idle_since().await) / 60;
+
+        // Parse time specification: <d>d<hh>:<mm>
+        let mut chars = args.trim().chars().peekable();
+        let mut days = 0i64;
+        let mut hours = 0i64;
+        let mut minutes = 0i64;
+
+        // Parse first number
+        let mut num = 0i64;
+        while let Some(&ch) = chars.peek() {
+            if ch.is_ascii_digit() {
+                num = num * 10 + (ch as i64 - '0' as i64);
+                chars.next();
+            } else {
+                break;
+            }
+        }
+
+        // Skip whitespace
+        while chars.peek() == Some(&' ') {
+            chars.next();
+        }
+
+        // Check for 'd' or 'D' (days)
+        if chars.peek() == Some(&'d') || chars.peek() == Some(&'D') {
+            days = num;
+            chars.next();
+
+            // Skip whitespace and parse next number
+            while chars.peek() == Some(&' ') {
+                chars.next();
+            }
+
+            num = 0;
+            while let Some(&ch) = chars.peek() {
+                if ch.is_ascii_digit() {
+                    num = num * 10 + (ch as i64 - '0' as i64);
+                    chars.next();
+                } else {
+                    break;
+                }
+            }
+
+            // Skip whitespace
+            while chars.peek() == Some(&' ') {
+                chars.next();
+            }
+        }
+
+        // Check for ':' (hours)
+        if chars.peek() == Some(&':') {
+            hours = num;
+            chars.next();
+
+            // Skip whitespace and parse minutes
+            while chars.peek() == Some(&' ') {
+                chars.next();
+            }
+
+            num = 0;
+            while let Some(&ch) = chars.peek() {
+                if ch.is_ascii_digit() {
+                    num = num * 10 + (ch as i64 - '0' as i64);
+                    chars.next();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        minutes = num;
+
+        // Skip trailing whitespace
+        while chars.peek() == Some(&' ') {
+            chars.next();
+        }
+
+        // If there are remaining characters, it's a syntax error
+        if chars.peek().is_some() {
+            self.output("Syntax error in time specification.  Format: <d>d<hh>:<mm>\n")
+                .await;
+            return;
+        }
+
+        // Calculate new idle_since timestamp
+        let total_minutes = days * 24 * 60 + hours * 60 + minutes;
+        let new_idle_since = Timestamp::from_unix(now.unix() - total_minutes * 60);
+
+        // Check permissions
+        if new_idle_since < self.login_time().await && self.priv_level().await < 50 {
+            self.output("Sorry, you can't be idle longer than you've been signed on.\n")
+                .await;
+            return;
+        }
+
+        // Set the new idle time
+        self.set_idle_since(new_idle_since).await;
+        if self.idle_since().await < self.login_time().await {
+            self.set_login_time(self.idle_since().await).await;
+        }
+
+        // Output results
+        let new_idle = (now - self.idle_since().await) / 60;
+
+        if current_idle > 0 && current_idle != new_idle {
+            self.output("[You were idle for").await;
+            self.print_time_long(current_idle as i32).await;
+            self.output(".]\n").await;
+        }
+
+        if current_idle == new_idle {
+            self.output("Your idle time is still").await;
+            self.print_time_long(current_idle as i32).await;
+            self.output(".\n").await;
+        } else if new_idle > 0 {
+            self.output("Your idle time has been set to").await;
+            self.print_time_long(new_idle as i32).await;
+            self.output(".\n").await;
+        } else {
+            self.output("Your idle time has been reset.\n").await;
+            self.set_idle_since(now).await;
+        }
     }
 
     pub async fn do_display(self: &Arc<Self>, args: &str) {
