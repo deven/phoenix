@@ -22,10 +22,7 @@ pub struct Text {
 
 impl Text {
     pub fn new(text: String) -> Self {
-        Self {
-            text,
-            time: Timestamp::new(),
-        }
+        Self { text, time: Timestamp::new() }
     }
 }
 
@@ -58,19 +55,8 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(
-        output_type: OutputType,
-        sender: Arc<Name>,
-        dest: Arc<Sendlist>,
-        msg: impl Into<ArcStr>,
-    ) -> Self {
-        Self {
-            output_type,
-            from: sender,
-            to: dest,
-            text: msg.into(),
-            time: Timestamp::new(),
-        }
+    pub fn new(output_type: OutputType, sender: Arc<Name>, dest: Arc<Sendlist>, msg: impl Into<ArcStr>) -> Self {
+        Self { output_type, from: sender, to: dest, text: msg.into(), time: Timestamp::new() }
     }
 }
 
@@ -89,15 +75,7 @@ impl OutputObj for Message {
     }
 
     async fn output(&self, telnet: &Arc<Telnet>) {
-        telnet
-            .print_message(
-                self.output_type,
-                self.time,
-                &self.from,
-                &self.to,
-                &self.text,
-            )
-            .await;
+        telnet.print_message(self.output_type, self.time, &self.from, &self.to, &self.text).await;
     }
 }
 
@@ -109,10 +87,7 @@ pub struct EntryNotify {
 
 impl EntryNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -134,11 +109,7 @@ impl OutputObj for EntryNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has entered Phoenix! [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has entered Phoenix! [{stamp}] ***\n")).await;
     }
 }
 
@@ -150,10 +121,7 @@ pub struct ExitNotify {
 
 impl ExitNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -175,11 +143,7 @@ impl OutputObj for ExitNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has left Phoenix! [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has left Phoenix! [{stamp}] ***\n")).await;
     }
 }
 
@@ -191,10 +155,7 @@ pub struct TransferNotify {
 
 impl TransferNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -216,11 +177,7 @@ impl OutputObj for TransferNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has transferred to new connection. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has transferred to new connection. [{stamp}] ***\n")).await;
     }
 }
 
@@ -232,10 +189,7 @@ pub struct AttachNotify {
 
 impl AttachNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -257,11 +211,7 @@ impl OutputObj for AttachNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} is now attached. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} is now attached. [{stamp}] ***\n")).await;
     }
 }
 
@@ -274,11 +224,7 @@ pub struct DetachNotify {
 
 impl DetachNotify {
     pub fn new(who: Arc<Name>, i: bool) -> Self {
-        Self {
-            name: who,
-            intentional: i,
-            time: Timestamp::new(),
-        }
+        Self { name: who, intentional: i, time: Timestamp::new() }
     }
 }
 
@@ -300,16 +246,8 @@ impl OutputObj for DetachNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        let intentionally = if self.intentional {
-            "intentionally"
-        } else {
-            "accidentally"
-        };
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has {intentionally} detached. [{stamp}] ***\n"
-            ))
-            .await;
+        let intentionally = if self.intentional { "intentionally" } else { "accidentally" };
+        telnet.output(&format!("*** {name}{blurb} has {intentionally} detached. [{stamp}] ***\n")).await;
     }
 }
 
@@ -321,10 +259,7 @@ pub struct HereNotify {
 
 impl HereNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -346,9 +281,7 @@ impl OutputObj for HereNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!("*** {name}{blurb} is now here. [{stamp}] ***\n"))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} is now here. [{stamp}] ***\n")).await;
     }
 }
 
@@ -360,10 +293,7 @@ pub struct AwayNotify {
 
 impl AwayNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -385,9 +315,7 @@ impl OutputObj for AwayNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!("*** {name}{blurb} is now away. [{stamp}] ***\n"))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} is now away. [{stamp}] ***\n")).await;
     }
 }
 
@@ -399,10 +327,7 @@ pub struct BusyNotify {
 
 impl BusyNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -424,9 +349,7 @@ impl OutputObj for BusyNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!("*** {name}{blurb} is now busy. [{stamp}] ***\n"))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} is now busy. [{stamp}] ***\n")).await;
     }
 }
 
@@ -438,10 +361,7 @@ pub struct GoneNotify {
 
 impl GoneNotify {
     pub fn new(who: Arc<Name>) -> Self {
-        Self {
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { name: who, time: Timestamp::new() }
     }
 }
 
@@ -463,9 +383,7 @@ impl OutputObj for GoneNotify {
         let name = &self.name.name;
         let blurb = &self.name.blurb;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!("*** {name}{blurb} is now gone. [{stamp}] ***\n"))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} is now gone. [{stamp}] ***\n")).await;
     }
 }
 
@@ -480,13 +398,7 @@ pub struct CreateNotify {
 
 impl CreateNotify {
     pub fn new(disc_name: ArcStr, disc_title: ArcStr, is_public: bool, creator: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            discussion_title: disc_title,
-            is_public,
-            creator,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator, time: Timestamp::new() }
     }
 }
 
@@ -511,17 +423,9 @@ impl OutputObj for CreateNotify {
         let title = &self.discussion_title;
         let stamp = &self.time.stamp();
         if self.is_public {
-            telnet
-                .output(&format!(
-                    "*** {name}{blurb} has created discussion {disc}, \"{title}\". [{stamp}] ***\n"
-                ))
-                .await;
+            telnet.output(&format!("*** {name}{blurb} has created discussion {disc}, \"{title}\". [{stamp}] ***\n")).await;
         } else {
-            telnet
-                .output(&format!(
-                    "*** {name}{blurb} has created private discussion {disc}. [{stamp}] ***\n"
-                ))
-                .await;
+            telnet.output(&format!("*** {name}{blurb} has created private discussion {disc}. [{stamp}] ***\n")).await;
         }
     }
 }
@@ -535,11 +439,7 @@ pub struct DestroyNotify {
 
 impl DestroyNotify {
     pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
 
@@ -562,11 +462,7 @@ impl OutputObj for DestroyNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has destroyed discussion {disc}. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has destroyed discussion {disc}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -579,11 +475,7 @@ pub struct JoinNotify {
 
 impl JoinNotify {
     pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
 
@@ -606,11 +498,7 @@ impl OutputObj for JoinNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has joined discussion {disc}. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has joined discussion {disc}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -623,11 +511,7 @@ pub struct QuitNotify {
 
 impl QuitNotify {
     pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
 
@@ -650,11 +534,7 @@ impl OutputObj for QuitNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has quit discussion {disc}. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has quit discussion {disc}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -667,11 +547,7 @@ pub struct PublicNotify {
 
 impl PublicNotify {
     pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
 
@@ -694,11 +570,7 @@ impl OutputObj for PublicNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has made discussion {disc} public. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has made discussion {disc} public. [{stamp}] ***\n")).await;
     }
 }
 
@@ -711,11 +583,7 @@ pub struct PrivateNotify {
 
 impl PrivateNotify {
     pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            name: who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
 
@@ -738,11 +606,7 @@ impl OutputObj for PrivateNotify {
         let blurb = &self.name.blurb;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {name}{blurb} has made discussion {disc} private. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {name}{blurb} has made discussion {disc} private. [{stamp}] ***\n")).await;
     }
 }
 
@@ -757,13 +621,7 @@ pub struct PermitNotify {
 
 impl PermitNotify {
     pub fn new(disc_name: ArcStr, public: bool, who: Arc<Name>, flag: bool) -> Self {
-        Self {
-            discussion_name: disc_name,
-            is_public: public,
-            name: who,
-            is_explicit: flag,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, time: Timestamp::new() }
     }
 }
 
@@ -790,11 +648,15 @@ impl OutputObj for PermitNotify {
             if self.is_explicit {
                 telnet.output(&format!("*** {name}{blurb} has repermitted you to discussion {disc}. [{stamp}] ***\n")).await;
             } else {
-                telnet.output(&format!("*** {name}{blurb} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n")).await;
+                telnet
+                    .output(&format!("*** {name}{blurb} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n"))
+                    .await;
             }
         } else {
             if self.is_explicit {
-                telnet.output(&format!("*** {name}{blurb} has repermitted you to private discussion {disc}. [{stamp}] ***\n")).await;
+                telnet
+                    .output(&format!("*** {name}{blurb} has repermitted you to private discussion {disc}. [{stamp}] ***\n"))
+                    .await;
             } else {
                 telnet.output(&format!("*** {name}{blurb} has permitted you to private discussion {disc}. [{stamp}] ***\n")).await;
             }
@@ -813,13 +675,7 @@ pub struct DepermitNotify {
 }
 
 impl DepermitNotify {
-    pub fn new(
-        disc_name: ArcStr,
-        public: bool,
-        who: Arc<Name>,
-        flag: bool,
-        removed_who: Option<Arc<Name>>,
-    ) -> Self {
+    pub fn new(disc_name: ArcStr, public: bool, who: Arc<Name>, flag: bool, removed_who: Option<Arc<Name>>) -> Self {
         Self {
             discussion_name: disc_name,
             is_public: public,
@@ -857,27 +713,49 @@ impl OutputObj for DepermitNotify {
                 let removed_name = &removed.name;
                 let removed_blurb = &removed.blurb;
                 if removed_name.eq_ignore_ascii_case(&session_name) {
-                    telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet
+                        .output(&format!(
+                            "*** {name}{blurb} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n"
+                        ))
+                        .await;
                 } else {
-                    telnet.output(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet
+                        .output(&format!(
+                            "*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n"
+                        ))
+                        .await;
                 }
             } else {
                 telnet.output(&format!("*** {name}{blurb} has depermitted you from discussion {disc}. [{stamp}] ***\n")).await;
             }
         } else {
             if self.is_explicit {
-                telnet.output(&format!("*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
+                telnet
+                    .output(&format!(
+                        "*** {name}{blurb} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n"
+                    ))
+                    .await;
             } else {
                 if let Some(removed) = &self.removed {
                     let removed_name = &removed.name;
                     let removed_blurb = &removed.blurb;
                     if removed_name.eq_ignore_ascii_case(&session_name) {
-                        telnet.output(&format!("*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
+                        telnet
+                            .output(&format!(
+                                "*** {name}{blurb} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n"
+                            ))
+                            .await;
                     } else {
-                        telnet.output(&format!("*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                        telnet
+                            .output(&format!(
+                                "*** {removed_name}{removed_blurb} has been removed from discussion {disc}. [{stamp}] ***\n"
+                            ))
+                            .await;
                     }
                 } else {
-                    telnet.output(&format!("*** {name}{blurb} has depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
+                    telnet
+                        .output(&format!("*** {name}{blurb} has depermitted you from private discussion {disc}. [{stamp}] ***\n"))
+                        .await;
                 }
             }
         }
@@ -894,12 +772,7 @@ pub struct AppointNotify {
 
 impl AppointNotify {
     pub fn new(disc_name: ArcStr, who1: Arc<Name>, who2: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            appointer: who1,
-            appointee: who2,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, appointer: who1, appointee: who2, time: Timestamp::new() }
     }
 }
 
@@ -927,7 +800,11 @@ impl OutputObj for AppointNotify {
         let stamp = &self.time.stamp();
 
         if self.appointee.name.eq_ignore_ascii_case(&session_name) {
-            telnet.output(&format!("*** {appointer_name}{appointer_blurb} has appointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
+            telnet
+                .output(&format!(
+                    "*** {appointer_name}{appointer_blurb} has appointed you as a moderator of discussion {disc}. [{stamp}] ***\n"
+                ))
+                .await;
         } else {
             telnet.output(&format!("*** {appointer_name}{appointer_blurb} has appointed {appointee_name}{appointee_blurb} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
         }
@@ -944,12 +821,7 @@ pub struct UnappointNotify {
 
 impl UnappointNotify {
     pub fn new(disc_name: ArcStr, who1: Arc<Name>, who2: Arc<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            unappointer: who1,
-            unappointee: who2,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, unappointer: who1, unappointee: who2, time: Timestamp::new() }
     }
 }
 
@@ -993,11 +865,7 @@ pub struct RenameNotify {
 
 impl RenameNotify {
     pub fn new(oldstr: impl Into<ArcStr>, newstr: impl Into<ArcStr>) -> Self {
-        Self {
-            oldname: oldstr.into(),
-            newname: newstr.into(),
-            time: Timestamp::new(),
-        }
+        Self { oldname: oldstr.into(), newname: newstr.into(), time: Timestamp::new() }
     }
 }
 
@@ -1019,11 +887,7 @@ impl OutputObj for RenameNotify {
         let oldname = &self.oldname;
         let newname = &self.newname;
         let stamp = &self.time.stamp();
-        telnet
-            .output(&format!(
-                "*** {oldname} has renamed to {newname}. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {oldname} has renamed to {newname}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -1048,15 +912,13 @@ impl OutputStream {
         let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
         let ack = self.acknowledged.load(std::sync::atomic::Ordering::Relaxed);
         if ack < sent {
-            self.acknowledged
-                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            self.acknowledged.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         }
     }
 
     pub async fn attach(&self, telnet: &Arc<Telnet>) {
         self.sent.store(0, std::sync::atomic::Ordering::Relaxed);
-        self.acknowledged
-            .store(0, std::sync::atomic::Ordering::Relaxed);
+        self.acknowledged.store(0, std::sync::atomic::Ordering::Relaxed);
 
         if telnet.acknowledge().await {
             while self.send_next(telnet).await {}
@@ -1086,10 +948,8 @@ impl OutputStream {
             let mut queue = self.queue.lock().await;
             let to_remove = ack.min(queue.len());
             queue.drain(..to_remove);
-            self.acknowledged
-                .fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
-            self.sent
-                .fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
+            self.acknowledged.fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
+            self.sent.fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
         }
     }
 

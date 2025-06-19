@@ -76,9 +76,7 @@ impl Text {
         let s = self.as_str();
 
         pat.is_empty()
-            || s.len() >= pat.len()
-                && s.is_char_boundary(pat.len())
-                && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
+            || s.len() >= pat.len() && s.is_char_boundary(pat.len()) && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
     }
 
     /// Checks if this text ends with the given pattern (case-insensitive).

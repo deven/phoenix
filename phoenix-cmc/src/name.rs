@@ -18,12 +18,10 @@ impl Name {
         let name = name.as_ref();
         let blurb = blurb.as_ref();
         let name_blurb = Text::from(format!("{name} [{blurb}]"));
+        let name_len = name.len();
+        let column_display = Self::format_column_display(name_blurb.as_str());
 
-        Self {
-            name_blurb,
-            name_len: name.len(),
-            column_display: Self::format_column_display(name_blurb.as_str()),
-        }
+        Self { name_blurb, name_len: name.len(), column_display }
     }
 
     /// Create a `Name` with no blurb.
@@ -31,12 +29,9 @@ impl Name {
         let name: Arc<str> = name.into();
         let name_len = name.len();
         let name_blurb = Text::from(name);
+        let column_display = Self::format_column_display(name_blurb.as_str());
 
-        Self {
-            name_blurb,
-            name_len,
-            column_display: Self::format_column_display(name_blurb.as_str()),
-        }
+        Self { name_blurb, name_len, column_display }
     }
 
     /// Format the name and blurb for column display.

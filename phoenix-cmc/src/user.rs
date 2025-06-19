@@ -59,11 +59,7 @@ impl User {
     }
 
     pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&ArcStr> {
-        self.reserved
-            .read()
-            .await
-            .iter()
-            .find(|&reserved| reserved.eq_ignore_ascii_case(name))
+        self.reserved.read().await.iter().find(|&reserved| reserved.eq_ignore_ascii_case(name))
     }
 }
 
@@ -75,19 +71,13 @@ pub struct UserManager {
 
 impl UserManager {
     pub fn new() -> Self {
-        Self {
-            users: Arc::new(RwLock::new(HashMap::new())),
-            last_update: Arc::new(RwLock::new(None)),
-        }
+        Self { users: Arc::new(RwLock::new(HashMap::new())), last_update: Arc::new(RwLock::new(None)) }
     }
 
     pub async fn get_user(&self, login: &str) -> Option<Arc<User>> {
         self.update_all().await.ok()?;
         let users = self.users.read().await;
-        users
-            .iter()
-            .find(|(k, _)| k.eq_ignore_ascii_case(login))
-            .map(|(_, v)| Arc::clone(v))
+        users.iter().find(|(k, _)| k.eq_ignore_ascii_case(login)).map(|(_, v)| Arc::clone(v))
     }
 
     pub async fn update(
@@ -153,20 +143,11 @@ impl UserManager {
             let parts: Vec<&str> = line.split(':').collect();
             if parts.len() >= 4 {
                 let username = parts[0];
-                let password = if parts[1].is_empty() {
-                    None
-                } else {
-                    Some(parts[1].to_string())
-                };
-                let names = if parts[2].is_empty() {
-                    None
-                } else {
-                    Some(parts[2])
-                };
+                let password = if parts[1].is_empty() { None } else { Some(parts[1].to_string()) };
+                let names = if parts[2].is_empty() { None } else { Some(parts[2]) };
                 let priv_level = parts[3].parse::<i32>().unwrap_or(0);
 
-                self.update(username, password, names, None::<&str>, priv_level)
-                    .await?;
+                self.update(username, password, names, None::<&str>, priv_level).await?;
             }
         }
 
@@ -206,9 +187,7 @@ pub fn verify_password(input: &str, encrypted: &str) -> bool {
     // First try modern Argon2 verification
     if let Ok(parsed_hash) = PasswordHash::new(encrypted) {
         let argon2 = Argon2::default();
-        return argon2
-            .verify_password(input.as_bytes(), &parsed_hash)
-            .is_ok();
+        return argon2.verify_password(input.as_bytes(), &parsed_hash).is_ok();
     }
 
     false
@@ -223,8 +202,7 @@ pub fn hash_password(password: &str) -> Result<String> {
 
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let password_hash = argon2
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
+    let password_hash =
+        argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
     Ok(password_hash.to_string())
 }

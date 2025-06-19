@@ -14,9 +14,7 @@ impl Timestamp {
     }
 
     pub fn from_unix(timestamp: i64) -> Self {
-        Self {
-            time: Local.timestamp_opt(timestamp, 0).unwrap(),
-        }
+        Self { time: Local.timestamp_opt(timestamp, 0).unwrap() }
     }
 
     pub fn unix(&self) -> i64 {
@@ -25,11 +23,8 @@ impl Timestamp {
 
     pub fn date(&self, start: usize, len: usize) -> String {
         let formatted = self.time.format("%a %b %e %T %Y").to_string();
-        let formatted = if formatted.len() > Self::MAX_FORMATTED_LENGTH {
-            &formatted[..Self::MAX_FORMATTED_LENGTH]
-        } else {
-            &formatted
-        };
+        let formatted =
+            if formatted.len() > Self::MAX_FORMATTED_LENGTH { &formatted[..Self::MAX_FORMATTED_LENGTH] } else { &formatted };
 
         if len > 0 && start + len < formatted.len() {
             formatted[start..start + len].to_string()
@@ -152,13 +147,7 @@ pub async fn system_uptime() -> Option<i64> {
         tokio::fs::read_to_string("/proc/uptime")
             .await
             .ok()
-            .and_then(|content| {
-                content
-                    .split_whitespace()
-                    .next()
-                    .and_then(|s| s.parse::<f64>().ok())
-                    .map(|f| f as i64)
-            })
+            .and_then(|content| content.split_whitespace().next().and_then(|s| s.parse::<f64>().ok()).map(|f| f as i64))
     }
 
     #[cfg(not(target_os = "linux"))]

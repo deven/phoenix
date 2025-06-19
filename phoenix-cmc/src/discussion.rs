@@ -70,19 +70,13 @@ impl Discussion {
     pub async fn allowed(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let allowed = self.allowed.read().await;
         let session_name = session.name().await;
-        allowed
-            .iter()
-            .find(|name| name.name.eq_ignore_ascii_case(&session_name))
-            .cloned()
+        allowed.iter().find(|name| name.name.eq_ignore_ascii_case(&session_name)).cloned()
     }
 
     pub async fn denied(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let denied = self.denied.read().await;
         let session_name = session.name().await;
-        denied
-            .iter()
-            .find(|name| name.name.eq_ignore_ascii_case(&session_name))
-            .cloned()
+        denied.iter().find(|name| name.name.eq_ignore_ascii_case(&session_name)).cloned()
     }
 
     pub async fn is_creator(self: &Arc<Self>, session: &Arc<Session>) -> bool {
@@ -97,10 +91,7 @@ impl Discussion {
     pub async fn is_moderator(self: &Arc<Self>, session: &Arc<Session>) -> Option<Arc<Name>> {
         let moderators = self.moderators.read().await;
         let session_name = session.name().await;
-        moderators
-            .iter()
-            .find(|name| name.name.eq_ignore_ascii_case(&session_name))
-            .cloned()
+        moderators.iter().find(|name| name.name.eq_ignore_ascii_case(&session_name)).cloned()
     }
 
     pub async fn permitted(self: &Arc<Self>, session: &Arc<Session>) -> bool {
@@ -130,18 +121,11 @@ impl Discussion {
 
         if self.is_creator(&session).await || self.is_moderator(&session).await.is_some() {
             Session::remove_discussion(self.name.clone()).await;
-            let notification = Arc::new(DestroyNotify::new(
-                self.name.clone(),
-                session.name_obj().await,
-            ));
+            let notification = Arc::new(DestroyNotify::new(self.name.clone(), session.name_obj().await));
             self.enqueue_others(notification, &session).await;
-            session
-                .output(&format!("You have destroyed discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You have destroyed discussion {disc}.\n")).await;
         } else {
-            session
-                .output(&format!("You are not a moderator of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
         }
     }
 
@@ -150,24 +134,15 @@ impl Discussion {
 
         let mut members = self.members.write().await;
         if members.contains(&session) {
-            session
-                .output(&format!("You are already a member of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are already a member of discussion {disc}.\n")).await;
         } else {
             if self.permitted(&session).await {
-                let notification =
-                    Arc::new(JoinNotify::new(self.name.clone(), session.name_obj().await));
+                let notification = Arc::new(JoinNotify::new(self.name.clone(), session.name_obj().await));
                 self.enqueue_others(notification, &session).await;
                 members.insert(session.clone());
-                session
-                    .output(&format!("You are now a member of discussion {disc}.\n"))
-                    .await;
+                session.output(&format!("You are now a member of discussion {disc}.\n")).await;
             } else {
-                session
-                    .output(&format!(
-                        "You are not permitted to join discussion {disc}.\n"
-                    ))
-                    .await;
+                session.output(&format!("You are not permitted to join discussion {disc}.\n")).await;
             }
         }
     }
@@ -179,19 +154,12 @@ impl Discussion {
         if members.contains(&session) {
             members.shift_remove(&session);
             if session.signed_on().await {
-                let notification =
-                    Arc::new(QuitNotify::new(self.name.clone(), session.name_obj().await));
+                let notification = Arc::new(QuitNotify::new(self.name.clone(), session.name_obj().await));
                 self.enqueue_others(notification, &session).await;
-                session
-                    .output(&format!(
-                        "You are no longer a member of discussion {disc}.\n"
-                    ))
-                    .await;
+                session.output(&format!("You are no longer a member of discussion {disc}.\n")).await;
             }
         } else {
-            session
-                .output(&format!("You are not a member of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are not a member of discussion {disc}.\n")).await;
         }
     }
 
@@ -199,9 +167,7 @@ impl Discussion {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
-            session
-                .output(&format!("You are not a moderator of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
 
@@ -212,19 +178,12 @@ impl Discussion {
 
             if let Some(_) = match_keyword(user, "others", 6) {
                 if self.is_public.load(Ordering::Relaxed) {
-                    session
-                        .output(&format!("Discussion {disc} is already public.\n"))
-                        .await;
+                    session.output(&format!("Discussion {disc} is already public.\n")).await;
                 } else {
                     self.is_public.store(true, Ordering::Relaxed);
-                    let notification = Arc::new(PublicNotify::new(
-                        self.name.clone(),
-                        session.name_obj().await,
-                    ));
+                    let notification = Arc::new(PublicNotify::new(self.name.clone(), session.name_obj().await));
                     self.enqueue_others(notification, &session).await;
-                    session
-                        .output(&format!("You have made discussion {disc} public.\n"))
-                        .await;
+                    session.output(&format!("You have made discussion {disc} public.\n")).await;
                 }
             } else {
                 let (found_session, matches) = session.find_session(user).await;
@@ -238,28 +197,14 @@ impl Discussion {
                     if self.is_public.load(Ordering::Relaxed) {
                         if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             denied.retain(|n| !n.name.eq_ignore_ascii_case(&name));
-                            let notification = Arc::new(PermitNotify::new(
-                                self.name.clone(),
-                                true,
-                                name_obj,
-                                true,
-                            ));
+                            let notification = Arc::new(PermitNotify::new(self.name.clone(), true, name_obj, true));
                             self.enqueue_others(notification, &session).await;
-                            session
-                                .output(&format!(
-                                    "You have repermitted {name} to discussion {disc}.\n"
-                                ))
-                                .await;
+                            session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
                         } else if allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             session.output(&format!("{name} is already explicitly permitted to public discussion {disc}.\n")).await;
                         } else {
                             allowed.insert(name_obj.clone());
-                            let notification = Arc::new(PermitNotify::new(
-                                self.name.clone(),
-                                true,
-                                name_obj,
-                                false,
-                            ));
+                            let notification = Arc::new(PermitNotify::new(self.name.clone(), true, name_obj, false));
                             self.enqueue_others(notification, &session).await;
                             session.output(&format!("You have explicitly permitted {name} to public discussion {disc}.\n")).await;
                         }
@@ -267,38 +212,16 @@ impl Discussion {
                         if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
                             denied.retain(|n| !n.name.eq_ignore_ascii_case(&name));
                             allowed.insert(name_obj.clone());
-                            let notification = Arc::new(PermitNotify::new(
-                                self.name.clone(),
-                                false,
-                                name_obj,
-                                true,
-                            ));
+                            let notification = Arc::new(PermitNotify::new(self.name.clone(), false, name_obj, true));
                             self.enqueue_others(notification, &session).await;
-                            session
-                                .output(&format!(
-                                    "You have repermitted {name} to discussion {disc}.\n"
-                                ))
-                                .await;
+                            session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
                         } else if allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
-                            session
-                                .output(&format!(
-                                    "{name} is already permitted to discussion {disc}.\n"
-                                ))
-                                .await;
+                            session.output(&format!("{name} is already permitted to discussion {disc}.\n")).await;
                         } else {
                             allowed.insert(name_obj.clone());
-                            let notification = Arc::new(PermitNotify::new(
-                                self.name.clone(),
-                                false,
-                                name_obj,
-                                false,
-                            ));
+                            let notification = Arc::new(PermitNotify::new(self.name.clone(), false, name_obj, false));
                             self.enqueue_others(notification, &session).await;
-                            session
-                                .output(&format!(
-                                    "You have permitted {name} to discussion {disc}.\n"
-                                ))
-                                .await;
+                            session.output(&format!("You have permitted {name} to discussion {disc}.\n")).await;
                         }
                     }
                 } else {
@@ -312,9 +235,7 @@ impl Discussion {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
-            session
-                .output(&format!("You are not a moderator of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
 
@@ -334,26 +255,16 @@ impl Discussion {
                     // Add current members to allowed list.
                     for member in members.iter() {
                         let member_name = member.name().await;
-                        if !allowed
-                            .iter()
-                            .any(|n| n.name.eq_ignore_ascii_case(&member_name))
-                        {
+                        if !allowed.iter().any(|n| n.name.eq_ignore_ascii_case(&member_name)) {
                             allowed.insert(member.name_obj().await);
                         }
                     }
 
-                    let notification = Arc::new(PrivateNotify::new(
-                        self.name.clone(),
-                        session.name_obj().await,
-                    ));
+                    let notification = Arc::new(PrivateNotify::new(self.name.clone(), session.name_obj().await));
                     self.enqueue_others(notification, &session).await;
-                    session
-                        .output(&format!("You have made discussion {disc} private.\n"))
-                        .await;
+                    session.output(&format!("You have made discussion {disc} private.\n")).await;
                 } else {
-                    session
-                        .output(&format!("Discussion {disc} is already private.\n"))
-                        .await;
+                    session.output(&format!("Discussion {disc} is already private.\n")).await;
                 }
             } else {
                 let (found_session, matches) = session.find_session(user).await;
@@ -367,38 +278,19 @@ impl Discussion {
                         allowed.retain(|n| !n.name.eq_ignore_ascii_case(&name));
 
                         if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
-                            session
-                                .output(&format!(
-                                    "{name} is already depermitted from discussion {disc}.\n"
-                                ))
-                                .await;
+                            session.output(&format!("{name} is already depermitted from discussion {disc}.\n")).await;
                         } else {
                             denied.insert(name_obj.clone());
                             if members.contains(&s) {
                                 members.shift_remove(&s);
-                                let notification = Arc::new(DepermitNotify::new(
-                                    self.name.clone(),
-                                    true,
-                                    name_obj.clone(),
-                                    true,
-                                    Some(name_obj),
-                                ));
+                                let notification =
+                                    Arc::new(DepermitNotify::new(self.name.clone(), true, name_obj.clone(), true, Some(name_obj)));
                                 self.enqueue_others(notification, &session).await;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification = Arc::new(DepermitNotify::new(
-                                    self.name.clone(),
-                                    true,
-                                    name_obj,
-                                    true,
-                                    None,
-                                ));
+                                let notification = Arc::new(DepermitNotify::new(self.name.clone(), true, name_obj, true, None));
                                 self.enqueue_others(notification, &session).await;
-                                session
-                                    .output(&format!(
-                                        "You have depermitted {name} from discussion {disc}.\n"
-                                    ))
-                                    .await;
+                                session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         }
                     } else {
@@ -416,31 +308,17 @@ impl Discussion {
                                 self.enqueue_others(notification, &session).await;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification = Arc::new(DepermitNotify::new(
-                                    self.name.clone(),
-                                    false,
-                                    name_obj,
-                                    false,
-                                    None,
-                                ));
+                                let notification = Arc::new(DepermitNotify::new(self.name.clone(), false, name_obj, false, None));
                                 self.enqueue_others(notification, &session).await;
-                                session
-                                    .output(&format!(
-                                        "You have depermitted {name} from discussion {disc}.\n"
-                                    ))
-                                    .await;
+                                session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         } else if denied.iter().any(|n| n.name.eq_ignore_ascii_case(&name)) {
-                            session.output(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
+                            session
+                                .output(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n"))
+                                .await;
                         } else {
                             denied.insert(name_obj.clone());
-                            let notification = Arc::new(DepermitNotify::new(
-                                self.name.clone(),
-                                false,
-                                name_obj,
-                                true,
-                                None,
-                            ));
+                            let notification = Arc::new(DepermitNotify::new(self.name.clone(), false, name_obj, true, None));
                             self.enqueue_others(notification, &session).await;
                             session.output(&format!("You have explicitly depermitted {name} from discussion {disc}.\n")).await;
                         }
@@ -455,13 +333,8 @@ impl Discussion {
     pub async fn appoint(self: &Arc<Self>, session: Arc<Session>, args: &str) {
         let disc = &self.name;
 
-        if !(self.is_creator(&session).await
-            || self.is_moderator(&session).await.is_some()
-            || session.priv_level().await >= 50)
-        {
-            session
-                .output(&format!("You are not a moderator of discussion {disc}.\n"))
-                .await;
+        if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some() || session.priv_level().await >= 50) {
+            session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
 
@@ -471,11 +344,7 @@ impl Discussion {
             remaining = rest;
 
             // Handle appointments - would need FindSession implementation
-            session
-                .output(&format!(
-                    "Appointment handling for '{user}' not yet implemented.\n"
-                ))
-                .await;
+            session.output(&format!("Appointment handling for '{user}' not yet implemented.\n")).await;
         }
     }
 
@@ -483,9 +352,7 @@ impl Discussion {
         let disc = &self.name;
 
         if !(self.is_creator(&session).await || self.is_moderator(&session).await.is_some()) {
-            session
-                .output(&format!("You are not a moderator of discussion {disc}.\n"))
-                .await;
+            session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
 
@@ -495,11 +362,7 @@ impl Discussion {
             remaining = rest;
 
             // Handle unappointments - would need FindSession implementation
-            session
-                .output(&format!(
-                    "Unappointment handling for '{user}' not yet implemented.\n"
-                ))
-                .await;
+            session.output(&format!("Unappointment handling for '{user}' not yet implemented.\n")).await;
         }
     }
 }
