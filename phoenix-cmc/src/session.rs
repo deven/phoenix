@@ -593,7 +593,7 @@ impl Session {
 
         // Quit all discussions silently
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|r| r.key().clone()).collect();
-        for key in disc_keys {
+        for key in &disc_keys {
             if let Some(disc) = DISCUSSIONS.get(&key) {
                 disc.quit(self.clone()).await;
             }
@@ -670,12 +670,12 @@ impl Session {
     }
 
     pub async fn announce(message: &str) {
-        for session in SESSIONS.iter() {
+        for session in &SESSIONS {
             session.output(message).await;
             session.enqueue_output().await;
         }
 
-        for session in INITS.iter() {
+        for session in &INITS {
             session.output(message).await;
             session.enqueue_output().await;
         }
@@ -713,7 +713,7 @@ impl Session {
     }
 
     pub async fn enqueue_others(self: &Arc<Self>, out: Arc<dyn OutputObj>) {
-        for session in SESSIONS.iter() {
+        for session in &SESSIONS {
             if session.id != self.id {
                 session.enqueue(out.clone()).await;
             }
@@ -753,7 +753,7 @@ impl Session {
                 return (session, session_matches, discussion, discussion_matches);
             }
 
-            for s in SESSIONS.iter() {
+            for s in &SESSIONS {
                 let s_name = s.name().await;
                 if s_name.eq_ignore_ascii_case(sendlist) {
                     session = Some(s.clone());
@@ -770,7 +770,7 @@ impl Session {
         }
 
         if do_discussions {
-            for d in DISCUSSIONS.iter() {
+            for d in &DISCUSSIONS {
                 if member {
                     let members = d.members.read().await;
                     if !members.contains(&self.clone()) {
@@ -2043,7 +2043,7 @@ impl Session {
         let mut detached = 0;
         let mut total = 0;
 
-        for session in SESSIONS.iter() {
+        for session in &SESSIONS {
             match *session.away.read().await {
                 AwayState::Here => here += 1,
                 AwayState::Away => away += 1,
@@ -2100,7 +2100,7 @@ impl Session {
 
         let now = Timestamp::new();
 
-        for disc in discussions {
+        for disc in &discussions {
             let disc_name = disc.name.as_ref();
             self.output(" ").await;
             let name = if disc_name.len() > 15 {
@@ -3581,7 +3581,7 @@ impl Session {
 
         if args.is_empty() {
             // Show all sessions
-            for session in SESSIONS.iter() {
+            for session in &SESSIONS {
                 who.insert(session.value().clone());
             }
 
