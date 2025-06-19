@@ -1119,8 +1119,6 @@ impl Session {
     }
 
     pub async fn process_input(self: &Arc<Self>, line: &str) {
-        let line = line.trim_end();
-
         if line.starts_with('!') {
             let line = line[1..].trim();
             if self.priv_level().await < 50 {
