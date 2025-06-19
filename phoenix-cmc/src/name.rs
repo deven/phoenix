@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Name(ArcStr, usize);  // (formatted_text, name_length)
+pub struct Name(ArcStr, usize); // (formatted_text, name_length)
 
 impl Name {
     /// Create a new `Name` with blurb.
