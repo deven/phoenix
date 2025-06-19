@@ -180,6 +180,15 @@ impl Session {
         self.write().await.telnet = value;
     }
 
+    /// Return a single-character detached indicator.
+    pub async fn detached_indicator(self: &Arc<Self>) -> &str {
+        if self.read().await.telnet.is_some() {
+            " "
+        } else {
+            "~"
+        }
+    }
+
     /// Get the login timeout Tokio task `AbortHandle`, if any.
     #[framed]
     pub async fn login_timeout(&self) -> Option<AbortHandle> {
@@ -1607,12 +1616,9 @@ impl Session {
 
         // Output each user.
         for session in &who {
-            // Connection status indicator.
-            if session.telnet().await.is_some() {
-                self.output(" ").await;
-            } else {
-                self.output("~").await;
-            }
+            // Detached indicator.
+            let detached = session.detached_indicator().await;
+            self.output(detached).await;
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
@@ -1712,12 +1718,9 @@ impl Session {
 
         // Output each user.
         for session in &who {
-            // Connection status indicator.
-            if session.telnet().await.is_some() {
-                self.output(" ").await;
-            } else {
-                self.output("~").await;
-            }
+            // Detached indicator.
+            let detached = session.detached_indicator().await;
+            self.output(detached).await;
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
@@ -1821,12 +1824,9 @@ impl Session {
 
         // Output each user.
         for session in &who {
-            // Connection status indicator.
-            if session.telnet().await.is_some() {
-                self.output(" ").await;
-            } else {
-                self.output("~").await;
-            }
+            // Detached indicator.
+            let detached = session.detached_indicator().await;
+            self.output(detached).await;
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
