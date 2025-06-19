@@ -145,11 +145,12 @@ impl Ord for Timestamp {
     }
 }
 
-// Utility function to get system uptime if available
-pub fn system_uptime() -> Option<i64> {
+// Utility function to get system uptime if available.
+pub async fn system_uptime() -> Option<i64> {
     #[cfg(target_os = "linux")]
     {
-        std::fs::read_to_string("/proc/uptime")
+        tokio::fs::read_to_string("/proc/uptime")
+            .await
             .ok()
             .and_then(|content| {
                 content

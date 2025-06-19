@@ -2849,7 +2849,7 @@ impl Session {
                 self.output(".\n").await;
             } else if let Some(_) = match_keyword(var, "time_format", 11) {
                 self.output("Your time format is ").await;
-                if let Some(format) = self.sys_vars.read().await.get("time_format") {
+                if let Some(format) = self.get_sys_var("time_format").await {
                     match format.as_str() {
                         "verbose" => self.output("verbose.\n").await,
                         "both" => self.output("both verbose and terse.\n").await,
@@ -2858,26 +2858,20 @@ impl Session {
                     }
                 } else {
                     self.output("the default: ").await;
-                    let default = DEFAULTS
-                        .read()
-                        .await
-                        .get("time_format")
-                        .cloned()
-                        .unwrap_or_else(|| "verbose".to_string());
-                    match default.as_str() {
-                        "verbose" => self.output("verbose.\n").await,
-                        "both" => self.output("both verbose and terse.\n").await,
-                        "terse" => self.output("terse.\n").await,
-                        _ => self.output("unknown.\n").await,
+                    match DEFAULTS.read().await.get("time_format").map(|s| s.as_str()) {
+                        Some("verbose") => self.output("verbose.\n").await,
+                        Some("both") => self.output("both verbose and terse.\n").await,
+                        Some("terse") => self.output("terse.\n").await,
+                        _ => self.output("verbose.\n").await,
                     }
                 }
             } else if let Some(_) = match_keyword(var, "uptime", 6) {
-                let uptime = if let Some(system) = system_uptime() {
-                    // TODO: Use actual server start time
-                    system / 60
+                let uptime = if let Some(system_up) = system_uptime() {
+                    // TODO: Replace with actual server start uptime when available
+                    system_up / 60
                 } else {
                     let now = Timestamp::new();
-                    // TODO: Use actual server start time
+                    // TODO: Replace with actual server start time when available
                     (now.unix() / 60) as i64
                 };
 
@@ -2885,10 +2879,10 @@ impl Session {
                 self.print_time_long(uptime as i32).await;
                 self.output(".\n").await;
 
-                if let Some(system) = system_uptime() {
-                    let system = system / 60;
+                if let Some(system_up) = system_uptime() {
+                    let system_minutes = system_up / 60;
                     self.output("(This machine has been running for").await;
-                    self.print_time_long(system as i32).await;
+                    self.print_time_long(system_minutes as i32).await;
                     self.output(".)\n").await;
                 }
             } else if let Some(_) = match_keyword(var, "version", 7) {
