@@ -1565,6 +1565,7 @@ impl Session {
     }
 
     pub async fn do_who(self: &Arc<Self>, args: &str) {
+        // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
             if !errors.is_empty() {
@@ -1574,42 +1575,74 @@ impl Session {
             return;
         }
 
-        // TODO: Implement full /who display
-        self.output("\n Name                              On Since  Idle  Away\n")
-            .await;
-        self.output(" ----                              --------  ----  ----\n")
-            .await;
-
         let now = Timestamp::new();
-        for session in who {
-            if session.telnet.read().await.is_some() {
+        let mut extend = 0;
+
+        // Find longest idle time for formatting.
+        for session in &who {
+            let days = (now - session.idle_since().await) / 86400;
+            if days == 0 {
+                continue;
+            }
+
+            let mut width = days.to_string().len();
+            if session.telnet().await.is_none() || (now - session.login_time().await) >= 31536000 {
+                width += 1;
+            }
+            if width > extend {
+                extend = width;
+            }
+        }
+
+        // Output header.
+        let spaces = " ".repeat(extend);
+        let head1 = " Name                              On Since";
+        let line1 = " ----                              --------";
+        let head2 = "  Idle  Away";
+        let line2 = "  ----  ----";
+        self.output(&format!(
+            "\n{head1}{spaces}{head2}\n{line1}{spaces}{line2}\n"
+        ))
+        .await;
+
+        // Output each user.
+        for session in &who {
+            // Connection status indicator.
+            if session.telnet().await.is_some() {
                 self.output(" ").await;
             } else {
                 self.output("~").await;
             }
 
-            let name = session.name_blurb().await;
-            if name.len() > 33 {
-                self.output(&format!("{name:<32.32}+ ")).await;
+            // Name and blurb.
+            let name_blurb = session.name_blurb().await;
+            let display = name_blurb.to_string();
+
+            if display.len() > 33 {
+                self.output(&format!("{display:<32.32}+ ")).await;
             } else {
-                self.output(&format!("{name:<33} ")).await;
+                self.output(&format!("{display:<33} ")).await;
             }
 
-            // Login time
-            let login_time = session.login_time.read().await;
-            if (now - *login_time) < 86400 {
-                self.output(&login_time.date(11, 8)).await;
-            } else if (now - *login_time) < 31536000 {
-                self.output(" ").await;
-                self.output(&login_time.date(4, 6)).await;
-                self.output(" ").await;
+            // Login time or "detached".
+            if session.telnet().await.is_some() {
+                let login_time = session.login_time().await;
+                if (now - login_time) < 86400 {
+                    self.output(&login_time.date(11, 8)).await;
+                } else if (now - login_time) < 31536000 {
+                    self.output(" ").await;
+                    self.output(&login_time.date(4, 6)).await;
+                    self.output(" ").await;
+                } else {
+                    self.output(&login_time.date(4, 4)).await;
+                    self.output(&login_time.date(20, 4)).await;
+                }
             } else {
-                self.output(&login_time.date(4, 4)).await;
-                self.output(&login_time.date(20, 4)).await;
+                self.output("detached").await;
             }
 
-            // Idle time
-            let idle = (now - *session.idle_since.read().await) / 60;
+            // Idle time.
+            let idle = (now - session.idle_since().await) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1617,26 +1650,35 @@ impl Session {
                 let hours = hours % 24;
 
                 if days > 0 {
-                    self.output(&format!(" {days:>2}d{hours:02}:{minutes:02}  "))
+                    self.output(&format!("{days:>extend$}d{hours:02}:{minutes:02}  "))
                         .await;
                 } else if hours > 0 {
-                    self.output(&format!("    {hours:>2}:{minutes:02}  ")).await;
+                    let width = extend + 3;
+                    self.output(&format!("{hours:>width$}:{minutes:02}  "))
+                        .await;
                 } else {
-                    self.output(&format!("       {minutes:>2}  ")).await;
+                    let width = extend + 6;
+                    self.output(&format!("{minutes:>width$}  ")).await;
                 }
             } else {
-                self.output("           ").await;
+                self.output(" ".repeat(extend + 8)).await;
             }
 
-            // Away state
-            match *session.away.read().await {
+            // Away state.
+            match session.away_state().await {
                 AwayState::Here => self.output("Here\n").await,
                 AwayState::Away => self.output("Away\n").await,
                 AwayState::Busy => self.output("Busy\n").await,
                 AwayState::Gone => self.output("Gone\n").await,
             }
+
+            // Show continuation of long name if only one user.
+            if display.len() > 33 && who.len() == 1 {
+                self.output(&format!(">{}\n", &display[32..])).await;
+            }
         }
 
+        // Output message and errors from get_who_set().
         self.output(&msg).await;
         if !errors.is_empty() {
             self.output("\x07\x07").await;
@@ -1645,6 +1687,7 @@ impl Session {
     }
 
     pub async fn do_idle(self: &Arc<Self>, args: &str) {
+        // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
             if !errors.is_empty() {
@@ -1654,34 +1697,40 @@ impl Session {
             return;
         }
 
-        if who.len() == 1 {
-            self.output("\n Name                              Idle\n")
-                .await;
-            self.output(" ----                              ----\n")
-                .await;
-        } else {
-            self.output("\n Name                              Idle  Name                              Idle\n").await;
-            self.output(
-                " ----                              ----  ----                              ----\n",
-            )
-            .await;
-        }
-
         let now = Timestamp::new();
         let mut col = 0;
 
-        for session in who {
-            if session.telnet.read().await.is_some() {
+        // Output header.
+        let head = " Name                              Idle";
+        let line = " ----                              ----";
+        if who.len() == 1 {
+            self.output(&format!("\n{head}\n{line}\n")).await;
+        } else {
+            self.output(&format!("\n{head} {head}\n{line} {line}\n"))
+                .await;
+        }
+
+        // Output each user.
+        for session in &who {
+            // Connection status indicator.
+            if session.telnet().await.is_some() {
                 self.output(" ").await;
             } else {
                 self.output("~").await;
             }
 
-            let name = session.name_blurb().await;
-            let plus = if name.len() > 32 { "+" } else { " " };
-            self.output(&format!("{name:<32.32}{plus} ")).await;
+            // Name and blurb.
+            let name_blurb = session.name_blurb().await;
+            let display = name_blurb.to_string();
 
-            let idle = (now - *session.idle_since.read().await) / 60;
+            if display.len() > 33 {
+                self.output(&format!("{display:<32.32}+ ")).await;
+            } else {
+                self.output(&format!("{display:<33} ")).await;
+            }
+
+            // Idle time.
+            let idle = (now - session.idle_since().await) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1701,18 +1750,21 @@ impl Session {
                 self.output("     ").await;
             }
 
-            if col == 1 {
-                self.output("\n").await;
+            // Column handling.
+            if col == 0 && who.len() > 1 {
+                self.output("  ").await;
             } else {
-                self.output(" ").await;
+                self.output("\n").await;
             }
             col = 1 - col;
         }
 
+        // Output newline if last line has only one column.
         if col == 1 {
             self.output("\n").await;
         }
 
+        // Output message and errors from get_who_set().
         self.output(&msg).await;
         if !errors.is_empty() {
             self.output("\x07\x07").await;
@@ -1721,13 +1773,148 @@ impl Session {
     }
 
     pub async fn do_why(self: &Arc<Self>, args: &str) {
+        // This is a privileged command.
         if self.priv_level().await < 50 {
             self.output("Why not?\n").await;
             return;
         }
 
-        // TODO: Implement privileged /why command
-        self.do_who(args).await;
+        // Get set of users to display.
+        let (who, errors, msg) = self.get_who_set(args).await;
+        if who.is_empty() {
+            if !errors.is_empty() {
+                self.output("\x07\x07").await;
+                self.output(&errors).await;
+            }
+            return;
+        }
+
+        let now = Timestamp::new();
+        let mut extend = 0;
+
+        // Find longest idle time for formatting.
+        for session in &who {
+            let days = (now - session.idle_since().await) / 86400;
+            if days == 0 {
+                continue;
+            }
+
+            let mut width = days.to_string().len();
+            if (now - session.login_time().await) >= 31536000 {
+                width += 1;
+            }
+            if width > extend {
+                extend = width;
+            }
+        }
+
+        // Output header.
+        let spaces = " ".repeat(extend);
+        let head1 = " Name                              On Since";
+        let line1 = " ----                              --------";
+        let head2 = "  Idle  Away  User      FD  Priv";
+        let line2 = "  ----  ----  ----      --  ----";
+        self.output(&format!(
+            "\n{head1}{spaces}{head2}\n{line1}{spaces}{line2}\n"
+        ))
+        .await;
+
+        // Output each user.
+        for session in &who {
+            // Connection status indicator.
+            if session.telnet().await.is_some() {
+                self.output(" ").await;
+            } else {
+                self.output("~").await;
+            }
+
+            // Name and blurb.
+            let name_blurb = session.name_blurb().await;
+            let display = name_blurb.to_string();
+
+            if display.len() > 33 {
+                self.output(&format!("{display:<32.32}+ ")).await;
+            } else {
+                self.output(&format!("{display:<33} ")).await;
+            }
+
+            // Login time.
+            let login_time = session.login_time().await;
+            if (now - login_time) < 86400 {
+                self.output(&login_time.date(11, 8)).await;
+            } else if (now - login_time) < 31536000 {
+                self.output(" ").await;
+                self.output(&login_time.date(4, 6)).await;
+                self.output(" ").await;
+            } else {
+                self.output(&login_time.date(4, 4)).await;
+                self.output(&login_time.date(20, 4)).await;
+            }
+
+            // Idle time.
+            let idle = (now - session.idle_since().await) / 60;
+            if idle > 0 {
+                let hours = idle / 60;
+                let minutes = idle % 60;
+                let days = hours / 24;
+                let hours = hours % 24;
+
+                if days > 0 {
+                    self.output(&format!("{days:>extend$}d{hours:02}:{minutes:02}  "))
+                        .await;
+                } else if hours > 0 {
+                    let width = extend + 3;
+                    self.output(&format!("{hours:>width$}:{minutes:02}  "))
+                        .await;
+                } else {
+                    let width = extend + 6;
+                    self.output(&format!("{minutes:>width$}  ")).await;
+                }
+            } else {
+                self.output(" ".repeat(extend + 8)).await;
+            }
+
+            // Away state.
+            match session.away_state().await {
+                AwayState::Here => self.output("Here  ").await,
+                AwayState::Away => self.output("Away  ").await,
+                AwayState::Busy => self.output("Busy  ").await,
+                AwayState::Gone => self.output("Gone  ").await,
+            }
+
+            // Username.
+            if let Some(user) = session.user().await {
+                let username = user.username().await;
+                self.output(&format!("{username:<8}  ")).await;
+            } else {
+                self.output("guest     ").await;
+            }
+
+            // File descriptor.
+            if let Some(telnet) = session.telnet().await {
+                let fd = telnet.fd().await;
+                self.output(&format!("{fd:2} ")).await;
+            } else {
+                self.output("-- ").await;
+            }
+
+            // Privilege level.
+            let session_priv = session.priv_level().await;
+            let user_priv = if let Some(user) = session.user().await {
+                user.priv_level().await
+            } else {
+                0
+            };
+            let indicator = if session_priv == user_priv { " " } else { "*" };
+            self.output(&format!("{indicator}{session_priv:4}\n")).await;
+        }
+
+        // Output message and errors from get_who_set().
+        self.output(&msg).await;
+        if !errors.is_empty() {
+            self.output("\x07\x07").await;
+            self.output(&errors).await;
+        }
     }
 
     pub async fn do_blurb(self: &Arc<Self>, args: &str, entry: bool) {
