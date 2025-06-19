@@ -1,6 +1,6 @@
 use crate::session::Session;
 use crate::telnet::Telnet;
-use crate::types::ArcStr;
+use crate::text::Text;
 use anyhow::Result;
 use log::{error, info};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -91,11 +91,11 @@ impl PhoenixServer {
         Ok(())
     }
 
-    pub async fn schedule_restart(self: &Arc<Self>, who: ArcStr, seconds: u64) {
+    pub async fn schedule_restart(self: &Arc<Self>, who: Text, seconds: u64) {
         self.schedule_shutdown_or_restart(who, seconds, true).await;
     }
 
-    pub async fn schedule_shutdown(self: &Arc<Self>, who: ArcStr, seconds: u64) {
+    pub async fn schedule_shutdown(self: &Arc<Self>, who: Text, seconds: u64) {
         self.schedule_shutdown_or_restart(who, seconds, false).await;
     }
 
@@ -110,7 +110,7 @@ impl PhoenixServer {
         }
     }
 
-    pub async fn schedule_shutdown_or_restart(self: &Arc<Self>, who: ArcStr, seconds: u64, restart: bool) {
+    pub async fn schedule_shutdown_or_restart(self: &Arc<Self>, who: Text, seconds: u64, restart: bool) {
         // Cancel any existing shutdown
         self.cancel_shutdown().await;
 

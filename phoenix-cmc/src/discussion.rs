@@ -2,16 +2,17 @@ use crate::constants::COMMA;
 use crate::name::Name;
 use crate::output::*;
 use crate::session::Session;
+use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::types::{getword, match_keyword, ArcStr, OrderedSet};
+use crate::types::{getword, match_keyword, OrderedSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct Discussion {
-    pub name: ArcStr,
-    pub title: ArcStr,
+    pub name: Text,
+    pub title: Text,
     pub is_public: Arc<AtomicBool>,
     pub creator: Option<Arc<Name>>,
     pub members: Arc<RwLock<OrderedSet<Arc<Session>>>>,
@@ -25,8 +26,8 @@ pub struct Discussion {
 impl Discussion {
     pub async fn new(
         creator_session: Option<Arc<Session>>,
-        name: impl Into<ArcStr>,
-        title: impl Into<ArcStr>,
+        name: impl Into<Text>,
+        title: impl Into<Text>,
         is_public: bool,
     ) -> Arc<Self> {
         let name = name.into();

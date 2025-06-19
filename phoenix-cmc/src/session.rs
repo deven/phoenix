@@ -5,6 +5,7 @@ use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
 use crate::server::PhoenixServer;
 use crate::telnet::{Telnet, TELNET_ENABLED};
+use crate::text::Text;
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::types::*;
 use crate::user::{verify_password, User, UserManager};
@@ -25,9 +26,9 @@ static INITS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static SESSIONS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static DISCUSSIONS: LazyLock<DashMap<String, Arc<Discussion>>> = LazyLock::new(DashMap::new);
 static SESSION_COUNTER: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
-static DEFAULTS: LazyLock<RwLock<HashMap<ArcStr, ArcStr>>> = LazyLock::new(|| {
+static DEFAULTS: LazyLock<RwLock<HashMap<Text, Text>>> = LazyLock::new(|| {
     let mut map = HashMap::new();
-    map.insert(ArcStr::from("time_format"), ArcStr::from("verbose"));
+    map.insert(Text::from("time_format"), Text::from("verbose"));
     RwLock::new(map)
 });
 static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
@@ -50,8 +51,8 @@ where
     pub lines: VecDeque<String>,
     pub output_buffer: String,
     pub pending: OutputStream,
-    pub user_vars: HashMap<ArcStr, ArcStr>,
-    pub sys_vars: HashMap<ArcStr, ArcStr>,
+    pub user_vars: HashMap<Text, Text>,
+    pub sys_vars: HashMap<Text, Text>,
     pub login_time: Timestamp,
     pub idle_since: Timestamp,
     pub away: AwayState,
@@ -65,9 +66,9 @@ where
     pub last_message: Option<Arc<Message>>,
     pub default_sendlist: Option<Arc<Sendlist>>,
     pub last_sendlist: Option<Arc<Sendlist>>,
-    pub last_explicit: ArcStr,
-    pub reply_sendlist: ArcStr,
-    pub oops_text: ArcStr,
+    pub last_explicit: Text,
+    pub reply_sendlist: Text,
+    pub oops_text: Text,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -114,9 +115,9 @@ impl Session {
             last_message: None,
             default_sendlist: None,
             last_sendlist: None,
-            last_explicit: ArcStr::default(),
-            reply_sendlist: ArcStr::default(),
-            oops_text: ArcStr::from("Oops!  Sorry, that last message was intended for someone else..."),
+            last_explicit: Text::default(),
+            reply_sendlist: Text::default(),
+            oops_text: Text::from("Oops!  Sorry, that last message was intended for someone else..."),
         };
 
         let session = Session(Arc::new(RwLock::new(inner)));
@@ -267,7 +268,7 @@ impl Session {
 
     /// Get a user variable.
     #[framed]
-    pub async fn get_user_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+    pub async fn get_user_var(&self, key: impl AsRef<str>) -> Option<Text> {
         self.read().await.user_vars.get(key.as_ref()).clone()
     }
 
@@ -276,12 +277,12 @@ impl Session {
     pub async fn set_user_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
         let key: Arc<str> = key.into();
         let value: Arc<str> = value.into();
-        self.write().await.user_vars.insert(ArcStr(key), ArcStr(value));
+        self.write().await.user_vars.insert(Text(key), Text(value));
     }
 
     /// Remove a user variable.
     #[framed]
-    pub async fn remove_user_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+    pub async fn remove_user_var(&self, key: impl AsRef<str>) -> Option<Text> {
         self.write().await.user_vars.remove(key.as_ref())
     }
 
@@ -293,7 +294,7 @@ impl Session {
 
     /// Get a system variable.
     #[framed]
-    pub async fn get_sys_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+    pub async fn get_sys_var(&self, key: impl AsRef<str>) -> Option<Text> {
         self.read().await.sys_vars.get(key.as_ref()).clone()
     }
 
@@ -302,12 +303,12 @@ impl Session {
     pub async fn set_sys_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
         let key: Arc<str> = key.into();
         let value: Arc<str> = value.into();
-        self.write().await.sys_vars.insert(ArcStr(key), ArcStr(value));
+        self.write().await.sys_vars.insert(Text(key), Text(value));
     }
 
     /// Remove a system variable.
     #[framed]
-    pub async fn remove_sys_var(&self, key: impl AsRef<str>) -> Option<ArcStr> {
+    pub async fn remove_sys_var(&self, key: impl AsRef<str>) -> Option<Text> {
         self.write().await.sys_vars.remove(key)
     }
 
@@ -464,7 +465,7 @@ impl Session {
 
     /// Get the blurb, if any.
     #[framed]
-    pub async fn blurb(&self) -> Option<ArcStr> {
+    pub async fn blurb(&self) -> Option<Text> {
         self.read().await.name.blurb()
     }
 
@@ -529,7 +530,7 @@ impl Session {
 
     /// Get the last explicit sendlist.
     #[framed]
-    pub async fn last_explicit(&self) -> ArcStr {
+    pub async fn last_explicit(&self) -> Text {
         self.read().await.last_explicit.clone()
     }
 
@@ -537,12 +538,12 @@ impl Session {
     #[framed]
     pub async fn set_last_explicit(&self, value: impl Into<Arc<str>>) {
         let value: Arc<str> = value.into();
-        self.write().await.last_explicit = ArcStr(value);
+        self.write().await.last_explicit = Text(value);
     }
 
     /// Get the reply sendlist.
     #[framed]
-    pub async fn reply_sendlist(&self) -> ArcStr {
+    pub async fn reply_sendlist(&self) -> Text {
         self.read().await.reply_sendlist.clone()
     }
 
@@ -554,15 +555,15 @@ impl Session {
 
         // Quote if necessary
         if sendlist.chars().any(|c| c == ' ' || c == ',' || c == ':' || c == ';' || c == '_') {
-            inner.reply_sendlist = ArcStr::from(format!("\"{sendlist}\""));
+            inner.reply_sendlist = Text::from(format!("\"{sendlist}\""));
         } else {
-            inner.reply_sendlist = ArcStr(sendlist);
+            inner.reply_sendlist = Text(sendlist);
         }
     }
 
     /// Get the oops text.
     #[framed]
-    pub async fn oops_text(&self) -> ArcStr {
+    pub async fn oops_text(&self) -> Text {
         self.read().await.oops_text.clone()
     }
 
@@ -570,13 +571,13 @@ impl Session {
     #[framed]
     pub async fn set_oops_text(&self, value: impl Into<Arc<str>>) {
         let value: Arc<str> = value.into();
-        self.write().await.oops_text = ArcStr(value);
+        self.write().await.oops_text = Text(value);
     }
 
-    pub async fn name_user(self: &Arc<Self>) -> ArcStr {
+    pub async fn name_user(self: &Arc<Self>) -> Text {
         let name = self.name().await;
         let user_name = self.user_name().await;
-        ArcStr::from(format!("{name} ({user_name})"))
+        Text::from(format!("{name} ({user_name})"))
     }
 
     pub async fn close(&self, drain: bool) {
@@ -672,7 +673,7 @@ impl Session {
         }
     }
 
-    pub async fn remove_discussion(name: ArcStr) {
+    pub async fn remove_discussion(name: Text) {
         DISCUSSIONS.remove(&name.to_string());
     }
 
@@ -1035,7 +1036,7 @@ impl Session {
                 return;
             }
         } else {
-            ArcStr::new(line)
+            Text::new(line)
         };
 
         *self.name.write().await = name.clone();
