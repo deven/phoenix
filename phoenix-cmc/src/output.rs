@@ -16,19 +16,19 @@ pub trait OutputObj: Send + Sync {
 }
 
 #[derive(Debug, Clone)]
-pub struct Text {
+pub struct TextOutput {
     pub text: String,
     pub time: Timestamp,
 }
 
-impl Text {
+impl TextOutput {
     pub fn new(text: String) -> Self {
         Self { text, time: Timestamp::new() }
     }
 }
 
 #[async_trait]
-impl OutputObj for Text {
+impl OutputObj for TextOutput {
     fn output_type(&self) -> OutputType {
         OutputType::TextOutput
     }
