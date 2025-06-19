@@ -79,6 +79,15 @@ impl Name {
     pub fn as_str(&self) -> &str {
         self.name_blurb.as_str()
     }
+
+    /// Get the full formatted name with blurb, or "you" if name matches.
+    pub fn you(&self, name: &Name) -> &str {
+        if UniCase::new(self.name()) != UniCase::new(name.name()) {
+            self.name_blurb.as_str()
+        } else {
+            "you"
+        }
+    }
 }
 
 impl fmt::Display for Name {
