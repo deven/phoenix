@@ -1,14 +1,15 @@
-use crate::types::ArcStr;
+use crate::text::Text;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
+use unicase::UniCase;
 
 #[derive(Debug, Clone)]
 pub struct Name {
-    pub name_blurb: ArcStr,
+    pub name_blurb: Text,
     pub name_len: usize,
-    pub column_display: ArcStr,
+    pub column_display: Text,
 }
 
 impl Name {
@@ -16,38 +17,35 @@ impl Name {
     pub fn new(name: impl AsRef<str>, blurb: impl AsRef<str>) -> Self {
         let name = name.as_ref();
         let blurb = blurb.as_ref();
-
-        let name_blurb = ArcStr::from(format!("{name} [{blurb}]"));
-        let name_len = name.len();
-        let column_display = Self::format_column_display(name_blurb.as_str());
+        let name_blurb = Text::from(format!("{name} [{blurb}]"));
 
         Self {
             name_blurb,
-            name_len,
-            column_display,
+            name_len: name.len(),
+            column_display: Self::format_column_display(name_blurb.as_str()),
         }
     }
 
     /// Create a `Name` with no blurb.
     pub fn with_name_only(name: impl Into<Arc<str>>) -> Self {
-        let name_blurb = ArcStr(name.into());
+        let name: Arc<str> = name.into();
         let name_len = name.len();
-        let column_display = Self::format_column_display(name_blurb.as_str());
+        let name_blurb = Text::from(name);
 
         Self {
             name_blurb,
             name_len,
-            column_display,
+            column_display: Self::format_column_display(name_blurb.as_str()),
         }
     }
 
     /// Format the name and blurb for column display.
     #[inline]
-    fn format_column_display(name_blurb: &str) -> ArcStr {
+    fn format_column_display(name_blurb: &str) -> Text {
         if name_blurb.len() > 33 {
-            ArcStr::from(format!("{name_blurb:<32.32}+ "))
+            Text::from(format!("{name_blurb:<32.32}+ "))
         } else {
-            ArcStr::from(format!("{name_blurb:<33} "))
+            Text::from(format!("{name_blurb:<33} "))
         }
     }
 
@@ -59,8 +57,8 @@ impl Name {
     /// Get just the blurb, if any.
     pub fn blurb(&self) -> Option<&str> {
         if self.name_blurb.len() > self.name_len {
-            let start = self.name_len + 2;
-            let end = self.name_blurb.len() - 1;
+            let start = self.name_len + 2; // skip name and " ["
+            let end = self.name_blurb.len() - 1; // drop trailing ']'
             Some(&self.name_blurb[start..end])
         } else {
             None
@@ -73,12 +71,12 @@ impl Name {
     }
 
     /// Get the full formatted name with blurb.
-    pub fn name_blurb(&self) -> &ArcStr {
+    pub fn name_blurb(&self) -> &Text {
         &self.name_blurb
     }
 
     /// Get the name and blurb formatted for column display.
-    pub fn column_display(&self) -> &ArcStr {
+    pub fn column_display(&self) -> &Text {
         &self.column_display
     }
 
@@ -94,15 +92,23 @@ impl fmt::Display for Name {
     }
 }
 
+impl PartialEq for Name {
+    fn eq(&self, other: &Self) -> bool {
+        UniCase::new(self.name()) == UniCase::new(other.name())
+    }
+}
+
+impl Eq for Name {}
+
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name().to_lowercase().hash(state);
+        UniCase::new(self.name()).hash(state);
     }
 }
 
 impl AsRef<str> for Name {
     fn as_ref(&self) -> &str {
-        &self
+        self.as_str()
     }
 }
 
@@ -113,11 +119,3 @@ impl Deref for Name {
         self.name_blurb.as_str()
     }
 }
-
-impl PartialEq for Name {
-    fn eq(&self, other: &Self) -> bool {
-        self.name().eq_ignore_ascii_case(other.name())
-    }
-}
-
-impl Eq for Name {}
