@@ -449,7 +449,7 @@ impl Session {
 
     /// Get the `Name` object.
     #[framed]
-    pub async fn name_blurb(&self) -> Arc<Name> {
+    pub async fn name(&self) -> Arc<Name> {
         self.read().await.name.clone()
     }
 
@@ -634,7 +634,7 @@ impl Session {
             old.close(true).await;
         }
 
-        self.enqueue_others(Arc::new(TransferNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(TransferNotify::new(self.name().await)))
             .await;
         self.pending.attach(new_telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
@@ -648,7 +648,7 @@ impl Session {
         let who = self.name_user().await;
         info!("Attach: {who} on new connection");
 
-        self.enqueue_others(Arc::new(AttachNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(AttachNotify::new(self.name().await)))
             .await;
         self.pending.attach(telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
@@ -666,11 +666,8 @@ impl Session {
                     info!("Detach: {who} (accidental)");
                 };
 
-                self.enqueue_others(Arc::new(DetachNotify::new(
-                    self.name_blurb().await,
-                    intentional,
-                )))
-                .await;
+                self.enqueue_others(Arc::new(DetachNotify::new(self.name().await, intentional)))
+                    .await;
                 *self.telnet.write().await = None;
             }
         } else {
@@ -852,7 +849,7 @@ impl Session {
         *self.idle_since.write().await = now;
         *self.login_time.write().await = now;
 
-        self.enqueue_others(Arc::new(EntryNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(EntryNotify::new(self.name().await)))
             .await;
     }
 
@@ -864,7 +861,7 @@ impl Session {
             info!("Exit: {who}, detached");
         }
 
-        self.enqueue_others(Arc::new(ExitNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(ExitNotify::new(self.name().await)))
             .await;
     }
 
@@ -1454,7 +1451,7 @@ impl Session {
 
     pub async fn do_restart(self: &Arc<Self>, args: &str) {
         let who = self.name_user().await;
-        let name = self.name_blurb().await;
+        let name = self.name().await;
 
         if args == "!" {
             // Immediate restart
@@ -1492,7 +1489,7 @@ impl Session {
 
     pub async fn do_down(self: &Arc<Self>, args: &str) {
         let who = self.name_user().await;
-        let name = self.name_blurb().await;
+        let name = self.name().await;
 
         if args == "!" {
             // Immediate shutdown
@@ -1537,7 +1534,7 @@ impl Session {
                 let who = target.name_user().await;
                 let name = target.name().await;
                 let by_who = self.name_user().await;
-                let by_name = self.name_blurb().await;
+                let by_name = self.name().await;
 
                 if drain {
                     self.output(&format!("\"{name}\" has been nuked.\n")).await;
@@ -1621,8 +1618,8 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name_blurb = session.name_blurb().await;
-            self.output(name_blurb.column_display()).await;
+            let name = session.name().await;
+            self.output(name.column_display()).await;
 
             // Login time or "detached".
             if session.telnet().await.is_some() {
@@ -1717,8 +1714,8 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name_blurb = session.name_blurb().await;
-            self.output(name_blurb.column_display()).await;
+            let name = session.name().await;
+            self.output(name.column_display()).await;
 
             // Idle time.
             let idle = (now - session.idle_since().await) / 60;
@@ -1817,8 +1814,8 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name_blurb = session.name_blurb().await;
-            self.output(name_blurb.column_display()).await;
+            let name = session.name().await;
+            self.output(name.column_display()).await;
 
             // Login time.
             let login_time = session.login_time().await;
@@ -1952,7 +1949,7 @@ impl Session {
         }
         self.output("You are now \"here\".\n").await;
         *self.away.write().await = AwayState::Here;
-        self.enqueue_others(Arc::new(HereNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(HereNotify::new(self.name().await)))
             .await;
     }
 
@@ -1963,7 +1960,7 @@ impl Session {
         }
         self.output("You are now \"away\".\n").await;
         *self.away.write().await = AwayState::Away;
-        self.enqueue_others(Arc::new(AwayNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(AwayNotify::new(self.name().await)))
             .await;
     }
 
@@ -1974,7 +1971,7 @@ impl Session {
         }
         self.output("You are now \"busy\".\n").await;
         *self.away.write().await = AwayState::Busy;
-        self.enqueue_others(Arc::new(BusyNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(BusyNotify::new(self.name().await)))
             .await;
     }
 
@@ -1985,7 +1982,7 @@ impl Session {
         }
         self.output("You are now \"gone\".\n").await;
         *self.away.write().await = AwayState::Gone;
-        self.enqueue_others(Arc::new(GoneNotify::new(self.name_blurb().await)))
+        self.enqueue_others(Arc::new(GoneNotify::new(self.name().await)))
             .await;
     }
 
@@ -2425,7 +2422,7 @@ impl Session {
             disc.name.clone(),
             disc.title.clone(),
             disc.is_public.load(Ordering::Relaxed),
-            self.name_blurb().await,
+            self.name().await,
         )))
         .await;
 
@@ -2574,8 +2571,7 @@ impl Session {
 
         self.output(&format!("You have changed your name to \"{args}\".\n"))
             .await;
-        *self.name.write().await = ArcStr::new(args);
-        *self.name_blurb.write().await = Name::new(args, self.blurb().await);
+        *self.name.write().await = Name::new(args, self.blurb().await);
     }
 
     pub async fn do_set(self: &Arc<Self>, args: &str) {
@@ -3529,7 +3525,7 @@ impl Session {
 
         let msg = Arc::new(Message::new(
             output_type,
-            self.name_blurb().await,
+            self.name().await,
             sendlist.clone(),
             text,
         ));
