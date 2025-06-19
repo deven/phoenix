@@ -199,18 +199,8 @@ impl Telnet {
 
     pub async fn init_telnet_options(self: &Arc<Self>) {
         // Test TIMING-MARK option before sending initial option negotiations
-        self.command(&[
-            TelnetCommand::IAC as u8,
-            TelnetCommand::Do as u8,
-            TelnetOption::TimingMark as u8,
-        ])
-        .await;
-        self.command(&[
-            TelnetCommand::IAC as u8,
-            TelnetCommand::Do as u8,
-            TelnetOption::TimingMark as u8,
-        ])
-        .await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
 
         // Start initial options negotiations
         self.set_lsga(true).await;
@@ -313,17 +303,9 @@ impl Telnet {
 
     pub async fn set_echo(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Will as u8,
-                TelnetOption::Echo as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Wont as u8,
-                TelnetOption::Echo as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]
         };
         self.command(&cmd).await;
 
@@ -337,17 +319,9 @@ impl Telnet {
 
     pub async fn set_lsga(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Will as u8,
-                TelnetOption::SuppressGoAhead as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Wont as u8,
-                TelnetOption::SuppressGoAhead as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]
         };
         self.command(&cmd).await;
 
@@ -361,17 +335,9 @@ impl Telnet {
 
     pub async fn set_rsga(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Do as u8,
-                TelnetOption::SuppressGoAhead as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Dont as u8,
-                TelnetOption::SuppressGoAhead as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]
         };
         self.command(&cmd).await;
 
@@ -385,17 +351,9 @@ impl Telnet {
 
     pub async fn set_lbin(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Will as u8,
-                TelnetOption::TransmitBinary as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Wont as u8,
-                TelnetOption::TransmitBinary as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]
         };
         self.command(&cmd).await;
 
@@ -409,17 +367,9 @@ impl Telnet {
 
     pub async fn set_rbin(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Do as u8,
-                TelnetOption::TransmitBinary as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Dont as u8,
-                TelnetOption::TransmitBinary as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]
         };
         self.command(&cmd).await;
 
@@ -433,17 +383,9 @@ impl Telnet {
 
     pub async fn set_naws(self: &Arc<Self>, enabled: bool) {
         let cmd = if enabled {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Do as u8,
-                TelnetOption::NAWS as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]
         } else {
-            [
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Dont as u8,
-                TelnetOption::NAWS as u8,
-            ]
+            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]
         };
         self.command(&cmd).await;
 
@@ -527,22 +469,16 @@ impl Telnet {
                 for &byte in &data {
                     match byte {
                         x if x == TelnetCommand::IAC as u8 => {
-                            self.output_buffer.lock().await.extend_from_slice(&[
-                                TelnetCommand::IAC as u8,
-                                TelnetCommand::IAC as u8,
-                            ]);
+                            self.output_buffer
+                                .lock()
+                                .await
+                                .extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                         }
                         RETURN => {
-                            self.output_buffer
-                                .lock()
-                                .await
-                                .extend_from_slice(&[RETURN, NULL]);
+                            self.output_buffer.lock().await.extend_from_slice(&[RETURN, NULL]);
                         }
                         NEWLINE => {
-                            self.output_buffer
-                                .lock()
-                                .await
-                                .extend_from_slice(&[RETURN, NEWLINE]);
+                            self.output_buffer.lock().await.extend_from_slice(&[RETURN, NEWLINE]);
                         }
                         _ => {
                             self.output_buffer.lock().await.extend_from_slice(&[byte]);
@@ -604,8 +540,7 @@ impl Telnet {
                 if session.signal_public().await {
                     self.output(BELL_STR).await;
                 }
-                self.output(&format!("\n -> From {from_name}{from_blurb} to everyone:"))
-                    .await;
+                self.output(&format!("\n -> From {from_name}{from_blurb} to everyone:")).await;
             }
             OutputType::PrivateMessage => {
                 // Save name to reply to
@@ -719,11 +654,7 @@ impl Telnet {
                 remaining = &remaining[wrap + 1..].trim_start();
             } else {
                 // No space found, break at column limit
-                let end = remaining
-                    .char_indices()
-                    .nth((width - 4).saturating_sub(1))
-                    .map(|(i, _)| i)
-                    .unwrap_or(remaining.len());
+                let end = remaining.char_indices().nth((width - 4).saturating_sub(1)).map(|(i, _)| i).unwrap_or(remaining.len());
                 self.output(&remaining[..end]).await;
                 remaining = &remaining[end..];
             }
@@ -944,11 +875,7 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_will_wont(
-        self: &Arc<Self>,
-        state: TelnetState,
-        byte: u8,
-    ) -> tokio::io::Result<()> {
+    pub async fn process_will_wont(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         use TelnetOption::*;
 
         match byte {
@@ -958,8 +885,7 @@ impl Telnet {
                     *rbin |= TELNET_WILL_WONT;
                     if (*rbin & TELNET_DO_DONT) == 0 {
                         *rbin |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
 
                         // Me too!
                         if *self.lbin.read().await == 0 {
@@ -970,8 +896,7 @@ impl Telnet {
                     *rbin &= !TELNET_WILL_WONT;
                     if (*rbin & TELNET_DO_DONT) != 0 {
                         *rbin &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
             }
@@ -981,8 +906,7 @@ impl Telnet {
                     *rsga |= TELNET_WILL_WONT;
                     if (*rsga & TELNET_DO_DONT) == 0 {
                         *rsga |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
 
                         // Me too!
                         if *self.lsga.read().await == 0 {
@@ -993,8 +917,7 @@ impl Telnet {
                     *rsga &= !TELNET_WILL_WONT;
                     if (*rsga & TELNET_DO_DONT) != 0 {
                         *rsga &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
             }
@@ -1004,15 +927,13 @@ impl Telnet {
                     *naws |= TELNET_WILL_WONT;
                     if (*naws & TELNET_DO_DONT) == 0 {
                         *naws |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
                     }
                 } else {
                     *naws &= !TELNET_WILL_WONT;
                     if (*naws & TELNET_DO_DONT) != 0 {
                         *naws &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
             }
@@ -1033,8 +954,7 @@ impl Telnet {
             _ => {
                 // Don't know this option, refuse it
                 if matches!(state, TelnetState::Will) {
-                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, byte])
-                        .await;
+                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, byte]).await;
                 }
             }
         }
@@ -1043,11 +963,7 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_do_dont(
-        self: &Arc<Self>,
-        state: TelnetState,
-        byte: u8,
-    ) -> tokio::io::Result<()> {
+    pub async fn process_do_dont(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         use TelnetOption::*;
 
         match byte {
@@ -1057,8 +973,7 @@ impl Telnet {
                     *lbin |= TELNET_DO_DONT;
                     if (*lbin & TELNET_WILL_WONT) == 0 {
                         *lbin |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
 
                         // You can too
                         if *self.rbin.read().await == 0 {
@@ -1069,8 +984,7 @@ impl Telnet {
                     *lbin &= !TELNET_DO_DONT;
                     if (*lbin & TELNET_WILL_WONT) != 0 {
                         *lbin &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
             }
@@ -1080,15 +994,13 @@ impl Telnet {
                     *echo |= TELNET_DO_DONT;
                     if (*echo & TELNET_WILL_WONT) == 0 {
                         *echo |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
                     }
                 } else {
                     *echo &= !TELNET_DO_DONT;
                     if (*echo & TELNET_WILL_WONT) != 0 {
                         *echo &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
             }
@@ -1098,8 +1010,7 @@ impl Telnet {
                     *lsga |= TELNET_DO_DONT;
                     if (*lsga & TELNET_WILL_WONT) == 0 {
                         *lsga |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
 
                         // You can too
                         if *self.rsga.read().await == 0 {
@@ -1110,16 +1021,14 @@ impl Telnet {
                     *lsga &= !TELNET_DO_DONT;
                     if (*lsga & TELNET_WILL_WONT) != 0 {
                         *lsga &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x])
-                            .await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
             }
             _ => {
                 // Don't know this option, refuse it
                 if matches!(state, TelnetState::Do) {
-                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, byte])
-                        .await;
+                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, byte]).await;
                 }
             }
         }
@@ -1128,11 +1037,7 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_subnegotiation(
-        self: &Arc<Self>,
-        state: TelnetState,
-        byte: u8,
-    ) -> tokio::io::Result<()> {
+    pub async fn process_subnegotiation(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         if matches!(state, TelnetState::Subnegotiation) && byte == TelnetCommand::IAC as u8 {
             *self.state.write().await = TelnetState::SubnegotiationEnd;
             return Ok(());
@@ -1268,11 +1173,7 @@ impl Telnet {
         Ok(())
     }
 
-    pub async fn process_compose(
-        self: &Arc<Self>,
-        state: TelnetState,
-        byte: u8,
-    ) -> tokio::io::Result<()> {
+    pub async fn process_compose(self: &Arc<Self>, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         let mut new_state = TelnetState::Data;
 
         match state {
@@ -1617,10 +1518,7 @@ impl Telnet {
                         self.output("\r\n\x1b[@").await;
                         wrap += width;
                         if wrap < data.len() {
-                            self.output_buffer
-                                .lock()
-                                .await
-                                .extend_from_slice(&data[wrap..=wrap]);
+                            self.output_buffer.lock().await.extend_from_slice(&data[wrap..=wrap]);
                         } else {
                             self.output(" ").await;
                         }
@@ -1641,10 +1539,7 @@ impl Telnet {
 
                     if (prompt_len + *point) % width == 0 {
                         if *point < data.len() {
-                            self.output_buffer
-                                .lock()
-                                .await
-                                .extend_from_slice(&data[*point..=*point]);
+                            self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
                             self.output("\x08").await;
                         }
                     }
@@ -1681,10 +1576,7 @@ impl Telnet {
                     self.output(&format!("\r\x1b[{cols}C")).await;
                     wrap += width;
                     if wrap < data.len() {
-                        self.output_buffer
-                            .lock()
-                            .await
-                            .extend_from_slice(&data[wrap..=wrap]);
+                        self.output_buffer.lock().await.extend_from_slice(&data[wrap..=wrap]);
                     } else {
                         self.output(" ").await;
                     }
@@ -1785,10 +1677,7 @@ impl Telnet {
         let do_echo = *self.do_echo.read().await;
         if echo == TELNET_ENABLED && do_echo {
             self.output("\x08").await;
-            self.output_buffer
-                .lock()
-                .await
-                .extend_from_slice(&data[point_val - 1..=point_val]);
+            self.output_buffer.lock().await.extend_from_slice(&data[point_val - 1..=point_val]);
         }
 
         *point += 1;
@@ -1797,10 +1686,7 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1909,10 +1795,7 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1922,10 +1805,7 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1954,10 +1834,7 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -1967,10 +1844,7 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
@@ -1999,10 +1873,7 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -2015,10 +1886,7 @@ impl Telnet {
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
             }
 
             *point += 1;
@@ -2028,10 +1896,7 @@ impl Telnet {
         let width = *self.width.read().await;
         if (prompt_len + *point) % width == 0 {
             if *point < data.len() {
-                self.output_buffer
-                    .lock()
-                    .await
-                    .extend_from_slice(&data[*point..=*point]);
+                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;

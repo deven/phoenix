@@ -27,14 +27,7 @@ impl PhoenixServer {
         let shutdown_handle = RwLock::new(None);
         let restarting = Arc::new(AtomicBool::new(false));
 
-        Ok(Arc::new(Self {
-            listener,
-            port,
-            debug,
-            shutdown_tx,
-            shutdown_handle,
-            restarting,
-        }))
+        Ok(Arc::new(Self { listener, port, debug, shutdown_tx, shutdown_handle, restarting }))
     }
 
     pub async fn run(self: Arc<Self>) -> ! {
@@ -117,12 +110,7 @@ impl PhoenixServer {
         }
     }
 
-    pub async fn schedule_shutdown_or_restart(
-        self: &Arc<Self>,
-        who: ArcStr,
-        seconds: u64,
-        restart: bool,
-    ) {
+    pub async fn schedule_shutdown_or_restart(self: &Arc<Self>, who: ArcStr, seconds: u64, restart: bool) {
         // Cancel any existing shutdown
         self.cancel_shutdown().await;
 
@@ -131,35 +119,18 @@ impl PhoenixServer {
 
         self.restarting.store(restart, Ordering::Relaxed);
 
-        let action = if restart {
-            "restarting"
-        } else {
-            "shutting down"
-        };
+        let action = if restart { "restarting" } else { "shutting down" };
 
         let server = self.clone();
         let handle = tokio::spawn(async move {
             let mut remaining = seconds;
             while remaining > 0 {
                 match remaining {
-                    300 => {
-                        Session::announce(&format!("*** Server {action} in 5 minutes ***\n")).await
-                    }
-                    180 => {
-                        Session::announce(&format!("*** Server {action} in 3 minutes ***\n")).await
-                    }
-                    120 => {
-                        Session::announce(&format!("*** Server {action} in 2 minutes ***\n")).await
-                    }
-                    60 => {
-                        Session::announce(&format!("*** Server {action} in 1 minute ***\n")).await
-                    }
-                    30 | 10 | 2..=5 => {
-                        Session::announce(&format!(
-                            "*** Server {action} in {remaining} seconds ***\n"
-                        ))
-                        .await
-                    }
+                    300 => Session::announce(&format!("*** Server {action} in 5 minutes ***\n")).await,
+                    180 => Session::announce(&format!("*** Server {action} in 3 minutes ***\n")).await,
+                    120 => Session::announce(&format!("*** Server {action} in 2 minutes ***\n")).await,
+                    60 => Session::announce(&format!("*** Server {action} in 1 minute ***\n")).await,
+                    30 | 10 | 2..=5 => Session::announce(&format!("*** Server {action} in {remaining} seconds ***\n")).await,
                     1 => Session::announce(&format!("*** Server {action} in 1 second ***\n")).await,
                     _ => {}
                 }
@@ -184,15 +155,10 @@ impl PhoenixServer {
 
         if restart {
             match std::env::current_exe() {
-                Ok(exe) => {
-                    match std::process::Command::new(exe)
-                        .args(std::env::args().skip(1))
-                        .spawn()
-                    {
-                        Ok(_) => info!("Server restart initiated"),
-                        Err(e) => info!("Failed to restart server: {e}"),
-                    }
-                }
+                Ok(exe) => match std::process::Command::new(exe).args(std::env::args().skip(1)).spawn() {
+                    Ok(_) => info!("Server restart initiated"),
+                    Err(e) => info!("Failed to restart server: {e}"),
+                },
                 Err(e) => info!("Failed to get executable path: {e}"),
             }
         }

@@ -20,33 +20,14 @@ pub struct Sendlist {
 }
 
 impl Sendlist {
-    pub async fn new(
-        session: &Arc<Session>,
-        typed: &str,
-        multi: bool,
-        do_sessions: bool,
-        do_discussions: bool,
-    ) -> Arc<Self> {
-        let mut sendlist = Self {
-            errors: String::new(),
-            typed: String::new(),
-            sessions: OrderedSet::new(),
-            discussions: OrderedSet::new(),
-        };
-        sendlist
-            .set(session, typed, multi, do_sessions, do_discussions)
-            .await;
+    pub async fn new(session: &Arc<Session>, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Arc<Self> {
+        let mut sendlist =
+            Self { errors: String::new(), typed: String::new(), sessions: OrderedSet::new(), discussions: OrderedSet::new() };
+        sendlist.set(session, typed, multi, do_sessions, do_discussions).await;
         Arc::new(sendlist)
     }
 
-    pub async fn set(
-        &mut self,
-        sender: &Arc<Session>,
-        sendlist: &str,
-        multi: bool,
-        do_sessions: bool,
-        do_discussions: bool,
-    ) {
+    pub async fn set(&mut self, sender: &Arc<Session>, sendlist: &str, multi: bool, do_sessions: bool, do_discussions: bool) {
         if self.typed == sendlist {
             return; // Return if sendlist unchanged
         }
@@ -61,14 +42,9 @@ impl Sendlist {
         }
 
         let mut non_matches: OrderedSet<ArcStr> = OrderedSet::new();
-        for part in sendlist
-            .split(SEPARATOR as char)
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-        {
-            let (found_session, session_matches, found_discussion, discussion_matches) = sender
-                .find_sendable(part, !multi, false, do_sessions, do_discussions)
-                .await;
+        for part in sendlist.split(SEPARATOR as char).map(str::trim).filter(|s| !s.is_empty()) {
+            let (found_session, session_matches, found_discussion, discussion_matches) =
+                sender.find_sendable(part, !multi, false, do_sessions, do_discussions).await;
 
             if let Some(session) = found_session {
                 self.sessions.insert(session);
@@ -145,11 +121,7 @@ impl Sendlist {
         }
     }
 
-    pub async fn expand(
-        self: &Arc<Self>,
-        who: &mut OrderedSet<Arc<Session>>,
-        sender: Option<Arc<Session>>,
-    ) -> usize {
+    pub async fn expand(self: &Arc<Self>, who: &mut OrderedSet<Arc<Session>>, sender: Option<Arc<Session>>) -> usize {
         who.clear();
 
         // Add all sessions from sendlist
@@ -181,19 +153,13 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
     let mut _is_explicit = false;
 
     // Attempt to detect smileys that shouldn't be sendlists
-    if !line
-        .chars()
-        .next()
-        .map_or(false, |c| c.is_alphabetic() || c.is_whitespace())
-    {
+    if !line.chars().next().map_or(false, |c| c.is_alphabetic() || c.is_whitespace()) {
         // Only compare initial non-whitespace characters
         let end = line.find(char::is_whitespace).unwrap_or(line.len());
         let initial = &line[..end];
 
         // Just special-case a few smileys
-        let smileys = [
-            ":-)", ":-(", ":-P", ";-)", ":_)", ":_(", ":)", ":(", ":P", ";)",
-        ];
+        let smileys = [":-)", ":-(", ":-P", ";-)", ":_)", ":_(", ":)", ":(", ":P", ";)"];
         if smileys.contains(&initial) {
             return (line, "default".to_string(), last_explicit_sendlist, false);
         }
@@ -214,19 +180,9 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
         match ch {
             ' ' | '\t' if !in_quotes => {
                 if sendlist.is_empty() {
-                    return (
-                        &line[1..],
-                        "default".to_string(),
-                        last_explicit_sendlist,
-                        false,
-                    );
+                    return (&line[1..], "default".to_string(), last_explicit_sendlist, false);
                 } else {
-                    return (
-                        &line[i..],
-                        "default".to_string(),
-                        last_explicit_sendlist,
-                        false,
-                    );
+                    return (&line[i..], "default".to_string(), last_explicit_sendlist, false);
                 }
             }
             ':' | ';' if !in_quotes => {
@@ -262,12 +218,7 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
 
     // If we got here, use default sendlist and possibly strip leading space
     if line.starts_with(' ') {
-        (
-            &line[1..],
-            "default".to_string(),
-            last_explicit_sendlist,
-            false,
-        )
+        (&line[1..], "default".to_string(), last_explicit_sendlist, false)
     } else {
         (line, "default".to_string(), last_explicit_sendlist, false)
     }
