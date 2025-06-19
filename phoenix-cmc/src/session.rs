@@ -43,7 +43,7 @@ where
 {
     pub id: usize,
     pub server: Arc<PhoenixServer>,
-    pub user: Option<User>
+    pub user: Option<User>,
     pub telnet: Option<Telnet>,
     pub login_timeout: Option<AbortHandle>,
     pub login_state: LoginState,
@@ -116,7 +116,9 @@ impl Session {
             last_sendlist: None,
             last_explicit: ArcStr::default(),
             reply_sendlist: ArcStr::default(),
-            oops_text: ArcStr::from("Oops!  Sorry, that last message was intended for someone else..."),
+            oops_text: ArcStr::from(
+                "Oops!  Sorry, that last message was intended for someone else...",
+            ),
         };
 
         let session = Session(Arc::new(RwLock::new(inner)));
@@ -267,7 +269,10 @@ impl Session {
     pub async fn set_user_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
         let key: Arc<str> = key.into();
         let value: Arc<str> = value.into();
-        self.write().await.user_vars.insert(ArcStr(key), ArcStr(value));
+        self.write()
+            .await
+            .user_vars
+            .insert(ArcStr(key), ArcStr(value));
     }
 
     /// Remove a user variable.
@@ -293,7 +298,10 @@ impl Session {
     pub async fn set_sys_var(&self, key: impl Into<Arc<str>>, value: impl Into<Arc<str>>) {
         let key: Arc<str> = key.into();
         let value: Arc<str> = value.into();
-        self.write().await.sys_vars.insert(ArcStr(key), ArcStr(value));
+        self.write()
+            .await
+            .sys_vars
+            .insert(ArcStr(key), ArcStr(value));
     }
 
     /// Remove a system variable.

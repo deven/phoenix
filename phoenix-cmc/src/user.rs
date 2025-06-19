@@ -59,7 +59,9 @@ impl User {
     }
 
     pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&ArcStr> {
-        self.reserved.read().await
+        self.reserved
+            .read()
+            .await
             .iter()
             .find(|&reserved| reserved.eq_ignore_ascii_case(name))
     }
