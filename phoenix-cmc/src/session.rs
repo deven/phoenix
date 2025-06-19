@@ -1622,13 +1622,7 @@ impl Session {
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
-            let display = name_blurb.to_string();
-
-            if display.len() > 33 {
-                self.output(&format!("{display:<32.32}+ ")).await;
-            } else {
-                self.output(&format!("{display:<33} ")).await;
-            }
+            self.output(name_blurb.column_display()).await;
 
             // Login time or "detached".
             if session.telnet().await.is_some() {
@@ -1679,8 +1673,8 @@ impl Session {
             }
 
             // Show continuation of long name if only one user.
-            if display.len() > 33 && who.len() == 1 {
-                self.output(&format!(">{}\n", &display[32..])).await;
+            if name.len() > 33 && who.len() == 1 {
+                self.output(&format!(">{}\n", &name.as_str()[32..])).await;
             }
         }
 
@@ -1724,13 +1718,7 @@ impl Session {
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
-            let display = name_blurb.to_string();
-
-            if display.len() > 33 {
-                self.output(&format!("{display:<32.32}+ ")).await;
-            } else {
-                self.output(&format!("{display:<33} ")).await;
-            }
+            self.output(name_blurb.column_display()).await;
 
             // Idle time.
             let idle = (now - session.idle_since().await) / 60;
@@ -1830,13 +1818,7 @@ impl Session {
 
             // Name and blurb.
             let name_blurb = session.name_blurb().await;
-            let display = name_blurb.to_string();
-
-            if display.len() > 33 {
-                self.output(&format!("{display:<32.32}+ ")).await;
-            } else {
-                self.output(&format!("{display:<33} ")).await;
-            }
+            self.output(name_blurb.column_display()).await;
 
             // Login time.
             let login_time = session.login_time().await;
