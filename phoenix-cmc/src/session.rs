@@ -1369,101 +1369,77 @@ impl Session {
     }
 
     pub async fn print_time_long(self: &Arc<Self>, minutes: i32) {
-        let format = if let Some(fmt) = self.sys_vars.read().await.get("time_format") {
-            fmt.clone()
+        // Determine time format (0 = verbose, 1 = both, 2 = terse)
+        let format = if let Some(fmt) = self.get_sys_var("time_format").await {
+            match fmt.as_str() {
+                "verbose" => 0,
+                "both" => 1,
+                "terse" => 2,
+                _ => 0,
+            }
         } else {
-            DEFAULTS
-                .read()
-                .await
-                .get("time_format")
-                .cloned()
-                .unwrap_or_else(|| "verbose".to_string())
+            match DEFAULTS.read().await.get("time_format").map(|s| s.as_str()) {
+                Some("verbose") => 0,
+                Some("both") => 1,
+                Some("terse") => 2,
+                _ => 0,
+            }
         };
 
+        // Calculate time components
         let hours = minutes / 60;
         let days = hours / 24;
         let minutes = minutes % 60;
         let hours = hours % 24;
 
-        match format.as_str() {
-            "verbose" => {
-                if days > 0 || hours > 0 || minutes > 0 {
-                    if minutes == 0 {
-                        self.output(" exactly").await;
-                    }
-                    if days > 0 {
-                        let s = if days == 1 { "" } else { "s" };
-                        let and = if hours > 0 && minutes > 0 {
-                            ","
-                        } else if hours > 0 || minutes > 0 {
-                            " and"
-                        } else {
-                            ""
-                        };
-                        self.output(&format!(" {days} day{s}{and}")).await;
-                    }
-                    if hours > 0 {
-                        let s = if hours == 1 { "" } else { "s" };
-                        let and = if minutes > 0 { " and" } else { "" };
-                        self.output(&format!(" {hours} hour{s}{and}")).await;
-                    }
-                    if minutes > 0 {
-                        let s = if minutes == 1 { "" } else { "s" };
-                        self.output(&format!(" {minutes} minute{s}")).await;
-                    }
-                } else {
-                    self.output(" under a minute").await;
+        // Print verbose format if format <= 1
+        if format <= 1 {
+            if days > 0 || hours > 0 || minutes > 0 {
+                if minutes == 0 {
+                    self.output(" exactly").await;
                 }
-            }
-            "both" => {
-                self.print_time_long_verbose(days, hours, minutes).await;
-                self.output(" ").await;
-                self.output("(").await;
-                self.print_time_long_terse(days, hours, minutes).await;
-                self.output(")").await;
-            }
-            "terse" | _ => {
-                self.print_time_long_terse(days, hours, minutes).await;
+                if days > 0 {
+                    let s = if days == 1 { "" } else { "s" };
+                    let and = if hours > 0 && minutes > 0 {
+                        ","
+                    } else if hours > 0 || minutes > 0 {
+                        " and"
+                    } else {
+                        ""
+                    };
+                    self.output(&format!(" {days} day{s}{and}")).await;
+                }
+                if hours > 0 {
+                    let s = if hours == 1 { "" } else { "s" };
+                    let and = if minutes > 0 { " and" } else { "" };
+                    self.output(&format!(" {hours} hour{s}{and}")).await;
+                }
+                if minutes > 0 {
+                    let s = if minutes == 1 { "" } else { "s" };
+                    self.output(&format!(" {minutes} minute{s}")).await;
+                }
+            } else {
+                self.output(" under a minute").await;
             }
         }
-    }
 
-    pub async fn print_time_long_verbose(self: &Arc<Self>, days: i32, hours: i32, minutes: i32) {
-        if days > 0 || hours > 0 || minutes > 0 {
-            if minutes == 0 {
-                self.output(" exactly").await;
-            }
+        // Print separator and/or terse format if format >= 1
+        if format >= 1 {
+            self.output(" ").await;
+        }
+        if format == 1 {
+            self.output("(").await;
+        }
+        if format >= 1 {
             if days > 0 {
-                let s = if days == 1 { "" } else { "s" };
-                let and = if hours > 0 && minutes > 0 {
-                    ","
-                } else if hours > 0 || minutes > 0 {
-                    " and"
-                } else {
-                    ""
-                };
-                self.output(&format!(" {days} day{s}{and}")).await;
+                self.output(&format!("{days}d{hours:02}:{minutes:02}"))
+                    .await;
+            } else {
+                self.output(&format!("{hours}:{minutes:02}")).await;
             }
-            if hours > 0 {
-                let s = if hours == 1 { "" } else { "s" };
-                let and = if minutes > 0 { " and" } else { "" };
-                self.output(&format!(" {hours} hour{s}{and}")).await;
-            }
-            if minutes > 0 {
-                let s = if minutes == 1 { "" } else { "s" };
-                self.output(&format!(" {minutes} minute{s}")).await;
-            }
-        } else {
-            self.output(" under a minute").await;
         }
-    }
-
-    pub async fn print_time_long_terse(self: &Arc<Self>, days: i32, hours: i32, minutes: i32) {
-        if days > 0 {
-            self.output(&format!("{days}d{hours:02}:{minutes:02}"))
-                .await;
-        } else {
-            self.output(&format!("{hours}:{minutes:02}")).await;
+        if format == 1 {
+            self.output(")").await;
         }
     }
 
