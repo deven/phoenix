@@ -2951,21 +2951,520 @@ impl Session {
     }
 
     pub async fn do_help(self: &Arc<Self>, args: &str) {
-        // TODO: Load help from external file
-        self.output("Help system not yet implemented. Known commands:\n\n")
+        let args = args.trim();
+
+        if match_keyword(args, "/who", 2).is_some()
+            || match_keyword(args, "who", 3).is_some()
+            || match_keyword(args, "/idle", 2).is_some()
+            || match_keyword(args, "idle", 4).is_some()
+        {
+            self.output(
+                "\
+    The /who and /idle commands are used to list users on Phoenix.  Both /who\n\
+    and /idle take identical arguments, but the output differs.  /who will give\n\
+    more information, while /idle will give a more compact presentation.\n\n\
+    Both /who and /idle will accept either categorical keywords or strings to\n\
+    match against names and discussions; all matches found are listed.  If any\n\
+    discussions are matched, all users in the discussions are listed.  The known\n\
+    categorical keywords for /who and /idle are:\n\n\
+       here   away   attached   active     idle     privileged   all\n\
+       busy   gone   detached   inactive   unidle   guests       everyone\n\n\
+    The categorical keywords match users in the given state.  The \"active\"\n\
+    state is special, and defined as follows:\n\
+       \"here\", attached, idle < 1 hour; or\n\
+       \"here\", detached, idle < 10 minutes; or\n\
+       \"away\", attached, idle < 10 minutes.\n\
+    The keyword \"all\" is treated as \"active,attached\", while \"everyone\"\n\
+    matches all users.  \"unidle\" matches users with idle < 10 minutes.  The\n\
+    default if no arguments are given is to match \"everyone\" for now.  (When\n\
+    more people are using the system, the default will change back to \"active\".)\n\
+    Match strings and multiple categorical keywords can be piled together as\n\
+    desired.  When only a single person is printed by /who, long blurbs are\n\
+    printed in full.\n",
+            )
             .await;
-        self.output("   /who     /blurb    /create    /permit     /clear     /howmany\n")
+        } else if match_keyword(args, "/blurb", 3).is_some()
+            || match_keyword(args, "blurb", 5).is_some()
+        {
+            self.output(
+                "\
+    The /blurb command allows you to set a descriptive \"blurb\".  It is usually\n\
+    printed along with your name in most messages and notifications.  There is\n\
+    no set limit to blurb length, but out of courtesy, try to keep it short.\n\
+    Under 30 characters is a good size.  Long blurbs are normally truncated in\n\
+    /who and /idle listings, so your entire blurb may not be seen at all times.\n\
+    When only one person is printed by /who, long blurbs are printed in full.\n\n\
+    Syntax: /blurb [blurb]\n\
+            /blurb \"blurb\"\n\
+            /blurb blurb\n\n\
+    \"/blurb off\" turns off your blurb.  \"/blurb\" alone reports your blurb.\n\n\
+    In many cases, it is preferable to use one of the away-state commands (/here,\n\
+    /away, /busy, /gone) instead of /blurb.  All of the away-state commands will\n\
+    take blurb arguments exactly like /blurb, but will set a meaningful status\n\
+    at the same time, so their use is encouraged.  Also, every away-state command\n\
+    may be abbreviated to a single letter, while /bl is the minimum abbreviation\n\
+    for the /blurb command, since /busy abbreviates to /b.\n\n\
+    See also: /here, /away, /busy, /gone.\n",
+            )
             .await;
-        self.output("   /what    /here     /destroy   /depermit   /unidle    /detach\n")
+        } else if match_keyword(args, "/here", 2).is_some()
+            || match_keyword(args, "here", 4).is_some()
+        {
+            self.output(
+                "\
+    The /here command accepts /blurb arguments to set the blurb, and then sets\n\
+    your away status to \"here\".  Even if you are already \"here\", others will\n\
+    still be notified that you are now \"here\".\n\n\
+    Being \"here\" implies that you are willing to engage in new conversations,\n\
+    and that you are reasonably likely to respond to messages quickly.\n\n\
+    If you wish to actively talk to certain people but not anyone else in general,\n\
+    then you should use /busy instead.\n\n\
+    Since people sometimes forget to set a new away status when they leave, the\n\
+    default /who target of \"active\" will only list \"here\" people if they are\n\
+    under one hour idle if attached, or if they are under ten minutes idle if\n\
+    detached.  (On the assumption they intend to return almost immediately.)\n\
+    Overly-idle \"here\" people aren't normally listed, so their away state is\n\
+    not changed due to idle time.\n\n\
+    The /here command may be abbreviated to /h.\n\n\
+    See also: /blurb, /away, /busy, /gone.\n",
+            )
             .await;
-        self.output("   /why     /away     /join      /appoint    /date      /bye\n")
+        } else if match_keyword(args, "/away", 2).is_some()
+            || match_keyword(args, "away", 4).is_some()
+        {
+            self.output(
+                "\
+    The /away command accepts /blurb arguments to set the blurb, and then sets\n\
+    your away status to \"away\".  Even if you are already \"away\", others will\n\
+    still be notified you are now \"away\".\n\n\
+    Being \"away\" implies you are either gone for a brief period (maybe around\n\
+    5-10 minutes), or you are around but likely to be inattentive.  It implies\n\
+    you are not unwilling to engage in new conversations, but may well be slow\n\
+    to respond.  \"away\" is a good state to use if you're reading Usenet news\n\
+    in another window, watching TV across the room from the keyboard, or taking\n\
+    a shower.  Your blurb should reflect your present activity, ideally.\n\n\
+    If you wish to actively talk to certain people but not anyone else in general,\n\
+    then you should use /busy instead.\n\n\
+    Since people sometimes forget to set a new away status when they leave, the\n\
+    default /who target of \"active\" will only list \"away\" people if they are\n\
+    attached and under ten minutes idle.  Overly-idle \"away\" people aren't\n\
+    normally listed, so their away state is not changed due to idle time.\n\n\
+    The /away command may be abbreviated to /a.\n\n\
+    See also: /blurb, /here, /busy, /gone.\n",
+            )
             .await;
-        self.output("   /idle    /busy     /quit      /unappoint  /set\n")
+        } else if match_keyword(args, "/busy", 2).is_some()
+            || match_keyword(args, "busy", 4).is_some()
+        {
+            self.output(
+                "\
+    The /busy command accepts /blurb arguments to set the blurb, and then sets\n\
+    your away status to \"busy\".  Even if you are already \"busy\", others will\n\
+    still be notified you are now \"busy\".\n\n\
+    Being \"busy\" implies you are either engaged in conversation with others\n\
+    on the system, or around but busy doing something else.  In either case,\n\
+    \"busy\" implies you would not appreciate interruptions that aren't very\n\
+    inportant, especially if they would require a reply.  Those whose messages\n\
+    are welcome would already know so.  Don't bother a person who is \"busy\"\n\
+    without having a reason to do so.  \"busy\" is a good state if you're in a\n\
+    deep conversation with someone, or if you're washing dishes, for example.\n\
+    Your blurb should reflect what you're busy with, ideally.\n\n\
+    The default /who target of \"active\" will never list \"busy\" people on the\n\
+    assumption that they do not wish to be unduly disturbed.  Idle time will not\n\
+    cause the away state to change, but if you become unidle while \"busy\" and\n\
+    at least ten minutes idle, you will get a warning message that you are still\n\
+    listed as \"busy\", in case it no longer applies and you forgot about it.\n\n\
+    The /busy command may be abbreviated to /b.\n\n\
+    See also: /blurb, /here, /away, /gone.\n",
+            )
             .await;
-        self.output("   /help    /gone     /send      /rename     /signal\n\n")
+        } else if match_keyword(args, "/gone", 2).is_some()
+            || match_keyword(args, "gone", 4).is_some()
+        {
+            self.output(
+                "\
+    The /gone command accepts /blurb arguments to set the blurb, and then sets\n\
+    your away status to \"gone\".  Even if you are already \"gone\", others will\n\
+    still be notified you are now \"gone\".\n\n\
+    Being \"gone\" implies you are gone and should not be expected to respond to\n\
+    messages at all until you return, regardless of whether you are attached or\n\
+    detached.  \"gone\" implies you are not having any conversations at all, and\n\
+    all messages received will be seen later, much like an answering machine.\n\
+    \"gone\" is a good state to use if you're asleep, off to work or class, etc.\n\
+    Your blurb should reflect where you went, ideally.  (e.g. \"/gone [-> work]\")\n\n\
+    If you wish to actively talk to certain people but not anyone else in general,\n\
+    then you should use /busy instead.\n\n\
+    The default /who target of \"active\" will never list \"gone\" people on the\n\
+    assumption that they are truly gone.  Idle time will not cause the away state\n\
+    to change, but if you send a message while \"gone\", you will be warned,\n\
+    for every message you send while \"gone\".\n\n\
+    The /gone command may be abbreviated to /g.\n\n\
+    See also: /blurb, /here, /away, /busy.\n",
+            )
             .await;
-        self.output("Type \"/help <command>\" for more information about a particular command.\n")
+        } else if match_keyword(args, "/help", 2).is_some()
+            || match_keyword(args, "help", 4).is_some()
+        {
+            self.output(
+                "\
+    The /help command is used to request helpful information about commands or\n\
+    concepts.  For example, for help on the /gone command, you can type either\n\
+    \"/help gone\" or \"/help /gone\".  If the slash form for command help is\n\
+    used, the command name may be abbreviated in the same way as the actual\n\
+    command.  Since the minimum abbreviation for /gone is /g, \"/help /g\" is\n\
+    sufficient, although \"/help g\" is not.\n",
+            )
             .await;
+        } else if match_keyword(args, "/send", 2).is_some()
+            || match_keyword(args, "send", 4).is_some()
+        {
+            self.output(
+                "\
+    The /send command is used to redirect your \"default sendlist\".  Simply type\n\
+    \"/send <sendlist>\" and <sendlist> becomes the new destination for any\n\
+    message which does not contain an explicit sendlist, including recognized\n\
+    smileys.  (See \"/help smileys\".)  \"/send off\" will turn off your default\n\
+    sendlist completely.  \"/send\" alone will display your current default\n\
+    sendlist without changing it.  /send may be abbreviated to /s.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/bye", 4).is_some()
+            || match_keyword(args, "bye", 3).is_some()
+        {
+            self.output(
+                "\
+    The /bye command is used to leave Phoenix completely.  If you sign off, you\n\
+    will be disconnected from the system and unable to receive messages at all.\n\
+    You may wish to consider using the /detach command instead.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/what", 3).is_some()
+            || match_keyword(args, "what", 4).is_some()
+        {
+            self.output(
+                "\
+    The /what command is used to list currently existing discussions.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/join", 2).is_some()
+            || match_keyword(args, "join", 4).is_some()
+        {
+            self.output(
+                "\
+    The /join command is used to join one or more discussions.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/quit", 2).is_some()
+            || match_keyword(args, "quit", 4).is_some()
+        {
+            self.output(
+                "\
+    The /quit command is used to quit one or more discussions.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/create", 3).is_some()
+            || match_keyword(args, "create", 6).is_some()
+        {
+            self.output(
+                "\
+    The /create command is used to create a new discussion.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/destroy", 4).is_some()
+            || match_keyword(args, "destroy", 7).is_some()
+        {
+            self.output(
+                "\
+    The /destroy command is used to destroy one or more discussions.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/permit", 4).is_some()
+            || match_keyword(args, "permit", 6).is_some()
+        {
+            self.output(
+                "\
+    The /permit command is used to permit one or more members to a discussion.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/depermit", 4).is_some()
+            || match_keyword(args, "depermit", 8).is_some()
+        {
+            self.output(
+                "\
+    The /depermit command is used to depermit one or more members from a\n\
+    discussion.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/appoint", 4).is_some()
+            || match_keyword(args, "appoint", 7).is_some()
+        {
+            self.output(
+                "\
+    The /appoint command is used to appoint one or more moderators to a\n\
+    discussion.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/unappoint", 10).is_some()
+            || match_keyword(args, "unappoint", 9).is_some()
+        {
+            self.output(
+                "\
+    The /unappoint command is used to unappoint one or more moderators from a\n\
+    discussion.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/rename", 7).is_some()
+            || match_keyword(args, "rename", 6).is_some()
+        {
+            self.output(
+                "\
+    The /rename command is used to change your name in the system.  There are\n\
+    currently some bugs with this, so use of /rename is presently discouraged\n\
+    until those bugs are fixed.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/clear", 3).is_some()
+            || match_keyword(args, "clear", 5).is_some()
+        {
+            self.output(
+                "\
+    The /clear command simply clears the terminal screen.\n\n\
+    Alternatively, type Escape then Control-L to clear the screen.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/unidle", 7).is_some()
+            || match_keyword(args, "unidle", 6).is_some()
+        {
+            self.output(
+                "\
+    The /unidle command simply resets your idle time as if you sent a message.\n\n\
+    Alternatively, send a line consisting of a single space only.  There is a\n\
+    slight difference in that <space><return> is silent if idle under one minute,\n\
+    while /unidle will report that the idle time was reset.  For both, if the\n\
+    idle time was at least one minute, it is reported before being reset.\n\n\
+    In general, when you become unidle, you will receive a report of the previous\n\
+    idle time if it exceeded the normal threshold of ten minutes.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/detach", 4).is_some()
+            || match_keyword(args, "detach", 6).is_some()
+        {
+            self.output(
+                "\
+    The /detach command is used to disconnect from Phoenix without signing off.\n\
+    You can still receive messages while detached, to be reviewed later.  When\n\
+    the /detach command is used, others are notified that you intentionally\n\
+    detached.  If any other event causes you to become detached (e.g. network\n\
+    failure), then others are notified that you accidentally detached.\n\n\
+    To reattach to a detached session, simply sign back on with the same account\n\
+    and name, and you will be automatically attached.  Currently, all pending\n\
+    output will be output very quickly; local scrollback is highly recommended.\n\
+    If you miss some of the detached output, do NOT press return, but disconnect\n\
+    instead locally.  When you reattach, the same output will be reviewed again.\n\
+    Output is only discarded when it has crossed the network (acknowledgements\n\
+    are used) and the user has entered an input line.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/howmany", 3).is_some()
+            || match_keyword(args, "howmany", 7).is_some()
+            || match_keyword(args, "how", 3).is_some()
+        {
+            self.output(
+                "\
+    The /howmany command shows how many users are \"here\", \"away\", \"busy\"\n\
+    and \"gone\", how many users are attached and detached, total number of\n\
+    users signed on, and how many discussions are active.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/why", 4).is_some()
+            || match_keyword(args, "why", 3).is_some()
+        {
+            self.output(
+                "\
+    The /why command is pretty self-explanatory. (try it!)\n",
+            )
+            .await;
+        } else if match_keyword(args, "/date", 3).is_some()
+            || match_keyword(args, "date", 4).is_some()
+        {
+            self.output(
+                "\
+    The /date command prints the current date and time like the date(1) command.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/signal", 3).is_some()
+            || match_keyword(args, "signal", 6).is_some()
+        {
+            self.output(
+                "\
+    The /signal command is used to control whether or not to ring the terminal\n\
+    bell when incoming messages arrive.  There are separate controls for public\n\
+    and private messages.  The default is on for both.\n\n\
+    Syntax: /signal [public|private] [on|off]\n",
+            )
+            .await;
+        } else if match_keyword(args, "smileys", 6).is_some() {
+            self.output(
+                "\
+    The following are recognized smileys:\n\n\
+       :-)   :-(   :-P   ;-)   :_)   :_(   :)   :(   :P   ;)\n\n\
+    When a message begins with one of these recognized smileys, either alone or\n\
+    followed immediately by whitespace, the smiley as assumed to be part of the\n\
+    message and sent to the default sendlist, instead of attempting to interpret\n\
+    the smiley as an explicit sendlist.  This does not attempt to special-case\n\
+    every type of smiley, but it does attempt to catch the common ones likely\n\
+    to be typed reflexively.  Only smileys containing a semicolon or colon are\n\
+    an issue here, since a smiley like \"8-)\" will already go to the default.\n\n\
+    In general, any message can be forced to be interpreted as either explicit\n\
+    or default sendlist sending by proper use of a space.  If a space leads the\n\
+    input line, it guarantees sending to the default sendlist.  If a space is\n\
+    immediately following a semicolon or colon in what would otherwise be one\n\
+    of the recognized smileys, it guarantees the explicit sendlist interpretation.\n\
+    In all cases, a single leading space in the message text will be removed\n\
+    if it is present, to allow such control over sending without changing the\n\
+    body of the message.\n\n\
+    Since this technique makes a single space alone on a line effectively the\n\
+    same as a blank line, this special case was used instead to reset idle time\n\
+    without actually sending any message.  (See \"/help unidle\".)\n",
+            )
+            .await;
+        } else if match_keyword(args, "/set", 4).is_some()
+            || match_keyword(args, "set", 3).is_some()
+        {
+            let set_args = if args.starts_with('/') {
+                args.strip_prefix("/set").unwrap_or("").trim()
+            } else {
+                args.strip_prefix("set").unwrap_or("").trim()
+            };
+
+            if match_keyword(set_args, "uptime", 6).is_some() {
+                self.output(
+                    "\
+    Server uptime is a readonly system variable and cannot be set.\n",
+                )
+                .await;
+            } else if match_keyword(set_args, "idle", 4).is_some() {
+                self.output(
+                    "\
+    The \"/set idle\" command is used to set an arbitrary idle time.  Arguments\n\
+    are a time specification in the format used by /who. (<d>d<hh>:<mm>)  You\n\
+    may not make yourself idle longer than you've been signed on.  Use of this\n\
+    command is actually discouraged.  In fact, it exists solely to discourage\n\
+    people from using idle time as a reason not to be active on the system.\n\
+    Idle time has no inherent value, and to hoard it is silly.  Yet this has\n\
+    been done, if only because of the time needed to build up a high idle time.\n\
+    This command is intended to take all the fun out of this game by eliminating\n\
+    the challenge of accumulating a high idle time, to discourage such misuse.\n",
+                )
+                .await;
+            } else if match_keyword(set_args, "time_format", 11).is_some() {
+                self.output(
+                    "\
+    The \"/set time_format\" command will set the current format used to display\n\
+    times in a verbose context.\n\n\
+    Valid options are: terse, verbose, both, default.\n",
+                )
+                .await;
+            } else if !set_args.is_empty() {
+                self.output(&format!("No help available for \"/set {set_args}\".\n"))
+                    .await;
+            } else {
+                self.output(
+                    "\
+    The /set command is used to set both system variables and user variables.\n\
+    System variables are specified with predefined keywords, and user variables\n\
+    must be prefixed with a dollar sign.  (e.g. \"idle\" is a system variable\n\
+    with a predefined purpose, and \"$idle\" is a user variable with no such\n\
+    predefined purpose.)\n\n\
+    Known system variables:\n\n\
+       uptime   idle     time_format\n",
+                )
+                .await;
+            }
+        } else if match_keyword(args, "/display", 2).is_some()
+            || match_keyword(args, "display", 7).is_some()
+        {
+            let display_args = if args.starts_with('/') {
+                args.strip_prefix("/display").unwrap_or("").trim()
+            } else {
+                args.strip_prefix("display").unwrap_or("").trim()
+            };
+
+            if match_keyword(display_args, "uptime", 6).is_some() {
+                self.output(
+                    "\
+    The \"/display uptime\" command will display how long the server has been\n\
+    running, and may also display how long the machine has been running.\n",
+                )
+                .await;
+            } else if match_keyword(display_args, "idle", 4).is_some() {
+                self.output(
+                    "\
+    The \"/display idle\" command will display your idle time.\n",
+                )
+                .await;
+            } else if match_keyword(display_args, "time_format", 11).is_some() {
+                self.output(
+                    "\
+    The \"/display time_format\" command will display the current format used to\n\
+    display times in a verbose context.\n\n\
+    Valid options are: terse, verbose, both, default.\n",
+                )
+                .await;
+            } else if !display_args.is_empty() {
+                self.output(&format!(
+                    "No help available for \"/display {display_args}\".\n"
+                ))
+                .await;
+            } else {
+                self.output(
+                    "\
+    The /display command is used to display both system variables and user\n\
+    variables.  System variables are specified with predefined keywords, and\n\
+    user variables must be prefixed with a dollar sign.  (e.g. \"idle\" is a\n\
+    system variable with a predefined purpose, and \"$idle\" is a user variable\n\
+    with no such predefined purpose.)\n\n\
+    Known system variables:\n\n\
+       uptime   idle     time_format\n",
+                )
+                .await;
+            }
+        } else if match_keyword(args, "/also", 3).is_some()
+            || match_keyword(args, "also", 4).is_some()
+        {
+            self.output(
+                "\
+    The /also command is used to send a copy of the last message to another\n\
+    sendlist.\n",
+            )
+            .await;
+        } else if match_keyword(args, "/oops", 3).is_some()
+            || match_keyword(args, "oops", 4).is_some()
+        {
+            self.output(
+                "\
+    The /oops command is used to send an \"oops\" message to the (unintended)\n\
+    recipient of the last message, and to resend the last message to another\n\
+    sendlist.  The \"/oops text <message>\" form can be used to change the\n\
+    text of the \"oops\" message.\n",
+            )
+            .await;
+        } else if !args.is_empty() {
+            self.output(&format!("No help available for \"{args}\".\n"))
+                .await;
+        } else {
+            self.output(
+                "\
+    Known commands:\n\n\
+       /who     /blurb    /create    /permit     /clear     /howmany\n\
+       /what    /here     /destroy   /depermit   /unidle    /detach\n\
+       /why     /away     /join      /appoint    /date      /bye\n\
+       /idle    /busy     /quit      /unappoint  /set\n\
+       /help    /gone     /send      /rename     /signal\n\n\
+    Type \"/help <command>\" for more information about a particular command.\n",
+            )
+            .await;
+        }
     }
 
     pub async fn do_reset(self: &Arc<Self>) {
