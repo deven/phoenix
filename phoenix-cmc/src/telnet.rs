@@ -2,6 +2,7 @@ use crate::constants::*;
 use crate::name::Name;
 use crate::sendlist::Sendlist;
 use crate::session::Session;
+use crate::text::Text;
 use crate::timestamp::Timestamp;
 use crate::types::*;
 use crate::VERSION;
@@ -240,11 +241,11 @@ impl Telnet {
         *self.acknowledge.read().await
     }
 
-    pub async fn session_name(self: &Arc<Self>) -> ArcStr {
+    pub async fn session_name(self: &Arc<Self>) -> Text {
         if let Some(session) = &*self.session.read().await {
             session.name().await.clone()
         } else {
-            ArcStr::default()
+            Text::default()
         }
     }
 

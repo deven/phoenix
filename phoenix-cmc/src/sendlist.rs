@@ -1,7 +1,8 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::session::Session;
-use crate::types::{ArcStr, OrderedSet};
+use crate::text::Text;
+use crate::types::OrderedSet;
 use std::fmt::Write;
 use std::sync::Arc;
 
@@ -41,7 +42,7 @@ impl Sendlist {
             return;
         }
 
-        let mut non_matches: OrderedSet<ArcStr> = OrderedSet::new();
+        let mut non_matches: OrderedSet<Text> = OrderedSet::new();
         for part in sendlist.split(SEPARATOR as char).map(str::trim).filter(|s| !s.is_empty()) {
             let (found_session, session_matches, found_discussion, discussion_matches) =
                 sender.find_sendable(part, !multi, false, do_sessions, do_discussions).await;

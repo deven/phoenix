@@ -1,8 +1,9 @@
 use crate::name::Name;
 use crate::sendlist::Sendlist;
 use crate::telnet::Telnet;
+use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::types::{ArcStr, OutputClass, OutputType};
+use crate::types::{OutputClass, OutputType};
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -50,12 +51,12 @@ pub struct Message {
     pub output_type: OutputType,
     pub from: Arc<Name>,
     pub to: Arc<Sendlist>,
-    pub text: ArcStr,
+    pub text: Text,
     pub time: Timestamp,
 }
 
 impl Message {
-    pub fn new(output_type: OutputType, sender: Arc<Name>, dest: Arc<Sendlist>, msg: impl Into<ArcStr>) -> Self {
+    pub fn new(output_type: OutputType, sender: Arc<Name>, dest: Arc<Sendlist>, msg: impl Into<Text>) -> Self {
         Self { output_type, from: sender, to: dest, text: msg.into(), time: Timestamp::new() }
     }
 }
@@ -389,15 +390,15 @@ impl OutputObj for GoneNotify {
 
 #[derive(Debug, Clone)]
 pub struct CreateNotify {
-    pub discussion_name: ArcStr,
-    pub discussion_title: ArcStr,
+    pub discussion_name: Text,
+    pub discussion_title: Text,
     pub is_public: bool,
     pub creator: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl CreateNotify {
-    pub fn new(disc_name: ArcStr, disc_title: ArcStr, is_public: bool, creator: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, disc_title: Text, is_public: bool, creator: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator, time: Timestamp::new() }
     }
 }
@@ -432,13 +433,13 @@ impl OutputObj for CreateNotify {
 
 #[derive(Debug, Clone)]
 pub struct DestroyNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub name: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl DestroyNotify {
-    pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -468,13 +469,13 @@ impl OutputObj for DestroyNotify {
 
 #[derive(Debug, Clone)]
 pub struct JoinNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub name: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl JoinNotify {
-    pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -504,13 +505,13 @@ impl OutputObj for JoinNotify {
 
 #[derive(Debug, Clone)]
 pub struct QuitNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub name: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl QuitNotify {
-    pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -540,13 +541,13 @@ impl OutputObj for QuitNotify {
 
 #[derive(Debug, Clone)]
 pub struct PublicNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub name: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl PublicNotify {
-    pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -576,13 +577,13 @@ impl OutputObj for PublicNotify {
 
 #[derive(Debug, Clone)]
 pub struct PrivateNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub name: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl PrivateNotify {
-    pub fn new(disc_name: ArcStr, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -612,7 +613,7 @@ impl OutputObj for PrivateNotify {
 
 #[derive(Debug, Clone)]
 pub struct PermitNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub is_public: bool,
     pub name: Arc<Name>,
     pub is_explicit: bool,
@@ -620,7 +621,7 @@ pub struct PermitNotify {
 }
 
 impl PermitNotify {
-    pub fn new(disc_name: ArcStr, public: bool, who: Arc<Name>, flag: bool) -> Self {
+    pub fn new(disc_name: Text, public: bool, who: Arc<Name>, flag: bool) -> Self {
         Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, time: Timestamp::new() }
     }
 }
@@ -666,7 +667,7 @@ impl OutputObj for PermitNotify {
 
 #[derive(Debug, Clone)]
 pub struct DepermitNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub is_public: bool,
     pub name: Arc<Name>,
     pub is_explicit: bool,
@@ -675,7 +676,7 @@ pub struct DepermitNotify {
 }
 
 impl DepermitNotify {
-    pub fn new(disc_name: ArcStr, public: bool, who: Arc<Name>, flag: bool, removed_who: Option<Arc<Name>>) -> Self {
+    pub fn new(disc_name: Text, public: bool, who: Arc<Name>, flag: bool, removed_who: Option<Arc<Name>>) -> Self {
         Self {
             discussion_name: disc_name,
             is_public: public,
@@ -764,14 +765,14 @@ impl OutputObj for DepermitNotify {
 
 #[derive(Debug, Clone)]
 pub struct AppointNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub appointer: Arc<Name>,
     pub appointee: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl AppointNotify {
-    pub fn new(disc_name: ArcStr, who1: Arc<Name>, who2: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who1: Arc<Name>, who2: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, appointer: who1, appointee: who2, time: Timestamp::new() }
     }
 }
@@ -813,14 +814,14 @@ impl OutputObj for AppointNotify {
 
 #[derive(Debug, Clone)]
 pub struct UnappointNotify {
-    pub discussion_name: ArcStr,
+    pub discussion_name: Text,
     pub unappointer: Arc<Name>,
     pub unappointee: Arc<Name>,
     pub time: Timestamp,
 }
 
 impl UnappointNotify {
-    pub fn new(disc_name: ArcStr, who1: Arc<Name>, who2: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who1: Arc<Name>, who2: Arc<Name>) -> Self {
         Self { discussion_name: disc_name, unappointer: who1, unappointee: who2, time: Timestamp::new() }
     }
 }
@@ -858,13 +859,13 @@ impl OutputObj for UnappointNotify {
 
 #[derive(Debug, Clone)]
 pub struct RenameNotify {
-    pub oldname: ArcStr,
-    pub newname: ArcStr,
+    pub oldname: Text,
+    pub newname: Text,
     pub time: Timestamp,
 }
 
 impl RenameNotify {
-    pub fn new(oldstr: impl Into<ArcStr>, newstr: impl Into<ArcStr>) -> Self {
+    pub fn new(oldstr: impl Into<Text>, newstr: impl Into<Text>) -> Self {
         Self { oldname: oldstr.into(), newname: newstr.into(), time: Timestamp::new() }
     }
 }
