@@ -6,6 +6,7 @@ pub mod sendlist;
 pub mod server;
 pub mod session;
 pub mod telnet;
+pub mod text;
 pub mod timestamp;
 pub mod types;
 pub mod user;
