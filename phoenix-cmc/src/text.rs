@@ -163,10 +163,45 @@ impl PartialEq for Text {
     }
 }
 
-// Generic PartialEq for any string-like type
-impl<T: AsRef<str>> PartialEq<T> for Text {
-    fn eq(&self, other: &T) -> bool {
-        self.0 == UniCase::new(other.as_ref())
+// Text == &str
+impl<'a> PartialEq<&'a str> for Text {
+    fn eq(&self, other: &&'a str) -> bool {
+        self.0 == UniCase::new(*other)
+    }
+}
+
+// &str == Text
+impl<'a> PartialEq<Text> for &'a str {
+    fn eq(&self, other: &Text) -> bool {
+        UniCase::new(*self) == other.0
+    }
+}
+
+// Text == String
+impl PartialEq<String> for Text {
+    fn eq(&self, other: &String) -> bool {
+        self.0 == UniCase::new(other.as_str())
+    }
+}
+
+// String == Text
+impl PartialEq<Text> for String {
+    fn eq(&self, other: &Text) -> bool {
+        UniCase::new(self.as_str()) == other.0
+    }
+}
+
+// Text == Arc<str>
+impl PartialEq<Arc<str>> for Text {
+    fn eq(&self, other: &Arc<str>) -> bool {
+        self.0 == UniCase::new(&**other)
+    }
+}
+
+// Arc<str> == Text
+impl PartialEq<Text> for Arc<str> {
+    fn eq(&self, other: &Text) -> bool {
+        UniCase::new(&**self) == other.0
     }
 }
 
