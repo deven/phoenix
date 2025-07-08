@@ -212,14 +212,18 @@ impl Hash for Text {
     }
 }
 
-// Generic From implementation for any string-like type
-impl<T: AsRef<str>> From<T> for Text {
-    fn from(s: T) -> Self {
-        Text::new(s.as_ref())
+impl<'a> From<&'a str> for Text {
+    fn from(s: &'a str) -> Self {
+        Text::new(s)
     }
 }
 
-// Special From for Arc<str> to avoid double-wrapping
+impl From<String> for Text {
+    fn from(s: String) -> Self {
+        Text::new(s)
+    }
+}
+
 impl From<Arc<str>> for Text {
     fn from(s: Arc<str>) -> Self {
         Text::from_arc(s)
