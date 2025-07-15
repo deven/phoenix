@@ -709,7 +709,7 @@ impl OutputObj for DepermitNotify {
                     .await;
             } else {
                 if let Some(removed) = &self.removed {
-                    if removed_name == session_name {
+                    if removed == session_name {
                         telnet
                             .output(&format!(
                                 "*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n"
@@ -757,17 +757,13 @@ impl OutputObj for AppointNotify {
     async fn output(&self, telnet: &Arc<Telnet>) {
         let session_name = telnet.session_name().await;
         let appointer = &self.appointer;
-        let appointee = &self.appointee;
+        let appointee = &self.appointee.you(session_name);
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
-        if appointee == session_name {
-            telnet.output(&format!("*** {appointer} has appointed you as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
-        } else {
-            telnet
-                .output(&format!("*** {appointer} has appointed {appointee} as a moderator of discussion {disc}. [{stamp}] ***\n"))
-                .await;
-        }
+        telnet
+            .output(&format!("*** {appointer} has appointed {appointee} as a moderator of discussion {disc}. [{stamp}] ***\n"))
+            .await;
     }
 }
 
@@ -802,21 +798,15 @@ impl OutputObj for UnappointNotify {
     async fn output(&self, telnet: &Arc<Telnet>) {
         let session_name = telnet.session_name().await;
         let unappointer = &self.unappointer;
-        let unappointee = &self.unappointee;
+        let unappointee = &self.unappointee.you(session_name);
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
-        if unappointee == session_name {
-            telnet
-                .output(&format!("*** {unappointer} has unappointed you as a moderator of discussion {disc}. [{stamp}] ***\n"))
-                .await;
-        } else {
-            telnet
-                .output(&format!(
-                    "*** {unappointer} has unappointed {unappointee} as a moderator of discussion {disc}. [{stamp}] ***\n"
-                ))
-                .await;
-        }
+        telnet
+            .output(&format!(
+                "*** {unappointer} has unappointed {unappointee} as a moderator of discussion {disc}. [{stamp}] ***\n"
+            ))
+            .await;
     }
 }
 
