@@ -71,13 +71,13 @@ pub async fn main() -> Result<()> {
     }
 
     // Initialize server
-    let server = Arc::new(server::PhoenixServer::new(port, debug).await?);
+    let server = Arc::new(server::Server::new(port, debug).await?);
     let pid = std::process::id();
     info!("Started Phoenix server, version {VERSION}.");
     info!("Listening for connections on TCP port {port}. (pid {pid})");
 
     // Set up signal handlers
-    let mut sigint = signal::ctrl_c();
+    let sigint = signal::ctrl_c();
     let mut sigterm = signal::unix::signal(signal::unix::SignalKind::terminate())?;
     let mut sigquit = signal::unix::signal(signal::unix::SignalKind::quit())?;
 
@@ -93,7 +93,7 @@ pub async fn main() -> Result<()> {
         _ = sigterm.recv() => info!("Received SIGTERM, shutting down..."),
         _ = sigquit.recv() => {
             info!("Received SIGQUIT, initiating shutdown...");
-            server.schedule_shutdown("signal".to_string(), 5).await;
+            server.schedule_shutdown("signal".into(), 5).await;
         }
     }
 

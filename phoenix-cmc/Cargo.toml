@@ -24,6 +24,7 @@ argon2 = "0.5"
 rand = "0.8"
 async-trait = "0.1"
 unicase = "2.8.1"
+async-backtrace = "0.2.7"
 
 [profile.release]
 lto = true
