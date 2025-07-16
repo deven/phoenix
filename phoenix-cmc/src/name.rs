@@ -1,4 +1,5 @@
 use crate::text::Text;
+use std::borrow::Borrow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -102,7 +103,21 @@ impl PartialEq for Name {
     }
 }
 
+impl PartialEq<Text> for Name {
+    fn eq(&self, other: &Text) -> bool {
+        *other == UniCase::new(self.name())
+    }
+}
+
+impl PartialEq<Name> for Text {
+    fn eq(&self, other: &Name) -> bool {
+        *self == UniCase::new(other.name())
+    }
+}
+
 impl Eq for Name {}
+impl Eq<Text> for Name {}
+impl Eq<Name> for Text {}
 
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -122,4 +137,12 @@ impl Deref for Name {
     fn deref(&self) -> &Self::Target {
         self.name_blurb.as_str()
     }
+}
+
+impl Borrow<Text> for Name {
+    fn borrow(&self) -> &Text { &self.name }
+}
+
+impl Borrow<str> for Name {
+    fn borrow(&self) -> &str { self.name.as_ref() }
 }
