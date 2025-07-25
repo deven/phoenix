@@ -2,16 +2,25 @@ use crate::session::Session;
 use crate::text::Text;
 use crate::types::OrderedSet;
 use anyhow::Result;
+use async_backtrace::framed;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::time::SystemTime;
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+/// User handle.
 #[derive(Debug, Clone)]
-pub struct User {
-    pub sessions: RwLock<OrderedSet<Arc<Session>>>,
+pub struct User(Arc<RwLock<UserInner>>);
+
+#[derive(Debug)]
+pub struct UserInner
+where
+    Self: Send + Sync + 'static,
+{
+    pub sessions: OrderedSet<Session>,
     pub user: Text,
     pub password: Option<String>,
-    pub reserved: RwLock<Vec<Text>>,
+    pub reserved: Vec<Text>,
     pub blurb: Option<Text>,
     pub priv_level: i32,
 }
@@ -19,26 +28,43 @@ pub struct User {
 impl User {
     const BUF_SIZE: usize = 1024;
 
+    #[framed]
     pub async fn new(
         login: impl Into<Text>,
         pass: Option<String>,
         names: Option<&str>,
         bl: Option<impl Into<Text>>,
         p: i32,
-    ) -> Arc<Self> {
-        let mut user = Self {
-            sessions: RwLock::new(OrderedSet::new()),
+    ) -> Self {
+        let inner = UserInner {
+            sessions: OrderedSet::new(),
             user: login.into(),
             password: pass,
-            reserved: RwLock::new(Vec::new()),
+            reserved: Vec::new(),
             blurb: bl.map(|b| b.into()),
             priv_level: p,
         };
+
+        let user = User(Arc::new(RwLock::new(inner)));
+
         user.set_reserved(names).await;
-        Arc::new(user)
+
+        user
     }
 
-    pub async fn set_reserved(self: &Arc<Self>, names: Option<&str>) {
+    /// Obtain read lock on the `UserInner` data.
+    #[framed]
+    pub async fn read(&self) -> RwLockReadGuard<'_, UserInner> {
+        self.0.read().await
+    }
+
+    /// Obtain write lock on the `UserInner` data.
+    #[framed]
+    pub async fn write(&self) -> RwLockWriteGuard<'_, UserInner> {
+        self.0.write().await
+    }
+
+    pub async fn set_reserved(&self, names: Option<&str>) {
         let reserved = *self.reserved.write().await;
         reserved.clear();
         if let Some(names) = names {
@@ -51,28 +77,49 @@ impl User {
         }
     }
 
-    pub async fn add_session(self: &Arc<Self>, session: Arc<Session>) {
+    pub async fn add_session(&self, session: Session) {
         self.sessions.write().await.insert(session);
     }
 
-    pub async fn remove_session(self: &Arc<Self>, session: &Arc<Session>) {
+    pub async fn remove_session(&self, session: &Session) {
         self.sessions.write().await.shift_remove(session);
     }
 
-    pub async fn find_reserved(self: &Arc<Self>, name: &str) -> Option<&Text> {
+    pub async fn find_reserved(&self, name: &str) -> Option<&Text> {
         self.reserved.read().await.iter().find(|&reserved| reserved.eq_ignore_ascii_case(name))
     }
 }
 
-#[derive(Clone)]
-pub struct UserManager {
-    pub users: Arc<RwLock<HashMap<Text, Arc<User>>>>,
-    pub last_update: Arc<RwLock<Option<std::time::SystemTime>>>,
+/// UserManager handle.
+#[derive(Debug, Clone)]
+pub struct UserManager(Arc<RwLock<UserManagerInner>>);
+
+#[derive(Debug)]
+pub struct UserManagerInner
+where
+    Self: Send + Sync + 'static,
+{
+    pub users: HashMap<Text, User>,
+    pub last_update: Option<SystemTime>,
 }
 
 impl UserManager {
+    #[framed]
     pub fn new() -> Self {
-        Self { users: Arc::new(RwLock::new(HashMap::new())), last_update: Arc::new(RwLock::new(None)) }
+        let inner = UserManagerInner { users: HashMap::new(), last_update: None };
+        Self(Arc::new(RwLock::new(inner)))
+    }
+
+    /// Obtain read lock on the `UserManagerInner` data.
+    #[framed]
+    pub async fn read(&self) -> RwLockReadGuard<'_, UserManagerInner> {
+        self.0.read().await
+    }
+
+    /// Obtain write lock on the `UserManagerInner` data.
+    #[framed]
+    pub async fn write(&self) -> RwLockWriteGuard<'_, UserManagerInner> {
+        self.0.write().await
     }
 
     pub async fn get_user(&self, login: &str) -> Option<Arc<User>> {

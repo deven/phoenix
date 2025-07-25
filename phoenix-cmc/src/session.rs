@@ -3,7 +3,7 @@ use crate::discussion::Discussion;
 use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
-use crate::server::PhoenixServer;
+use crate::server::Server;
 use crate::telnet::{Telnet, TELNET_ENABLED};
 use crate::text::Text;
 use crate::timestamp::{system_uptime, Timestamp};
@@ -13,18 +13,18 @@ use crate::VERSION;
 use async_backtrace::framed;
 use dashmap::DashMap;
 use log::info;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
+use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tokio::task::AbortHandle;
 
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 
 static INITS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static SESSIONS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
-static DISCUSSIONS: LazyLock<DashMap<String, Arc<Discussion>>> = LazyLock::new(DashMap::new);
+static DISCUSSIONS: LazyLock<DashMap<String, Discussion>> = LazyLock::new(DashMap::new);
 static SESSION_COUNTER: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
 static DEFAULTS: LazyLock<RwLock<HashMap<Text, Text>>> = LazyLock::new(|| {
     let mut map = HashMap::new();
@@ -43,7 +43,7 @@ where
     Self: Send + Sync + 'static,
 {
     pub id: usize,
-    pub server: Arc<PhoenixServer>,
+    pub server: Server,
     pub user: Option<User>,
     pub telnet: Option<Telnet>,
     pub login_timeout: Option<AbortHandle>,
@@ -86,7 +86,7 @@ impl Session {
     pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 
     #[framed]
-    pub async fn new(server: Arc<PhoenixServer>, telnet: Arc<Telnet>) -> Self {
+    pub async fn new(server: Server, telnet: Telnet) -> Self {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
         let now = Timestamp::new();
 
@@ -131,13 +131,13 @@ impl Session {
         session
     }
 
-    /// Obtain read lock on the session data.
+    /// Obtain read lock on the `SessionInner` data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, SessionInner> {
         self.0.read().await
     }
 
-    /// Obtain write lock on the session data.
+    /// Obtain write lock on the `SessionInner` data.
     #[framed]
     pub async fn write(&self) -> RwLockWriteGuard<'_, SessionInner> {
         self.0.write().await
@@ -149,9 +149,9 @@ impl Session {
         self.read().await.id
     }
 
-    /// Get the `PhoenixServer` object.
+    /// Get the `Server` object.
     #[framed]
-    pub async fn server(&self) -> Arc<PhoenixServer> {
+    pub async fn server(&self) -> Server {
         self.read().await.server.clone()
     }
 
@@ -180,7 +180,7 @@ impl Session {
     }
 
     /// Return a single-character detached indicator.
-    pub async fn detached_indicator(self: &Arc<Self>) -> &str {
+    pub async fn detached_indicator(&self) -> &str {
         if self.read().await.telnet.is_some() {
             " "
         } else {
@@ -574,14 +574,14 @@ impl Session {
         self.write().await.oops_text = Text(value);
     }
 
-    pub async fn name_user(self: &Arc<Self>) -> Text {
+    pub async fn name_user(&self) -> Text {
         let name = self.name().await;
         let user_name = self.user_name().await;
         Text::from(format!("{name} ({user_name})"))
     }
 
     pub async fn close(&self, drain: bool) {
-        let id = self.id();
+        let id = self.id().await;
         INITS.remove(&id);
         SESSIONS.remove(&id);
 
@@ -611,7 +611,7 @@ impl Session {
         }
     }
 
-    pub async fn transfer(self: &Arc<Self>, new_telnet: Arc<Telnet>) {
+    pub async fn transfer(&self, new_telnet: Telnet) {
         let old_telnet = self.telnet.read().await.clone();
         *self.telnet.write().await = Some(new_telnet.clone());
         new_telnet.set_session(Some(self.clone())).await;
@@ -629,7 +629,7 @@ impl Session {
         self.enqueue_output().await;
     }
 
-    pub async fn attach(self: &Arc<Self>, telnet: Arc<Telnet>) {
+    pub async fn attach(&self, telnet: Telnet) {
         *self.telnet.write().await = Some(telnet.clone());
         telnet.set_session(Some(self.clone())).await;
 
@@ -642,7 +642,7 @@ impl Session {
         self.enqueue_output().await;
     }
 
-    pub async fn detach(self: &Arc<Self>, telnet: &Arc<Telnet>, intentional: bool) {
+    pub async fn detach(&self, telnet: &Telnet, intentional: bool) {
         if self.signed_on().await && self.priv_level().await > 0 {
             let current_telnet = self.telnet.read().await;
             if let Some(t) = &*current_telnet {
@@ -677,7 +677,7 @@ impl Session {
         DISCUSSIONS.remove(&name.to_string());
     }
 
-    pub async fn enqueue(self: &Arc<Self>, out: Arc<dyn OutputObj>) {
+    pub async fn enqueue(&self, out: Arc<dyn OutputObj>) {
         self.enqueue_output().await;
         if let Some(telnet) = &*self.telnet.read().await {
             self.pending.enqueue(Some(telnet), out).await;
@@ -686,7 +686,7 @@ impl Session {
         }
     }
 
-    pub async fn enqueue_output(self: &Arc<Self>) {
+    pub async fn enqueue_output(&self) {
         let text = {
             let mut buf = self.output_buffer.lock().await;
             if buf.is_empty() {
@@ -702,30 +702,30 @@ impl Session {
         }
     }
 
-    pub async fn enqueue_others(self: &Arc<Self>, out: Arc<dyn OutputObj>) {
+    pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>) {
         for session in &SESSIONS {
-            if session.id != self.id {
+            if session.id().await != self.id().await {
                 session.enqueue(out.clone()).await;
             }
         }
     }
 
-    pub async fn acknowledge_output(self: &Arc<Self>) {
+    pub async fn acknowledge_output(&self) {
         self.pending.acknowledge().await;
     }
 
-    pub async fn output_next(self: &Arc<Self>, telnet: &Arc<Telnet>) -> bool {
+    pub async fn output_next(&self, telnet: &Telnet) -> bool {
         self.pending.send_next(telnet).await
     }
 
     pub async fn find_sendable(
-        self: &Arc<Self>,
+        &self,
         sendlist: &str,
         member: bool,
         exact: bool,
         do_sessions: bool,
         do_discussions: bool,
-    ) -> (Option<Arc<Session>>, OrderedSet<Arc<Session>>, Option<Arc<Discussion>>, OrderedSet<Arc<Discussion>>) {
+    ) -> (Option<Session>, OrderedSet<Session>, Option<Discussion>, OrderedSet<Discussion>) {
         let mut session = None;
         let mut session_matches = OrderedSet::new();
         let mut discussion = None;
@@ -795,21 +795,17 @@ impl Session {
         (session, session_matches, discussion, discussion_matches)
     }
 
-    pub async fn find_session(self: &Arc<Self>, sendlist: &str) -> (Option<Arc<Session>>, OrderedSet<Arc<Session>>) {
+    pub async fn find_session(&self, sendlist: &str) -> (Option<Session>, OrderedSet<Session>) {
         let (session, matches, _, _) = self.find_sendable(sendlist, false, false, true, false).await;
         (session, matches)
     }
 
-    pub async fn find_discussion(
-        self: &Arc<Self>,
-        sendlist: &str,
-        member: bool,
-    ) -> (Option<Arc<Discussion>>, OrderedSet<Arc<Discussion>>) {
+    pub async fn find_discussion(&self, sendlist: &str, member: bool) -> (Option<Discussion>, OrderedSet<Discussion>) {
         let (_, _, discussion, matches) = self.find_sendable(sendlist, member, false, false, true).await;
         (discussion, matches)
     }
 
-    pub async fn notify_entry(self: &Arc<Self>) {
+    pub async fn notify_entry(&self) {
         let who = self.name_user().await;
         if let Some(_telnet) = &*self.telnet.read().await {
             info!("Enter: {who} on connection");
@@ -824,7 +820,7 @@ impl Session {
         self.enqueue_others(Arc::new(EntryNotify::new(self.name().await))).await;
     }
 
-    pub async fn notify_exit(self: &Arc<Self>) {
+    pub async fn notify_exit(&self) {
         let who = self.name_user().await;
         if let Some(_telnet) = &*self.telnet.read().await {
             info!("Exit: {who} on connection");
@@ -835,13 +831,16 @@ impl Session {
         self.enqueue_others(Arc::new(ExitNotify::new(self.name().await))).await;
     }
 
-    pub async fn init_login_sequence(self: &Arc<Self>) {
-        self.start_login_timeout().await;
-        self.set_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
+    pub async fn init_login_sequence(&self) {
+        let mut inner = self.0.write().await;
+        inner.start_login_timeout().await;
+        //        inner.set_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
     }
+}
 
-    pub async fn start_login_timeout(self: &Arc<Self>) {
-        let session_id = self.id;
+impl SessionInner {
+    pub async fn start_login_timeout(&mut self) {
+        let session_id = self.id().await;
 
         let handle = tokio::spawn(async move {
             tokio::time::sleep(LOGIN_TIMEOUT).await;
@@ -856,14 +855,16 @@ impl Session {
 
         *self.login_timeout.write().await = Some(handle.abort_handle());
     }
+}
 
-    pub async fn cancel_login_timeout(self: &Arc<Self>) {
+impl Session {
+    pub async fn cancel_login_timeout(&self) {
         if let Some(handle) = self.login_timeout.write().await.take() {
             handle.abort();
         }
     }
 
-    pub async fn set_login_state(self: &Arc<Self>, state: LoginState, prompt: Option<&str>) {
+    pub async fn set_login_state(&self, state: LoginState, prompt: Option<&str>) {
         // Cancel the login timeout if login is complete.
         if state == LoginState::LoggedIn {
             self.cancel_login_timeout().await;
@@ -881,7 +882,7 @@ impl Session {
         self.process_pending_lines().await;
     }
 
-    pub async fn process_pending_lines(self: &Arc<Self>) {
+    pub async fn process_pending_lines(&self) {
         loop {
             let line = {
                 let mut lines = self.lines.lock().await;
@@ -895,7 +896,7 @@ impl Session {
         }
     }
 
-    pub async fn handle_input(self: &Arc<Self>, line: String) {
+    pub async fn handle_input(&self, line: String) {
         self.pending.dequeue().await;
 
         match *self.login_state.read().await {
@@ -911,11 +912,11 @@ impl Session {
         self.enqueue_output().await;
     }
 
-    pub async fn save_input_line(self: &Arc<Self>, line: String) {
+    pub async fn save_input_line(&self, line: String) {
         self.lines.lock().await.push(line);
     }
 
-    pub async fn handle_login_input(self: &Arc<Self>, line: String) {
+    pub async fn handle_login_input(&self, line: String) {
         let line = line.trim();
 
         if let Some(args) = match_keyword(line, "/bye", 4) {
@@ -953,7 +954,7 @@ impl Session {
         }
     }
 
-    pub async fn handle_password_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_password_input(&self, line: &str) {
         if let Some(telnet) = &*self.telnet.read().await {
             telnet.output("\n").await;
             telnet.set_do_echo(true).await;
@@ -989,7 +990,7 @@ impl Session {
         self.set_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
     }
 
-    pub async fn print_reserved_names(self: &Arc<Self>) {
+    pub async fn print_reserved_names(&self) {
         if let Some(user_lock) = &*self.user.read().await {
             let user = user_lock.read().await;
 
@@ -1019,7 +1020,7 @@ impl Session {
         }
     }
 
-    pub async fn handle_name_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_name_input(&self, line: &str) {
         let line = line.trim();
         let name = if line.is_empty() {
             if let Some(user_lock) = &*self.user.read().await {
@@ -1046,7 +1047,7 @@ impl Session {
         }
     }
 
-    pub async fn handle_blurb_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_blurb_input(&self, line: &str) {
         if !self.check_name_availability(&self.name().await, true, false).await {
             return;
         }
@@ -1075,8 +1076,8 @@ impl Session {
             user.add_session(self.clone()).await;
         }
 
-        SESSIONS.insert(self.id, self.clone());
-        INITS.remove(&self.id);
+        SESSIONS.insert(self.id().await, self.clone());
+        INITS.remove(&self.id().await);
 
         self.notify_entry().await;
 
@@ -1105,7 +1106,7 @@ impl Session {
         self.set_login_state(LoginState::LoggedIn, None).await;
     }
 
-    pub async fn handle_transfer_input(self: &Arc<Self>, line: &str) {
+    pub async fn handle_transfer_input(&self, line: &str) {
         if match_keyword(line, "yes", 1).is_none() {
             self.output("Session not transferred.\n").await;
             self.set_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
@@ -1118,7 +1119,7 @@ impl Session {
         }
     }
 
-    pub async fn process_input(self: &Arc<Self>, line: &str) {
+    pub async fn process_input(&self, line: &str) {
         if line.starts_with('!') {
             let line = line[1..].trim();
             if self.priv_level().await < 50 {
@@ -1209,7 +1210,7 @@ impl Session {
         }
     }
 
-    pub async fn check_name_availability(self: &Arc<Self>, name: &str, double_check: bool, transferring: bool) -> bool {
+    pub async fn check_name_availability(&self, name: &str, double_check: bool, transferring: bool) -> bool {
         if name.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
             self.set_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
@@ -1279,7 +1280,7 @@ impl Session {
     }
 
     // Command implementations
-    pub async fn reset_idle(self: &Arc<Self>, min: usize) -> i64 {
+    pub async fn reset_idle(&self, min: usize) -> i64 {
         let now = Timestamp::new();
         let idle = (now - *self.idle_since.read().await) / 60;
 
@@ -1293,7 +1294,7 @@ impl Session {
         idle
     }
 
-    pub async fn print_time_long(self: &Arc<Self>, minutes: i32) {
+    pub async fn print_time_long(&self, minutes: i32) {
         // Determine time format (0 = verbose, 1 = both, 2 = terse)
         let format = if let Some(fmt) = self.get_sys_var("time_format").await {
             match fmt.as_str() {
@@ -1367,7 +1368,7 @@ impl Session {
         }
     }
 
-    pub async fn do_restart(self: &Arc<Self>, args: &str) {
+    pub async fn do_restart(&self, args: &str) {
         let who = self.name_user().await;
         let name = self.name().await;
 
@@ -1396,7 +1397,7 @@ impl Session {
         }
     }
 
-    pub async fn do_down(self: &Arc<Self>, args: &str) {
+    pub async fn do_down(&self, args: &str) {
         let who = self.name_user().await;
         let name = self.name().await;
 
@@ -1425,7 +1426,7 @@ impl Session {
         }
     }
 
-    pub async fn do_nuke(self: &Arc<Self>, args: &str) {
+    pub async fn do_nuke(&self, args: &str) {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
@@ -1461,11 +1462,11 @@ impl Session {
         }
     }
 
-    pub async fn do_bye(self: &Arc<Self>, _args: &str) {
+    pub async fn do_bye(&self, _args: &str) {
         self.close(true).await;
     }
 
-    pub async fn do_who(self: &Arc<Self>, args: &str) {
+    pub async fn do_who(&self, args: &str) {
         // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
@@ -1573,7 +1574,7 @@ impl Session {
         }
     }
 
-    pub async fn do_idle(self: &Arc<Self>, args: &str) {
+    pub async fn do_idle(&self, args: &str) {
         // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
@@ -1649,7 +1650,7 @@ impl Session {
         }
     }
 
-    pub async fn do_why(self: &Arc<Self>, args: &str) {
+    pub async fn do_why(&self, args: &str) {
         // This is a privileged command.
         if self.priv_level().await < 50 {
             self.output("Why not?\n").await;
@@ -1776,7 +1777,7 @@ impl Session {
         }
     }
 
-    pub async fn do_blurb(self: &Arc<Self>, args: &str, entry: bool) {
+    pub async fn do_blurb(&self, args: &str, entry: bool) {
         let args = args.trim();
 
         if !args.is_empty() {
@@ -1819,7 +1820,7 @@ impl Session {
         }
     }
 
-    pub async fn do_here(self: &Arc<Self>, args: &str) {
+    pub async fn do_here(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1829,7 +1830,7 @@ impl Session {
         self.enqueue_others(Arc::new(HereNotify::new(self.name().await))).await;
     }
 
-    pub async fn do_away(self: &Arc<Self>, args: &str) {
+    pub async fn do_away(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1839,7 +1840,7 @@ impl Session {
         self.enqueue_others(Arc::new(AwayNotify::new(self.name().await))).await;
     }
 
-    pub async fn do_busy(self: &Arc<Self>, args: &str) {
+    pub async fn do_busy(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1849,7 +1850,7 @@ impl Session {
         self.enqueue_others(Arc::new(BusyNotify::new(self.name().await))).await;
     }
 
-    pub async fn do_gone(self: &Arc<Self>, args: &str) {
+    pub async fn do_gone(&self, args: &str) {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
             self.do_blurb(args, false).await;
@@ -1859,18 +1860,18 @@ impl Session {
         self.enqueue_others(Arc::new(GoneNotify::new(self.name().await))).await;
     }
 
-    pub async fn do_clear(self: &Arc<Self>, _args: &str) {
+    pub async fn do_clear(&self, _args: &str) {
         self.output("\x1b[H\x1b[J").await;
     }
 
-    pub async fn do_unidle(self: &Arc<Self>, _args: &str) {
+    pub async fn do_unidle(&self, _args: &str) {
         let idle = self.reset_idle(1).await;
         if idle == 0 {
             self.output("Your idle time has been reset.\n").await;
         }
     }
 
-    pub async fn do_detach(self: &Arc<Self>, _args: &str) {
+    pub async fn do_detach(&self, _args: &str) {
         if self.priv_level().await > 0 {
             self.reset_idle(10).await;
             self.output("You have been detached.\n").await;
@@ -1883,7 +1884,7 @@ impl Session {
         }
     }
 
-    pub async fn do_howmany(self: &Arc<Self>, _args: &str) {
+    pub async fn do_howmany(&self, _args: &str) {
         let mut here = 0;
         let mut away = 0;
         let mut busy = 0;
@@ -1921,7 +1922,7 @@ impl Session {
         self.output(&format!("\nDiscussions in use: {disc_count}\n\n")).await;
     }
 
-    pub async fn do_what(self: &Arc<Self>, args: &str) {
+    pub async fn do_what(&self, args: &str) {
         if DISCUSSIONS.is_empty() {
             self.output("No discussions currently exist.\n").await;
             return;
@@ -1989,13 +1990,13 @@ impl Session {
         }
     }
 
-    pub async fn do_date(self: &Arc<Self>, _args: &str) {
+    pub async fn do_date(&self, _args: &str) {
         let t = Timestamp::new();
         let date = t.date(0, 0);
         self.output(&format!("{date}\n")).await;
     }
 
-    pub async fn do_signal(self: &Arc<Self>, args: &str) {
+    pub async fn do_signal(&self, args: &str) {
         let mut args = args;
 
         if let Some(_rest) = match_keyword(args, "on", 2) {
@@ -2051,7 +2052,7 @@ impl Session {
         }
     }
 
-    pub async fn do_send(self: &Arc<Self>, args: &str) {
+    pub async fn do_send(&self, args: &str) {
         if args.is_empty() {
             if let Some(sendlist) = &*self.default_sendlist.read().await {
                 self.output("You are sending to ").await;
@@ -2103,7 +2104,7 @@ impl Session {
         self.output(".\n").await;
     }
 
-    pub async fn print_sendlist(self: &Arc<Self>, sendlist: &Sendlist) {
+    pub async fn print_sendlist(&self, sendlist: &Sendlist) {
         if !sendlist.sessions.is_empty() {
             let mut first = true;
             for session in &sendlist.sessions {
@@ -2142,7 +2143,7 @@ impl Session {
         }
     }
 
-    pub async fn do_join(self: &Arc<Self>, args: &str) {
+    pub async fn do_join(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /join <disc>[,<disc>...]\n").await;
             return;
@@ -2160,7 +2161,7 @@ impl Session {
         }
     }
 
-    pub async fn do_quit(self: &Arc<Self>, args: &str) {
+    pub async fn do_quit(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /quit <disc>[,<disc>...]\n").await;
             return;
@@ -2181,7 +2182,7 @@ impl Session {
         }
     }
 
-    pub async fn do_create(self: &Arc<Self>, args: &str) {
+    pub async fn do_create(&self, args: &str) {
         let mut args = args;
         let mut is_public = true;
 
@@ -2251,7 +2252,7 @@ impl Session {
         self.output(&format!("You have created discussion {name}, \"{title}\".\n")).await;
     }
 
-    pub async fn do_destroy(self: &Arc<Self>, args: &str) {
+    pub async fn do_destroy(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /destroy <disc>[,<disc>...]\n").await;
             return;
@@ -2272,7 +2273,7 @@ impl Session {
         }
     }
 
-    pub async fn do_permit(self: &Arc<Self>, args: &str) {
+    pub async fn do_permit(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /permit <disc> <person>[,<person>...]\n").await;
@@ -2288,7 +2289,7 @@ impl Session {
         }
     }
 
-    pub async fn do_depermit(self: &Arc<Self>, args: &str) {
+    pub async fn do_depermit(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /depermit <disc> <person>[,<person>...]\n").await;
@@ -2304,7 +2305,7 @@ impl Session {
         }
     }
 
-    pub async fn do_appoint(self: &Arc<Self>, args: &str) {
+    pub async fn do_appoint(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /appoint <disc> <person>[,<person>...]\n").await;
@@ -2320,7 +2321,7 @@ impl Session {
         }
     }
 
-    pub async fn do_unappoint(self: &Arc<Self>, args: &str) {
+    pub async fn do_unappoint(&self, args: &str) {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /unappoint <disc> <person>[,<person>...]\n").await;
@@ -2336,7 +2337,7 @@ impl Session {
         }
     }
 
-    pub async fn do_rename(self: &Arc<Self>, args: &str) {
+    pub async fn do_rename(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /rename <name>\n").await;
             return;
@@ -2358,7 +2359,7 @@ impl Session {
         }
 
         match self.find_sendable(args, false, true, true, true).await {
-            (Some(found_session), _, _, _) if found_session.id != self.id => {
+            (Some(found_session), _, _, _) if found_session.id().await != self.id().await => {
                 let found_name = found_session.name().await;
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
             }
@@ -2375,7 +2376,7 @@ impl Session {
         *self.name.write().await = Name::new(args, self.blurb().await);
     }
 
-    pub async fn do_set(self: &Arc<Self>, args: &str) {
+    pub async fn do_set(&self, args: &str) {
         let (var, value) = getword(args, Some('='));
         if var.is_empty() || value.is_empty() {
             self.output("Usage: /set <variable>=<value>\n").await;
@@ -2444,7 +2445,7 @@ impl Session {
         }
     }
 
-    pub async fn set_idle(self: &Arc<Self>, args: &str) {
+    pub async fn set_idle(&self, args: &str) {
         let now = Timestamp::new();
         let current_idle = (now - self.idle_since().await) / 60;
 
@@ -2569,7 +2570,7 @@ impl Session {
         }
     }
 
-    pub async fn do_display(self: &Arc<Self>, args: &str) {
+    pub async fn do_display(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /display <variable>[,<variable>...]\n").await;
             return;
@@ -2655,7 +2656,7 @@ impl Session {
         }
     }
 
-    pub async fn do_also(self: &Arc<Self>, args: &str) {
+    pub async fn do_also(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /also <sendlist>\n").await;
             return;
@@ -2669,7 +2670,7 @@ impl Session {
         }
     }
 
-    pub async fn do_oops(self: &Arc<Self>, args: &str) {
+    pub async fn do_oops(&self, args: &str) {
         if args.is_empty() {
             self.output("Usage: /oops <sendlist> OR /oops text [<message>]\n").await;
             return;
@@ -2699,7 +2700,7 @@ impl Session {
         }
     }
 
-    pub async fn do_help(self: &Arc<Self>, args: &str) {
+    pub async fn do_help(&self, args: &str) {
         let args = args.trim();
 
         if match_keyword(args, "/who", 2).is_some()
@@ -3155,11 +3156,11 @@ impl Session {
         }
     }
 
-    pub async fn do_reset(self: &Arc<Self>) {
+    pub async fn do_reset(&self) {
         self.reset_idle(1).await;
     }
 
-    pub async fn do_message(self: &Arc<Self>, line: &str) {
+    pub async fn do_message(&self, line: &str) {
         let (msg_start, sendlist_str, last_explicit, is_explicit) = message_start(line);
         let msg_start = msg_start.trim();
 
@@ -3202,7 +3203,7 @@ impl Session {
         self.send_message(&sendlist, msg_start).await;
     }
 
-    pub async fn send_message(self: &Arc<Self>, sendlist: &Arc<Sendlist>, text: &str) {
+    pub async fn send_message(&self, sendlist: &Sendlist, text: &str) {
         if !sendlist.errors.is_empty() {
             self.output("\x07\x07").await;
             self.output(&sendlist.errors).await;
@@ -3242,7 +3243,7 @@ impl Session {
         self.output("\n").await;
     }
 
-    pub async fn get_who_set(self: &Arc<Self>, args: &str) -> (OrderedSet<Arc<Session>>, String, String) {
+    pub async fn get_who_set(&self, args: &str) -> (OrderedSet<Session>, String, String) {
         let mut who = OrderedSet::new();
         let mut errors = String::new();
         let mut msg = String::new();
@@ -3279,7 +3280,7 @@ impl Session {
         (who, errors, msg)
     }
 
-    pub async fn session_matches(self: &Arc<Self>, name: &str, matches: &OrderedSet<Arc<Session>>) {
+    pub async fn session_matches(&self, name: &str, matches: &OrderedSet<Session>) {
         if !matches.is_empty() {
             let count = matches.len();
 
@@ -3300,7 +3301,7 @@ impl Session {
         }
     }
 
-    pub async fn discussion_matches(self: &Arc<Self>, name: &str, matches: &OrderedSet<Arc<Discussion>>) {
+    pub async fn discussion_matches(&self, name: &str, matches: &OrderedSet<Discussion>) {
         if !matches.is_empty() {
             let count = matches.len();
 
