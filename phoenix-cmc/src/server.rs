@@ -42,13 +42,13 @@ impl Server {
         Ok(Self(Arc::new(RwLock::new(inner))))
     }
 
-    /// Obtain read lock on the session data.
+    /// Obtain read lock on the `ServerInner` data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, ServerInner> {
         self.0.read().await
     }
 
-    /// Obtain write lock on the session data.
+    /// Obtain write lock on the `ServerInner` data.
     #[framed]
     pub async fn write(&self) -> RwLockWriteGuard<'_, ServerInner> {
         self.0.write().await
@@ -155,23 +155,23 @@ impl Server {
         let mut shutdown_rx = self.shutdown_tx().await.subscribe();
         tokio::select! {
             _ = shutdown_rx.recv() => {
-//                telnet.output("\n\n*** Server is shutting down ***\n").await;
-//                telnet.close(true).await;
+                telnet.output("\n\n*** Server is shutting down ***\n").await;
+                telnet.close(true).await;
             }
-//            result = telnet.handle_input() => {
-//                if let Err(e) = result {
-//                    if e.kind() != std::io::ErrorKind::UnexpectedEof {
-//                        error!("Telnet error: {e}");
-//                    }
-//                }
-//
-//                // Detach or close session
-//                if session.signed_on().await {
-//                    session.detach(&telnet, false).await;
-//                } else {
-//                    session.close(false).await;
-//                }
-//            }
+            result = telnet.handle_input() => {
+                if let Err(e) = result {
+                    if e.kind() != std::io::ErrorKind::UnexpectedEof {
+                        error!("Telnet error: {e}");
+                    }
+                }
+
+                // Detach or close session
+                if session.signed_on().await {
+                    session.detach(&telnet, false).await;
+                } else {
+                    session.close(false).await;
+                }
+            }
         }
 
         Ok(())

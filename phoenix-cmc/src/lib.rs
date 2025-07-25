@@ -11,7 +11,7 @@ pub mod timestamp;
 pub mod types;
 pub mod user;
 
-pub use server::PhoenixServer;
+pub use server::Server;
 pub use types::*;
 
 /// Phoenix server version.
