@@ -35,7 +35,13 @@ static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 
 /// Session handle.
 #[derive(Debug, Clone)]
-pub struct Session(Arc<RwLock<SessionInner>>);
+pub struct Session
+where
+    Self: Send + Sync + 'static,
+{
+    pub id: usize,
+    pub inner: Arc<RwLock<SessionInner>>,
+}
 
 #[derive(Debug)]
 pub struct SessionInner
@@ -120,7 +126,7 @@ impl Session {
             oops_text: Text::from("Oops!  Sorry, that last message was intended for someone else..."),
         };
 
-        let session = Session(Arc::new(RwLock::new(inner)));
+        let session = Session { id, inner };
 
         // Add to initializing sessions
         INITS.insert(id, session.clone());
@@ -134,19 +140,19 @@ impl Session {
     /// Obtain read lock on the `SessionInner` data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, SessionInner> {
-        self.0.read().await
+        self.inner.read().await
     }
 
     /// Obtain write lock on the `SessionInner` data.
     #[framed]
     pub async fn write(&self) -> RwLockWriteGuard<'_, SessionInner> {
-        self.0.write().await
+        self.inner.write().await
     }
 
     /// Get the session ID.
     #[framed]
     pub async fn id(&self) -> usize {
-        self.read().await.id
+        self.id
     }
 
     /// Get the `Server` object.
@@ -581,7 +587,7 @@ impl Session {
     }
 
     pub async fn close(&self, drain: bool) {
-        let id = self.id().await;
+        let id = self.id;
         INITS.remove(&id);
         SESSIONS.remove(&id);
 
@@ -704,7 +710,7 @@ impl Session {
 
     pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>) {
         for session in &SESSIONS {
-            if session.id().await != self.id().await {
+            if session.id != self.id {
                 session.enqueue(out.clone()).await;
             }
         }
@@ -832,7 +838,7 @@ impl Session {
     }
 
     pub async fn init_login_sequence(&self) {
-        let mut inner = self.0.write().await;
+        let mut inner = self.inner.write().await;
         inner.start_login_timeout().await;
         //        inner.set_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
     }
@@ -840,7 +846,7 @@ impl Session {
 
 impl SessionInner {
     pub async fn start_login_timeout(&mut self) {
-        let session_id = self.id().await;
+        let session_id = self.id;
 
         let handle = tokio::spawn(async move {
             tokio::time::sleep(LOGIN_TIMEOUT).await;
@@ -1076,8 +1082,8 @@ impl Session {
             user.add_session(self.clone()).await;
         }
 
-        SESSIONS.insert(self.id().await, self.clone());
-        INITS.remove(&self.id().await);
+        SESSIONS.insert(self.id, self.clone());
+        INITS.remove(&self.id);
 
         self.notify_entry().await;
 
@@ -2359,7 +2365,7 @@ impl Session {
         }
 
         match self.find_sendable(args, false, true, true, true).await {
-            (Some(found_session), _, _, _) if found_session.id().await != self.id().await => {
+            (Some(found_session), _, _, _) if found_session.id != self.id => {
                 let found_name = found_session.name().await;
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
             }
