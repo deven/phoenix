@@ -95,7 +95,7 @@ impl Sendlist {
                             _ => self.errors += ", ",
                         };
 
-                        self.errors += d.name.as_ref();
+                        self.errors += &d.name().await;
                     }
 
                     self.errors += ".\n";
@@ -131,7 +131,7 @@ impl Sendlist {
 
         // Add all members from discussions
         for discussion in &self.discussions {
-            let members = discussion.members.read().await;
+            let ref members = discussion.read().await.members;
             for member in members.iter() {
                 match &sender {
                     Some(sender) if sender.id == member.id => {}

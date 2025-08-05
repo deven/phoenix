@@ -899,8 +899,7 @@ impl Telnet {
                     is_private = true;
                 } else {
                     for disc in &to.discussions {
-                        let members = disc.members.read().await;
-                        if members.contains(&session) && !disc.is_public.load(Ordering::Relaxed) {
+                        if disc.is_member(&session).await && !disc.is_public().await {
                             is_private = true;
                             break;
                         }
@@ -959,7 +958,7 @@ impl Telnet {
                             } else {
                                 self.output(", ").await;
                             }
-                            self.output(&discussion.name).await;
+                            self.output(&discussion.name().await).await;
                         }
                     }
                 }

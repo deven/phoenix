@@ -600,7 +600,7 @@ impl Session {
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|r| r.key().clone()).collect();
         for key in &disc_keys {
             if let Some(disc) = DISCUSSIONS.get(&key) {
-                disc.quit(self.clone()).await;
+                disc.quit(&self).await;
             }
         }
 
@@ -763,17 +763,18 @@ impl Session {
         if do_discussions {
             for d in &DISCUSSIONS {
                 if member {
-                    let members = d.members.read().await;
-                    if !members.contains(&self.clone()) {
+                    let inner = d.read().await;
+                    if !inner.members.contains(&self) {
                         continue;
                     }
                 }
 
-                if d.name.eq_ignore_ascii_case(sendlist) {
+                let d_name = d.name().await;
+                if d_name.eq_ignore_ascii_case(sendlist) {
                     discussion = Some(d.clone());
                     discussion_matches.insert(d.clone());
                 } else if !exact {
-                    if let Some(pos) = match_name(&d.name, sendlist) {
+                    if let Some(pos) = match_name(&d_name, sendlist) {
                         if pos == 1 {
                             discussion = Some(d.clone());
                         }
@@ -1274,7 +1275,7 @@ impl Session {
                 false
             }
             (_, _, Some(found_discussion), _) => {
-                let found_name = found_discussion.name.as_ref();
+                let found_name = found_discussion.name().await;
                 let already = if double_check { "now" } else { "already" };
                 self.output(&format!("There is {already} a discussion named \"{found_name}\".  Choose another name.\n")).await;
                 self.set_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
@@ -1934,7 +1935,7 @@ impl Session {
             return;
         }
 
-        let sendlist = Sendlist::new(&self.clone(), args, true, false, true).await;
+        let sendlist = Sendlist::new(&self, args, true, false, true).await;
 
         if !args.is_empty() && sendlist.discussions.is_empty() {
             self.output(&sendlist.errors).await;
@@ -1950,17 +1951,17 @@ impl Session {
         let now = Timestamp::new();
 
         for disc in &discussions {
-            let disc_name = disc.name.as_ref();
+            let disc_name = disc.name().await;
             self.output(" ").await;
             let name = if disc_name.len() > 15 { format!("{disc_name:<14.14}+") } else { format!("{disc_name:<15}") };
             self.output(&name).await;
 
-            let members = disc.members.read().await;
-            let member_count = members.len();
-            let is_member = if members.contains(&self.clone()) { '*' } else { ' ' };
+            let inner = disc.read().await;
+            let member_count = inner.members.len();
+            let is_member = if inner.members.contains(&self) { '*' } else { ' ' };
             self.output(&format!("{member_count:>3}{is_member} ")).await;
 
-            let idle = (now - *disc.idle_since.read().await) / 60;
+            let idle = (now - disc.idle_since().await) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1978,9 +1979,9 @@ impl Session {
                 self.output("         ").await;
             }
 
-            if disc.permitted(&self.clone()).await {
-                let title = &disc.title;
-                if disc.title.len() > 49 {
+            if disc.is_permitted(&self.name().await).await {
+                let title = &disc.title().await;
+                if title.len() > 49 {
                     self.output(&format!("{title:<48.48}+\n")).await;
                 } else {
                     self.output(&format!("{title}\n")).await;
@@ -2092,7 +2093,7 @@ impl Session {
             }
         }
 
-        let sendlist = Sendlist::new(&self.clone(), &slist, false, true, true).await;
+        let sendlist = Sendlist::new(&self, &slist, false, true, true).await;
 
         if !sendlist.errors.is_empty() {
             self.output("\x07\x07").await;
@@ -2133,7 +2134,7 @@ impl Session {
                     } else {
                         self.output(", ").await;
                     }
-                    self.output(discussion.name.as_ref()).await;
+                    self.output(discussion.name().await).await;
                 }
             }
         } else {
@@ -2144,7 +2145,7 @@ impl Session {
                 } else {
                     self.output(", ").await;
                 }
-                self.output(discussion.name.as_ref()).await;
+                self.output(discussion.name().await).await;
             }
         }
     }
@@ -2161,7 +2162,7 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.join(self.clone()).await,
+                (Some(discussion), _) => discussion.join(&self).await,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             }
         }
@@ -2179,9 +2180,9 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.quit(self.clone()).await,
+                (Some(discussion), _) => discussion.quit(&self).await,
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.quit(self.clone()).await,
+                    (Some(discussion), _) => discussion.quit(&self).await,
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
@@ -2235,7 +2236,7 @@ impl Session {
                 return;
             }
             (_, _, Some(discussion), _) => {
-                let name = discussion.name.as_ref();
+                let name = discussion.name().await;
                 self.output(&format!("There is already a discussion named \"{name}\". (not created)\n")).await;
                 return;
             }
@@ -2246,15 +2247,15 @@ impl Session {
         DISCUSSIONS.insert(name.to_string(), disc.clone());
 
         self.enqueue_others(Arc::new(CreateNotify::new(
-            disc.name.clone(),
-            disc.title.clone(),
-            disc.is_public.load(Ordering::Relaxed),
+            disc.name().await,
+            disc.title().await,
+            disc.is_public().await,
             self.name().await,
         )))
         .await;
 
-        let name = disc.name.as_ref();
-        let title = &disc.title;
+        let name = disc.name().await;
+        let title = disc.title().await;
         self.output(&format!("You have created discussion {name}, \"{title}\".\n")).await;
     }
 
@@ -2270,9 +2271,9 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.destroy(self.clone()).await,
+                (Some(discussion), _) => discussion.destroy(&self).await,
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.destroy(self.clone()).await,
+                    (Some(discussion), _) => discussion.destroy(&self).await,
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
@@ -2287,9 +2288,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.permit(self.clone(), rest).await,
+            (Some(discussion), _) => discussion.permit(&self, rest).await,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.permit(self.clone(), rest).await,
+                (Some(discussion), _) => discussion.permit(&self, rest).await,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2303,9 +2304,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.depermit(self.clone(), rest).await,
+            (Some(discussion), _) => discussion.depermit(&self, rest).await,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.depermit(self.clone(), rest).await,
+                (Some(discussion), _) => discussion.depermit(&self, rest).await,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2319,9 +2320,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.appoint(self.clone(), rest).await,
+            (Some(discussion), _) => discussion.appoint(&self, rest).await,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.appoint(self.clone(), rest).await,
+                (Some(discussion), _) => discussion.appoint(&self, rest).await,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2335,9 +2336,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.unappoint(self.clone(), rest).await,
+            (Some(discussion), _) => discussion.unappoint(&self, rest).await,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.unappoint(self.clone(), rest).await,
+                (Some(discussion), _) => discussion.unappoint(&self, rest).await,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2365,12 +2366,12 @@ impl Session {
         }
 
         match self.find_sendable(args, false, true, true, true).await {
-            (Some(found_session), _, _, _) if found_session.id != self.id => {
+            (Some(found_session), _, _, _) if found_session != self => {
                 let found_name = found_session.name().await;
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
             }
             (_, _, Some(found_discussion), _) => {
-                let found_name = found_discussion.name.as_ref();
+                let found_name = found_discussion.name().await;
                 self.output(&format!("There is already a discussion named \"{found_name}\".  (name unchanged)\n")).await;
             }
             _ => {}
@@ -2669,7 +2670,7 @@ impl Session {
         }
 
         if let Some(last_msg) = &*self.last_message.read().await {
-            let sendlist = Sendlist::new(&self.clone(), args, false, true, true).await;
+            let sendlist = Sendlist::new(&self, args, false, true, true).await;
             self.send_message(&sendlist, &last_msg.text).await;
         } else {
             self.output("You have no previous message to resend.\n").await;
@@ -2693,7 +2694,7 @@ impl Session {
             }
         } else {
             if let Some(last_msg) = &*self.last_message.read().await {
-                let sendlist = Sendlist::new(&self.clone(), args, false, true, true).await;
+                let sendlist = Sendlist::new(&self, args, false, true, true).await;
                 let text = last_msg.text.clone();
                 let to = last_msg.to.clone();
 
@@ -3189,7 +3190,7 @@ impl Session {
                 return;
             }
         } else {
-            Sendlist::new(&self.clone(), &sendlist_str, false, true, true).await
+            Sendlist::new(&self, &sendlist_str, false, true, true).await
         };
 
         *self.last_sendlist.write().await = Some(sendlist.clone());
@@ -3236,7 +3237,7 @@ impl Session {
         }
 
         for disc in &sendlist.discussions {
-            *disc.idle_since.write().await = Timestamp::new();
+            *disc.set_idle_since(Timestamp::new()).await;
         }
 
         self.output("(message sent to ").await;
@@ -3264,7 +3265,7 @@ impl Session {
             let s = if count == 1 { "" } else { "s" };
             msg = format!("\n{count} user{s} signed on.\n");
         } else {
-            let sendlist = Sendlist::new(&self.clone(), args, true, true, true).await;
+            let sendlist = Sendlist::new(&self, args, true, true, true).await;
 
             let total = sendlist.expand(&mut who, None).await;
 
@@ -3319,7 +3320,7 @@ impl Session {
                     _ => self.output(", ").await,
                 };
 
-                self.output(disc.name.as_ref());
+                self.output(disc.name().await);
             }
 
             self.output(".\n").await;
