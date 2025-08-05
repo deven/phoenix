@@ -872,7 +872,7 @@ impl Telnet {
         }
     }
 
-    pub async fn print_message(&self, output_type: OutputType, time: Timestamp, from: &Arc<Name>, to: &Arc<Sendlist>, start: &str) {
+    pub async fn print_message(&self, output_type: OutputType, time: Timestamp, from: &Name, to: &Arc<Sendlist>, start: &str) {
         if self.session.read().await.is_none() {
             return;
         }

@@ -4,10 +4,18 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use unicase::UniCase;
 
+/// Name handle.
 #[derive(Debug, Clone)]
-pub struct Name {
+pub struct Name(Arc<RwLock<NameInner>>);
+
+#[derive(Debug)]
+pub struct NameInner
+where
+    Self: Send + Sync + 'static,
+{
     pub name_blurb: Text,
     pub name_len: usize,
     pub column_display: Text,
