@@ -4,46 +4,45 @@ use crate::session::Session;
 use crate::text::Text;
 use crate::types::OrderedSet;
 use std::fmt::Write;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
-pub enum Sendable {
-    Session(Arc<Session>),
-    Discussion(Arc<Discussion>),
-}
+//#[derive(Debug, Clone)]
+//pub enum Sendable {
+//    Session(Session),
+//    Discussion(Discussion),
+//}
 
 #[derive(Debug, Clone)]
 pub struct Sendlist {
     pub errors: String,
     pub typed: String,
-    pub sessions: OrderedSet<Arc<Session>>,
-    pub discussions: OrderedSet<Arc<Discussion>>,
+    pub sessions: OrderedSet<Session>,
+    pub discussions: OrderedSet<Discussion>,
 }
 
 impl Sendlist {
-    pub async fn new(session: &Arc<Session>, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Arc<Self> {
+    pub async fn new(sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Self {
         let mut sendlist =
             Self { errors: String::new(), typed: String::new(), sessions: OrderedSet::new(), discussions: OrderedSet::new() };
-        sendlist.set(session, typed, multi, do_sessions, do_discussions).await;
-        Arc::new(sendlist)
+        sendlist.set(sender, typed, multi, do_sessions, do_discussions).await;
+        sendlist
     }
 
-    pub async fn set(&mut self, sender: &Arc<Session>, sendlist: &str, multi: bool, do_sessions: bool, do_discussions: bool) {
-        if self.typed == sendlist {
+    pub async fn set(&mut self, sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) {
+        if self.typed == typed {
             return; // Return if sendlist unchanged
         }
 
         self.errors.clear();
-        self.typed = sendlist.to_string();
+        self.typed = typed.to_string();
         self.sessions.clear();
         self.discussions.clear();
 
-        if sendlist.is_empty() {
+        if typed.is_empty() {
             return;
         }
 
         let mut non_matches: OrderedSet<Text> = OrderedSet::new();
-        for part in sendlist.split(SEPARATOR as char).map(str::trim).filter(|s| !s.is_empty()) {
+        for part in typed.split(SEPARATOR as char).map(str::trim).filter(|s| !s.is_empty()) {
             let (found_session, session_matches, found_discussion, discussion_matches) =
                 sender.find_sendable(part, !multi, false, do_sessions, do_discussions).await;
 
@@ -122,7 +121,7 @@ impl Sendlist {
         }
     }
 
-    pub async fn expand(self: &Arc<Self>, who: &mut OrderedSet<Arc<Session>>, sender: Option<Arc<Session>>) -> usize {
+    pub async fn expand(&self, who: &mut OrderedSet<Session>, sender: Option<Session>) -> usize {
         who.clear();
 
         // Add all sessions from sendlist
