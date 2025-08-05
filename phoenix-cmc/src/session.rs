@@ -68,7 +68,7 @@ where
     pub closing: bool,
     pub attempts: i32,
     pub priv_level: i32,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub last_message: Option<Arc<Message>>,
     pub default_sendlist: Option<Arc<Sendlist>>,
     pub last_sendlist: Option<Arc<Sendlist>>,
@@ -448,7 +448,7 @@ impl Session {
 
     /// Get the `Name` object.
     #[framed]
-    pub async fn name(&self) -> Arc<Name> {
+    pub async fn name(&self) -> Name {
         self.read().await.name.clone()
     }
 

@@ -49,14 +49,14 @@ impl OutputObj for TextOutput {
 #[derive(Debug, Clone)]
 pub struct Message {
     pub output_type: OutputType,
-    pub from: Arc<Name>,
+    pub from: Name,
     pub to: Arc<Sendlist>,
     pub text: Text,
     pub time: Timestamp,
 }
 
 impl Message {
-    pub fn new(output_type: OutputType, sender: Arc<Name>, dest: Arc<Sendlist>, msg: impl Into<Text>) -> Self {
+    pub fn new(output_type: OutputType, sender: Name, dest: Arc<Sendlist>, msg: impl Into<Text>) -> Self {
         Self { output_type, from: sender, to: dest, text: msg.into(), time: Timestamp::new() }
     }
 }
@@ -82,12 +82,12 @@ impl OutputObj for Message {
 
 #[derive(Debug, Clone)]
 pub struct EntryNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl EntryNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -115,12 +115,12 @@ impl OutputObj for EntryNotify {
 
 #[derive(Debug, Clone)]
 pub struct ExitNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl ExitNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -148,12 +148,12 @@ impl OutputObj for ExitNotify {
 
 #[derive(Debug, Clone)]
 pub struct TransferNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl TransferNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -181,12 +181,12 @@ impl OutputObj for TransferNotify {
 
 #[derive(Debug, Clone)]
 pub struct AttachNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl AttachNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -214,13 +214,13 @@ impl OutputObj for AttachNotify {
 
 #[derive(Debug, Clone)]
 pub struct DetachNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub intentional: bool,
     pub time: Timestamp,
 }
 
 impl DetachNotify {
-    pub fn new(who: Arc<Name>, i: bool) -> Self {
+    pub fn new(who: Name, i: bool) -> Self {
         Self { name: who, intentional: i, time: Timestamp::new() }
     }
 }
@@ -249,12 +249,12 @@ impl OutputObj for DetachNotify {
 
 #[derive(Debug, Clone)]
 pub struct HereNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl HereNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -282,12 +282,12 @@ impl OutputObj for HereNotify {
 
 #[derive(Debug, Clone)]
 pub struct AwayNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl AwayNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -315,12 +315,12 @@ impl OutputObj for AwayNotify {
 
 #[derive(Debug, Clone)]
 pub struct BusyNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl BusyNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -348,12 +348,12 @@ impl OutputObj for BusyNotify {
 
 #[derive(Debug, Clone)]
 pub struct GoneNotify {
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl GoneNotify {
-    pub fn new(who: Arc<Name>) -> Self {
+    pub fn new(who: Name) -> Self {
         Self { name: who, time: Timestamp::new() }
     }
 }
@@ -384,12 +384,12 @@ pub struct CreateNotify {
     pub discussion_name: Text,
     pub discussion_title: Text,
     pub is_public: bool,
-    pub creator: Arc<Name>,
+    pub creator: Name,
     pub time: Timestamp,
 }
 
 impl CreateNotify {
-    pub fn new(disc_name: Text, disc_title: Text, is_public: bool, creator: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, disc_title: Text, is_public: bool, creator: Name) -> Self {
         Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator, time: Timestamp::new() }
     }
 }
@@ -424,12 +424,12 @@ impl OutputObj for CreateNotify {
 #[derive(Debug, Clone)]
 pub struct DestroyNotify {
     pub discussion_name: Text,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl DestroyNotify {
-    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Name) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -459,12 +459,12 @@ impl OutputObj for DestroyNotify {
 #[derive(Debug, Clone)]
 pub struct JoinNotify {
     pub discussion_name: Text,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl JoinNotify {
-    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Name) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -494,12 +494,12 @@ impl OutputObj for JoinNotify {
 #[derive(Debug, Clone)]
 pub struct QuitNotify {
     pub discussion_name: Text,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl QuitNotify {
-    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Name) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -529,12 +529,12 @@ impl OutputObj for QuitNotify {
 #[derive(Debug, Clone)]
 pub struct PublicNotify {
     pub discussion_name: Text,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl PublicNotify {
-    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Name) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -564,12 +564,12 @@ impl OutputObj for PublicNotify {
 #[derive(Debug, Clone)]
 pub struct PrivateNotify {
     pub discussion_name: Text,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub time: Timestamp,
 }
 
 impl PrivateNotify {
-    pub fn new(disc_name: Text, who: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who: Name) -> Self {
         Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
     }
 }
@@ -600,13 +600,13 @@ impl OutputObj for PrivateNotify {
 pub struct PermitNotify {
     pub discussion_name: Text,
     pub is_public: bool,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub is_explicit: bool,
     pub time: Timestamp,
 }
 
 impl PermitNotify {
-    pub fn new(disc_name: Text, public: bool, who: Arc<Name>, flag: bool) -> Self {
+    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool) -> Self {
         Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, time: Timestamp::new() }
     }
 }
@@ -651,14 +651,14 @@ impl OutputObj for PermitNotify {
 pub struct DepermitNotify {
     pub discussion_name: Text,
     pub is_public: bool,
-    pub name: Arc<Name>,
+    pub name: Name,
     pub is_explicit: bool,
-    pub removed: Option<Arc<Name>>,
+    pub removed: Option<Name>,
     pub time: Timestamp,
 }
 
 impl DepermitNotify {
-    pub fn new(disc_name: Text, public: bool, who: Arc<Name>, flag: bool, removed_who: Option<Arc<Name>>) -> Self {
+    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool, removed_who: Option<Name>) -> Self {
         Self {
             discussion_name: disc_name,
             is_public: public,
@@ -729,13 +729,13 @@ impl OutputObj for DepermitNotify {
 #[derive(Debug, Clone)]
 pub struct AppointNotify {
     pub discussion_name: Text,
-    pub appointer: Arc<Name>,
-    pub appointee: Arc<Name>,
+    pub appointer: Name,
+    pub appointee: Name,
     pub time: Timestamp,
 }
 
 impl AppointNotify {
-    pub fn new(disc_name: Text, who1: Arc<Name>, who2: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who1: Name, who2: Name) -> Self {
         Self { discussion_name: disc_name, appointer: who1, appointee: who2, time: Timestamp::new() }
     }
 }
@@ -770,13 +770,13 @@ impl OutputObj for AppointNotify {
 #[derive(Debug, Clone)]
 pub struct UnappointNotify {
     pub discussion_name: Text,
-    pub unappointer: Arc<Name>,
-    pub unappointee: Arc<Name>,
+    pub unappointer: Name,
+    pub unappointee: Name,
     pub time: Timestamp,
 }
 
 impl UnappointNotify {
-    pub fn new(disc_name: Text, who1: Arc<Name>, who2: Arc<Name>) -> Self {
+    pub fn new(disc_name: Text, who1: Name, who2: Name) -> Self {
         Self { discussion_name: disc_name, unappointer: who1, unappointee: who2, time: Timestamp::new() }
     }
 }
