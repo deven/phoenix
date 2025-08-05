@@ -4,19 +4,29 @@ use crate::types::OrderedSet;
 use anyhow::Result;
 use async_backtrace::framed;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
+
 /// User handle.
 #[derive(Debug, Clone)]
-pub struct User(Arc<RwLock<UserInner>>);
+pub struct User
+where
+    Self: Send + Sync + 'static,
+{
+    pub id: usize,
+    pub inner: Arc<RwLock<UserInner>>,
+}
 
 #[derive(Debug)]
 pub struct UserInner
 where
     Self: Send + Sync + 'static,
 {
+    pub id: usize,
     pub sessions: OrderedSet<Session>,
     pub user: Text,
     pub password: Option<String>,
@@ -36,32 +46,38 @@ impl User {
         bl: Option<impl Into<Text>>,
         p: i32,
     ) -> Self {
-        let inner = UserInner {
-            sessions: OrderedSet::new(),
-            user: login.into(),
-            password: pass,
-            reserved: Vec::new(),
-            blurb: bl.map(|b| b.into()),
-            priv_level: p,
-        };
+        let id = USER_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let sessions = OrderedSet::new();
+        let user = login.into();
+        let password = pass;
+        let reserved = Vec::new();
+        let blurb = bl.map(|b| b.into());
+        let priv_level = p;
 
-        let user = User(Arc::new(RwLock::new(inner)));
+        let inner = UserInner { id, sessions, user, password, reserved, blurb, priv_level };
+
+        let user = User { id, inner: Arc::new(RwLock::new(inner)) };
 
         user.set_reserved(names).await;
 
         user
     }
 
+    /// Get the user ID.
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
     /// Obtain read lock on the `UserInner` data.
     #[framed]
     pub async fn read(&self) -> RwLockReadGuard<'_, UserInner> {
-        self.0.read().await
+        self.inner.read().await
     }
 
     /// Obtain write lock on the `UserInner` data.
     #[framed]
     pub async fn write(&self) -> RwLockWriteGuard<'_, UserInner> {
-        self.0.write().await
+        self.inner.write().await
     }
 
     pub async fn set_reserved(&self, names: Option<&str>) {
@@ -253,4 +269,18 @@ pub fn hash_password(password: &str) -> Result<String> {
     let password_hash =
         argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
     Ok(password_hash.to_string())
+}
+
+impl PartialEq for User {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for User {}
+
+impl std::hash::Hash for User {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
