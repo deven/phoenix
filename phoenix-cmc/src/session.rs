@@ -555,7 +555,7 @@ impl Session {
 
     /// Set the reply sendlist.
     #[framed]
-    pub async fn set_reply_sendlist(&self, sendlist: Into<Arc<str>>) {
+    pub async fn set_reply_sendlist(&self, sendlist: impl Into<Arc<str>>) {
         let sendlist: Arc<str> = sendlist.into();
         let mut inner = self.write().await;
 
