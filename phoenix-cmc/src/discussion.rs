@@ -305,7 +305,7 @@ impl Discussion {
                     session.output(&format!("Discussion {disc} is already public.\n")).await;
                 } else {
                     inner.is_public = true;
-                    let notification = Arc::new(PublicNotify::new(inner.name.clone(), session.name().await));
+                    let notification = Arc::new(PublicNotify::new(inner.name.clone(), session_name.clone()));
                     inner.enqueue_others(notification, &session).await;
                     let disc = &inner.name;
                     session.output(&format!("You have made discussion {disc} public.\n")).await;
@@ -393,7 +393,7 @@ impl Discussion {
                         inner.allowed.insert(name);
                     }
 
-                    let notification = Arc::new(PrivateNotify::new(inner.name.clone(), session.name().await));
+                    let notification = Arc::new(PrivateNotify::new(inner.name.clone(), session_name.clone()));
                     inner.enqueue_others(notification, &session).await;
                     let disc = &inner.name;
                     session.output(&format!("You have made discussion {disc} private.\n")).await;
