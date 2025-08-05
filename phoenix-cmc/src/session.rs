@@ -25,7 +25,7 @@ const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 static INITS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static SESSIONS: LazyLock<DashMap<usize, Session>> = LazyLock::new(DashMap::new);
 static DISCUSSIONS: LazyLock<DashMap<String, Discussion>> = LazyLock::new(DashMap::new);
-static SESSION_COUNTER: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+static SESSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 static DEFAULTS: LazyLock<RwLock<HashMap<Text, Text>>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert(Text::from("time_format"), Text::from("verbose"));
@@ -126,7 +126,7 @@ impl Session {
             oops_text: Text::from("Oops!  Sorry, that last message was intended for someone else..."),
         };
 
-        let session = Session { id, inner };
+        let session = Session { id, inner: Arc::new(RwLock::new(inner)) };
 
         // Add to initializing sessions
         INITS.insert(id, session.clone());
@@ -150,8 +150,7 @@ impl Session {
     }
 
     /// Get the session ID.
-    #[framed]
-    pub async fn id(&self) -> usize {
+    pub fn id(&self) -> usize {
         self.id
     }
 
@@ -612,7 +611,7 @@ impl Session {
 
         // Disassociate from user
         if let Some(user) = &*self.user.read().await {
-            user.remove_session(&self.clone()).await;
+            user.remove_session(&self).await;
             *self.user.write().await = None;
         }
     }
@@ -710,7 +709,7 @@ impl Session {
 
     pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>) {
         for session in &SESSIONS {
-            if session.id != self.id {
+            if session != self {
                 session.enqueue(out.clone()).await;
             }
         }

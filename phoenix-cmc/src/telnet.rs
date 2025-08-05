@@ -571,7 +571,7 @@ impl Telnet {
     }
 
     pub async fn close(self: &Self, drain: bool) {
-        *self.closing.write().await = true;
+        self.set_closing(true).await;
 
         if drain {
             *self.do_echo.write().await = false;
@@ -1049,7 +1049,7 @@ impl Telnet {
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
         loop {
-            if *self.closing.read().await {
+            if self.closing().await {
                 return Ok(());
             }
 
