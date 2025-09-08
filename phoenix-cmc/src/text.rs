@@ -73,6 +73,17 @@ impl Text {
         Self(UniCase::new(self.0.slice_ref(substring)))
     }
 
+    /// Creates a zero-copy slice from an existing substring reference.
+    ///
+    /// This is useful when you already have a `&str` that's a substring of this `Text`.
+    /// The substring must be derived from this `Text` for this to work.
+    ///
+    /// # Panics
+    /// Panics if `subset` is not actually a substring of this `Text`.
+    pub fn slice_ref(&self, subset: &str) -> Self {
+        Self(UniCase::new(self.0.slice_ref(subset)))
+    }
+
     /// Creates a zero-copy slice from the start to the given index.
     pub fn slice_to(&self, end: usize) -> Self {
         self.slice(0..end)
