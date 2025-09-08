@@ -69,7 +69,7 @@ impl Text {
     /// is extremely efficient and shares the same underlying buffer.
     pub fn slice(&self, range: Range<usize>) -> Self {
         let s = self.as_str();
-        let substring = &s[range];  // This handles UTF-8 boundaries
+        let substring = &s[range]; // This handles UTF-8 boundaries
         Self(UniCase::new(self.0.slice_ref(substring)))
     }
 
@@ -127,9 +127,7 @@ impl Text {
             return true;
         }
         let s = self.as_str();
-        s.len() >= pat.len()
-            && s.is_char_boundary(pat.len())
-            && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
+        s.len() >= pat.len() && s.is_char_boundary(pat.len()) && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
     }
 
     /// Checks if this text ends with the given pattern (case-insensitive).
@@ -138,9 +136,7 @@ impl Text {
             return true;
         }
         let s = self.as_str();
-        s.len() >= pat.len()
-            && s.is_char_boundary(s.len() - pat.len())
-            && UniCase::new(&s[s.len() - pat.len()..]) == UniCase::new(pat)
+        s.len() >= pat.len() && s.is_char_boundary(s.len() - pat.len()) && UniCase::new(&s[s.len() - pat.len()..]) == UniCase::new(pat)
     }
 
     /// Checks if this text contains the given pattern (case-insensitive).
@@ -757,24 +753,24 @@ mod tests {
 
         assert_eq!(text.as_str(), "Hello World");
         assert_eq!(text, "Hello World");
-        assert_eq!(text, "HELLO WORLD");  // Case-insensitive
+        assert_eq!(text, "HELLO WORLD"); // Case-insensitive
         assert_eq!(text, String::from("hello world"));
 
         let bs2 = text.as_bytestring();
         assert_eq!(bs2, "Hello World");
         assert_eq!(bs2, String::from("Hello World"));
-        assert_eq!(bs2, Text::new("HELLO WORLD"));  // Case-insensitive via Text's PartialEq
+        assert_eq!(bs2, Text::new("HELLO WORLD")); // Case-insensitive via Text's PartialEq
     }
 
     #[test]
     fn test_slice_ref() {
         let text = Text::new("Hello World");
         let s = text.as_str();
-        let hello_ref = &s[0..5];  // "Hello"
+        let hello_ref = &s[0..5]; // "Hello"
 
         let hello_slice = text.slice_ref(hello_ref);
         assert_eq!(hello_slice, "Hello");
-        assert_eq!(hello_slice, "HELLO");  // Case-insensitive
+        assert_eq!(hello_slice, "HELLO"); // Case-insensitive
 
         // Test that it shares the same underlying data
         let hello_direct = text.slice(0..5);
@@ -796,7 +792,7 @@ mod tests {
         // Test Text iterators with case-insensitive semantics
         let text_parts: Vec<Text> = text.split_text(",").collect();
         assert_eq!(text_parts.len(), 3);
-        assert_eq!(text_parts[0], "HELLO");  // Case-insensitive
+        assert_eq!(text_parts[0], "HELLO"); // Case-insensitive
         assert_eq!(text_parts[1], "world");
         assert_eq!(text_parts[2], "TEST");
     }
@@ -812,7 +808,7 @@ mod tests {
         // Test Text lines with case-insensitive semantics
         let text_lines: Vec<Text> = text.lines_text().collect();
         assert_eq!(text_lines.len(), 3);
-        assert_eq!(text_lines[0], "LINE1");  // Case-insensitive
+        assert_eq!(text_lines[0], "LINE1"); // Case-insensitive
         assert_eq!(text_lines[1], "line2");
         assert_eq!(text_lines[2], "LINE3");
     }
@@ -824,7 +820,7 @@ mod tests {
         // Test strip prefix with zero-copy
         let stripped = text.strip_prefix("Hello ").unwrap();
         assert_eq!(stripped, "World");
-        assert_eq!(stripped, "WORLD");  // Case-insensitive
+        assert_eq!(stripped, "WORLD"); // Case-insensitive
 
         // Test strip suffix with zero-copy
         let stripped_suffix = text.strip_suffix(" World").unwrap();
@@ -845,7 +841,7 @@ mod tests {
         assert_eq!(hello, "Hello");
         assert_eq!(hello, "HELLO");
 
-        assert!(text.get_text(0..100).is_none());  // Out of bounds
+        assert!(text.get_text(0..100).is_none()); // Out of bounds
 
         // Test parsing
         let number_text = Text::new("42");
@@ -858,7 +854,7 @@ mod tests {
 
         // Test match_indices
         let matches: Vec<(usize, &str)> = text.match_indices("l").collect();
-        assert_eq!(matches.len(), 3);  // "Hello World" has 3 'l's
+        assert_eq!(matches.len(), 3); // "Hello World" has 3 'l's
     }
 
     #[test]
@@ -867,13 +863,10 @@ mod tests {
         let text = Text::new("A,B,C,D");
 
         // Pattern: use &str iterator then map to Text with slice_ref
-        let custom_parts: Vec<Text> = text
-            .split(",")
-            .map(|s| text.slice_ref(s))
-            .collect();
+        let custom_parts: Vec<Text> = text.split(",").map(|s| text.slice_ref(s)).collect();
 
         assert_eq!(custom_parts.len(), 4);
-        assert_eq!(custom_parts[0], "a");  // Case-insensitive
+        assert_eq!(custom_parts[0], "a"); // Case-insensitive
         assert_eq!(custom_parts[1], "B");
         assert_eq!(custom_parts[2], "c");
         assert_eq!(custom_parts[3], "D");
