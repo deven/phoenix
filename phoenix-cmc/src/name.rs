@@ -4,12 +4,11 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
-use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use unicase::UniCase;
 
 /// Name handle.
 #[derive(Debug, Clone)]
-pub struct Name(Arc<RwLock<NameInner>>);
+pub struct Name(Arc<NameInner>);
 
 #[derive(Debug)]
 pub struct NameInner
@@ -29,8 +28,9 @@ impl Name {
         let name_blurb = Text::from(format!("{name} [{blurb}]"));
         let name_len = name.len();
         let column_display = Self::format_column_display(name_blurb.as_str());
+        let inner = NameInner { name_blurb, name_len: name.len(), column_display };
 
-        Self { name_blurb, name_len: name.len(), column_display }
+        Self(Arc::new(inner))
     }
 
     /// Create a `Name` with no blurb.
@@ -39,8 +39,9 @@ impl Name {
         let name_len = name.len();
         let name_blurb = Text::from(name);
         let column_display = Self::format_column_display(name_blurb.as_str());
+        let inner = NameInner { name_blurb, name_len, column_display };
 
-        Self { name_blurb, name_len, column_display }
+        Self(Arc::new(inner))
     }
 
     /// Format the name and blurb for column display.
@@ -55,15 +56,15 @@ impl Name {
 
     /// Get just the name without the blurb.
     pub fn name(&self) -> &str {
-        &self.name_blurb[..self.name_len]
+        &self.0.name_blurb[..self.0.name_len]
     }
 
     /// Get just the blurb, if any.
     pub fn blurb(&self) -> Option<&str> {
-        if self.name_blurb.len() > self.name_len {
-            let start = self.name_len + 2; // skip name and " ["
-            let end = self.name_blurb.len() - 1; // drop trailing ']'
-            Some(&self.name_blurb[start..end])
+        if self.0.name_blurb.len() > self.0.name_len {
+            let start = self.0.name_len + 2; // skip name and " ["
+            let end = self.0.name_blurb.len() - 1; // drop trailing ']'
+            Some(&self.0.name_blurb[start..end])
         } else {
             None
         }
@@ -71,28 +72,28 @@ impl Name {
 
     /// Check if this `Name` has a blurb.
     pub fn has_blurb(&self) -> bool {
-        self.name_blurb.len() > self.name_len
+        self.0.name_blurb.len() > self.0.name_len
     }
 
     /// Get the full formatted name with blurb.
     pub fn name_blurb(&self) -> &Text {
-        &self.name_blurb
+        &self.0.name_blurb
     }
 
     /// Get the name and blurb formatted for column display.
     pub fn column_display(&self) -> &Text {
-        &self.column_display
+        &self.0.column_display
     }
 
     /// Get the full formatted name with blurb as &str.
     pub fn as_str(&self) -> &str {
-        self.name_blurb.as_str()
+        self.0.name_blurb.as_str()
     }
 
     /// Get the full formatted name with blurb, or "you" if name matches.
     pub fn you(&self, name: &Name) -> &str {
         if UniCase::new(self.name()) != UniCase::new(name.name()) {
-            self.name_blurb.as_str()
+            self.0.name_blurb.as_str()
         } else {
             "you"
         }
@@ -101,7 +102,7 @@ impl Name {
 
 impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.name_blurb)
+        f.write_str(&self.0.name_blurb)
     }
 }
 
@@ -141,7 +142,7 @@ impl Deref for Name {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.name_blurb.as_str()
+        self.0.name_blurb.as_str()
     }
 }
 
