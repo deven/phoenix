@@ -598,10 +598,22 @@ mod tests {
     fn test_mixed_type_equality() {
         let text = Text::new("Hello");
 
+        // Test all supported types with case-insensitive equality
         assert_eq!(text, "HELLO");
         assert_eq!(text, "hello");
+        assert_eq!(text, &"HeLLo");
         assert_eq!(text, String::from("HeLLo"));
         assert_eq!(text, Arc::from("hello"));
+        assert_eq!(text, ByteString::from("HELLO"));
+
+        // Test symmetric equality
+        assert_eq!("HELLO", text);
+        assert_eq!(String::from("hello"), text);
+        assert_eq!(Arc::from("HeLLo"), text);
+
+        // Test that different content is not equal
+        assert_ne!(text, "World");
+        assert_ne!(text, String::from("Goodbye"));
     }
 
     #[test]
@@ -734,7 +746,7 @@ mod tests {
 
         // Into ByteString
         let bs: ByteString = text.into();
-        assert_eq!(bs.as_str(), "Hello");
+        assert_eq!(bs, "Hello");
     }
 
     #[test]
@@ -743,8 +755,13 @@ mod tests {
         let text = Text::from(bs);
 
         assert_eq!(text.as_str(), "Hello World");
+        assert_eq!(text, "Hello World");
+        assert_eq!(text, "HELLO WORLD");  // Case-insensitive
+        assert_eq!(text, String::from("hello world"));
 
         let bs2 = text.as_bytestring();
-        assert_eq!(bs2.as_str(), "Hello World");
+        assert_eq!(bs2, "Hello World");
+        assert_eq!(bs2, String::from("Hello World"));
+        assert_eq!(bs2, Text::new("HELLO WORLD"));  // Case-insensitive via Text's PartialEq
     }
 }
