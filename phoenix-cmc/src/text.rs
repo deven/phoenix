@@ -68,7 +68,9 @@ impl Text {
     /// This is the key advantage of using `ByteString` - creating slices
     /// is extremely efficient and shares the same underlying buffer.
     pub fn slice(&self, range: Range<usize>) -> Self {
-        Self(UniCase::new(self.0.slice(range)))
+        let s = self.as_str();
+        let substring = &s[range];  // This handles UTF-8 boundaries
+        Self(UniCase::new(self.0.slice_ref(substring)))
     }
 
     /// Creates a zero-copy slice from the start to the given index.
