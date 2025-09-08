@@ -307,11 +307,6 @@ impl Text {
         self.as_str().rsplit_once(pat)
     }
 
-    /// Returns an iterator over the lines of this text as `&str`.
-    pub fn lines(&self) -> std::str::Lines<'_> {
-        self.as_str().lines()
-    }
-
     /// Returns an iterator over the lines of this text as zero-copy `Text` values.
     ///
     /// This variant preserves case-insensitive semantics for each line.
