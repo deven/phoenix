@@ -776,8 +776,8 @@ mod tests {
 
         let bs2 = text.as_bytestring();
         assert_eq!(bs2, "Hello World");
-        assert_eq!(bs2, String::from("Hello World"));
-        assert_eq!(bs2, Text::new("HELLO WORLD")); // Case-insensitive via Text's PartialEq
+        assert_eq!(*bs2, String::from("Hello World"));
+        assert_eq!(Text::new("HELLO WORLD"), *bs2); // Case-insensitive via Text's PartialEq
     }
 
     #[test]
