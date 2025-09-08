@@ -55,16 +55,16 @@ impl Name {
     }
 
     /// Get just the name without the blurb.
-    pub fn name(&self) -> &str {
-        &self.0.name_blurb[..self.0.name_len]
+    pub fn name(&self) -> &Text {
+        Text::from(&self.0.name_blurb[..self.0.name_len])
     }
 
     /// Get just the blurb, if any.
-    pub fn blurb(&self) -> Option<&str> {
+    pub fn blurb(&self) -> Option<&Text> {
         if self.0.name_blurb.len() > self.0.name_len {
             let start = self.0.name_len + 2; // skip name and " ["
             let end = self.0.name_blurb.len() - 1; // drop trailing ']'
-            Some(&self.0.name_blurb[start..end])
+            Some(Text::from(&self.0.name_blurb[start..end]))
         } else {
             None
         }
@@ -93,7 +93,7 @@ impl Name {
     /// Get the full formatted name with blurb, or "you" if name matches.
     pub fn you(&self, name: &Name) -> &str {
         if UniCase::new(self.name()) != UniCase::new(name.name()) {
-            self.0.name_blurb.as_str()
+            self.as_str()
         } else {
             "you"
         }
@@ -102,7 +102,7 @@ impl Name {
 
 impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0.name_blurb)
+        f.write_str(self.as_str())
     }
 }
 
