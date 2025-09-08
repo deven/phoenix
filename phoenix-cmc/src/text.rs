@@ -236,11 +236,6 @@ impl Text {
         self.as_str().lines()
     }
 
-    /// Splits this text by whitespace, returning an iterator of zero-copy slices.
-    pub fn split_whitespace(&self) -> impl Iterator<Item = &str> {
-        self.as_str().split_whitespace()
-    }
-
     /// Checks if this text is ASCII.
     pub fn is_ascii(&self) -> bool {
         self.as_str().is_ascii()
@@ -324,7 +319,7 @@ impl Text {
         self.lines().map(|s| self.slice_ref(s))
     }
 
-    /// Splits this text by whitespace, returning an iterator of `&str`.
+    /// Splits this text by whitespace, returning an iterator of zero-copy slices.
     pub fn split_whitespace(&self) -> impl Iterator<Item = &str> {
         self.as_str().split_whitespace()
     }
