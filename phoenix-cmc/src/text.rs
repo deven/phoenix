@@ -202,6 +202,16 @@ impl Text {
         self.0.into_inner()
     }
 
+    /// Returns a reference to the underlying `Bytes`.
+    pub fn as_bytes(&self) -> &Bytes {
+        &*self.as_bytestring()
+    }
+
+    /// Extracts the underlying `Bytes`, consuming the `Text`.
+    pub fn into_bytes(self) -> Bytes {
+        self.into_bytestring().into()
+    }
+
     /// Case-sensitive equality check.
     ///
     /// Use this when you need exact matching instead of the default
