@@ -138,6 +138,12 @@ impl AsRef<str> for Name {
     }
 }
 
+impl AsRef<Text> for Name {
+    fn as_ref(&self) -> &Text {
+        self.name_blurb()
+    }
+}
+
 impl Deref for Name {
     type Target = str;
 
