@@ -267,6 +267,108 @@ impl Text {
 
         Text::new(result)
     }
+
+    /// Splits this text by a pattern, returning an iterator of `&str` substrings.
+    pub fn split(&self, pat: &str) -> impl Iterator<Item = &str> {
+        self.as_str().split(pat)
+    }
+
+    /// Splits this text by a pattern, returning an iterator of zero-copy `Text` substrings.
+    ///
+    /// This variant preserves case-insensitive semantics for each part.
+    pub fn split_text(&self, pat: &str) -> impl Iterator<Item = Text> + '_ {
+        self.split(pat).map(|s| self.slice_ref(s))
+    }
+
+    /// Splits this text by a pattern from the right, returning an iterator of `&str` substrings.
+    pub fn rsplit(&self, pat: &str) -> impl Iterator<Item = &str> {
+        self.as_str().rsplit(pat)
+    }
+
+    /// Splits this text by a pattern, returning at most `n` `&str` substrings.
+    pub fn splitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
+        self.as_str().splitn(n, pat)
+    }
+
+    /// Splits this text by a pattern from the right, returning at most `n` `&str` substrings.
+    pub fn rsplitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
+        self.as_str().rsplitn(n, pat)
+    }
+
+    /// Splits this text once by a pattern.
+    pub fn split_once(&self, pat: &str) -> Option<(&str, &str)> {
+        self.as_str().split_once(pat)
+    }
+
+    /// Splits this text once by a pattern from the right.
+    pub fn rsplit_once(&self, pat: &str) -> Option<(&str, &str)> {
+        self.as_str().rsplit_once(pat)
+    }
+
+    /// Returns an iterator over the lines of this text as `&str`.
+    pub fn lines(&self) -> std::str::Lines<'_> {
+        self.as_str().lines()
+    }
+
+    /// Returns an iterator over the lines of this text as zero-copy `Text` values.
+    ///
+    /// This variant preserves case-insensitive semantics for each line.
+    pub fn lines_text(&self) -> impl Iterator<Item = Text> + '_ {
+        self.lines().map(|s| self.slice_ref(s))
+    }
+
+    /// Splits this text by whitespace, returning an iterator of `&str`.
+    pub fn split_whitespace(&self) -> impl Iterator<Item = &str> {
+        self.as_str().split_whitespace()
+    }
+
+    /// Removes a prefix from this text, returning a zero-copy slice if successful.
+    pub fn strip_prefix(&self, prefix: &str) -> Option<Self> {
+        if self.starts_with(prefix) {
+            Some(self.slice_from(prefix.len()))
+        } else {
+            None
+        }
+    }
+
+    /// Removes a suffix from this text, returning a zero-copy slice if successful.
+    pub fn strip_suffix(&self, suffix: &str) -> Option<Self> {
+        if self.ends_with(suffix) {
+            Some(self.slice_to(self.len() - suffix.len()))
+        } else {
+            None
+        }
+    }
+
+    /// Returns an iterator over character indices and the characters themselves.
+    pub fn char_indices(&self) -> std::str::CharIndices<'_> {
+        self.as_str().char_indices()
+    }
+
+    /// Returns an iterator over the start indices of matches of a pattern.
+    pub fn match_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
+        self.as_str().match_indices(pat)
+    }
+
+    /// Returns an iterator over the start indices of matches of a pattern from the right.
+    pub fn rmatch_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
+        self.as_str().rmatch_indices(pat)
+    }
+
+    /// Safely gets a substring by range, returning `None` if out of bounds.
+    pub fn get(&self, range: Range<usize>) -> Option<&str> {
+        self.as_str().get(range)
+    }
+
+    /// Returns a safely sliced zero-copy `Text`, or `None` if out of bounds.
+    pub fn get_text(&self, range: Range<usize>) -> Option<Self> {
+        self.get(range).map(|s| self.slice_ref(s))
+    }
+
+    /// Parses this text into another type.
+    pub fn parse<T: std::str::FromStr>(&self) -> Result<T, T::Err> {
+        self.as_str().parse()
+    }
 }
 
 // Default implementation
