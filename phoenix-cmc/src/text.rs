@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use bytestring::ByteString;
 use std::borrow::Borrow;
 use std::fmt;
