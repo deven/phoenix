@@ -205,12 +205,12 @@ impl Text {
 
     /// Returns a reference to the underlying `Bytes`.
     pub fn as_bytes(&self) -> &Bytes {
-        &*self.as_bytestring()
+        self.as_bytestring().as_bytes()
     }
 
     /// Extracts the underlying `Bytes`, consuming the `Text`.
     pub fn into_bytes(self) -> Bytes {
-        self.into_bytestring().into()
+        self.into_bytestring().into_bytes()
     }
 
     /// Case-sensitive equality check.
