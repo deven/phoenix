@@ -96,7 +96,8 @@ impl Text {
 
     /// Splits the text at the given index, returning two zero-copy slices.
     pub fn split_at(&self, mid: usize) -> (Self, Self) {
-        (self.slice_to(mid), self.slice_from(mid))
+        let (left, right) = self.0.split_at(mid);
+        (Self(UniCase::new(left)), Self(UniCase::new(right)))
     }
 
     /// Creates a lowercase version as a new `String`.
