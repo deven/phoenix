@@ -401,6 +401,18 @@ impl fmt::Display for Text {
 }
 
 // AsRef implementations
+impl AsRef<ByteString> for Text {
+    fn as_ref(&self) -> &ByteString {
+        self.as_bytestring()
+    }
+}
+
+impl AsRef<Bytes> for Text {
+    fn as_ref(&self) -> &Bytes {
+        self.as_bytes()
+    }
+}
+
 impl AsRef<str> for Text {
     fn as_ref(&self) -> &str {
         self.as_str()
