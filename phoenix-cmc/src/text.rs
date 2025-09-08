@@ -764,4 +764,117 @@ mod tests {
         assert_eq!(bs2, String::from("Hello World"));
         assert_eq!(bs2, Text::new("HELLO WORLD"));  // Case-insensitive via Text's PartialEq
     }
+
+    #[test]
+    fn test_slice_ref() {
+        let text = Text::new("Hello World");
+        let s = text.as_str();
+        let hello_ref = &s[0..5];  // "Hello"
+
+        let hello_slice = text.slice_ref(hello_ref);
+        assert_eq!(hello_slice, "Hello");
+        assert_eq!(hello_slice, "HELLO");  // Case-insensitive
+
+        // Test that it shares the same underlying data
+        let hello_direct = text.slice(0..5);
+        assert_eq!(hello_slice, hello_direct);
+    }
+
+    #[test]
+    fn test_string_methods() {
+        let text = Text::new("Hello,World,Test");
+
+        // Test &str iterators
+        let parts: Vec<&str> = text.split(",").collect();
+        assert_eq!(parts, vec!["Hello", "World", "Test"]);
+
+        let (first, rest) = text.split_once(",").unwrap();
+        assert_eq!(first, "Hello");
+        assert_eq!(rest, "World,Test");
+
+        // Test Text iterators with case-insensitive semantics
+        let text_parts: Vec<Text> = text.split_text(",").collect();
+        assert_eq!(text_parts.len(), 3);
+        assert_eq!(text_parts[0], "HELLO");  // Case-insensitive
+        assert_eq!(text_parts[1], "world");
+        assert_eq!(text_parts[2], "TEST");
+    }
+
+    #[test]
+    fn test_lines_and_text_variants() {
+        let text = Text::new("Line1\nLine2\nLine3");
+
+        // Test &str lines
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines, vec!["Line1", "Line2", "Line3"]);
+
+        // Test Text lines with case-insensitive semantics
+        let text_lines: Vec<Text> = text.lines_text().collect();
+        assert_eq!(text_lines.len(), 3);
+        assert_eq!(text_lines[0], "LINE1");  // Case-insensitive
+        assert_eq!(text_lines[1], "line2");
+        assert_eq!(text_lines[2], "LINE3");
+    }
+
+    #[test]
+    fn test_strip_operations() {
+        let text = Text::new("Hello World");
+
+        // Test strip prefix with zero-copy
+        let stripped = text.strip_prefix("Hello ").unwrap();
+        assert_eq!(stripped, "World");
+        assert_eq!(stripped, "WORLD");  // Case-insensitive
+
+        // Test strip suffix with zero-copy
+        let stripped_suffix = text.strip_suffix(" World").unwrap();
+        assert_eq!(stripped_suffix, "Hello");
+        assert_eq!(stripped_suffix, "HELLO");
+
+        // Test failed strips
+        assert!(text.strip_prefix("Goodbye").is_none());
+        assert!(text.strip_suffix("Universe").is_none());
+    }
+
+    #[test]
+    fn test_additional_methods() {
+        let text = Text::new("Hello World 123");
+
+        // Test get_text for safe slicing
+        let hello = text.get_text(0..5).unwrap();
+        assert_eq!(hello, "Hello");
+        assert_eq!(hello, "HELLO");
+
+        assert!(text.get_text(0..100).is_none());  // Out of bounds
+
+        // Test parsing
+        let number_text = Text::new("42");
+        let num: i32 = number_text.parse().unwrap();
+        assert_eq!(num, 42);
+
+        // Test char_indices
+        let indices: Vec<(usize, char)> = text.char_indices().take(3).collect();
+        assert_eq!(indices, vec![(0, 'H'), (1, 'e'), (2, 'l')]);
+
+        // Test match_indices
+        let matches: Vec<(usize, &str)> = text.match_indices("l").collect();
+        assert_eq!(matches.len(), 3);  // "Hello World" has 3 'l's
+    }
+
+    #[test]
+    fn test_slice_ref_pattern() {
+        // Document the slice_ref pattern for custom iterators
+        let text = Text::new("A,B,C,D");
+
+        // Pattern: use &str iterator then map to Text with slice_ref
+        let custom_parts: Vec<Text> = text
+            .split(",")
+            .map(|s| text.slice_ref(s))
+            .collect();
+
+        assert_eq!(custom_parts.len(), 4);
+        assert_eq!(custom_parts[0], "a");  // Case-insensitive
+        assert_eq!(custom_parts[1], "B");
+        assert_eq!(custom_parts[2], "c");
+        assert_eq!(custom_parts[3], "D");
+    }
 }
