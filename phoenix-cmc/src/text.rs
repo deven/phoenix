@@ -75,18 +75,14 @@ impl Text {
     pub fn starts_with(&self, pat: &str) -> bool {
         let s = self.as_str();
 
-        pat.is_empty()
-            || s.len() >= pat.len() && s.is_char_boundary(pat.len()) && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
+        pat.is_empty() || s.len() >= pat.len() && s.is_char_boundary(pat.len()) && UniCase::new(&s[..pat.len()]) == UniCase::new(pat)
     }
 
     /// Checks if this text ends with the given pattern (case-insensitive).
     pub fn ends_with(&self, pat: &str) -> bool {
         let s = self.as_str();
 
-        pat.is_empty()
-            || s.len() >= pat.len()
-                && s.is_char_boundary(s.len() - pat.len())
-                && UniCase::new(&s[s.len() - pat.len()..]) == UniCase::new(pat)
+        pat.is_empty() || s.len() >= pat.len() && s.is_char_boundary(s.len() - pat.len()) && UniCase::new(&s[s.len() - pat.len()..]) == UniCase::new(pat)
     }
 
     /// Checks if this text contains the given pattern (case-insensitive).

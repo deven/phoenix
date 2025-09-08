@@ -21,8 +21,7 @@ pub struct Sendlist {
 
 impl Sendlist {
     pub async fn new(sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Self {
-        let mut sendlist =
-            Self { errors: String::new(), typed: String::new(), sessions: OrderedSet::new(), discussions: OrderedSet::new() };
+        let mut sendlist = Self { errors: String::new(), typed: String::new(), sessions: OrderedSet::new(), discussions: OrderedSet::new() };
         sendlist.set(sender, typed, multi, do_sessions, do_discussions).await;
         sendlist
     }
