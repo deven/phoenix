@@ -361,20 +361,6 @@ impl PartialEq<Text> for Arc<str> {
     }
 }
 
-// Text == ByteString
-impl PartialEq<ByteString> for Text {
-    fn eq(&self, other: &ByteString) -> bool {
-        self.0 == UniCase::new(other.as_str())
-    }
-}
-
-// ByteString == Text
-impl PartialEq<Text> for ByteString {
-    fn eq(&self, other: &Text) -> bool {
-        UniCase::new(self.as_str()) == other.0
-    }
-}
-
 // Hash implementation - case-insensitive
 impl Hash for Text {
     fn hash<H: Hasher>(&self, state: &mut H) {
