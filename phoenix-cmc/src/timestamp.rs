@@ -23,8 +23,7 @@ impl Timestamp {
 
     pub fn date(&self, start: usize, len: usize) -> String {
         let formatted = self.time.format("%a %b %e %T %Y").to_string();
-        let formatted =
-            if formatted.len() > Self::MAX_FORMATTED_LENGTH { &formatted[..Self::MAX_FORMATTED_LENGTH] } else { &formatted };
+        let formatted = if formatted.len() > Self::MAX_FORMATTED_LENGTH { &formatted[..Self::MAX_FORMATTED_LENGTH] } else { &formatted };
 
         if len > 0 && start + len < formatted.len() {
             formatted[start..start + len].to_string()

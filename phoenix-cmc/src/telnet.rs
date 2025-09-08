@@ -630,11 +630,7 @@ impl Telnet {
     pub async fn timing_mark(&self) {
         if *self.acknowledge.read().await {
             *self.outstanding.write().await += 1;
-            self.output_buffer.lock().await.extend_from_slice(&[
-                TelnetCommand::IAC as u8,
-                TelnetCommand::Do as u8,
-                TelnetOption::TimingMark as u8,
-            ]);
+            self.output_buffer.lock().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
         }
     }
 
@@ -823,10 +819,7 @@ impl Telnet {
                 for &byte in &data {
                     match byte {
                         x if x == TelnetCommand::IAC as u8 => {
-                            self.output_buffer
-                                .lock()
-                                .await
-                                .extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
+                            self.output_buffer.lock().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                         }
                         RETURN => {
                             self.output_buffer.lock().await.extend_from_slice(&[RETURN, NULL]);

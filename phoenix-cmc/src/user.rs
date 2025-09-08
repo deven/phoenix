@@ -39,13 +39,7 @@ impl User {
     const BUF_SIZE: usize = 1024;
 
     #[framed]
-    pub async fn new(
-        login: impl Into<Text>,
-        pass: Option<String>,
-        names: Option<&str>,
-        bl: Option<impl Into<Text>>,
-        p: i32,
-    ) -> Self {
+    pub async fn new(login: impl Into<Text>, pass: Option<String>, names: Option<&str>, bl: Option<impl Into<Text>>, p: i32) -> Self {
         let id = USER_COUNTER.fetch_add(1, Ordering::Relaxed);
         let sessions = OrderedSet::new();
         let user = login.into();
@@ -144,14 +138,7 @@ impl UserManager {
         users.iter().find(|(k, _)| k.eq_ignore_ascii_case(login)).map(|(_, v)| Arc::clone(v))
     }
 
-    pub async fn update(
-        &self,
-        login: impl Into<Text>,
-        pass: Option<String>,
-        names: Option<&str>,
-        defblurb: Option<impl Into<Text>>,
-        p: i32,
-    ) -> Result<()> {
+    pub async fn update(&self, login: impl Into<Text>, pass: Option<String>, names: Option<&str>, defblurb: Option<impl Into<Text>>, p: i32) -> Result<()> {
         let login_str: Text = login.into();
         let mut users = self.users.write().await;
 
@@ -266,8 +253,7 @@ pub fn hash_password(password: &str) -> Result<String> {
 
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let password_hash =
-        argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
+    let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
     Ok(password_hash.to_string())
 }
 

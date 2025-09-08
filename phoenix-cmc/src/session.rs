@@ -455,11 +455,7 @@ impl Session {
     #[framed]
     pub async fn set_name(&self, value: impl AsRef<str>) {
         let mut inner = self.write().await;
-        inner.name = if inner.name.has_blurb() {
-            Name::new(value.as_ref(), inner.name.blurb())
-        } else {
-            Name::with_name_only(value.as_ref())
-        };
+        inner.name = if inner.name.has_blurb() { Name::new(value.as_ref(), inner.name.blurb()) } else { Name::with_name_only(value.as_ref()) };
     }
 
     /// Get the blurb, if any.
@@ -851,9 +847,7 @@ impl SessionInner {
         let handle = tokio::spawn(async move {
             tokio::time::sleep(LOGIN_TIMEOUT).await;
 
-            if let Some(session) =
-                SESSIONS.get(&session_id).map(|e| e.value().clone()).or_else(|| INITS.get(&session_id).map(|e| e.value().clone()))
-            {
+            if let Some(session) = SESSIONS.get(&session_id).map(|e| e.value().clone()).or_else(|| INITS.get(&session_id).map(|e| e.value().clone())) {
                 session.enqueue_output().await;
                 session.close(true).await;
             }
@@ -1238,9 +1232,7 @@ impl Session {
         match self.find_sendable(name, false, true, true, true).await {
             (Some(found_session), _, _, _) => {
                 match (&*self.user.read().await, &*found_session.user.read().await) {
-                    (Some(my_user), Some(their_user))
-                        if my_user.user == their_user.user && found_session.priv_level().await > 0 =>
-                    {
+                    (Some(my_user), Some(their_user)) if my_user.user == their_user.user && found_session.priv_level().await > 0 => {
                         if let Some(their_telnet) = &*found_session.telnet.read().await {
                             if transferring {
                                 self.output("Transferring active session...\n").await;
@@ -1250,11 +1242,7 @@ impl Session {
                             } else {
                                 let now = if double_check { " now" } else { "" };
                                 self.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
-                                self.set_login_state(
-                                    LoginState::AwaitingTransferConfirmation,
-                                    Some("Transfer active session? [no] "),
-                                )
-                                .await;
+                                self.set_login_state(LoginState::AwaitingTransferConfirmation, Some("Transfer active session? [no] ")).await;
                             }
                         } else {
                             self.output("Attaching to detached session...\n").await;
@@ -1801,9 +1789,7 @@ impl Session {
                     self.output("Your blurb was already turned off.\n").await;
                 }
             } else {
-                if (args.starts_with('"') && args.ends_with('"') && args.len() > 2)
-                    || (args.starts_with('[') && args.ends_with(']'))
-                {
+                if (args.starts_with('"') && args.ends_with('"') && args.len() > 2) || (args.starts_with('[') && args.ends_with(']')) {
                     start = 1;
                     end = args.len() - 1;
                 }
@@ -1941,8 +1927,7 @@ impl Session {
             return;
         }
 
-        let discussions =
-            if args.is_empty() { DISCUSSIONS.iter().map(|r| r.value().clone()).collect() } else { sendlist.discussions.clone() };
+        let discussions = if args.is_empty() { DISCUSSIONS.iter().map(|r| r.value().clone()).collect() } else { sendlist.discussions.clone() };
 
         self.output("\n Name            Users  Idle  Title\n").await;
         self.output(" ----            -----  ----  -----\n").await;
@@ -2245,13 +2230,7 @@ impl Session {
         let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
         DISCUSSIONS.insert(name.to_string(), disc.clone());
 
-        self.enqueue_others(Arc::new(CreateNotify::new(
-            disc.name().await,
-            disc.title().await,
-            disc.is_public().await,
-            self.name().await,
-        )))
-        .await;
+        self.enqueue_others(Arc::new(CreateNotify::new(disc.name().await, disc.title().await, disc.is_public().await, self.name().await))).await;
 
         let name = disc.name().await;
         let title = disc.title().await;
@@ -2979,10 +2958,7 @@ impl Session {
     are used) and the user has entered an input line.\n",
             )
             .await;
-        } else if match_keyword(args, "/howmany", 3).is_some()
-            || match_keyword(args, "howmany", 7).is_some()
-            || match_keyword(args, "how", 3).is_some()
-        {
+        } else if match_keyword(args, "/howmany", 3).is_some() || match_keyword(args, "howmany", 7).is_some() || match_keyword(args, "how", 3).is_some() {
             self.output(
                 "\
     The /howmany command shows how many users are \"here\", \"away\", \"busy\"\n\
@@ -3037,11 +3013,7 @@ impl Session {
             )
             .await;
         } else if match_keyword(args, "/set", 4).is_some() || match_keyword(args, "set", 3).is_some() {
-            let set_args = if args.starts_with('/') {
-                args.strip_prefix("/set").unwrap_or("").trim()
-            } else {
-                args.strip_prefix("set").unwrap_or("").trim()
-            };
+            let set_args = if args.starts_with('/') { args.strip_prefix("/set").unwrap_or("").trim() } else { args.strip_prefix("set").unwrap_or("").trim() };
 
             if match_keyword(set_args, "uptime", 6).is_some() {
                 self.output(
@@ -3087,11 +3059,8 @@ impl Session {
                 .await;
             }
         } else if match_keyword(args, "/display", 2).is_some() || match_keyword(args, "display", 7).is_some() {
-            let display_args = if args.starts_with('/') {
-                args.strip_prefix("/display").unwrap_or("").trim()
-            } else {
-                args.strip_prefix("display").unwrap_or("").trim()
-            };
+            let display_args =
+                if args.starts_with('/') { args.strip_prefix("/display").unwrap_or("").trim() } else { args.strip_prefix("display").unwrap_or("").trim() };
 
             if match_keyword(display_args, "uptime", 6).is_some() {
                 self.output(
@@ -3225,8 +3194,7 @@ impl Session {
         let mut who = OrderedSet::new();
         let count = sendlist.expand(&mut who, Some(self.clone())).await;
 
-        let output_type =
-            if count > 1 || !sendlist.discussions.is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
+        let output_type = if count > 1 || !sendlist.discussions.is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
 
         let msg = Arc::new(Message::new(output_type, self.name().await, sendlist.clone(), text));
         *self.last_message.write().await = Some(msg.clone());

@@ -633,9 +633,7 @@ impl OutputObj for PermitNotify {
             if self.is_explicit {
                 telnet.output(&format!("*** {name} has repermitted you to discussion {disc}. [{stamp}] ***\n")).await;
             } else {
-                telnet
-                    .output(&format!("*** {name} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n"))
-                    .await;
+                telnet.output(&format!("*** {name} has explicitly permitted you to public discussion {disc}. [{stamp}] ***\n")).await;
             }
         } else {
             if self.is_explicit {
@@ -659,14 +657,7 @@ pub struct DepermitNotify {
 
 impl DepermitNotify {
     pub fn new(disc_name: Text, public: bool, who: Name, flag: bool, removed_who: Option<Name>) -> Self {
-        Self {
-            discussion_name: disc_name,
-            is_public: public,
-            name: who,
-            is_explicit: flag,
-            removed: removed_who,
-            time: Timestamp::new(),
-        }
+        Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, removed: removed_who, time: Timestamp::new() }
     }
 }
 
@@ -693,9 +684,7 @@ impl OutputObj for DepermitNotify {
         if self.is_public {
             if let Some(removed) = &self.removed {
                 if removed == session_name {
-                    telnet
-                        .output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n"))
-                        .await;
+                    telnet.output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
                 } else {
                     telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                 }
@@ -704,17 +693,11 @@ impl OutputObj for DepermitNotify {
             }
         } else {
             if self.is_explicit {
-                telnet
-                    .output(&format!("*** {name} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n"))
-                    .await;
+                telnet.output(&format!("*** {name} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
                     if removed == session_name {
-                        telnet
-                            .output(&format!(
-                                "*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n"
-                            ))
-                            .await;
+                        telnet.output(&format!("*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
                     } else {
                         telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                     }
@@ -761,9 +744,7 @@ impl OutputObj for AppointNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
-        telnet
-            .output(&format!("*** {appointer} has appointed {appointee} as a moderator of discussion {disc}. [{stamp}] ***\n"))
-            .await;
+        telnet.output(&format!("*** {appointer} has appointed {appointee} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -802,11 +783,7 @@ impl OutputObj for UnappointNotify {
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
-        telnet
-            .output(&format!(
-                "*** {unappointer} has unappointed {unappointee} as a moderator of discussion {disc}. [{stamp}] ***\n"
-            ))
-            .await;
+        telnet.output(&format!("*** {unappointer} has unappointed {unappointee} as a moderator of discussion {disc}. [{stamp}] ***\n")).await;
     }
 }
 
@@ -855,11 +832,7 @@ pub struct OutputStream {
 
 impl OutputStream {
     pub fn new() -> Self {
-        Self {
-            queue: tokio::sync::Mutex::new(Vec::new()),
-            acknowledged: std::sync::atomic::AtomicUsize::new(0),
-            sent: std::sync::atomic::AtomicUsize::new(0),
-        }
+        Self { queue: tokio::sync::Mutex::new(Vec::new()), acknowledged: std::sync::atomic::AtomicUsize::new(0), sent: std::sync::atomic::AtomicUsize::new(0) }
     }
 
     pub async fn acknowledge(&self) {

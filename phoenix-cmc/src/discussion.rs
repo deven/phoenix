@@ -63,19 +63,7 @@ impl Discussion {
             moderators.insert(creator_name);
         }
 
-        let inner = DiscussionInner {
-            id,
-            name,
-            title,
-            is_public,
-            creator,
-            members,
-            moderators,
-            allowed,
-            denied,
-            creation_time,
-            idle_since,
-        };
+        let inner = DiscussionInner { id, name, title, is_public, creator, members, moderators, allowed, denied, creation_time, idle_since };
 
         Self { id, inner: Arc::new(RwLock::new(inner)) }
     }
@@ -417,14 +405,12 @@ impl Discussion {
                             inner.denied.insert(name.clone());
                             if inner.is_member(&s) {
                                 inner.members.shift_remove(&s);
-                                let notification =
-                                    Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, Some(name.clone())));
+                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, Some(name.clone())));
                                 inner.enqueue_others(notification, &session).await;
                                 let disc = &inner.name;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification =
-                                    Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, None));
+                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, None));
                                 inner.enqueue_others(notification, &session).await;
                                 let disc = &inner.name;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
@@ -435,28 +421,19 @@ impl Discussion {
                             inner.allowed.retain(|n| n != name);
                             if inner.is_member(&s) {
                                 inner.members.shift_remove(&s);
-                                let notification = Arc::new(DepermitNotify::new(
-                                    inner.name.clone(),
-                                    false,
-                                    name.clone(),
-                                    false,
-                                    Some(name.clone()),
-                                ));
+                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), false, Some(name.clone())));
                                 inner.enqueue_others(notification, &session).await;
                                 let disc = &inner.name;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification =
-                                    Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), false, None));
+                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), false, None));
                                 inner.enqueue_others(notification, &session).await;
                                 let disc = &inner.name;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         } else if inner.is_denied(name) {
                             let disc = &inner.name;
-                            session
-                                .output(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n"))
-                                .await;
+                            session.output(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
                         } else {
                             inner.denied.insert(name.clone());
                             let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), true, None));

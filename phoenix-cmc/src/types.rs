@@ -63,11 +63,7 @@ pub enum AwayState {
 pub fn getword(input: &str, separator: Option<char>) -> (&str, &str) {
     let input = input.trim_start();
 
-    let end = if let Some(sep) = separator {
-        input.find(|c: char| c.is_whitespace() || c == sep)
-    } else {
-        input.find(char::is_whitespace)
-    };
+    let end = if let Some(sep) = separator { input.find(|c: char| c.is_whitespace() || c == sep) } else { input.find(char::is_whitespace) };
 
     match end {
         Some(pos) => {
