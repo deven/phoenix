@@ -192,9 +192,9 @@ impl Text {
         }
     }
 
-    /// Returns a clone of the underlying `ByteString`.
-    pub fn as_bytestring(&self) -> ByteString {
-        self.0.clone().into_inner()
+    /// Returns a reference to the underlying `ByteString`.
+    pub fn as_bytestring(&self) -> &ByteString {
+        &*self.0
     }
 
     /// Extracts the underlying `ByteString`, consuming the `Text`.
