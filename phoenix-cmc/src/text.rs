@@ -719,6 +719,7 @@ impl From<Text> for String {
 }
 
 impl From<Text> for ByteString {
+    #[inline]
     fn from(text: Text) -> Self {
         text.into_bytestring()
     }
