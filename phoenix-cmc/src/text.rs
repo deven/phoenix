@@ -276,19 +276,19 @@ impl Text {
 
     /// Returns the number of characters (not bytes) in this text.
     #[inline]
-    pub fn chars(&self) -> std::str::Chars<'_> {
+    pub fn chars(&self) -> str::Chars<'_> {
         self.as_str().chars()
     }
 
     /// Returns an iterator over the bytes of this text.
     #[inline]
-    pub fn bytes(&self) -> std::str::Bytes<'_> {
+    pub fn bytes(&self) -> str::Bytes<'_> {
         self.as_str().bytes()
     }
 
     /// Returns an iterator over the lines of this text.
     #[inline]
-    pub fn lines(&self) -> std::str::Lines<'_> {
+    pub fn lines(&self) -> str::Lines<'_> {
         self.as_str().lines()
     }
 
@@ -409,7 +409,7 @@ impl Text {
 
     /// Returns an iterator over character indices and the characters themselves.
     #[inline]
-    pub fn char_indices(&self) -> std::str::CharIndices<'_> {
+    pub fn char_indices(&self) -> str::CharIndices<'_> {
         self.as_str().char_indices()
     }
 
@@ -439,7 +439,7 @@ impl Text {
 
     /// Parses this text into another type.
     #[inline]
-    pub fn parse<T: std::str::FromStr>(&self) -> Result<T, T::Err> {
+    pub fn parse<T: str::FromStr>(&self) -> Result<T, T::Err> {
         self.as_str().parse()
     }
 }
