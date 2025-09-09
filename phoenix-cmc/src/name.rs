@@ -16,63 +16,51 @@ where
     Self: Send + Sync + 'static,
 {
     pub name_blurb: Text,
-    pub name_len: usize,
+    pub name: Text,
+    pub blurb: Option<Text>,
     pub column_display: Text,
 }
 
 impl Name {
-    /// Create a `Name` with a blurb.
-    pub fn new(name: impl AsRef<str>, blurb: impl AsRef<str>) -> Self {
+    /// Create a `Name` with an optional blurb.
+    pub fn new(name: impl AsRef<str>, blurb: Option<impl AsRef<str>>) -> Self {
         let name = name.as_ref();
-        let blurb = blurb.as_ref();
-        let name_blurb = Text::from(format!("{name} [{blurb}]"));
         let name_len = name.len();
-        let column_display = Self::format_column_display(name_blurb.as_str());
-        let inner = NameInner { name_blurb, name_len: name.len(), column_display };
 
-        Self(Arc::new(inner))
-    }
-
-    /// Create a `Name` with no blurb.
-    pub fn with_name_only(name: impl Into<Arc<str>>) -> Self {
-        let name: Arc<str> = name.into();
-        let name_len = name.len();
-        let name_blurb = Text::from(name);
-        let column_display = Self::format_column_display(name_blurb.as_str());
-        let inner = NameInner { name_blurb, name_len, column_display };
-
-        Self(Arc::new(inner))
-    }
-
-    /// Format the name and blurb for column display.
-    #[inline]
-    fn format_column_display(name_blurb: &str) -> Text {
-        if name_blurb.len() > 33 {
-            Text::from(format!("{name_blurb:<32.32}+ "))
+        let (name_blurb, name, blurb) = if let Some(blurb) = blurb {
+            let blurb = blurb.as_ref();
+            let name_blurb = Text::from(format!("{name} [{blurb}]"));
+            let name = name_blurb.slice(0..name_len);
+            let blurb_start = name_len + 2; // skip name and " ["
+            let blurb_end = name_blurb.len() - 1; // drop trailing ']'
+            let blurb = Some(name_blurb.slice(blurb_start..blurb_end));
+            (name_blurb, name, blurb)
         } else {
-            Text::from(format!("{name_blurb:<33} "))
-        }
+            let name = Text::from(name);
+            let name_blurb = name.clone();
+            (name_blurb, name, None)
+        };
+
+        let column_display = if name_blurb.len() > 33 { Text::from(format!("{name_blurb:<32.32}+ ")) } else { Text::from(format!("{name_blurb:<33} ")) };
+
+        let inner = NameInner { name_blurb, name, blurb, column_display };
+
+        Self(Arc::new(inner))
     }
 
     /// Get just the name without the blurb.
     pub fn name(&self) -> &Text {
-        Text::from(&self.0.name_blurb[..self.0.name_len])
+        &self.0.name
     }
 
     /// Get just the blurb, if any.
     pub fn blurb(&self) -> Option<&Text> {
-        if self.0.name_blurb.len() > self.0.name_len {
-            let start = self.0.name_len + 2; // skip name and " ["
-            let end = self.0.name_blurb.len() - 1; // drop trailing ']'
-            Some(Text::from(&self.0.name_blurb[start..end]))
-        } else {
-            None
-        }
+        self.0.blurb.as_ref()
     }
 
     /// Check if this `Name` has a blurb.
     pub fn has_blurb(&self) -> bool {
-        self.0.name_blurb.len() > self.0.name_len
+        self.0.blurb.is_some()
     }
 
     /// Get the full formatted name with blurb.
