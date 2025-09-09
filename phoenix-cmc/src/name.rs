@@ -4,7 +4,6 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
-use unicase::UniCase;
 
 /// Name handle.
 #[derive(Debug, Clone)]
@@ -80,7 +79,7 @@ impl Name {
 
     /// Get the full formatted name with blurb, or "you" if name matches.
     pub fn you(&self, name: &Name) -> &str {
-        if UniCase::new(self.name()) != UniCase::new(name.name()) {
+        if self != name {
             self.as_str()
         } else {
             "you"
@@ -96,19 +95,19 @@ impl fmt::Display for Name {
 
 impl PartialEq for Name {
     fn eq(&self, other: &Self) -> bool {
-        UniCase::new(self.name()) == UniCase::new(other.name())
+        self.0.name == other.0.name
     }
 }
 
 impl PartialEq<Text> for Name {
     fn eq(&self, other: &Text) -> bool {
-        *other == *UniCase::new(self.name())
+        *other == self.0.name
     }
 }
 
 impl PartialEq<Name> for Text {
     fn eq(&self, other: &Name) -> bool {
-        *self == *UniCase::new(other.name())
+        *self == other.0.name
     }
 }
 
@@ -116,7 +115,7 @@ impl Eq for Name {}
 
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        UniCase::new(self.name()).hash(state);
+        self.0.name.hash(state);
     }
 }
 
