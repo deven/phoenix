@@ -1,10 +1,18 @@
+//#![no_std]
+
+extern crate alloc;
+
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+    sync::Arc,
+    vec::Vec,
+};
+use core::{borrow::Borrow, fmt, hash::Hash, hash::Hasher, ops::Add, ops::Deref, ops::Range, str};
+
 use bytes::Bytes;
+use bytes::BytesMut;
 use bytestring::ByteString;
-use std::borrow::Borrow;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::ops::{Add, Deref, Range};
-use std::sync::{Arc, LazyLock};
 use unicase::UniCase;
 
 /// A case-insensitive, reference-counted string type with zero-copy slicing.
