@@ -603,26 +603,112 @@ impl<'a> From<&'a str> for Text {
     }
 }
 
+impl From<ByteString> for Text {
+    #[inline]
+    fn from(bytestring: ByteString) -> Self {
+        Self::from_bytestring(bytestring)
+    }
+}
+
 impl From<String> for Text {
     #[inline]
     fn from(s: String) -> Self {
-        Self::new(s)
+        Self::from_bytestring(ByteString::from(s)) // Zero-copy, no validation needed
+    }
+}
+
+impl From<Box<str>> for Text {
+    #[inline]
+    fn from(s: Box<str>) -> Self {
+        let bytestring = ByteString::from(s);
+        Self::from_bytestring(bytestring)
+    }
+}
+
+// Small newtype so the owner satisfies AsRef<[u8]>
+struct ArcStrOwner(Arc<str>);
+impl AsRef<[u8]> for ArcStrOwner {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_bytes()
     }
 }
 
 impl From<Arc<str>> for Text {
     #[inline]
     fn from(s: Arc<str>) -> Self {
-        Self::from_arc(s)
+        let bytes = Bytes::from_owner(ArcStrOwner(s));
+        let bytestring = unsafe { ByteString::from_bytes_unchecked(bytes) }; // Safe because Arc<str> is valid UTF-8
+        Self::from_bytestring(bytestring)
     }
 }
 
-impl From<ByteString> for Text {
+// TryFrom implementations
+impl TryFrom<Bytes> for Text {
+    type Error = str::Utf8Error;
+
     #[inline]
-    fn from(bs: ByteString) -> Self {
-        Text::from_bytestring(bs)
+    fn try_from(bytes: Bytes) -> Result<Self, Self::Error> {
+        let bytestring = ByteString::try_from(bytes)?;
+        Ok(Self::from_bytestring(bytestring))
     }
 }
+
+impl TryFrom<BytesMut> for Text {
+    type Error = str::Utf8Error;
+
+    #[inline]
+    fn try_from(bytes: BytesMut) -> Result<Self, Self::Error> {
+        let bytestring = ByteString::try_from(bytes)?;
+        Ok(Self::from_bytestring(bytestring))
+    }
+}
+
+impl TryFrom<&[u8]> for Text {
+    type Error = str::Utf8Error;
+
+    #[inline]
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        let bytestring = ByteString::try_from(bytes)?;
+        Ok(Self::from_bytestring(bytestring))
+    }
+}
+
+impl TryFrom<Vec<u8>> for Text {
+    type Error = str::Utf8Error;
+
+    #[inline]
+    fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
+        let bytestring = ByteString::try_from(bytes)?;
+        Ok(Self::from_bytestring(bytestring))
+    }
+}
+
+macro_rules! array_impls {
+    ($($len:expr)+) => {
+        $(
+            impl TryFrom<[u8; $len]> for Text {
+                type Error = str::Utf8Error;
+
+                #[inline]
+                fn try_from(value: [u8; $len]) -> Result<Self, Self::Error> {
+                    Text::try_from(&value[..])
+                }
+            }
+
+            impl TryFrom<&[u8; $len]> for Text {
+                type Error = str::Utf8Error;
+
+                #[inline]
+                fn try_from(value: &[u8; $len]) -> Result<Self, Self::Error> {
+                    Text::try_from(&value[..])
+                }
+            }
+        )+
+    }
+}
+
+array_impls!(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32);
 
 // Into conversions
 impl From<Text> for String {
