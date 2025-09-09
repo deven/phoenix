@@ -48,26 +48,31 @@ impl Text {
     }
 
     /// Creates a `Text` from an existing `ByteString`.
+    #[inline]
     pub fn from_bytestring(bs: ByteString) -> Self {
         Self(UniCase::new(bs))
     }
 
     /// Creates a `Text` from an existing `Arc<str>`.
+    #[inline]
     pub fn from_arc(arc: Arc<str>) -> Self {
         Self(UniCase::new(ByteString::from(arc.as_ref())))
     }
 
     /// Returns the underlying string slice with original casing.
+    #[inline]
     pub fn as_str(&self) -> &str {
         self.0.as_ref()
     }
 
     /// Returns the length of the string in bytes.
+    #[inline]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     /// Returns true if the string is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -94,11 +99,13 @@ impl Text {
     }
 
     /// Creates a zero-copy slice from the start to the given index.
+    #[inline]
     pub fn slice_to(&self, end: usize) -> Self {
         self.slice(0..end)
     }
 
     /// Creates a zero-copy slice from the given index to the end.
+    #[inline]
     pub fn slice_from(&self, start: usize) -> Self {
         self.slice(start..self.len())
     }
@@ -202,21 +209,25 @@ impl Text {
     }
 
     /// Returns a reference to the underlying `ByteString`.
+    #[inline]
     pub fn as_bytestring(&self) -> &ByteString {
         &*self.0
     }
 
     /// Extracts the underlying `ByteString`, consuming the `Text`.
+    #[inline]
     pub fn into_bytestring(self) -> ByteString {
         self.0.into_inner()
     }
 
     /// Returns a reference to the underlying `Bytes`.
+    #[inline]
     pub fn as_bytes(&self) -> &Bytes {
         self.as_bytestring().as_bytes()
     }
 
     /// Extracts the underlying `Bytes`, consuming the `Text`.
+    #[inline]
     pub fn into_bytes(self) -> Bytes {
         self.into_bytestring().into_bytes()
     }
@@ -225,36 +236,43 @@ impl Text {
     ///
     /// Use this when you need exact matching instead of the default
     /// case-insensitive comparison.
+    #[inline]
     pub fn eq_exact(&self, other: &str) -> bool {
         self.as_str() == other
     }
 
     /// Returns the number of characters (not bytes) in this text.
+    #[inline]
     pub fn chars(&self) -> std::str::Chars<'_> {
         self.as_str().chars()
     }
 
     /// Returns an iterator over the bytes of this text.
+    #[inline]
     pub fn bytes(&self) -> std::str::Bytes<'_> {
         self.as_str().bytes()
     }
 
     /// Returns an iterator over the lines of this text.
+    #[inline]
     pub fn lines(&self) -> std::str::Lines<'_> {
         self.as_str().lines()
     }
 
     /// Checks if this text is ASCII.
+    #[inline]
     pub fn is_ascii(&self) -> bool {
         self.as_str().is_ascii()
     }
 
     /// Repeats this text n times into a new `Text`.
+    #[inline]
     pub fn repeat(&self, n: usize) -> Self {
         Text::new(self.as_str().repeat(n))
     }
 
     /// Replaces all matches of a pattern with another string.
+    #[inline]
     pub fn replace(&self, from: &str, to: &str) -> Self {
         Text::new(self.as_str().replace(from, to))
     }
@@ -279,6 +297,7 @@ impl Text {
     }
 
     /// Splits this text by a pattern, returning an iterator of `&str` substrings.
+    #[inline]
     pub fn split(&self, pat: &str) -> impl Iterator<Item = &str> {
         self.as_str().split(pat)
     }
@@ -286,31 +305,37 @@ impl Text {
     /// Splits this text by a pattern, returning an iterator of zero-copy `Text` substrings.
     ///
     /// This variant preserves case-insensitive semantics for each part.
+    #[inline]
     pub fn split_text(&self, pat: &str) -> impl Iterator<Item = Text> + '_ {
         self.split(pat).map(|s| self.slice_ref(s))
     }
 
     /// Splits this text by a pattern from the right, returning an iterator of `&str` substrings.
+    #[inline]
     pub fn rsplit(&self, pat: &str) -> impl Iterator<Item = &str> {
         self.as_str().rsplit(pat)
     }
 
     /// Splits this text by a pattern, returning at most `n` `&str` substrings.
+    #[inline]
     pub fn splitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
         self.as_str().splitn(n, pat)
     }
 
     /// Splits this text by a pattern from the right, returning at most `n` `&str` substrings.
+    #[inline]
     pub fn rsplitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
         self.as_str().rsplitn(n, pat)
     }
 
     /// Splits this text once by a pattern.
+    #[inline]
     pub fn split_once(&self, pat: &str) -> Option<(&str, &str)> {
         self.as_str().split_once(pat)
     }
 
     /// Splits this text once by a pattern from the right.
+    #[inline]
     pub fn rsplit_once(&self, pat: &str) -> Option<(&str, &str)> {
         self.as_str().rsplit_once(pat)
     }
@@ -318,16 +343,19 @@ impl Text {
     /// Returns an iterator over the lines of this text as zero-copy `Text` values.
     ///
     /// This variant preserves case-insensitive semantics for each line.
+    #[inline]
     pub fn lines_text(&self) -> impl Iterator<Item = Text> + '_ {
         self.lines().map(|s| self.slice_ref(s))
     }
 
     /// Splits this text by whitespace, returning an iterator of zero-copy slices.
+    #[inline]
     pub fn split_whitespace(&self) -> impl Iterator<Item = &str> {
         self.as_str().split_whitespace()
     }
 
     /// Removes a prefix from this text, returning a zero-copy slice if successful.
+    #[inline]
     pub fn strip_prefix(&self, prefix: &str) -> Option<Self> {
         if self.starts_with(prefix) {
             Some(self.slice_from(prefix.len()))
@@ -337,6 +365,7 @@ impl Text {
     }
 
     /// Removes a suffix from this text, returning a zero-copy slice if successful.
+    #[inline]
     pub fn strip_suffix(&self, suffix: &str) -> Option<Self> {
         if self.ends_with(suffix) {
             Some(self.slice_to(self.len() - suffix.len()))
@@ -346,31 +375,37 @@ impl Text {
     }
 
     /// Returns an iterator over character indices and the characters themselves.
+    #[inline]
     pub fn char_indices(&self) -> std::str::CharIndices<'_> {
         self.as_str().char_indices()
     }
 
     /// Returns an iterator over the start indices of matches of a pattern.
+    #[inline]
     pub fn match_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
         self.as_str().match_indices(pat)
     }
 
     /// Returns an iterator over the start indices of matches of a pattern from the right.
+    #[inline]
     pub fn rmatch_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
         self.as_str().rmatch_indices(pat)
     }
 
     /// Safely gets a substring by range, returning `None` if out of bounds.
+    #[inline]
     pub fn get(&self, range: Range<usize>) -> Option<&str> {
         self.as_str().get(range)
     }
 
     /// Returns a safely sliced zero-copy `Text`, or `None` if out of bounds.
+    #[inline]
     pub fn get_text(&self, range: Range<usize>) -> Option<Self> {
         self.get(range).map(|s| self.slice_ref(s))
     }
 
     /// Parses this text into another type.
+    #[inline]
     pub fn parse<T: std::str::FromStr>(&self) -> Result<T, T::Err> {
         self.as_str().parse()
     }
@@ -378,6 +413,7 @@ impl Text {
 
 // Default implementation
 impl Default for Text {
+    #[inline]
     fn default() -> Self {
         EMPTY_TEXT.clone()
     }
@@ -387,6 +423,7 @@ impl Default for Text {
 impl Deref for Text {
     type Target = str;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
@@ -394,6 +431,7 @@ impl Deref for Text {
 
 // Display implementation
 impl fmt::Display for Text {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }
@@ -401,24 +439,28 @@ impl fmt::Display for Text {
 
 // AsRef implementations
 impl AsRef<ByteString> for Text {
+    #[inline]
     fn as_ref(&self) -> &ByteString {
         self.as_bytestring()
     }
 }
 
 impl AsRef<Bytes> for Text {
+    #[inline]
     fn as_ref(&self) -> &Bytes {
         self.as_bytes()
     }
 }
 
 impl AsRef<str> for Text {
+    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl AsRef<[u8]> for Text {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_str().as_bytes()
     }
@@ -426,6 +468,7 @@ impl AsRef<[u8]> for Text {
 
 // Borrow implementation for HashMap lookups
 impl Borrow<str> for Text {
+    #[inline]
     fn borrow(&self) -> &str {
         self.as_str()
     }
@@ -433,6 +476,7 @@ impl Borrow<str> for Text {
 
 // PartialEq implementations - all case-insensitive
 impl PartialEq for Text {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -440,6 +484,7 @@ impl PartialEq for Text {
 
 // Text == &str
 impl<'a> PartialEq<&'a str> for Text {
+    #[inline]
     fn eq(&self, other: &&'a str) -> bool {
         self.0 == UniCase::new(*other)
     }
@@ -447,6 +492,7 @@ impl<'a> PartialEq<&'a str> for Text {
 
 // &str == Text
 impl<'a> PartialEq<Text> for &'a str {
+    #[inline]
     fn eq(&self, other: &Text) -> bool {
         UniCase::new(*self) == other.0
     }
@@ -454,6 +500,7 @@ impl<'a> PartialEq<Text> for &'a str {
 
 // Text == str (direct)
 impl PartialEq<str> for Text {
+    #[inline]
     fn eq(&self, other: &str) -> bool {
         self.0 == UniCase::new(other)
     }
@@ -461,6 +508,7 @@ impl PartialEq<str> for Text {
 
 // str == Text (direct)
 impl PartialEq<Text> for str {
+    #[inline]
     fn eq(&self, other: &Text) -> bool {
         UniCase::new(self) == other.0
     }
@@ -468,6 +516,7 @@ impl PartialEq<Text> for str {
 
 // Text == String
 impl PartialEq<String> for Text {
+    #[inline]
     fn eq(&self, other: &String) -> bool {
         self.0 == UniCase::new(other.as_str())
     }
@@ -475,6 +524,7 @@ impl PartialEq<String> for Text {
 
 // String == Text
 impl PartialEq<Text> for String {
+    #[inline]
     fn eq(&self, other: &Text) -> bool {
         UniCase::new(self.as_str()) == other.0
     }
@@ -482,6 +532,7 @@ impl PartialEq<Text> for String {
 
 // Text == Arc<str>
 impl PartialEq<Arc<str>> for Text {
+    #[inline]
     fn eq(&self, other: &Arc<str>) -> bool {
         self.0 == UniCase::new(&**other)
     }
@@ -489,6 +540,7 @@ impl PartialEq<Arc<str>> for Text {
 
 // Arc<str> == Text
 impl PartialEq<Text> for Arc<str> {
+    #[inline]
     fn eq(&self, other: &Text) -> bool {
         UniCase::new(&**self) == other.0
     }
@@ -496,6 +548,7 @@ impl PartialEq<Text> for Arc<str> {
 
 // Hash implementation - case-insensitive
 impl Hash for Text {
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }
@@ -503,24 +556,28 @@ impl Hash for Text {
 
 // From implementations
 impl<'a> From<&'a str> for Text {
+    #[inline]
     fn from(s: &'a str) -> Self {
         Text::new(s)
     }
 }
 
 impl From<String> for Text {
+    #[inline]
     fn from(s: String) -> Self {
         Text::new(s)
     }
 }
 
 impl From<Arc<str>> for Text {
+    #[inline]
     fn from(s: Arc<str>) -> Self {
         Text::from_arc(s)
     }
 }
 
 impl From<ByteString> for Text {
+    #[inline]
     fn from(bs: ByteString) -> Self {
         Text::from_bytestring(bs)
     }
@@ -528,6 +585,7 @@ impl From<ByteString> for Text {
 
 // Into conversions
 impl From<Text> for String {
+    #[inline]
     fn from(text: Text) -> Self {
         text.as_str().to_string()
     }
@@ -543,6 +601,7 @@ impl From<Text> for ByteString {
 impl Add<&Text> for &Text {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: &Text) -> Text {
         Text::concat(self, rhs)
     }
@@ -551,6 +610,7 @@ impl Add<&Text> for &Text {
 impl Add<&str> for &Text {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: &str) -> Text {
         let mut s = String::with_capacity(self.len() + rhs.len());
         s.push_str(self.as_str());
@@ -562,6 +622,7 @@ impl Add<&str> for &Text {
 impl Add<&Text> for &str {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: &Text) -> Text {
         let mut s = String::with_capacity(self.len() + rhs.len());
         s.push_str(self);
@@ -574,6 +635,7 @@ impl Add<&Text> for &str {
 impl Add<Text> for Text {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: Text) -> Text {
         Text::concat(&self, &rhs)
     }
@@ -582,6 +644,7 @@ impl Add<Text> for Text {
 impl Add<String> for Text {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: String) -> Text {
         &self + rhs.as_str()
     }
@@ -590,6 +653,7 @@ impl Add<String> for Text {
 impl Add<Text> for String {
     type Output = Text;
 
+    #[inline]
     fn add(self, rhs: Text) -> Text {
         self.as_str() + &rhs
     }
