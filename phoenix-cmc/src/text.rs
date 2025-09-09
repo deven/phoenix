@@ -213,8 +213,7 @@ impl Text {
         if trimmed.len() == s.len() {
             self.clone() // Already trimmed
         } else {
-            let start = s.as_ptr() as usize - trimmed.as_ptr() as usize;
-            self.slice(start..start + trimmed.len())
+            self.slice_ref(trimmed)
         }
     }
 
@@ -225,8 +224,7 @@ impl Text {
         if trimmed.len() == s.len() {
             self.clone()
         } else {
-            let start = s.as_ptr() as usize - trimmed.as_ptr() as usize;
-            self.slice_from(start)
+            self.slice_ref(trimmed)
         }
     }
 
@@ -237,7 +235,7 @@ impl Text {
         if trimmed.len() == s.len() {
             self.clone()
         } else {
-            self.slice_to(trimmed.len())
+            self.slice_ref(trimmed)
         }
     }
 
