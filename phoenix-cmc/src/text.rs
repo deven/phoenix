@@ -1014,7 +1014,11 @@ mod tests {
         let bs2 = text.as_bytestring();
         assert_eq!(bs2, "Hello World");
         assert_eq!(*bs2, String::from("Hello World"));
-        assert_eq!(Text::new("HELLO WORLD"), *bs2); // Case-insensitive via Text's PartialEq
+
+        // Test ByteString vs Text equality (ByteString has PartialEq<Text>)
+        let text_hello = Text::new("HELLO WORLD");
+        assert_eq!(*bs2, text_hello); // ByteString == Text (this direction works)
+        assert_eq!(text_hello.as_str(), **bs2); // Alternative: compare via &str
     }
 
     #[test]
