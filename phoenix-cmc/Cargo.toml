@@ -33,3 +33,4 @@ codegen-units = 1
 
 [features]
 guest-access = []
+serde = []

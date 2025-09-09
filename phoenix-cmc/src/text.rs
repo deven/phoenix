@@ -787,6 +787,48 @@ impl Add<Text> for String {
     }
 }
 
+#[cfg(feature = "serde")]
+mod serde {
+    use alloc::string::String;
+
+    use serde::{
+        de::{Deserialize, Deserializer},
+        ser::{Serialize, Serializer},
+    };
+
+    use super::Text;
+
+    impl Serialize for Text {
+        #[inline]
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            serializer.serialize_str(self.as_ref())
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Text {
+        #[inline]
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            String::deserialize(deserializer).map(Text::from)
+        }
+    }
+
+    #[cfg(test)]
+    mod serde_impl_tests {
+        use serde::de::DeserializeOwned;
+        use static_assertions::assert_impl_all;
+
+        use super::*;
+
+        assert_impl_all!(Text: Serialize, DeserializeOwned);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
