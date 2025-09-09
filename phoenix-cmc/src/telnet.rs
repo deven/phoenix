@@ -602,10 +602,6 @@ impl Telnet {
         }
     }
 
-    pub async fn set_session(&self, session: Option<Session>) {
-        *self.session.write().await = session;
-    }
-
     pub async fn output(self: &Self, data: &str) {
         let mut output = self.output_buffer.lock().await;
 
