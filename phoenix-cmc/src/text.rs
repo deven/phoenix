@@ -53,16 +53,43 @@ impl Text {
         }
     }
 
-    /// Creates a `Text` from an existing `ByteString`.
+    /// Creates a new `Text` from a `ByteString`.
     #[inline]
-    pub fn from_bytestring(bs: ByteString) -> Self {
-        Self(UniCase::new(bs))
+    pub fn from_bytestring(bytestring: ByteString) -> Self {
+        Self(UniCase::new(bytestring))
     }
 
-    /// Creates a `Text` from an existing `Arc<str>`.
+    /// Creates a new `Text` from a `ByteString` as a Unicode string.
     #[inline]
-    pub fn from_arc(arc: Arc<str>) -> Self {
-        Self(UniCase::new(ByteString::from(arc.as_ref())))
+    pub const fn from_bytestring_unicode(bytestring: ByteString) -> Self {
+        Self(UniCase::unicode(bytestring))
+    }
+
+    /// Creates a new `Text` from a `ByteString` as an ASCII string.
+    #[inline]
+    pub const fn from_bytestring_ascii(bytestring: ByteString) -> Self {
+        Self(UniCase::ascii(bytestring))
+    }
+
+    /// Creates a new `Text` from a `&'static str`.
+    ///
+    /// This is more efficient than `new()` for string literals since
+    /// it avoids copying the string data.
+    #[inline]
+    pub fn from_static(src: &'static str) -> Self {
+        Self(UniCase::new(ByteString::from_static(src)))
+    }
+
+    /// Creates a new `Text` from a `&'static str` as a Unicode string.
+    #[inline]
+    pub const fn from_static_unicode(src: &'static str) -> Self {
+        Self(UniCase::unicode(ByteString::from_static(src)))
+    }
+
+    /// Creates a new `Text` from a `&'static str` as an ASCII string.
+    #[inline]
+    pub const fn from_static_ascii(src: &'static str) -> Self {
+        Self(UniCase::ascii(ByteString::from_static(src)))
     }
 
     /// Returns the underlying string slice with original casing.
