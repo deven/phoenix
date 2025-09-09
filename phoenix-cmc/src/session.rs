@@ -117,7 +117,7 @@ impl Session {
             closing: false,
             attempts: 0,
             priv_level: 0,
-            name: Name::with_name_only(""),
+            name: Name::new("", None),
             last_message: None,
             default_sendlist: None,
             last_sendlist: None,
@@ -455,7 +455,7 @@ impl Session {
     #[framed]
     pub async fn set_name(&self, value: impl AsRef<str>) {
         let mut inner = self.write().await;
-        inner.name = if inner.name.has_blurb() { Name::new(value.as_ref(), inner.name.blurb()) } else { Name::with_name_only(value.as_ref()) };
+        inner.name = Name::new(value.as_ref(), inner.name.blurb());
     }
 
     /// Get the blurb, if any.
@@ -482,7 +482,7 @@ impl Session {
     pub async fn remove_blurb(&self) {
         let mut inner = self.write().await;
         if inner.name.has_blurb() {
-            inner.name = Name::with_name_only(inner.name.name());
+            inner.name = Name::new(inner.name.name(), None);
         }
     }
 
