@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::info;
-use phoenix_cmc::{server, VERSION};
+use phoenix_cmc::{server, server::Server, VERSION};
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -71,7 +71,7 @@ pub async fn main() -> Result<()> {
     }
 
     // Initialize server
-    let server = Arc::new(server::Server::new(port, debug).await?);
+    let server = Server::new(port, debug).await?;
     let pid = std::process::id();
     info!("Started Phoenix server, version {VERSION}.");
     info!("Listening for connections on TCP port {port}. (pid {pid})");
