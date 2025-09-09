@@ -23,6 +23,8 @@ use unicase::UniCase;
 ///
 /// # Examples
 /// ```
+/// use phoenix_cmc::text::Text;
+///
 /// let name1 = Text::new("Alice");
 /// let name2 = Text::new("ALICE");
 /// assert_eq!(name1, name2);  // Case-insensitive comparison
