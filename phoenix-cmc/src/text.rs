@@ -44,7 +44,13 @@ static EMPTY_TEXT: LazyLock<Text> = LazyLock::new(|| Text(UniCase::new(ByteStrin
 impl Text {
     /// Creates a new `Text` from any string-like type.
     pub fn new(s: impl AsRef<str>) -> Self {
-        Self(UniCase::new(ByteString::from(s.as_ref())))
+        let s = s.as_ref();
+
+        if s.is_empty() {
+            Self::default()
+        } else {
+            Self(UniCase::new(ByteString::from(s.as_ref())))
+        }
     }
 
     /// Creates a `Text` from an existing `ByteString`.
