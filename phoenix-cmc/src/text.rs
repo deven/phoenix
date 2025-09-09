@@ -167,7 +167,7 @@ impl Text {
         let mut s = String::with_capacity(left.len() + right.len());
         s.push_str(left.as_str());
         s.push_str(right.as_str());
-        Text::new(s)
+        Self::new(s)
     }
 
     /// Checks if this text starts with the given pattern (case-insensitive).
@@ -301,13 +301,13 @@ impl Text {
     /// Repeats this text n times into a new `Text`.
     #[inline]
     pub fn repeat(&self, n: usize) -> Self {
-        Text::new(self.as_str().repeat(n))
+        Self::new(self.as_str().repeat(n))
     }
 
     /// Replaces all matches of a pattern with another string.
     #[inline]
     pub fn replace(&self, from: &str, to: &str) -> Self {
-        Text::new(self.as_str().replace(from, to))
+        Self::new(self.as_str().replace(from, to))
     }
 
     /// Replaces all matches of a pattern with another string (case-insensitive).
@@ -326,7 +326,7 @@ impl Text {
         }
         result.push_str(&s[last_end..]);
 
-        Text::new(result)
+        Self::new(result)
     }
 
     /// Splits this text by a pattern, returning an iterator of `&str` substrings.
@@ -599,21 +599,21 @@ impl Hash for Text {
 impl<'a> From<&'a str> for Text {
     #[inline]
     fn from(s: &'a str) -> Self {
-        Text::new(s)
+        Self::new(s)
     }
 }
 
 impl From<String> for Text {
     #[inline]
     fn from(s: String) -> Self {
-        Text::new(s)
+        Self::new(s)
     }
 }
 
 impl From<Arc<str>> for Text {
     #[inline]
     fn from(s: Arc<str>) -> Self {
-        Text::from_arc(s)
+        Self::from_arc(s)
     }
 }
 
