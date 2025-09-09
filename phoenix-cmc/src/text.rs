@@ -35,7 +35,7 @@ use unicase::UniCase;
 /// let slice = name1.slice(0..3);  // "Ali"
 /// assert_eq!(slice.as_str(), "Ali");
 /// ```
-#[derive(Debug, Clone, Eq, Ord, PartialOrd)]
+#[derive(Clone, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct Text(UniCase<ByteString>);
 
@@ -429,11 +429,19 @@ impl Deref for Text {
     }
 }
 
+// Debug implementation
+impl fmt::Debug for Text {
+    #[inline]
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        (**self).fmt(fmt)
+    }
+}
+
 // Display implementation
 impl fmt::Display for Text {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        (**self).fmt(fmt)
     }
 }
 
