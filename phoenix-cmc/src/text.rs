@@ -331,7 +331,7 @@ impl Text {
 
     /// Splits this text by a pattern, returning an iterator of `&str` substrings.
     #[inline]
-    pub fn split(&self, pat: &str) -> impl Iterator<Item = &str> {
+    pub fn split<'a, 'b>(&'a self, pat: &'b str) -> str::Split<'a, &'b str> {
         self.as_str().split(pat)
     }
 
@@ -339,25 +339,25 @@ impl Text {
     ///
     /// This variant preserves case-insensitive semantics for each part.
     #[inline]
-    pub fn split_text(&self, pat: &str) -> impl Iterator<Item = Text> + '_ {
-        self.split(pat).map(|s| self.slice_ref(s))
+    pub fn split_text<'a>(&'a self, pat: &'a str) -> impl Iterator<Item = Text> + 'a {
+        self.split(pat).map(move |s| self.slice_ref(s))
     }
 
     /// Splits this text by a pattern from the right, returning an iterator of `&str` substrings.
     #[inline]
-    pub fn rsplit(&self, pat: &str) -> impl Iterator<Item = &str> {
+    pub fn rsplit<'a, 'b>(&'a self, pat: &'b str) -> str::RSplit<'a, &'b str> {
         self.as_str().rsplit(pat)
     }
 
     /// Splits this text by a pattern, returning at most `n` `&str` substrings.
     #[inline]
-    pub fn splitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
+    pub fn splitn<'a, 'b>(&'a self, n: usize, pat: &'b str) -> str::SplitN<'a, &'b str> {
         self.as_str().splitn(n, pat)
     }
 
     /// Splits this text by a pattern from the right, returning at most `n` `&str` substrings.
     #[inline]
-    pub fn rsplitn(&self, n: usize, pat: &str) -> impl Iterator<Item = &str> {
+    pub fn rsplitn<'a, 'b>(&'a self, n: usize, pat: &'b str) -> str::RSplitN<'a, &'b str> {
         self.as_str().rsplitn(n, pat)
     }
 
@@ -415,13 +415,13 @@ impl Text {
 
     /// Returns an iterator over the start indices of matches of a pattern.
     #[inline]
-    pub fn match_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
+    pub fn match_indices<'a, 'b>(&'a self, pat: &'b str) -> str::MatchIndices<'a, &'b str> {
         self.as_str().match_indices(pat)
     }
 
     /// Returns an iterator over the start indices of matches of a pattern from the right.
     #[inline]
-    pub fn rmatch_indices(&self, pat: &str) -> impl Iterator<Item = (usize, &str)> {
+    pub fn rmatch_indices<'a, 'b>(&'a self, pat: &'b str) -> str::RMatchIndices<'a, &'b str> {
         self.as_str().rmatch_indices(pat)
     }
 
