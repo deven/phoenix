@@ -853,8 +853,8 @@ mod tests {
         assert_eq!(text, String::from("HeLLo"));
         assert_eq!(text, Arc::from("hello"));
 
-        // Test ByteString comparison (note: symmetric only works one way due to trait conflicts)
-        assert_eq!(ByteString::from("HELLO"), text);
+        // Test ByteString comparison (use Text == ByteString for case-insensitive comparison)
+        assert_eq!(text, *ByteString::from("HELLO"));
 
         // Test symmetric equality
         assert_eq!("HELLO", text);
@@ -940,9 +940,10 @@ mod tests {
         let mut map = HashMap::new();
         map.insert(Text::new("Alice"), 42);
 
-        // Can look up with &str thanks to Borrow<str>
-        assert_eq!(map.get("alice"), Some(&42));
-        assert_eq!(map.get("ALICE"), Some(&42));
+        // Case-insensitive lookup using Text keys
+        assert_eq!(map.get(&Text::new("alice")), Some(&42));
+        assert_eq!(map.get(&Text::new("ALICE")), Some(&42));
+        assert_eq!(map.get(&Text::new("Alice")), Some(&42));
     }
 
     #[test]
@@ -1013,10 +1014,12 @@ mod tests {
         assert_eq!(bs2, "Hello World");
         assert_eq!(*bs2, String::from("Hello World"));
 
-        // Test ByteString vs Text equality (ByteString has PartialEq<Text>)
+        // Test Text vs ByteString equality (Text has case-insensitive PartialEq<str>)
         let text_hello = Text::new("HELLO WORLD");
-        assert_eq!(*bs2, text_hello); // ByteString == Text (this direction works)
-        assert_eq!(text_hello.as_str(), **bs2); // Alternative: compare via &str
+        assert_eq!(text_hello, **bs2); // Text == str (case-insensitive via deref)
+                                       // Note: as_str() comparison would be case-sensitive, demonstrating preserved casing
+        assert_ne!(text_hello.as_str(), &**bs2); // Different cases
+        assert_eq!(text_hello, &**bs2); // But equal case-insensitively
     }
 
     #[test]
@@ -1149,7 +1152,7 @@ mod tests {
 
         // Test from_arc
         let arc = Arc::from("world");
-        let t2 = Text::from_arc(arc);
+        let t2 = Text::from(arc);
         assert_eq!(t2.as_str(), "world");
 
         // Test from_bytestring
@@ -1328,7 +1331,7 @@ mod tests {
         let text = Text::new("Hello 🌍 World");
 
         // Basic operations work with Unicode
-        assert_eq!(text.len(), 15); // bytes, not chars
+        assert_eq!(text.len(), 16); // bytes, not chars (🌍 is 4 bytes)
         assert!(!text.is_ascii());
 
         // Case operations
