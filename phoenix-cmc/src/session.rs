@@ -727,6 +727,11 @@ impl Session {
         self.0.name
     }
 
+    /// Get only the name from the `Name` object.
+    pub fn name_only(&self) -> &Text {
+        self.0.name.name()
+    }
+
     /// Set the name.
     pub fn set_name(&self, value: impl AsRef<str>) {
         self.0.name = Name::new(value.as_ref(), self.0.name.blurb());
