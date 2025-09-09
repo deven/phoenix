@@ -723,47 +723,40 @@ impl Session {
     }
 
     /// Get the `Name` object.
-    #[framed]
-    pub async fn name(&self) -> Name {
-        self.0.name.clone()
+    pub fn name(&self) -> &Name {
+        self.0.name
     }
 
     /// Set the name.
-    #[framed]
-    pub async fn set_name(&self, value: impl AsRef<str>) {
+    pub fn set_name(&self, value: impl AsRef<str>) {
         self.0.name = Name::new(value.as_ref(), self.0.name.blurb());
     }
 
-    /// Get the blurb, if any.
-    #[framed]
-    pub async fn has_blurb(&self) -> bool {
+    /// Check if a blurb is set.
+    pub fn has_blurb(&self) -> bool {
         self.0.name.has_blurb()
     }
 
     /// Get the blurb, if any.
-    #[framed]
-    pub async fn blurb(&self) -> Option<Text> {
-        self.0.name.blurb().cloned()
+    pub fn blurb(&self) -> Option<&Text> {
+        self.0.name.blurb()
     }
 
     /// Set the blurb.
-    #[framed]
-    pub async fn set_blurb(&self, value: impl AsRef<str>) {
-        self.0.name = Name::new(self.0.name.name(), Some(value.as_ref()));
+    pub fn set_blurb(&self, value: Option<impl AsRef<str>>) {
+        self.0.name = Name::new(self.0.name.name(), value);
     }
 
     /// Remove the blurb.
-    #[framed]
-    pub async fn remove_blurb(&self) {
+    pub fn remove_blurb(&self) {
         if self.0.name.has_blurb() {
             self.0.name = Name::new(self.0.name.name(), None);
         }
     }
 
     /// Set both name and blurb atomically.
-    #[framed]
-    pub async fn set_name_and_blurb(&self, name: impl AsRef<str>, blurb: impl AsRef<str>) {
-        self.0.name = Name::new(name.as_ref(), Some(blurb.as_ref()));
+    pub fn set_name_and_blurb(&self, name: impl AsRef<str>, blurb: Option<impl AsRef<str>>) {
+        self.0.name = Name::new(name.as_ref(), blurb);
     }
 
     /// Get the last message.
@@ -849,7 +842,7 @@ impl Session {
     }
 
     pub async fn name_user(&self) -> Text {
-        let name = self.name().await;
+        let name = self.name();
         let user_name = self.user_name().await;
         Text::from(format!("{name} ({user_name})"))
     }
@@ -897,7 +890,7 @@ impl Session {
             old.close(true).await;
         }
 
-        self.enqueue_others(Arc::new(TransferNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(TransferNotify::new(self.name()))).await;
         self.pending.attach(new_telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
         self.enqueue_output().await;
@@ -910,7 +903,7 @@ impl Session {
         let who = self.name_user().await;
         info!("Attach: {who} on new connection");
 
-        self.enqueue_others(Arc::new(AttachNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(AttachNotify::new(self.name()))).await;
         self.pending.attach(telnet).await;
         self.output("*** End of reviewed output. ***\n").await;
         self.enqueue_output().await;
@@ -927,7 +920,7 @@ impl Session {
                     info!("Detach: {who} (accidental)");
                 };
 
-                self.enqueue_others(Arc::new(DetachNotify::new(self.name().await, intentional))).await;
+                self.enqueue_others(Arc::new(DetachNotify::new(self.name(), intentional))).await;
                 *self.telnet.write().await = None;
             }
         } else {
@@ -1013,7 +1006,7 @@ impl Session {
             }
 
             for s in &SESSIONS {
-                let s_name = s.name().await;
+                let s_name = s.name();
                 if s_name.eq_ignore_ascii_case(sendlist) {
                     session = Some(s.clone());
                     session_matches.insert(s.clone());
@@ -1037,7 +1030,7 @@ impl Session {
                     }
                 }
 
-                let d_name = d.name().await;
+                let d_name = d.name();
                 if d_name.eq_ignore_ascii_case(sendlist) {
                     discussion = Some(d.clone());
                     discussion_matches.insert(d.clone());
@@ -1092,7 +1085,7 @@ impl Session {
         *self.idle_since.write().await = now;
         *self.login_time.write().await = now;
 
-        self.enqueue_others(Arc::new(EntryNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(EntryNotify::new(self.name()))).await;
     }
 
     pub async fn notify_exit(&self) {
@@ -1103,7 +1096,7 @@ impl Session {
             info!("Exit: {who}, detached");
         }
 
-        self.enqueue_others(Arc::new(ExitNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(ExitNotify::new(self.name()))).await;
     }
 
     pub async fn init_login_sequence(&self) {
@@ -1321,7 +1314,7 @@ impl Session {
     }
 
     pub async fn handle_blurb_input(&self, line: &str) {
-        if !self.check_name_availability(&self.name().await, true, false).await {
+        if !self.check_name_availability(&self.name(), true, false).await {
             return;
         }
 
@@ -1386,7 +1379,7 @@ impl Session {
             return;
         }
 
-        if self.check_name_availability(&self.name().await, true, true).await {
+        if self.check_name_availability(&self.name(), true, true).await {
             self.output("(That session is now gone.)\n").await;
             self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
         }
@@ -1525,7 +1518,7 @@ impl Session {
                         }
                     }
                     _ => {
-                        let found_name = found_session.name().await;
+                        let found_name = found_session.name();
                         let already = if double_check { "now" } else { "already" };
                         self.output(&format!("The name \"{found_name}\" is {already} in use.  Choose another.\n")).await;
                         self.set_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
@@ -1637,7 +1630,7 @@ impl Session {
 
     pub async fn do_restart(&self, args: &str) {
         let who = self.name_user().await;
-        let name = self.name().await;
+        let name = self.name();
 
         if args == "!" {
             // Immediate restart
@@ -1666,7 +1659,7 @@ impl Session {
 
     pub async fn do_down(&self, args: &str) {
         let who = self.name_user().await;
-        let name = self.name().await;
+        let name = self.name();
 
         if args == "!" {
             // Immediate shutdown
@@ -1700,9 +1693,9 @@ impl Session {
         match self.find_session(args).await {
             (Some(target), _) => {
                 let who = target.name_user().await;
-                let name = target.name().await;
+                let name = target.name();
                 let by_who = self.name_user().await;
-                let by_name = self.name().await;
+                let by_name = self.name();
 
                 if drain {
                     self.output(&format!("\"{name}\" has been nuked.\n")).await;
@@ -1778,7 +1771,7 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name = session.name().await;
+            let name = session.name();
             self.output(name.column_display()).await;
 
             // Login time or "detached".
@@ -1871,7 +1864,7 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name = session.name().await;
+            let name = session.name();
             self.output(name.column_display()).await;
 
             // Idle time.
@@ -1968,7 +1961,7 @@ impl Session {
             self.output(detached).await;
 
             // Name and blurb.
-            let name = session.name().await;
+            let name = session.name();
             self.output(name.column_display()).await;
 
             // Login time.
@@ -2092,7 +2085,7 @@ impl Session {
         }
         self.output("You are now \"here\".\n").await;
         *self.away.write().await = AwayState::Here;
-        self.enqueue_others(Arc::new(HereNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(HereNotify::new(self.name()))).await;
     }
 
     pub async fn do_away(&self, args: &str) {
@@ -2102,7 +2095,7 @@ impl Session {
         }
         self.output("You are now \"away\".\n").await;
         *self.away.write().await = AwayState::Away;
-        self.enqueue_others(Arc::new(AwayNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(AwayNotify::new(self.name()))).await;
     }
 
     pub async fn do_busy(&self, args: &str) {
@@ -2112,7 +2105,7 @@ impl Session {
         }
         self.output("You are now \"busy\".\n").await;
         *self.away.write().await = AwayState::Busy;
-        self.enqueue_others(Arc::new(BusyNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(BusyNotify::new(self.name()))).await;
     }
 
     pub async fn do_gone(&self, args: &str) {
@@ -2122,7 +2115,7 @@ impl Session {
         }
         self.output("You are now \"gone\".\n").await;
         *self.away.write().await = AwayState::Gone;
-        self.enqueue_others(Arc::new(GoneNotify::new(self.name().await))).await;
+        self.enqueue_others(Arc::new(GoneNotify::new(self.name()))).await;
     }
 
     pub async fn do_clear(&self, _args: &str) {
@@ -2236,7 +2229,7 @@ impl Session {
                 self.output("         ").await;
             }
 
-            if disc.is_permitted(&self.name().await).await {
+            if disc.is_permitted(&self.name()).await {
                 let title = &disc.title().await;
                 if title.len() > 49 {
                     self.output(&format!("{title:<48.48}+\n")).await;
@@ -2377,7 +2370,7 @@ impl Session {
                 } else {
                     self.output(", ").await;
                 }
-                self.output(&session.name().await).await;
+                self.output(&session.name()).await;
             }
 
             if !sendlist.discussions.is_empty() {
@@ -2488,7 +2481,7 @@ impl Session {
 
         match self.find_sendable(name, false, true, true, true).await {
             (Some(session), _, _, _) => {
-                let name = session.name().await;
+                let name = session.name();
                 self.output(&format!("There is already someone named \"{name}\". (not created)\n")).await;
                 return;
             }
@@ -2503,7 +2496,7 @@ impl Session {
         let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
         DISCUSSIONS.insert(name.to_string(), disc.clone());
 
-        self.enqueue_others(Arc::new(CreateNotify::new(disc.name().await, disc.title().await, disc.is_public().await, self.name().await))).await;
+        self.enqueue_others(Arc::new(CreateNotify::new(disc.name().await, disc.title().await, disc.is_public().await, self.name()))).await;
 
         let name = disc.name().await;
         let title = disc.title().await;
@@ -2618,7 +2611,7 @@ impl Session {
 
         match self.find_sendable(args, false, true, true, true).await {
             (Some(found_session), _, _, _) if found_session != self => {
-                let found_name = found_session.name().await;
+                let found_name = found_session.name();
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
             }
             (_, _, Some(found_discussion), _) => {
@@ -2628,7 +2621,7 @@ impl Session {
             _ => {}
         }
 
-        self.enqueue_others(Arc::new(RenameNotify::new(self.name().await, args))).await;
+        self.enqueue_others(Arc::new(RenameNotify::new(self.name(), args))).await;
 
         self.output(&format!("You have changed your name to \"{args}\".\n")).await;
         *self.name.write().await = Name::new(args, self.blurb().await);
@@ -3469,7 +3462,7 @@ impl Session {
 
         let output_type = if count > 1 || !sendlist.discussions.is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
 
-        let msg = Arc::new(Message::new(output_type, self.name().await, sendlist.clone(), text));
+        let msg = Arc::new(Message::new(output_type, self.name(), sendlist.clone(), text));
         *self.last_message.write().await = Some(msg.clone());
 
         for session in &who {
@@ -3539,7 +3532,7 @@ impl Session {
                     _ => self.output(", ").await,
                 };
 
-                self.output(&session.name().await);
+                self.output(&session.name());
             }
 
             self.output(".\n").await;
