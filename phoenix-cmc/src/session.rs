@@ -35,46 +35,80 @@ static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 
 /// Session handle.
 #[derive(Debug, Clone)]
-pub struct Session
-where
-    Self: Send + Sync + 'static,
-{
-    pub id: usize,
-    pub inner: Arc<RwLock<SessionInner>>,
-}
+pub struct Session(Arc<SessionInner>);
 
 #[derive(Debug)]
 pub struct SessionInner
 where
     Self: Send + Sync + 'static,
 {
+    // Immutable fields
     pub id: usize,
     pub server: Server,
+
+    // User and connection state
     pub user: Option<User>,
     pub telnet: Option<Telnet>,
-    pub login_timeout: Option<AbortHandle>,
-    pub login_state: LoginState,
-    pub lines: VecDeque<String>,
+
+    // I/O handling
     pub output_buffer: String,
     pub pending: OutputStream,
+
+    // User preferences and variables
     pub user_vars: HashMap<Text, Text>,
     pub sys_vars: HashMap<Text, Text>,
+    pub signal_public: bool,
+    pub signal_private: bool,
+
+    // Session state
     pub login_time: Timestamp,
     pub idle_since: Timestamp,
     pub away: AwayState,
-    pub signal_public: bool,
-    pub signal_private: bool,
-    pub signed_on: bool,
-    pub closing: bool,
-    pub attempts: i32,
     pub priv_level: i32,
     pub name: Name,
+
+    // Message handling
     pub last_message: Option<Arc<Message>>,
     pub default_sendlist: Option<Arc<Sendlist>>,
     pub last_sendlist: Option<Arc<Sendlist>>,
     pub last_explicit: Text,
     pub reply_sendlist: Text,
     pub oops_text: Text,
+}
+
+/// Trait for session objects that can be associated with a Telnet connection.
+/// Implemented by both LoginSession (pre-login) and Session (post-login).
+pub trait ConnectionSession: Send + Sync {
+    fn name_opt(&self) -> Option<&Name> {
+        None
+    }
+    async fn acknowledge_output(&self);
+    async fn last_explicit(&self) -> Text {
+        Text::default()
+    }
+    async fn reply_sendlist(&self) -> Text {
+        Text::default()
+    }
+    async fn output_next(&self, telnet: &Telnet) -> bool;
+    async fn output(&mut self, text: impl AsRef<str>);
+    async fn handle_input(&mut self, line: String);
+
+    async fn print_message(&self, _telnet: &mut Telnet) {}
+}
+
+/// Pre-login session for managing connections before authentication.
+#[derive(Debug)]
+pub struct LoginSession {
+    pub id: usize,
+    pub server: Server,
+    pub user: Option<User>,
+    pub telnet: Telnet,
+    pub login_state: LoginState,
+    pub login_timeout: Option<AbortHandle>,
+    pub attempts: i32,
+    pub lines: VecDeque<String>,
+    pub output_buffer: String,
+    pub pending: OutputStream,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -85,7 +119,250 @@ pub enum LoginState {
     AwaitingName,
     AwaitingBlurb,
     AwaitingTransferConfirmation,
-    LoggedIn,
+}
+
+impl LoginSession {
+    pub fn new(id: usize, server: Server, telnet: Telnet) -> Self {
+        Self {
+            id,
+            server,
+            user: None,
+            telnet,
+            login_state: LoginState::PreLogin,
+            login_timeout: None,
+            attempts: 0,
+            lines: VecDeque::new(),
+            output_buffer: String::new(),
+            pending: OutputStream::new(),
+        }
+    }
+
+    pub async fn handle_login_input(&mut self, line: String) {
+        let line = line.trim();
+        if let Some(_args) = match_keyword(line, "/bye", 4) {
+            self.do_bye().await;
+            return;
+        }
+        if line.is_empty() {
+            self.telnet.prompt("login: ").await;
+            return;
+        }
+        let user = (*USER_MANAGER).get_user(&line).await;
+        self.user = user.clone();
+        if let Some(_user_lock) = &user {
+            self.telnet.set_do_echo(false).await;
+            self.set_login_state(LoginState::AwaitingPassword, Some("password: "));
+        } else {
+            self.output("Invalid login.\n").await;
+            self.attempts += 1;
+            if self.attempts >= Session::MAX_LOGIN_ATTEMPTS {
+                self.close(true).await;
+                return;
+            }
+            self.telnet.prompt("login: ").await;
+        }
+    }
+
+    pub async fn handle_password_input(&mut self, line: String) {
+        self.telnet.output("\n").await;
+        self.telnet.set_do_echo(true).await;
+        (*USER_MANAGER).update_all().await.ok();
+
+        let valid = if let Some(user_lock) = &self.user {
+            let user = user_lock.read().await;
+            if let Some(password) = &user.password {
+                verify_password(&line, password)
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        if !valid {
+            self.output("Login incorrect.\n").await;
+            self.attempts += 1;
+            if self.attempts >= Session::MAX_LOGIN_ATTEMPTS {
+                self.close(true).await;
+                return;
+            }
+            self.set_login_state(LoginState::AwaitingLogin, Some("login: "));
+            self.user = None;
+            return;
+        }
+
+        if let Some(user_lock) = &self.user {
+            let user = user_lock.read().await;
+            if user.reserved.is_empty() {
+                self.output("You don't have any reserved names.\n").await;
+                self.close(true).await;
+                return;
+            }
+
+            if user.reserved.len() == 1 {
+                let name = user.reserved[0].clone();
+                if self.check_name_availability(&name, false, false).await {
+                    self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: "));
+                }
+                return;
+            }
+        }
+
+        self.print_reserved_names().await;
+        self.set_login_state(LoginState::AwaitingName, Some("Enter name: "));
+    }
+
+    pub async fn handle_name_input(&mut self, line: String) {
+        let line = line.trim();
+        let name = if line.is_empty() {
+            if let Some(user_lock) = &self.user {
+                let user = user_lock.read().await;
+                if let Some(reserved) = user.reserved.first() {
+                    reserved.clone()
+                } else {
+                    self.telnet.prompt("Enter name: ").await;
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else {
+            Text::new(line)
+        };
+
+        if self.check_name_availability(&name, false, false).await {
+            self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: "));
+        }
+    }
+
+    pub async fn handle_blurb_input(&mut self, line: String) {
+        let name = if let Some(user_lock) = &self.user {
+            let user = user_lock.read().await;
+            if let Some(reserved) = user.reserved.first() {
+                reserved.clone()
+            } else {
+                return;
+            }
+        } else {
+            return;
+        };
+
+        if !self.check_name_availability(&name, true, false).await {
+            return;
+        }
+
+        let line = if line.is_empty() {
+            if let Some(user_lock) = &self.user {
+                let user = user_lock.read().await;
+                user.blurb.as_ref().map(|b| b.as_str()).unwrap_or("").to_string()
+            } else {
+                String::new()
+            }
+        } else {
+            line
+        };
+
+        // At this point we would transition to a full Session
+        // This is where we'd create the Session object and add to SESSIONS
+        // For now, just mark as logged in
+        self.set_login_state(LoginState::LoggedIn, None);
+    }
+
+    pub async fn handle_transfer_input(&mut self, line: String) {
+        let line = line.trim();
+        if match_keyword(&line, "yes", 1).is_none() {
+            self.output("Session not transferred.\n").await;
+            self.set_login_state(LoginState::AwaitingName, Some("Enter name: "));
+            return;
+        }
+
+        let name = if let Some(user_lock) = &self.user {
+            let user = user_lock.read().await;
+            if let Some(reserved) = user.reserved.first() {
+                reserved.clone()
+            } else {
+                return;
+            }
+        } else {
+            return;
+        };
+
+        if self.check_name_availability(&name, true, true).await {
+            self.output("(That session is now gone.)\n").await;
+            self.set_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: "));
+        }
+    }
+
+    pub async fn print_reserved_names(&self) {
+        self.output("\nYour reserved names are:\n\n").await;
+        if let Some(user_lock) = &self.user {
+            let user = user_lock.read().await;
+            for (i, name) in user.reserved.iter().enumerate() {
+                self.output(&format!("    {}: {}\n", i + 1, name)).await;
+            }
+        }
+        self.output("\n").await;
+    }
+
+    pub async fn check_name_availability(&self, name: &Text, blurb: bool, transfer: bool) -> bool {
+        // Placeholder - would need to implement full logic
+        true
+    }
+
+    pub async fn set_login_state(&mut self, state: LoginState, prompt: Option<&str>) {
+        self.login_state = state;
+        if let Some(prompt) = prompt {
+            self.telnet.prompt(prompt).await;
+        }
+    }
+
+    pub async fn enqueue_output(&mut self) {
+        if !self.output_buffer.is_empty() {
+            self.pending.enqueue(self.output_buffer.clone()).await;
+            self.output_buffer.clear();
+        }
+    }
+
+    pub async fn do_bye(&self) {
+        self.close(true).await;
+    }
+
+    pub async fn close(&self, drain: bool) {
+        self.telnet.close(drain).await;
+    }
+
+    pub async fn save_input_line(&mut self, line: String) {
+        self.lines.push_back(line);
+    }
+}
+
+impl ConnectionSession for LoginSession {
+    async fn acknowledge_output(&self) {
+        self.pending.acknowledge().await;
+    }
+
+    async fn output_next(&self, telnet: &Telnet) -> bool {
+        self.pending.send_next(telnet).await
+    }
+
+    async fn output(&mut self, text: impl AsRef<str>) {
+        self.output_buffer.push_str(text.as_ref());
+    }
+
+    async fn handle_input(&mut self, line: String) {
+        self.pending.dequeue().await;
+
+        match self.login_state {
+            LoginState::PreLogin => self.save_input_line(line).await,
+            LoginState::AwaitingLogin => self.handle_login_input(line).await,
+            LoginState::AwaitingPassword => self.handle_password_input(line).await,
+            LoginState::AwaitingName => self.handle_name_input(line).await,
+            LoginState::AwaitingBlurb => self.handle_blurb_input(line).await,
+            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(line).await,
+        }
+
+        self.enqueue_output().await;
+    }
 }
 
 impl Session {
@@ -448,49 +725,45 @@ impl Session {
     /// Get the `Name` object.
     #[framed]
     pub async fn name(&self) -> Name {
-        self.read().await.name.clone()
+        self.0.name.clone()
     }
 
     /// Set the name.
     #[framed]
     pub async fn set_name(&self, value: impl AsRef<str>) {
-        let mut inner = self.write().await;
-        inner.name = Name::new(value.as_ref(), inner.name.blurb());
+        self.0.name = Name::new(value.as_ref(), self.0.name.blurb());
     }
 
     /// Get the blurb, if any.
     #[framed]
     pub async fn has_blurb(&self) -> bool {
-        self.read().await.name.has_blurb()
+        self.0.name.has_blurb()
     }
 
     /// Get the blurb, if any.
     #[framed]
     pub async fn blurb(&self) -> Option<Text> {
-        self.read().await.name.blurb()
+        self.0.name.blurb().cloned()
     }
 
     /// Set the blurb.
     #[framed]
     pub async fn set_blurb(&self, value: impl AsRef<str>) {
-        let mut inner = self.write().await;
-        inner.name = Name::new(inner.name.name(), value.as_ref());
+        self.0.name = Name::new(self.0.name.name(), Some(value.as_ref()));
     }
 
     /// Remove the blurb.
     #[framed]
     pub async fn remove_blurb(&self) {
-        let mut inner = self.write().await;
-        if inner.name.has_blurb() {
-            inner.name = Name::new(inner.name.name(), None);
+        if self.0.name.has_blurb() {
+            self.0.name = Name::new(self.0.name.name(), None);
         }
     }
 
     /// Set both name and blurb atomically.
     #[framed]
     pub async fn set_name_and_blurb(&self, name: impl AsRef<str>, blurb: impl AsRef<str>) {
-        let mut inner = self.write().await;
-        inner.name = Name::new(name.as_ref(), blurb.as_ref());
+        self.0.name = Name::new(name.as_ref(), Some(blurb.as_ref()));
     }
 
     /// Get the last message.
@@ -3294,6 +3567,40 @@ impl Session {
         } else {
             self.output(&format!("No discussions matched \"{name}\".\n")).await;
         }
+    }
+}
+
+impl ConnectionSession for Session {
+    fn name_opt(&self) -> Option<&Name> {
+        Some(self.name())
+    }
+
+    async fn acknowledge_output(&self) {
+        self.pending.read().await.acknowledge().await;
+    }
+
+    async fn last_explicit(&self) -> Text {
+        self.read().await.last_explicit.clone()
+    }
+
+    async fn reply_sendlist(&self) -> Text {
+        self.read().await.reply_sendlist.clone()
+    }
+
+    async fn output_next(&self, telnet: &Telnet) -> bool {
+        self.pending.read().await.send_next(telnet).await
+    }
+
+    async fn output(&mut self, text: impl AsRef<str>) {
+        self.output(text.as_ref()).await;
+    }
+
+    async fn handle_input(&mut self, line: String) {
+        self.handle_input(line).await;
+    }
+
+    async fn print_message(&self, telnet: &mut Telnet) {
+        self.print_message(telnet).await;
     }
 }
 
