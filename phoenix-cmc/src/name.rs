@@ -1,5 +1,5 @@
 use crate::text::Text;
-//use std::borrow::Borrow;
+use std::borrow::Borrow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -139,10 +139,8 @@ impl Deref for Name {
     }
 }
 
-//impl Borrow<Text> for Name {
-//    fn borrow(&self) -> &Text { &self.name() }
-//}
-//
-//impl Borrow<str> for Name {
-//    fn borrow(&self) -> &str { self.name().as_ref() }
-//}
+impl Borrow<Text> for Name {
+    fn borrow(&self) -> &Text {
+        &self.0.name
+    }
+}
