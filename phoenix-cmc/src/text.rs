@@ -39,7 +39,7 @@ use unicase::UniCase;
 #[repr(transparent)]
 pub struct Text(UniCase<ByteString>);
 
-static EMPTY_TEXT: LazyLock<Text> = LazyLock::new(|| Text(UniCase::new(ByteString::new())));
+const EMPTY_TEXT: Text = Text::from_bytestring_ascii(ByteString::new());
 
 impl Text {
     /// Creates a new `Text` from any string-like type.
