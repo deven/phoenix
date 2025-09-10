@@ -122,7 +122,7 @@ pub enum LoginState {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AwayState {
     Here = 0,
     Away = 1,
