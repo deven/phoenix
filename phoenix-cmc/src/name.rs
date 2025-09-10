@@ -7,7 +7,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 /// Name handle.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub struct Name(Arc<NameInner>);
 
 #[derive(Debug)]
@@ -15,9 +15,9 @@ pub struct NameInner
 where
     Self: Send + Sync + 'static,
 {
-    pub name_blurb: Text,
     pub name: Text,
     pub blurb: Option<Text>,
+    pub name_blurb: Text,
     pub column_display: Text,
 }
 
@@ -112,7 +112,17 @@ impl PartialEq<Name> for Text {
     }
 }
 
-impl Eq for Name {}
+impl PartialOrd for Name {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Name {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.name.cmp(&other.0.name)
+    }
+}
 
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
