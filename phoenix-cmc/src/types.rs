@@ -4,15 +4,6 @@ use indexmap::IndexSet;
 // Order-preserving set type
 pub type OrderedSet<T> = IndexSet<T>;
 
-// Event types
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EventType {
-    UnknownEvent,
-    ShutdownEvent,
-    RestartEvent,
-    LoginTimeoutEvent,
-}
-
 // Output types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputType {
