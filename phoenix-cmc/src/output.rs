@@ -3,9 +3,46 @@ use crate::sendlist::Sendlist;
 use crate::telnet::Telnet;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::types::{OutputClass, OutputType};
 use async_trait::async_trait;
 use std::sync::Arc;
+
+// Output types
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OutputType {
+    UnknownOutput,
+    TextOutput,
+    PublicMessage,
+    PrivateMessage,
+    EntryOutput,
+    ExitOutput,
+    TransferOutput,
+    AttachOutput,
+    DetachOutput,
+    HereOutput,
+    AwayOutput,
+    BusyOutput,
+    GoneOutput,
+    CreateOutput,
+    DestroyOutput,
+    JoinOutput,
+    QuitOutput,
+    PublicOutput,
+    PrivateOutput,
+    PermitOutput,
+    DepermitOutput,
+    AppointOutput,
+    UnappointOutput,
+    RenameOutput,
+}
+
+// Output classifications
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OutputClass {
+    UnknownClass,
+    TextClass,
+    MessageClass,
+    NotificationClass,
+}
 
 #[async_trait]
 pub trait OutputObj: Send + Sync {

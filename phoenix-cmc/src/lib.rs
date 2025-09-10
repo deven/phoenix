@@ -11,11 +11,82 @@ pub mod session;
 pub mod telnet;
 pub mod text;
 pub mod timestamp;
-pub mod types;
 pub mod user;
 
-pub use server::Server;
-pub use types::*;
+// Order-preserving set type
+pub type OrderedSet<T> = indexmap::IndexSet<T>;
 
 /// Phoenix server version.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub fn getword(input: &str, separator: Option<char>) -> (&str, &str) {
+    let input = input.trim_start();
+
+    let end = if let Some(sep) = separator { input.find(|c: char| c.is_whitespace() || c == sep) } else { input.find(char::is_whitespace) };
+
+    match end {
+        Some(pos) => {
+            let word = &input[..pos];
+            let mut rest = input[pos..].trim_start();
+
+            if let Some(sep) = separator {
+                if let Some(stripped) = rest.strip_prefix(sep) {
+                    rest = stripped.trim_start();
+                }
+            }
+
+            (word, rest)
+        }
+        None => (input, ""),
+    }
+}
+
+pub fn match_keyword<'a>(input: &'a str, keyword: &str, min: usize) -> Option<&'a str> {
+    let (word, rest) = getword(input, None);
+    if word.len() >= min && keyword.starts_with(&word.to_lowercase()) {
+        Some(rest)
+    } else {
+        None
+    }
+}
+
+pub fn match_name(name: &str, sendlist: &str) -> Option<usize> {
+    use crate::constants::*;
+
+    if name.is_empty() || sendlist.is_empty() {
+        return None;
+    }
+
+    let name_bytes = name.as_bytes();
+    let sendlist_bytes = sendlist.as_bytes();
+
+    for (start_pos, _) in name.char_indices() {
+        let mut name_pos = start_pos;
+        let mut send_pos = 0;
+
+        while name_pos < name_bytes.len() && send_pos < sendlist_bytes.len() {
+            let n = name_bytes[name_pos];
+            let s = sendlist_bytes[send_pos];
+
+            // Let an unquoted underscore match a space or an underscore
+            if s == UNQUOTED_UNDERSCORE && (n == SPACE || n == UNDERSCORE) {
+                name_pos += 1;
+                send_pos += 1;
+                continue;
+            }
+
+            if n.to_ascii_lowercase() != s.to_ascii_lowercase() {
+                break;
+            }
+
+            name_pos += 1;
+            send_pos += 1;
+        }
+
+        if send_pos == sendlist_bytes.len() {
+            return Some(start_pos + 1);
+        }
+    }
+
+    None
+}
