@@ -51,15 +51,6 @@ pub enum OutputClass {
     NotificationClass,
 }
 
-// Away states
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AwayState {
-    Here,
-    Away,
-    Busy,
-    Gone,
-}
-
 pub fn getword(input: &str, separator: Option<char>) -> (&str, &str) {
     let input = input.trim_start();
 
