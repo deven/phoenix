@@ -1,6 +1,6 @@
 use crate::constants::*;
 use crate::discussion::Discussion;
-use crate::name::Name;
+use crate::name::{CurrentName, Name};
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
 use crate::server::Server;
@@ -65,7 +65,7 @@ where
     pub idle_since: Timestamp,
     pub away: AwayState,
     pub priv_level: i32,
-    pub name: Name,
+    pub name: CurrentName,
 
     // Message handling
     pub last_message: Option<Arc<Message>>,
@@ -723,8 +723,8 @@ impl Session {
     }
 
     /// Get the `Name` object.
-    pub fn name(&self) -> &Name {
-        self.0.name
+    pub fn name(&self) -> Name {
+        self.0.name.snapshot()
     }
 
     /// Get only the name from the `Name` object.
@@ -734,7 +734,8 @@ impl Session {
 
     /// Set the name.
     pub fn set_name(&self, value: impl AsRef<str>) {
-        self.0.name = Name::new(value.as_ref(), self.0.name.blurb());
+        let current = self.0.name.borrow();
+        self.0.name.set(Name::new(value.as_ref(), current.blurb()));
     }
 
     /// Check if a blurb is set.
