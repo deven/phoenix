@@ -14,7 +14,7 @@ use async_backtrace::framed;
 use dashmap::DashMap;
 use log::info;
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -63,7 +63,7 @@ where
     // Session state
     pub login_time: Timestamp,
     pub idle_since: Timestamp,
-    pub away: AwayState,
+    pub away: AtomicAwayState,
     pub priv_level: i32,
     pub name: CurrentName,
 
@@ -119,6 +119,63 @@ pub enum LoginState {
     AwaitingName,
     AwaitingBlurb,
     AwaitingTransferConfirmation,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AwayState {
+    Here = 0,
+    Away = 1,
+    Busy = 2,
+    Gone = 3,
+}
+
+impl Default for AwayState {
+    fn default() -> Self {
+        AwayState::Here
+    }
+}
+
+impl From<AwayState> for u8 {
+    #[inline]
+    fn from(state: AwayState) -> u8 {
+        state as u8
+    }
+}
+
+impl From<u8> for AwayState {
+    #[inline]
+    fn from(value: u8) -> Self {
+        match value {
+            0 => AwayState::Here,
+            1 => AwayState::Away,
+            2 => AwayState::Busy,
+            3 => AwayState::Gone,
+            _ => AwayState::default(),
+        }
+    }
+}
+
+pub struct AtomicAwayState(AtomicU8);
+
+impl AtomicAwayState {
+    pub fn new(state: AwayState) -> Self {
+        Self(AtomicU8::new(state.into()))
+    }
+
+    pub fn get(&self) -> AwayState {
+        AwayState::from(self.0.load(Ordering::Acquire))
+    }
+
+    pub fn set(&self, state: AwayState) {
+        self.0.store(state.into(), Ordering::Release)
+    }
+}
+
+impl Default for AtomicAwayState {
+    fn default() -> Self {
+        Self::new(AwayState::default())
+    }
 }
 
 impl LoginSession {
@@ -387,7 +444,7 @@ impl Session {
             sys_vars: HashMap::new(),
             login_time: now,
             idle_since: now,
-            away: AwayState::Here,
+            away: Default::default(),
             signal_public: true,
             signal_private: true,
             signed_on: false,
@@ -631,15 +688,13 @@ impl Session {
     }
 
     /// Get the away state.
-    #[framed]
-    pub async fn away_state(&self) -> AwayState {
-        self.read().await.away
+    pub fn away(&self) -> AwayState {
+        self.0.away.get()
     }
 
     /// Set the away state.
-    #[framed]
-    pub async fn set_away_state(&self, value: AwayState) {
-        self.write().await.away = value;
+    pub fn set_away(&self, value: AwayState) {
+        self.0.away.set(value);
     }
 
     /// Get the public signal flag.
@@ -2090,7 +2145,7 @@ impl Session {
             self.do_blurb(args, false).await;
         }
         self.output("You are now \"here\".\n").await;
-        *self.away.write().await = AwayState::Here;
+        self.set_away(AwayState::Here);
         self.enqueue_others(Arc::new(HereNotify::new(self.name()))).await;
     }
 
@@ -2100,7 +2155,7 @@ impl Session {
             self.do_blurb(args, false).await;
         }
         self.output("You are now \"away\".\n").await;
-        *self.away.write().await = AwayState::Away;
+        self.set_away(AwayState::Away);
         self.enqueue_others(Arc::new(AwayNotify::new(self.name()))).await;
     }
 
@@ -2110,7 +2165,7 @@ impl Session {
             self.do_blurb(args, false).await;
         }
         self.output("You are now \"busy\".\n").await;
-        *self.away.write().await = AwayState::Busy;
+        self.set_away(AwayState::Busy);
         self.enqueue_others(Arc::new(BusyNotify::new(self.name()))).await;
     }
 
@@ -2120,7 +2175,7 @@ impl Session {
             self.do_blurb(args, false).await;
         }
         self.output("You are now \"gone\".\n").await;
-        *self.away.write().await = AwayState::Gone;
+        self.set_away(AwayState::Gone);
         self.enqueue_others(Arc::new(GoneNotify::new(self.name()))).await;
     }
 
@@ -2158,7 +2213,7 @@ impl Session {
         let mut total = 0;
 
         for session in &SESSIONS {
-            match *session.away.read().await {
+            match session.away() {
                 AwayState::Here => here += 1,
                 AwayState::Away => away += 1,
                 AwayState::Busy => busy += 1,
