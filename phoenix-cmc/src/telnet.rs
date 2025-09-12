@@ -1,19 +1,22 @@
 use crate::constants::*;
+use crate::name::AtomicNameOption;
 use crate::name::Name;
+use crate::output::OutputType;
 use crate::sendlist::Sendlist;
-use crate::session::Session;
+use crate::server::Server;
+use crate::session::{AtomicSessionConnection, LoginSession, Session, SessionConnection};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::types::*;
 use crate::VERSION;
+use arc_swap::{ArcSwap, ArcSwapOption, Guard};
 use async_backtrace::framed;
 use bytes::{Bytes, BytesMut};
 use std::collections::VecDeque;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::Mutex;
 
 pub const BELL_STR: &str = "\x07";
 
@@ -69,7 +72,7 @@ pub enum TelnetSubnegotiationState {
 
 /// Telnet handle.
 #[derive(Debug, Clone)]
-pub struct Telnet(Arc<RwLock<TelnetInner>>);
+pub struct Telnet(Arc<TelnetInner>);
 
 #[derive(Debug)]
 pub struct TelnetInner
@@ -77,54 +80,54 @@ where
     Self: Send + Sync + 'static,
 {
     // Connection
-    pub stream: TcpStream,
-    pub closing: bool,
-    pub close_on_eof: bool,
+    pub stream: Mutex<TcpStream>,
+    pub closing: AtomicBool,
+    pub close_on_eof: AtomicBool,
 
     // Session
-    pub session: Option<Session>,
+    pub session_connection: AtomicSessionConnection,
 
     // Terminal settings
-    pub width: usize,
-    pub height: usize,
-    pub naws_width: usize,
-    pub naws_height: usize,
+    pub width: AtomicUsize,
+    pub height: AtomicUsize,
+    pub naws_width: AtomicUsize,
+    pub naws_height: AtomicUsize,
 
     // Input buffer and editing
-    pub data: Vec<u8>,
-    pub point: usize,
-    pub mark: Option<usize>,
-    pub prompt: String,
+    pub data: Mutex<Vec<u8>>,
+    pub point: AtomicUsize,
+    pub mark: ArcSwapOption<usize>,
+    pub prompt: AtomicText,
 
     // History and kill ring
-    pub history: VecDeque<String>,
-    pub history_position: Option<usize>,
-    pub kill_ring: VecDeque<String>,
+    pub history: Mutex<VecDeque<Text>>,
+    pub history_position: ArcSwapOption<usize>,
+    pub kill_ring: Mutex<VecDeque<Text>>,
 
     // Reply tracking
-    pub reply_to: Option<Name>,
+    pub reply_to: AtomicNameOption,
 
     // Output buffers
-    pub output_buffer: BytesMut,
-    pub command_buffer: BytesMut,
+    pub output_buffer: Mutex<BytesMut>,
+    pub command_buffer: Mutex<BytesMut>,
 
     // Telnet state
-    pub state: TelnetState,
-    pub undrawn: bool,
-    pub do_echo: bool,
-    pub acknowledge: bool,
-    pub outstanding: usize,
+    pub state: ArcSwap<TelnetState>,
+    pub undrawn: AtomicBool,
+    pub do_echo: AtomicBool,
+    pub acknowledge: AtomicBool,
+    pub outstanding: AtomicUsize,
 
     // Telnet options
-    pub echo: u8,
-    pub lsga: u8,
-    pub rsga: u8,
-    pub lbin: u8,
-    pub rbin: u8,
-    pub naws: u8,
+    pub echo: AtomicU8,
+    pub lsga: AtomicU8,
+    pub rsga: AtomicU8,
+    pub lbin: AtomicU8,
+    pub rbin: AtomicU8,
+    pub naws: AtomicU8,
 
     // Subnegotiation state
-    pub sb_state: TelnetSubnegotiationState,
+    pub sb_state: ArcSwap<TelnetSubnegotiationState>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -135,7 +138,7 @@ pub enum TelnetState {
     Wont,
     Do,
     Dont,
-    Subnegotiation,
+    SubnegotiationBegin,
     SubnegotiationEnd,
     Return,
     Escape,
@@ -166,416 +169,462 @@ impl Telnet {
     pub const HISTORY_MAX: usize = 200;
     pub const KILL_RING_MAX: usize = 1;
 
-    #[framed]
-    pub async fn new(stream: TcpStream) -> Self {
+    /// Create a new `Telnet` with its associated `LoginSession`.
+    pub fn new(stream: TcpStream, server: Server) -> Self {
+        let login_session = LoginSession::new(server);
         let inner = TelnetInner {
-            stream: stream,
-            closing: false,
-            close_on_eof: true,
-            session: None,
-            width: Self::DEFAULT_WIDTH,
-            height: Self::DEFAULT_HEIGHT,
-            naws_width: 0,
-            naws_height: 0,
-            data: Vec::with_capacity(Self::INPUT_SIZE),
-            point: 0,
-            mark: None,
-            prompt: String::new(),
-            history: VecDeque::with_capacity(Self::HISTORY_MAX),
-            history_position: None,
-            kill_ring: VecDeque::with_capacity(Self::KILL_RING_MAX),
-            reply_to: None,
-            output_buffer: BytesMut::with_capacity(Self::BUF_SIZE),
-            command_buffer: BytesMut::with_capacity(1024),
-            state: TelnetState::Data,
-            undrawn: false,
-            do_echo: true,
-            acknowledge: false,
-            outstanding: 2, // Start with 2 for initial timing marks
-            echo: 0,
-            lsga: 0,
-            rsga: 0,
-            lbin: 0,
-            rbin: 0,
-            naws: 0,
-            sb_state: TelnetSubnegotiationState::Idle,
+            stream: Mutex::new(stream),
+            closing: AtomicBool::new(false),
+            close_on_eof: AtomicBool::new(true),
+            session_connection: AtomicSessionConnection::new(SessionConnection::PreLogin(login_session.clone())),
+            width: AtomicUsize::new(Self::DEFAULT_WIDTH),
+            height: AtomicUsize::new(Self::DEFAULT_HEIGHT),
+            naws_width: AtomicUsize::new(0),
+            naws_height: AtomicUsize::new(0),
+            data: Mutex::new(Vec::with_capacity(Self::INPUT_SIZE)),
+            point: AtomicUsize::new(0),
+            mark: ArcSwapOption::new(None),
+            prompt: AtomicText::new(Text::default()),
+            history: Mutex::new(VecDeque::with_capacity(Self::HISTORY_MAX)),
+            history_position: ArcSwapOption::new(None),
+            kill_ring: Mutex::new(VecDeque::with_capacity(Self::KILL_RING_MAX)),
+            reply_to: None.into(),
+            output_buffer: Mutex::new(BytesMut::with_capacity(Self::BUF_SIZE)),
+            command_buffer: Mutex::new(BytesMut::with_capacity(1024)),
+            state: ArcSwap::new(Arc::new(TelnetState::Data)),
+            undrawn: AtomicBool::new(false),
+            do_echo: AtomicBool::new(true),
+            acknowledge: AtomicBool::new(false),
+            outstanding: AtomicUsize::new(2), // Start with 2 for initial timing marks
+            echo: AtomicU8::new(0),
+            lsga: AtomicU8::new(0),
+            rsga: AtomicU8::new(0),
+            lbin: AtomicU8::new(0),
+            rbin: AtomicU8::new(0),
+            naws: AtomicU8::new(0),
+            sb_state: ArcSwap::new(Arc::new(TelnetSubnegotiationState::Idle)),
         };
 
-        let telnet = Telnet(Arc::new(RwLock::new(inner)));
-
-        //        // Send initial telnet negotiations
-        //        telnet.init_telnet_options().await;
+        let telnet = Telnet(Arc::new(inner));
+        login_session.set_telnet(telnet.clone());
 
         telnet
     }
 
-    /// Obtain read lock on the `TelnetInner` data.
-    #[framed]
-    pub async fn read(&self) -> RwLockReadGuard<'_, TelnetInner> {
-        self.0.read().await
-    }
-
-    /// Obtain write lock on the `TelnetInner` data.
-    #[framed]
-    pub async fn write(&self) -> RwLockWriteGuard<'_, TelnetInner> {
-        self.0.write().await
-    }
-
     /// Get the TCP stream.
     #[framed]
-    pub async fn stream(&self) -> TcpStream {
-        self.read().await.stream.clone()
+    pub async fn stream(&self) -> MutexGuard<TcpStream> {
+        self.0.stream.lock().await
     }
 
     /// Get the closing flag.
-    #[framed]
-    pub async fn closing(&self) -> bool {
-        self.read().await.closing
+    pub fn closing(&self) -> bool {
+        self.0.closing.load(Ordering::Relaxed)
     }
 
     /// Set the closing flag.
-    #[framed]
-    pub async fn set_closing(&self, value: bool) {
-        self.write().await.closing = value;
+    pub fn set_closing(&self, value: bool) {
+        self.0.closing.store(value, Ordering::Relaxed);
     }
 
     /// Get the close-on-EOF flag.
-    #[framed]
-    pub async fn close_on_eof(&self) -> bool {
-        self.read().await.close_on_eof
+    pub fn close_on_eof(&self) -> bool {
+        self.0.close_on_eof.load(Ordering::Relaxed)
     }
 
     /// Set the close-on-EOF flag.
-    #[framed]
-    pub async fn set_close_on_eof(&self, value: bool) {
-        self.write().await.close_on_eof = value;
+    pub fn set_close_on_eof(&self, value: bool) {
+        self.0.close_on_eof.store(value, Ordering::Relaxed);
     }
 
-    /// Get the `Session` object, if any.
-    #[framed]
-    pub async fn session(&self) -> Option<Session> {
-        self.read().await.session.clone()
+    /// Get the `SessionConnection`.
+    pub fn session_connection(&self) -> SessionConnection {
+        self.0.session_connection.snapshot()
     }
 
-    /// Set the `Session` object.
-    #[framed]
-    pub async fn set_session(&self, value: Option<Session>) {
-        self.write().await.session = value;
+    /// Set the `SessionConnection`.
+    pub fn set_session_connection(&self, value: SessionConnection) {
+        self.0.session_connection.set(value);
+    }
+
+    /// Get the `LoginSession`, if any.
+    pub fn login_session(&self) -> Option<LoginSession> {
+        match self.session_connection() {
+            SessionConnection::PreLogin(login_session) => Some(login_session),
+            _ => None,
+        }
+    }
+
+    /// Set the `LoginSession`.
+    pub fn set_login_session(&self, value: LoginSession) {
+        self.set_session_connection(SessionConnection::PreLogin(value));
+    }
+
+    /// Get the `Session`, if any.
+    pub fn session(&self) -> Option<Session> {
+        match self.session_connection() {
+            SessionConnection::LoggedIn(session) => Some(session),
+            _ => None,
+        }
+    }
+
+    /// Set the `Session`.
+    pub fn set_session(&self, value: Session) {
+        self.set_session_connection(SessionConnection::LoggedIn(value));
+    }
+
+    /// Get the session name, if any.
+    pub fn session_name(&self) -> Option<Text> {
+        self.session().map(|s| s.name())
+    }
+
+    /// Get the terminal width.
+    pub fn width(&self) -> usize {
+        self.0.width.load(Ordering::Relaxed)
+    }
+
+    /// Set the terminal width.
+    pub fn set_width(&self, value: usize) {
+        self.0.width.store(value, Ordering::Relaxed);
+    }
+
+    /// Get the terminal height.
+    pub fn height(&self) -> usize {
+        self.0.height.load(Ordering::Relaxed)
+    }
+
+    /// Set the terminal height.
+    pub fn set_height(&self, value: usize) {
+        self.0.height.store(value, Ordering::Relaxed);
     }
 
     /// Get the NAWS width.
-    #[framed]
-    pub async fn naws_width(&self) -> usize {
-        self.read().await.naws_width
+    pub fn naws_width(&self) -> usize {
+        self.0.naws_width.load(Ordering::Relaxed)
     }
 
     /// Set the NAWS width.
-    #[framed]
-    pub async fn set_naws_width(&self, value: usize) {
-        self.write().await.naws_width = value;
+    pub fn set_naws_width(&self, value: usize) {
+        self.0.naws_width.store(value, Ordering::Relaxed);
     }
 
     /// Get the NAWS height.
-    #[framed]
-    pub async fn naws_height(&self) -> usize {
-        self.read().await.naws_height
+    pub fn naws_height(&self) -> usize {
+        self.0.naws_height.load(Ordering::Relaxed)
     }
 
     /// Set the NAWS height.
-    #[framed]
-    pub async fn set_naws_height(&self, value: usize) {
-        self.write().await.naws_height = value;
+    pub fn set_naws_height(&self, value: usize) {
+        self.0.naws_height.store(value, Ordering::Relaxed);
     }
 
     /// Get the data buffer.
     #[framed]
-    pub async fn data(&self) -> Vec<u8> {
-        self.read().await.data.clone()
-    }
-
-    /// Set the data buffer.
-    #[framed]
-    pub async fn set_data(&self, value: Vec<u8>) {
-        self.write().await.data = value;
+    pub async fn data(&self) -> MutexGuard<Vec<u8>> {
+        self.0.data.lock().await
     }
 
     /// Get the point location.
-    #[framed]
-    pub async fn point(&self) -> usize {
-        self.read().await.point
+    pub fn point(&self) -> usize {
+        self.0.point.load(Ordering::Relaxed)
     }
 
     /// Set the point location.
-    #[framed]
-    pub async fn set_point(&self, value: usize) {
-        self.write().await.point = value;
+    pub fn set_point(&self, value: usize) {
+        self.0.point.store(value, Ordering::Relaxed);
     }
 
     /// Get the mark location, if any.
-    #[framed]
-    pub async fn mark(&self) -> Option<usize> {
-        self.read().await.mark.clone()
+    pub fn mark(&self) -> Option<usize> {
+        match *self.0.mark.borrow() {
+            Some(mark) => Some(mark),
+            None => None,
+        }
     }
 
     /// Set the mark location.
-    #[framed]
-    pub async fn set_mark(&self, value: Option<usize>) {
-        self.write().await.mark = value;
+    pub fn set_mark(&self, value: Option<usize>) {
+        self.0.mark.set(Arc::new(value));
     }
 
     /// Get the prompt.
-    #[framed]
-    pub async fn prompt(&self) -> String {
-        self.read().await.prompt.clone()
+    pub fn prompt(&self) -> Text {
+        self.0.prompt.snapshot()
     }
 
     /// Set the prompt.
-    #[framed]
-    pub async fn set_prompt(&self, value: String) {
-        self.write().await.prompt = value;
+    pub fn set_prompt(&self, value: Text) {
+        self.0.prompt.set(value)
     }
 
     /// Get the input history.
     #[framed]
-    pub async fn history(&self) -> VecDeque<String> {
-        self.read().await.history.clone()
-    }
-
-    /// Set the input history.
-    #[framed]
-    pub async fn set_history(&self, value: VecDeque<String>) {
-        self.write().await.history = value;
+    pub async fn history(&self) -> MutexGuard<VecDeque<Text>> {
+        self.0.history.lock().await
     }
 
     /// Get the history position, if any.
-    #[framed]
-    pub async fn history_position(&self) -> Option<usize> {
-        self.read().await.history_position.clone()
+    pub fn history_position(&self) -> Option<usize> {
+        match *self.0.history_position.borrow() {
+            Some(history_position) => Some(history_position),
+            None => None,
+        }
     }
 
     /// Set the history position.
-    #[framed]
-    pub async fn set_history_position(&self, value: Option<usize>) {
-        self.write().await.history_position = value;
+    pub fn set_history_position(&self, value: Option<usize>) {
+        self.0.history_position.set(Arc::new(value));
     }
 
     /// Get the kill ring.
     #[framed]
-    pub async fn kill_ring(&self) -> VecDeque<String> {
-        self.read().await.kill_ring
-    }
-
-    /// Set the kill ring.
-    #[framed]
-    pub async fn set_kill_ring(&self, value: VecDeque<String>) {
-        self.write().await.kill_ring = value;
+    pub async fn kill_ring(&self) -> MutexGuard<VecDeque<Text>> {
+        self.0.kill_ring.lock().await
     }
 
     /// Get the reply-to name, if any.
-    #[framed]
-    pub async fn reply_to(&self) -> Option<Name> {
-        self.read().await.reply_to.clone()
+    pub fn reply_to(&self) -> Option<Name> {
+        self.0.reply_to.snapshot()
     }
 
     /// Set the reply-to name.
-    #[framed]
-    pub async fn set_reply_to(&self, value: Option<Name>) {
-        self.write().await.reply_to = value;
+    pub fn set_reply_to(&self, value: Option<Name>) {
+        self.0.reply_to.set(value);
     }
 
     /// Get the output buffer.
     #[framed]
-    pub async fn output_buffer(&self) -> BytesMut {
-        self.read().await.output_buffer.clone()
-    }
-
-    /// Set the output buffer.
-    #[framed]
-    pub async fn set_output_buffer(&self, value: BytesMut) {
-        self.write().await.output_buffer = value;
+    pub async fn output_buffer(&self) -> MutexGuard<BytesMut> {
+        self.0.output_buffer.lock().await
     }
 
     /// Get the command buffer.
     #[framed]
-    pub async fn command_buffer(&self) -> BytesMut {
-        self.read().await.command_buffer.clone()
-    }
-
-    /// Set the command buffer.
-    #[framed]
-    pub async fn set_command_buffer(&self, value: BytesMut) {
-        self.write().await.command_buffer = value;
+    pub async fn command_buffer(&self) -> MutexGuard<BytesMut> {
+        self.0.command_buffer.lock().await
     }
 
     /// Get the TELNET state.
-    #[framed]
-    pub async fn state(&self) -> TelnetState {
-        self.read().await.state.clone()
+    pub fn state(&self, value: TelnetState) {
+        *self.0.state.load_full()
     }
 
     /// Set the TELNET state.
-    #[framed]
-    pub async fn set_state(&self, value: TelnetState) {
-        self.write().await.state = value;
+    pub fn set_state(&self, value: TelnetState) {
+        self.0.state.set(Arc::new(TelnetState));
     }
 
     /// Get the undrawn flag.
-    #[framed]
-    pub async fn undrawn(&self) -> bool {
-        self.read().await.undrawn
+    pub fn undrawn(&self) -> bool {
+        self.0.undrawn.load(Ordering::Relaxed)
     }
 
     /// Set the undrawn flag.
-    #[framed]
-    pub async fn set_undrawn(&self, value: bool) {
-        self.write().await.undrawn = value;
+    pub fn set_undrawn(&self, value: bool) {
+        self.0.undrawn.store(value, Ordering::Relaxed);
     }
 
     /// Get the do-echo flag.
-    #[framed]
-    pub async fn do_echo(&self) -> bool {
-        self.read().await.do_echo
+    pub fn do_echo(&self) -> bool {
+        self.0.do_echo.load(Ordering::Relaxed)
     }
 
     /// Set the do-echo flag.
-    #[framed]
-    pub async fn set_do_echo(&self, value: bool) {
-        self.write().await.do_echo = value;
+    pub fn set_do_echo(&self, value: bool) {
+        self.0.do_echo.store(value, Ordering::Relaxed);
     }
 
     /// Get the acknowledge flag.
-    #[framed]
-    pub async fn acknowledge(&self) -> bool {
-        self.read().await.acknowledge
+    pub fn acknowledge(&self) -> bool {
+        self.0.acknowledge.load(Ordering::Relaxed)
     }
 
     /// Set the acknowledge flag.
-    #[framed]
-    pub async fn set_acknowledge(&self, value: bool) {
-        self.write().await.acknowledge = value;
+    pub fn set_acknowledge(&self, value: bool) {
+        self.0.acknowledge.store(value, Ordering::Relaxed);
     }
 
     /// Get the outstanding flag.
-    #[framed]
-    pub async fn outstanding(&self) -> bool {
-        self.read().await.outstanding
+    pub fn outstanding(&self) -> bool {
+        self.0.outstanding.load(Ordering::Relaxed)
     }
 
     /// Set the outstanding flag.
-    #[framed]
-    pub async fn set_outstanding(&self, value: bool) {
-        self.write().await.outstanding = value;
+    pub fn set_outstanding(&self, value: bool) {
+        self.0.outstanding.store(value, Ordering::Relaxed);
     }
 
     /// Get the echo option state.
-    #[framed]
-    pub async fn echo(&self) -> u8 {
-        self.read().await.echo
+    pub fn echo(&self) -> u8 {
+        self.0.echo.load(Ordering::Relaxed)
     }
 
     /// Set the echo option state.
-    #[framed]
-    pub async fn set_echo(&self, value: u8) {
-        self.write().await.echo = value;
+    pub fn set_echo(&self, value: u8) {
+        self.0.echo.store(value, Ordering::Relaxed);
     }
 
     /// Get the local suppress-go-ahead option state.
-    #[framed]
-    pub async fn lsga(&self) -> u8 {
-        self.read().await.lsga
+    pub fn lsga(&self) -> u8 {
+        self.0.lsga.load(Ordering::Relaxed)
     }
 
     /// Set the local suppress-go-ahead option state.
-    #[framed]
-    pub async fn set_lsga(&self, value: u8) {
-        self.write().await.lsga = value;
+    pub fn set_lsga(&self, value: u8) {
+        self.0.lsga.store(value, Ordering::Relaxed);
     }
 
     /// Get the remote suppress-go-ahead option state.
-    #[framed]
-    pub async fn rsga(&self) -> u8 {
-        self.read().await.rsga
+    pub fn rsga(&self) -> u8 {
+        self.0.rsga.load(Ordering::Relaxed)
     }
 
     /// Set the remote suppress-go-ahead option state.
-    #[framed]
-    pub async fn set_rsga(&self, value: u8) {
-        self.write().await.rsga = value;
+    pub fn set_rsga(&self, value: u8) {
+        self.0.rsga.store(value, Ordering::Relaxed);
     }
 
     /// Get the local binary option state.
-    #[framed]
-    pub async fn lbin(&self) -> u8 {
-        self.read().await.lbin
+    pub fn lbin(&self) -> u8 {
+        self.0.lbin.load(Ordering::Relaxed)
     }
 
     /// Set the local binary option state.
-    #[framed]
-    pub async fn set_lbin(&self, value: u8) {
-        self.write().await.lbin = value;
+    pub fn set_lbin(&self, value: u8) {
+        self.0.lbin.store(value, Ordering::Relaxed);
     }
 
     /// Get the remote binary option state.
-    #[framed]
-    pub async fn rbin(&self) -> u8 {
-        self.read().await.rbin
+    pub fn rbin(&self) -> u8 {
+        self.0.rbin.load(Ordering::Relaxed)
     }
 
     /// Set the remote binary option state.
-    #[framed]
-    pub async fn set_rbin(&self, value: u8) {
-        self.write().await.rbin = value;
+    pub fn set_rbin(&self, value: u8) {
+        self.0.rbin.store(value, Ordering::Relaxed);
     }
 
     /// Get the NAWS option state.
-    #[framed]
-    pub async fn naws(&self) -> u8 {
-        self.read().await.naws
+    pub fn naws(&self) -> u8 {
+        self.0.naws.load(Ordering::Relaxed)
     }
 
     /// Set the NAWS option state.
-    #[framed]
-    pub async fn set_naws(&self, value: u8) {
-        self.write().await.naws = value;
+    pub fn set_naws(&self, value: u8) {
+        self.0.naws.store(value, Ordering::Relaxed);
     }
 
     /// Get the TELNET option subnegotiation state.
-    #[framed]
-    pub async fn sb_state(&self) -> TelnetSubnegotiationState {
-        self.read().await.sb_state
+    pub fn sb_state(&self) -> TelnetSubnegotiationState {
+        *self.0.state.load_full()
     }
 
     /// Set the TELNET option subnegotiation state.
-    #[framed]
-    pub async fn set_sb_state(&self, value: TelnetSubnegotiationState) {
-        self.write().await.sb_state = value;
+    pub fn set_sb_state(&self, value: TelnetSubnegotiationState) {
+        self.0.state.set(Arc::new(TelnetState));
     }
 
+    /// Initiate TELNET protocol option negotiations and session login sequence.
+    #[framed]
+    pub async fn init_login_sequence(&self) {
+        // Initiate TELNET protocol option negotiations.
+        self.init_telnet_options().await;
+
+        // Initiate session login sequence.
+        let session = self.session_connection();
+        session.init_login_sequence().await;
+    }
+
+    /// Initiate TELNET protocol option negotiations.
+    #[framed]
     pub async fn init_telnet_options(&self) {
-        // Test TIMING-MARK option before sending initial option negotiations
+        // Test TIMING-MARK option before sending initial option negotiations.
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
 
-        // Start initial options negotiations
-        self.set_lsga(true).await;
-        self.set_rsga(true).await;
-        self.set_lbin(true).await;
-        self.set_rbin(true).await;
-        self.set_echo(true).await;
-        self.set_naws(true).await;
+        // Start initial options negotiations.
+        self.will_lsga().await; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
+        self.do_rsga().await; // Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
+        self.will_lbin().await; // Send IAC WILL TRANSMIT-BINARY option sequence. (local)
+        self.do_rbin().await; // Send IAC DO TRANSMIT-BINARY option sequence. (remote)
+        self.will_echo().await; // Send IAC WILL ECHO option sequence.
+        self.do_naws().await; // Send IAC DO NAWS option sequence.
 
-        // Send welcome banner
+        // Send welcome banner.
         self.output("\nWelcome to Phoenix! (").await;
         self.output(VERSION).await;
         self.output(")\n\n").await;
     }
 
+    // Check if initial option negotiations are finished.
+    #[framed]
+    pub async fn check_options(&self, force: bool) {
+        if force {
+            // Assume this is a raw TCP connection.
+            self.set_lsga(TELNET_ENABLED);
+            self.set_rsga(TELNET_ENABLED);
+            self.set_lbin(TELNET_ENABLED);
+            self.set_rbin(TELNET_ENABLED);
+            self.set_echo(0);
+            self.set_naws(0);
+            self.set_welcome_sent(true);
+            self.output(
+                "You don't appear to be running a telnet client.  Assuming raw TCP connection.\n(Use C-x C-e to toggle remote echo if you need it.)\n\n",
+            )
+            .await;
+            self.welcome().await;
+        } else {
+            // Make sure we're done with required initial option negotiations.
+            // Intentionally use == with bitfield mask to test both bits at once.
+            if self.lbin() == TELNET_WILL_WONT || self.rbin() == TELNET_DO_DONT || self.echo() == TELNET_WILL_WONT {
+                return;
+            }
+        }
+
+        // Did the SUPPRESS-GO-AHEAD option work?  I don't care!
+        //
+        // (Most of the world doesn't do Go Aheads right anyhow, so why bother?)
+
+        #[cfg(feature = "guest-access")]
+        {
+            // Announce guest account.
+            self.output("A \"guest\" account is available.\n\n").await;
+        }
+
+        // See if local TRANSMIT-BINARY option worked.
+        if !self.lbin() {
+            // We were denied binary transmission.  Blow it off and do it anyhow.
+            self.output("Binary output refused, but the refusal will be ignored...\n").await;
+        }
+
+        // See if remote TRANSMIT-BINARY option worked.
+        if !self.rbin() {
+            // Client refuses to send binary data; that's okay.
+            self.output("Binary input refused.  Use compose sequences as necessary.\n").await;
+        }
+
+        // See if TIMING-MARK option worked properly.
+        if !self.acknowledge() {
+            // Sigh.  Timing marks not acknowledged properly.  Inform the user.
+            self.output("Sorry, your telnet client is broken.  Output may be lost by the network.\n\n").await;
+        }
+
+        // Warn if about to shut down!
+        if server.shutting_down() {
+            self.output("*** This server is about to shut down! ***\n\n").await;
+        }
+
+        // Send login prompt.
+        self.output("login: ").await;
+    }
+
+    #[framed]
     pub async fn close(self: &Self, drain: bool) {
-        self.set_closing(true).await;
+        self.set_closing(true);
 
         if drain {
-            *self.do_echo.write().await = false;
-            if *self.acknowledge.read().await {
+            self.set_do_echo(false);
+            if self.acknowledge() {
                 self.timing_mark().await;
             } else {
                 // Flush all pending output
@@ -584,26 +633,13 @@ impl Telnet {
         }
 
         // Close the underlying stream
-        {
-            let mut stream = self.stream.lock().await;
-            stream.shutdown().await.ok();
-        }
+        self.stream().await.shutdown().await.ok();
     }
 
-    pub async fn acknowledge(&self) -> bool {
-        *self.acknowledge.read().await
-    }
-
-    pub async fn session_name(&self) -> Text {
-        if let Some(session) = &*self.session.read().await {
-            session.name().await.clone()
-        } else {
-            Text::default()
-        }
-    }
-
+    /// Add bytes to output buffer.
+    #[framed]
     pub async fn output(self: &Self, data: &str) {
-        let mut output = self.output_buffer.lock().await;
+        let mut output = self.output_buffer().await;
 
         for &byte in data.as_bytes() {
             match byte {
@@ -623,153 +659,128 @@ impl Telnet {
         }
     }
 
-    pub async fn timing_mark(&self) {
-        if *self.acknowledge.read().await {
-            *self.outstanding.write().await += 1;
-            self.output_buffer.lock().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
-        }
-    }
-
+    /// Add bytes to command output buffer.
+    #[framed]
     pub async fn command(&self, data: &[u8]) {
-        self.command_buffer.lock().await.extend_from_slice(data);
+        self.command_buffer().await.extend_from_slice(data);
     }
 
-    pub async fn get_echo(&self) -> u8 {
-        *self.echo.read().await
-    }
-
-    pub async fn set_do_echo(&self, enabled: bool) {
-        *self.do_echo.write().await = enabled;
-    }
-
-    pub async fn reset_history(&self) {
-        self.history.lock().await.clear();
-        *self.history_position.write().await = None;
-    }
-
-    pub async fn set_echo(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut echo = self.echo.write().await;
-        if enabled {
-            *echo |= TELNET_WILL_WONT;
-        } else {
-            *echo &= !TELNET_WILL_WONT;
+    /// Send IAC DO TIMING-MARK option sequence, to output buffer instead of command buffer.
+    #[framed]
+    pub async fn timing_mark(&self) {
+        if self.acknowledge() {
+            self.increment_outstanding();
+            self.output_buffer().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
         }
     }
 
-    pub async fn set_lsga(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut lsga = self.lsga.write().await;
-        if enabled {
-            *lsga |= TELNET_WILL_WONT;
-        } else {
-            *lsga &= !TELNET_WILL_WONT;
-        }
+    /// Send IAC WILL ECHO option sequence.
+    #[framed]
+    pub async fn will_echo(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]).await;
+        self.set_echo(self.echo() | TELNET_WILL_WONT);
     }
 
-    pub async fn set_rsga(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut rsga = self.rsga.write().await;
-        if enabled {
-            *rsga |= TELNET_DO_DONT;
-        } else {
-            *rsga &= !TELNET_DO_DONT;
-        }
+    /// Send IAC WONT ECHO option sequence.
+    #[framed]
+    pub async fn wont_echo(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]).await;
+        self.set_echo(self.echo() & !TELNET_WILL_WONT);
     }
 
-    pub async fn set_lbin(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut lbin = self.lbin.write().await;
-        if enabled {
-            *lbin |= TELNET_WILL_WONT;
-        } else {
-            *lbin &= !TELNET_WILL_WONT;
-        }
+    /// Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
+    #[framed]
+    pub async fn will_lsga(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.set_lsga(self.lsga() | TELNET_WILL_WONT);
     }
 
-    pub async fn set_rbin(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut rbin = self.rbin.write().await;
-        if enabled {
-            *rbin |= TELNET_DO_DONT;
-        } else {
-            *rbin &= !TELNET_DO_DONT;
-        }
+    /// Send IAC WONT SUPPRESS-GO-AHEAD option sequence. (local)
+    #[framed]
+    pub async fn wont_lsga(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.set_lsga(self.lsga() & !TELNET_WILL_WONT);
     }
 
-    pub async fn set_naws(&self, enabled: bool) {
-        let cmd = if enabled {
-            [TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]
-        } else {
-            [TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]
-        };
-        self.command(&cmd).await;
-
-        let mut naws = self.naws.write().await;
-        if enabled {
-            *naws |= TELNET_DO_DONT;
-        } else {
-            *naws &= !TELNET_DO_DONT;
-        }
+    /// Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
+    #[framed]
+    pub async fn do_rsga(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.set_rsga(self.rsga() | TELNET_DO_DONT);
     }
 
-    pub async fn prompt(&self, p: &str) {
-        *self.prompt.write().await = p.to_string();
-        if !*self.undrawn.read().await {
+    /// Send IAC DONT SUPPRESS-GO-AHEAD option sequence. (remote)
+    #[framed]
+    pub async fn dont_rsga(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.set_rsga(self.rsga() & !TELNET_DO_DONT);
+    }
+
+    /// Send IAC WILL TRANSMIT-BINARY option sequence. (local)
+    #[framed]
+    pub async fn will_lbin(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.set_lbin(self.lbin() | TELNET_WILL_WONT);
+    }
+
+    /// Send IAC WONT TRANSMIT-BINARY option sequence. (local)
+    #[framed]
+    pub async fn wont_lbin(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.set_lbin(self.lbin() & !TELNET_WILL_WONT);
+    }
+
+    /// Send IAC DO TRANSMIT-BINARY option sequence. (remote)
+    #[framed]
+    pub async fn do_rbin(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.set_rbin(self.rbin() | TELNET_DO_DONT);
+    }
+
+    /// Send IAC DONT TRANSMIT-BINARY option sequence. (remote)
+    #[framed]
+    pub async fn dont_rbin(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.set_rbin(self.rbin() & !TELNET_DO_DONT);
+    }
+
+    /// Send IAC DO NAWS option sequence.
+    #[framed]
+    pub async fn do_naws(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await;
+        self.set_naws(self.naws() | TELNET_DO_DONT);
+    }
+
+    /// Send IAC DONT NAWS option sequence.
+    #[framed]
+    pub async fn dont_naws(&self) {
+        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await;
+        self.set_naws(self.naws() & !TELNET_DO_DONT);
+    }
+
+    #[framed]
+    pub async fn show_prompt(&self, p: &str) {
+        self.set_prompt(p);
+        if !self.undrawn() {
             self.output(p).await;
         }
     }
 
+    #[framed]
     pub async fn undraw_input(&self) {
-        if *self.undrawn.read().await {
+        if self.undrawn() {
             return;
         }
-        *self.undrawn.write().await = true;
+        self.set_undrawn(true);
 
-        let echo = *self.echo.read().await;
-        let do_echo = *self.do_echo.read().await;
+        if self.echo() == TELNET_ENABLED && self.do_echo() {
+            let prompt_len = self.prompt().len();
 
-        if echo == TELNET_ENABLED && do_echo {
-            let point = *self.point.read().await;
-            let data = self.data.lock().await;
-            let prompt_len = self.prompt.read().await.len();
-            let width = *self.width.read().await;
-
-            if prompt_len == 0 && data.is_empty() {
+            if prompt_len == 0 && self.data().is_empty() {
                 return;
             }
 
-            let lines = (prompt_len + point) / width;
+            let lines = (prompt_len + self.point()) / self.width();
 
             // ANSI escape sequences to move cursor and clear
             if lines > 0 {
@@ -778,12 +789,11 @@ impl Telnet {
                 self.output("\r\x1b[J").await;
             }
         } else {
-            let prompt_len = self.prompt.read().await.len();
+            let prompt_len = self.prompt().len();
             if prompt_len == 0 {
                 return;
             }
-            let width = *self.width.read().await;
-            let lines = prompt_len / width;
+            let lines = prompt_len / self.width();
 
             // ANSI escape sequences
             if lines > 0 {
@@ -794,50 +804,51 @@ impl Telnet {
         }
     }
 
+    #[framed]
     pub async fn redraw_input(&self) {
-        if !*self.undrawn.read().await {
+        if !self.undrawn() {
             return;
         }
-        *self.undrawn.write().await = false;
+        self.set_undrawn(false);
 
-        let prompt = self.prompt.read().await.clone();
+        let prompt = self.prompt().clone();
         if !prompt.is_empty() {
             self.output(&prompt).await;
         }
 
-        let data = self.data.lock().await.clone();
+        let data = self.data().await.clone();
         if !data.is_empty() {
-            let echo = *self.echo.read().await;
-            let do_echo = *self.do_echo.read().await;
+            let echo = self.echo();
+            let do_echo = self.do_echo();
 
             if echo == TELNET_ENABLED && do_echo {
                 // Echo the input data
                 for &byte in &data {
                     match byte {
                         x if x == TelnetCommand::IAC as u8 => {
-                            self.output_buffer.lock().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
+                            self.output_buffer().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                         }
                         RETURN => {
-                            self.output_buffer.lock().await.extend_from_slice(&[RETURN, NULL]);
+                            self.output_buffer().await.extend_from_slice(&[RETURN, NULL]);
                         }
                         NEWLINE => {
-                            self.output_buffer.lock().await.extend_from_slice(&[RETURN, NEWLINE]);
+                            self.output_buffer().await.extend_from_slice(&[RETURN, NEWLINE]);
                         }
                         _ => {
-                            self.output_buffer.lock().await.extend_from_slice(&[byte]);
+                            self.output_buffer().await.extend_from_slice(&[byte]);
                         }
                     }
                 }
 
                 // Force line wrap if at end of line
-                let width = *self.width.read().await;
+                let width = self.width();
                 let prompt_len = prompt.len();
                 if (prompt_len + data.len()) % width == 0 {
                     self.output(" \x08").await;
                 }
 
                 // Move cursor back to point if not at end
-                let point = *self.point.read().await;
+                let point = self.point();
                 if point < data.len() {
                     let end_line = (prompt_len + data.len()) / width;
                     let point_line = (prompt_len + point) / width;
@@ -861,26 +872,25 @@ impl Telnet {
         }
     }
 
+    #[framed]
     pub async fn print_message(&self, output_type: OutputType, time: Timestamp, from: &Name, to: &Arc<Sendlist>, start: &str) {
-        if self.session.read().await.is_none() {
-            return;
-        }
-
-        let session = self.session.read().await.as_ref().unwrap().clone();
-        let width = *self.width.read().await;
-        let from_name = &from.name;
-        let from_blurb = &from.blurb;
+        let session = self.session_connection();
+        let signal_public = session.signal_public();
+        let signal_private = session.signal_private();
+        let width = self.width();
+        let from_name = from.name();
+        let from_blurb = from.blurb();
 
         match output_type {
             OutputType::PublicMessage => {
-                if session.signal_public().await {
+                if signal_public {
                     self.output(BELL_STR).await;
                 }
                 self.output(&format!("\n -> From {from_name}{from_blurb} to everyone:")).await;
             }
             OutputType::PrivateMessage => {
                 // Save name to reply to
-                *self.reply_to.write().await = Some(from.clone());
+                self.set_reply_to(from.clone());
 
                 // Decide if "private"
                 let mut is_private = false;
@@ -899,19 +909,19 @@ impl Telnet {
                 if is_private {
                     session.set_reply_sendlist(&from.name).await;
 
-                    if session.signal_private().await {
+                    if signal_private {
                         self.output(BELL_STR).await;
                     }
                     if to.sessions.contains(&session) {
                         self.output("\n >> Private message from ").await;
                     } else {
-                        if !session.signal_private().await && session.signal_public().await {
+                        if !signal_private && signal_public {
                             self.output(BELL_STR).await;
                         }
                         self.output("\n >> From ").await;
                     }
                 } else {
-                    if session.signal_public().await {
+                    if signal_public {
                         self.output(BELL_STR).await;
                     }
                     self.output("\n -> From ").await;
@@ -1002,10 +1012,11 @@ impl Telnet {
         self.output("\n").await;
     }
 
+    #[framed]
     pub async fn flush_output(&self) -> tokio::io::Result<()> {
         // First flush command buffer
         let cmd_data = {
-            let mut buf = self.command_buffer.lock().await;
+            let mut buf = self.command_buffer().await;
             if buf.is_empty() {
                 Bytes::new()
             } else {
@@ -1014,12 +1025,12 @@ impl Telnet {
         };
 
         if !cmd_data.is_empty() {
-            self.stream.lock().await.write_all(&cmd_data).await?;
+            self.stream().await.write_all(&cmd_data).await?;
         }
 
         // Then flush output buffer
         let out_data = {
-            let mut buf = self.output_buffer.lock().await;
+            let mut buf = self.output_buffer().await;
             if buf.is_empty() {
                 Bytes::new()
             } else {
@@ -1028,12 +1039,13 @@ impl Telnet {
         };
 
         if !out_data.is_empty() {
-            self.stream.lock().await.write_all(&out_data).await?;
+            self.stream().await.write_all(&out_data).await?;
         }
 
         Ok(())
     }
 
+    #[framed]
     pub async fn handle_input(&self) -> tokio::io::Result<()> {
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
@@ -1044,7 +1056,7 @@ impl Telnet {
 
             // Read from socket
             let n = {
-                let mut stream = self.stream.lock().await;
+                let mut stream = self.stream().await;
                 match stream.read(&mut buffer).await {
                     Ok(0) => return Ok(()), // EOF
                     Ok(n) => n,
@@ -1063,63 +1075,41 @@ impl Telnet {
         }
     }
 
+    #[framed]
     pub async fn process_byte(&self, byte: u8) -> tokio::io::Result<()> {
-        let state = *self.state.read().await;
+        let state = self.state();
 
         match state {
-            TelnetState::Data => {
-                self.process_data_byte(byte).await?;
-            }
-            TelnetState::IAC => {
-                self.process_iac_byte(byte).await?;
-            }
-            TelnetState::Will | TelnetState::Wont => {
-                self.process_will_wont(state, byte).await?;
-            }
-            TelnetState::Do | TelnetState::Dont => {
-                self.process_do_dont(state, byte).await?;
-            }
-            TelnetState::Subnegotiation | TelnetState::SubnegotiationEnd => {
-                self.process_subnegotiation(state, byte).await?;
-            }
+            TelnetState::Data => self.process_data_byte(byte).await?,
+            TelnetState::IAC => self.process_iac_byte(byte).await?,
+            TelnetState::Will | TelnetState::Wont => self.process_will_wont(state, byte).await?,
+            TelnetState::Do | TelnetState::Dont => self.process_do_dont(state, byte).await?,
+            TelnetState::SubnegotiationBegin | TelnetState::SubnegotiationEnd => self.process_subnegotiation(state, byte).await?,
             TelnetState::Return => {
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
                 if byte != b'\n' {
                     self.process_data_byte(byte).await?;
                 }
             }
-            TelnetState::Escape => {
-                self.process_escape(byte).await?;
-            }
-            TelnetState::CSI => {
-                self.process_csi(byte).await?;
-            }
-            TelnetState::ControlC => {
-                self.process_compose(state, byte).await?;
-            }
-            TelnetState::ControlX => {
-                self.process_control_x(byte).await?;
-            }
-            _ => {
-                self.process_compose(state, byte).await?;
-            }
+            TelnetState::Escape => self.process_escape(byte).await?,
+            TelnetState::CSI => self.process_csi(byte).await?,
+            TelnetState::ControlC => self.process_compose(state, byte).await?,
+            TelnetState::ControlX => self.process_control_x(byte).await?,
+            _ => self.process_compose(state, byte).await?,
         }
 
         Ok(())
     }
 
+    #[framed]
     pub async fn process_data_byte(&self, byte: u8) -> tokio::io::Result<()> {
         match byte {
-            x if x == TelnetCommand::IAC as u8 => {
-                *self.state.write().await = TelnetState::IAC;
-            }
+            x if x == TelnetCommand::IAC as u8 => self.set_state(TelnetState::IAC),
             CONTROL_A => self.beginning_of_line().await,
             CONTROL_B => self.backward_char().await,
-            CONTROL_C => {
-                *self.state.write().await = TelnetState::ControlC;
-            }
+            CONTROL_C => self.set_state(TelnetState::ControlC),
             CONTROL_D => {
-                if *self.close_on_eof.read().await && self.data.lock().await.is_empty() {
+                if self.close_on_eof() && self.data().await.is_empty() {
                     self.close(true).await;
                 } else {
                     self.delete_char().await;
@@ -1137,350 +1127,414 @@ impl Telnet {
             CONTROL_P => self.previous_line().await,
             CONTROL_T => self.transpose_chars().await,
             CONTROL_U => self.erase_line().await,
-            CONTROL_X => {
-                *self.state.write().await = TelnetState::ControlX;
-            }
+            CONTROL_X => self.set_state(TelnetState::ControlX),
             CONTROL_Y => self.yank().await,
             BACKSPACE | DELETE => self.erase_char().await,
             SEMICOLON => self.do_semicolon().await,
             COLON => self.do_colon().await,
             RETURN => {
-                *self.state.write().await = TelnetState::Return;
+                self.set_state(TelnetState::Return);
                 self.accept_input().await;
             }
             NEWLINE => self.accept_input().await,
-            ESCAPE => {
-                *self.state.write().await = TelnetState::Escape;
-            }
-            CSI => {
-                *self.state.write().await = TelnetState::CSI;
-            }
+            ESCAPE => self.set_state(TelnetState::Escape),
+            CSI => self.set_state(TelnetState::CSI),
             _ => self.insert_char(byte).await,
         }
         Ok(())
     }
 
+    #[framed]
     pub async fn process_iac_byte(&self, byte: u8) -> tokio::io::Result<()> {
-        use TelnetCommand::*;
-
         match byte {
-            x if x == AbortOutput as u8 => {
-                // Abort all output data
-                self.output_buffer.lock().await.clear();
-                *self.state.write().await = TelnetState::Data;
+            // Abort all output data.
+            x if x == TelnetCommand::AbortOutput as u8 => {
+                self.output_buffer().await.clear();
+                self.set_state(TelnetState::Data);
             }
-            x if x == AreYouThere as u8 => {
-                // Send confirmation
+
+            // Are we here?  Yes!  Queue confirmation to command queue, to be output as soon as possible.
+            x if x == TelnetCommand::AreYouThere as u8 => {
                 self.command(b"\r\n[Yes]\r\n").await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
-            x if x == EraseCharacter as u8 => {
+
+            // Erase last input character.
+            x if x == TelnetCommand::EraseCharacter as u8 => {
                 self.erase_char().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
-            x if x == EraseLine as u8 => {
+
+            // Erase current input line.
+            x if x == TelnetCommand::EraseLine as u8 => {
                 self.erase_line().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
-            x if x == Will as u8 => {
-                *self.state.write().await = TelnetState::Will;
-            }
-            x if x == Wont as u8 => {
-                *self.state.write().await = TelnetState::Wont;
-            }
-            x if x == Do as u8 => {
-                *self.state.write().await = TelnetState::Do;
-            }
-            x if x == Dont as u8 => {
-                *self.state.write().await = TelnetState::Dont;
-            }
-            x if x == SubnegotiationBegin as u8 => {
-                *self.state.write().await = TelnetState::Subnegotiation;
-            }
-            x if x == IAC as u8 => {
-                // Escaped IAC is data
+
+            // Option negotiation/subnegotiation.  Remember which type.
+            x if x == TelnetCommand::Will as u8 => self.set_state(TelnetState::Will),
+            x if x == TelnetCommand::Wont as u8 => self.set_state(TelnetState::Wont),
+            x if x == TelnetCommand::Do as u8 => self.set_state(TelnetState::Do),
+            x if x == TelnetCommand::Dont as u8 => self.set_state(TelnetState::Dont),
+            x if x == TelnetCommand::SubnegotiationBegin as u8 => self.set_state(TelnetState::SubnegotiationBegin),
+
+            // Escaped (doubled) TelnetIAC is data.
+            x if x == TelnetCommand::IAC as u8 => {
                 self.insert_char(x).await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
-            _ => {
-                // Ignore unknown telnet commands
-                *self.state.write().await = TelnetState::Data;
-            }
+
+            // Ignore any other TELNET command.
+            _ => self.set_state(TelnetState::Data),
         }
         Ok(())
     }
 
+    #[framed]
     pub async fn process_will_wont(&self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
-        use TelnetOption::*;
-
+        // Negotiate remote option.
         match byte {
-            x if x == TransmitBinary as u8 => {
-                let mut rbin = self.rbin.write().await;
+            // TRANSMIT-BINARY option
+            x if x == TelnetOption::TransmitBinary as u8 => {
+                let mut rbin = self.rbin();
                 if matches!(state, TelnetState::Will) {
-                    *rbin |= TELNET_WILL_WONT;
-                    if (*rbin & TELNET_DO_DONT) == 0 {
-                        *rbin |= TELNET_DO_DONT;
+                    rbin |= TELNET_WILL_WONT;
+                    if (rbin & TELNET_DO_DONT) == 0 {
+                        // Turn on TRANSMIT-BINARY option.
+                        rbin |= TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
 
-                        // Me too!
-                        if *self.lbin.read().await == 0 {
-                            self.set_lbin(true).await;
+                        // Me, too!
+                        if self.lbin() == 0 {
+                            self.will_lbin().await;
                         }
                     }
                 } else {
-                    *rbin &= !TELNET_WILL_WONT;
-                    if (*rbin & TELNET_DO_DONT) != 0 {
-                        *rbin &= !TELNET_DO_DONT;
+                    rbin &= !TELNET_WILL_WONT;
+                    if (rbin & TELNET_DO_DONT) != 0 {
+                        // Turn off TRANSMIT-BINARY option.
+                        rbin &= !TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
+                self.set_rbin(rbin);
+                if !self.options_finished() {
+                    self.check_options(false).await;
+                }
             }
-            x if x == SuppressGoAhead as u8 => {
-                let mut rsga = self.rsga.write().await;
+
+            // SUPPRESS-GO-AHEAD option
+            x if x == TelnetOption::SuppressGoAhead as u8 => {
+                let mut rsga = self.rsga();
                 if matches!(state, TelnetState::Will) {
-                    *rsga |= TELNET_WILL_WONT;
-                    if (*rsga & TELNET_DO_DONT) == 0 {
-                        *rsga |= TELNET_DO_DONT;
+                    rsga |= TELNET_WILL_WONT;
+                    if (rsga & TELNET_DO_DONT) == 0 {
+                        // Turn on SUPPRESS-GO-AHEAD option.
+                        rsga |= TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
 
-                        // Me too!
-                        if *self.lsga.read().await == 0 {
-                            self.set_lsga(true).await;
+                        // Me, too!
+                        if self.lsga() == 0 {
+                            self.will_lsga().await;
                         }
                     }
                 } else {
-                    *rsga &= !TELNET_WILL_WONT;
-                    if (*rsga & TELNET_DO_DONT) != 0 {
-                        *rsga &= !TELNET_DO_DONT;
+                    rsga &= !TELNET_WILL_WONT;
+                    if (rsga & TELNET_DO_DONT) != 0 {
+                        // Turn off SUPPRESS-GO-AHEAD option.
+                        rsga &= !TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
+                self.set_rsga(rsga);
+                if !self.options_finished() {
+                    self.check_options(false).await;
+                }
             }
-            x if x == NAWS as u8 => {
-                let mut naws = self.naws.write().await;
+
+            // NAWS option
+            x if x == TelnetOption::NAWS as u8 => {
+                let mut naws = self.naws();
                 if matches!(state, TelnetState::Will) {
-                    *naws |= TELNET_WILL_WONT;
-                    if (*naws & TELNET_DO_DONT) == 0 {
-                        *naws |= TELNET_DO_DONT;
+                    naws |= TELNET_WILL_WONT;
+                    if (naws & TELNET_DO_DONT) == 0 {
+                        // Turn on NAWS option.
+                        naws |= TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
                     }
                 } else {
-                    *naws &= !TELNET_WILL_WONT;
-                    if (*naws & TELNET_DO_DONT) != 0 {
-                        *naws &= !TELNET_DO_DONT;
+                    naws &= !TELNET_WILL_WONT;
+                    if (naws & TELNET_DO_DONT) != 0 {
+                        // Turn off NAWS option.
+                        naws &= !TELNET_DO_DONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
                     }
                 }
-            }
-            x if x == TimingMark as u8 => {
-                let mut outstanding = self.outstanding.write().await;
-                if *outstanding > 0 {
-                    *outstanding -= 1;
-                }
-                if *self.acknowledge.read().await {
-                    if let Some(session) = &*self.session.read().await {
-                        session.acknowledge_output().await;
-                    }
-                }
-                if *outstanding == 0 {
-                    *self.acknowledge.write().await = true;
+                self.set_naws(naws);
+                if !self.options_finished() {
+                    self.check_options(false).await;
                 }
             }
+
+            // TIMING-MARK option
+            x if x == TelnetOption::TimingMark as u8 => {
+                self.decrement_outstanding();
+                if self.acknowledge() {
+                    let session = self.session_connection();
+                    session.acknowledge_output().await;
+                }
+                if self.outstanding() == 0 {
+                    self.set_acknowledge(true);
+                }
+            }
+
+            // Don't know this option, refuse it.
             _ => {
-                // Don't know this option, refuse it
                 if matches!(state, TelnetState::Will) {
                     self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, byte]).await;
                 }
             }
         }
 
-        *self.state.write().await = TelnetState::Data;
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
+    #[framed]
     pub async fn process_do_dont(&self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
-        use TelnetOption::*;
-
+        // Negotiate local option.
         match byte {
-            x if x == TransmitBinary as u8 => {
-                let mut lbin = self.lbin.write().await;
+            // TRANSMIT-BINARY option
+            x if x == TelnetOption::TransmitBinary as u8 => {
+                let mut lbin = self.lbin();
                 if matches!(state, TelnetState::Do) {
-                    *lbin |= TELNET_DO_DONT;
-                    if (*lbin & TELNET_WILL_WONT) == 0 {
-                        *lbin |= TELNET_WILL_WONT;
+                    lbin |= TELNET_DO_DONT;
+                    if (lbin & TELNET_WILL_WONT) == 0 {
+                        // Turn on TRANSMIT-BINARY option.
+                        lbin |= TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
 
-                        // You can too
-                        if *self.rbin.read().await == 0 {
-                            self.set_rbin(true).await;
+                        // You can too.
+                        if self.rbin() == 0 {
+                            self.do_rbin().await;
                         }
                     }
                 } else {
-                    *lbin &= !TELNET_DO_DONT;
-                    if (*lbin & TELNET_WILL_WONT) != 0 {
-                        *lbin &= !TELNET_WILL_WONT;
+                    lbin &= !TELNET_DO_DONT;
+                    if (lbin & TELNET_WILL_WONT) != 0 {
+                        // Turn off TRANSMIT-BINARY option.
+                        lbin &= !TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
+                self.set_lbin(lbin);
+                if !self.options_finished() {
+                    self.check_options(false).await;
+                }
             }
-            x if x == Echo as u8 => {
-                let mut echo = self.echo.write().await;
+
+            // ECHO option
+            x if x == TelnetOption::Echo as u8 => {
+                let mut echo = self.echo();
                 if matches!(state, TelnetState::Do) {
-                    *echo |= TELNET_DO_DONT;
-                    if (*echo & TELNET_WILL_WONT) == 0 {
-                        *echo |= TELNET_WILL_WONT;
+                    echo |= TELNET_DO_DONT;
+                    if (echo & TELNET_WILL_WONT) == 0 {
+                        // Turn on ECHO option.
+                        echo |= TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
                     }
                 } else {
-                    *echo &= !TELNET_DO_DONT;
-                    if (*echo & TELNET_WILL_WONT) != 0 {
-                        *echo &= !TELNET_WILL_WONT;
+                    echo &= !TELNET_DO_DONT;
+                    if (echo & TELNET_WILL_WONT) != 0 {
+                        // Turn off ECHO option.
+                        echo &= !TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
+                self.set_echo(echo);
+                if !self.options_finished() {
+                    self.check_options(false).await;
+                }
             }
-            x if x == SuppressGoAhead as u8 => {
-                let mut lsga = self.lsga.write().await;
+
+            // SUPPRESS-GO-AHEAD option
+            x if x == TelnetOption::SuppressGoAhead as u8 => {
+                let mut lsga = self.lsga();
                 if matches!(state, TelnetState::Do) {
-                    *lsga |= TELNET_DO_DONT;
-                    if (*lsga & TELNET_WILL_WONT) == 0 {
-                        *lsga |= TELNET_WILL_WONT;
+                    lsga |= TELNET_DO_DONT;
+                    if (lsga & TELNET_WILL_WONT) == 0 {
+                        // Turn on SUPPRESS-GO-AHEAD option.
+                        lsga |= TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
 
-                        // You can too
-                        if *self.rsga.read().await == 0 {
-                            self.set_rsga(true).await;
+                        // You can too.
+                        if self.rsga() == 0 {
+                            self.do_rsga().await;
                         }
                     }
                 } else {
-                    *lsga &= !TELNET_DO_DONT;
-                    if (*lsga & TELNET_WILL_WONT) != 0 {
-                        *lsga &= !TELNET_WILL_WONT;
+                    lsga &= !TELNET_DO_DONT;
+                    if (lsga & TELNET_WILL_WONT) != 0 {
+                        // Turn off SUPPRESS-GO-AHEAD option.
+                        lsga &= !TELNET_WILL_WONT;
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
                     }
                 }
+                self.set_lsga(lsga);
+                if !self.options_finished() {
+                    self.check_options(false).await;
+                }
             }
+
+            // Don't know this option, refuse it.
             _ => {
-                // Don't know this option, refuse it
                 if matches!(state, TelnetState::Do) {
                     self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, byte]).await;
                 }
             }
         }
 
-        *self.state.write().await = TelnetState::Data;
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
+    #[framed]
     pub async fn process_subnegotiation(&self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
-        if matches!(state, TelnetState::Subnegotiation) && byte == TelnetCommand::IAC as u8 {
-            *self.state.write().await = TelnetState::SubnegotiationEnd;
+        // Watch for IAC in subnegotiation sequence.
+        if matches!(state, TelnetState::SubnegotiationBegin) && byte == TelnetCommand::IAC as u8 {
+            self.set_state(TelnetState::SubnegotiationEnd);
             return Ok(());
         }
 
+        // Process option subnegotiation sequence.
         if matches!(state, TelnetState::SubnegotiationEnd) {
+            // Received IAC during subnegotiation sequence, check for SE.
             if byte == TelnetCommand::SubnegotiationEnd as u8 {
-                // Subnegotiation complete
-                let sb_state = *self.sb_state.read().await;
-                if matches!(sb_state, TelnetSubnegotiationState::NAWSDone) {
-                    self.set_width(*self.naws_width.read().await).await;
-                    self.set_height(*self.naws_height.read().await).await;
+                // Subnegotiation sequence is complete.
+                match self.sb_state() {
+                    // NAWS subnegotiation was successful; set the new size.
+                    TelnetSubnegotiationState::NAWSDone => {
+                        self.set_new_width(self.naws_width());
+                        self.set_new_height(self.naws_height());
+                    }
+
+                    // Subnegotiation was unsuccessful; do nothing.
+                    _ => (),
                 }
-                *self.state.write().await = TelnetState::Data;
-                *self.sb_state.write().await = TelnetSubnegotiationState::Idle;
+                self.set_state(TelnetState::Data);
+                self.set_sb_state(TelnetSubnegotiationState::Idle);
                 return Ok(());
             } else {
-                *self.state.write().await = TelnetState::Subnegotiation;
+                // Return to subnegotiation sequence processing.
+                self.set_state(TelnetState::SubnegotiationBegin);
+
+                // Allow doubled IAC to fall through as data, ignore others.
                 if byte != TelnetCommand::IAC as u8 {
                     return Ok(());
                 }
             }
         }
 
-        // Process subnegotiation data
-        let mut sb_state = self.sb_state.write().await;
-        match *sb_state {
+        // Process subnegotiation data.
+        let mut sb_state = self.sb_state();
+        match sb_state {
+            // Get subnegotiation option.
             TelnetSubnegotiationState::Idle => match byte {
+                // NAWS subnegotiation started.
                 x if x == TelnetOption::NAWS as u8 => {
-                    *sb_state = TelnetSubnegotiationState::NAWSWidthHigh;
+                    sb_state = TelnetSubnegotiationState::NAWSWidthHigh;
                 }
+
+                // Unknown option subnegotiation started; ignore it.
                 _ => {
-                    *sb_state = TelnetSubnegotiationState::Unknown;
+                    sb_state = TelnetSubnegotiationState::Unknown;
                 }
             },
+
+            // Get high byte of terminal width.
             TelnetSubnegotiationState::NAWSWidthHigh => {
-                *self.naws_width.write().await = (byte as usize) * 256;
-                *sb_state = TelnetSubnegotiationState::NAWSWidthLow;
+                self.set_naws_width((byte as usize) * 256);
+                sb_state = TelnetSubnegotiationState::NAWSWidthLow;
             }
+
+            // Get low byte of terminal width.
             TelnetSubnegotiationState::NAWSWidthLow => {
-                *self.naws_width.write().await += byte as usize;
-                *sb_state = TelnetSubnegotiationState::NAWSHeightHigh;
+                self.set_naws_width(self.naws_width() + byte as usize);
+                sb_state = TelnetSubnegotiationState::NAWSHeightHigh;
             }
+
+            // Get high byte of terminal height.
             TelnetSubnegotiationState::NAWSHeightHigh => {
-                *self.naws_height.write().await = (byte as usize) * 256;
-                *sb_state = TelnetSubnegotiationState::NAWSHeightLow;
+                self.set_naws_height((byte as usize) * 256);
+                sb_state = TelnetSubnegotiationState::NAWSHeightLow;
             }
+
+            // Get low byte of terminal height.
             TelnetSubnegotiationState::NAWSHeightLow => {
-                *self.naws_height.write().await += byte as usize;
-                *sb_state = TelnetSubnegotiationState::NAWSDone;
+                self.set_naws_height(self.naws_height() + byte as usize);
+                sb_state = TelnetSubnegotiationState::NAWSDone;
             }
+
+            // Ignore subnegotiation data in other states.
             _ => {}
         }
 
         Ok(())
     }
 
+    #[framed]
     pub async fn process_escape(&self, byte: u8) -> tokio::io::Result<()> {
         match byte {
             b'[' | b'O' => {
-                *self.state.write().await = TelnetState::CSI;
+                self.set_state(TelnetState::CSI);
             }
             CONTROL_L => {
                 self.undraw_input().await;
                 self.output("\x1b[H\x1b[J").await; // Clear screen
                 self.redraw_input().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'b' => {
                 self.backward_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'c' => {
                 self.capitalize_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'd' => {
                 self.delete_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'f' => {
                 self.forward_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'l' => {
                 self.downcase_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b't' => {
                 self.transpose_words().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             b'u' => {
                 self.upcase_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             BACKSPACE | DELETE => {
                 self.erase_word().await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
             _ => {
                 self.output(BELL_STR).await;
-                *self.state.write().await = TelnetState::Data;
+                self.set_state(TelnetState::Data);
             }
         }
         Ok(())
     }
 
+    #[framed]
     pub async fn process_csi(&self, byte: u8) -> tokio::io::Result<()> {
         match byte {
             b'A' => self.previous_line().await,
@@ -1489,25 +1543,26 @@ impl Telnet {
             b'D' => self.backward_char().await,
             _ => self.output(BELL_STR).await,
         }
-        *self.state.write().await = TelnetState::Data;
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
+    #[framed]
     pub async fn process_control_x(&self, byte: u8) -> tokio::io::Result<()> {
         match byte {
             CONTROL_E => {
                 // Toggle remote echo
-                let echo = *self.echo.read().await;
-                self.set_echo(echo != TELNET_ENABLED).await;
+                self.set_echo(self.echo() != TELNET_ENABLED);
             }
             _ => {
                 self.output(BELL_STR).await;
             }
         }
-        *self.state.write().await = TelnetState::Data;
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
+    #[framed]
     pub async fn process_compose(&self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         let mut new_state = TelnetState::Data;
 
@@ -1675,11 +1730,12 @@ impl Telnet {
             _ => {}
         }
 
-        *self.state.write().await = new_state;
+        self.set_state(new_state);
         Ok(())
     }
 
-    pub async fn set_width(&self, n: usize) -> usize {
+    #[framed]
+    pub async fn set_new_width(&self, n: usize) -> usize {
         let new_width = if n == 0 {
             Self::DEFAULT_WIDTH
         } else if n > 0 && n < Self::MINIMUM_WIDTH {
@@ -1688,17 +1744,18 @@ impl Telnet {
             n
         };
 
-        let old_width = *self.width.read().await;
+        let old_width = self.width();
         if old_width != new_width {
             self.undraw_input().await;
-            *self.width.write().await = new_width;
+            self.set_width(new_width);
             self.redraw_input().await;
         }
 
         new_width
     }
 
-    pub async fn set_height(&self, n: usize) -> usize {
+    #[framed]
+    pub async fn set_new_height(&self, n: usize) -> usize {
         let new_height = if n == 0 {
             Self::DEFAULT_HEIGHT
         } else if n > 0 {
@@ -1707,16 +1764,17 @@ impl Telnet {
             Self::DEFAULT_HEIGHT
         };
 
-        *self.height.write().await = new_height;
+        self.set_height(new_height);
         new_height
     }
 
     // Input editing functions
+    #[framed]
     pub async fn beginning_of_line(&self) {
-        let point = *self.point.read().await;
+        let point = self.point();
         if point > 0 {
-            let prompt_len = self.prompt.read().await.len();
-            let width = *self.width.read().await;
+            let prompt_len = self.prompt().len();
+            let width = self.width();
 
             let point_line = (prompt_len + point) / width;
             let start_line = prompt_len / width;
@@ -1736,17 +1794,18 @@ impl Telnet {
                 self.output(&format!("\x1b[{cols}C")).await;
             }
 
-            *self.point.write().await = 0;
+            self.set_point(0);
         }
     }
 
+    #[framed]
     pub async fn end_of_line(&self) {
-        let point = *self.point.read().await;
-        let data_len = self.data.lock().await.len();
+        let point = self.point();
+        let data_len = self.data().await.len();
 
         if point < data_len {
-            let prompt_len = self.prompt.read().await.len();
-            let width = *self.width.read().await;
+            let prompt_len = self.prompt().len();
+            let width = self.width();
 
             let end_line = (prompt_len + data_len) / width;
             let point_line = (prompt_len + point) / width;
@@ -1766,20 +1825,21 @@ impl Telnet {
                 self.output(&format!("\x1b[{cols}D")).await;
             }
 
-            *self.point.write().await = data_len;
+            self.set_point(data_len);
         }
     }
 
+    #[framed]
     pub async fn forward_char(&self) {
-        let mut point = self.point.write().await;
-        let data_len = self.data.lock().await.len();
+        let mut point = self.point();
+        let data_len = self.data().await.len();
 
-        if *point < data_len {
-            *point += 1;
+        if point < data_len {
+            point += 1;
 
-            let prompt_len = self.prompt.read().await.len();
-            let width = *self.width.read().await;
-            let point_col = (prompt_len + *point) % width;
+            let prompt_len = self.prompt().len();
+            let width = self.width();
+            let point_col = (prompt_len + point) % width;
 
             if point_col == 0 {
                 self.output("\r\n").await;
@@ -1787,15 +1847,18 @@ impl Telnet {
                 self.output("\x1b[C").await;
             }
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn backward_char(&self) {
-        let mut point = self.point.write().await;
+        let mut point = self.point();
 
-        if *point > 0 {
-            let prompt_len = self.prompt.read().await.len();
-            let width = *self.width.read().await;
-            let point_col = (prompt_len + *point) % width;
+        if point > 0 {
+            let prompt_len = self.prompt().len();
+            let width = self.width();
+            let point_col = (prompt_len + point) % width;
 
             if point_col == 0 {
                 let cols = width - 1;
@@ -1804,56 +1867,61 @@ impl Telnet {
                 self.output("\x08").await;
             }
 
-            *point -= 1;
+            point -= 1;
         }
+
+        self.set_point(point);
     }
 
+    /// Insert character at point.
+    #[framed]
     pub async fn insert_char(&self, ch: u8) {
         if (ch >= SPACE && ch < DELETE) || (ch >= NBSP && ch <= Y_UMLAUT_LOWER) {
-            let mut data = self.data.lock().await;
-            let mut point = self.point.write().await;
+            // Make room for the new character if necessary.
+            let mut data = self.data().await;
+            let mut point = self.point();
 
-            // Make room if at end
-            if *point >= data.len() {
+            if point >= data.len() {
+                // Insert character at point (end), echo if necessary.
                 data.push(ch);
-                *point += 1;
+                point += 1;
 
-                let echo = *self.echo.read().await;
-                let do_echo = *self.do_echo.read().await;
+                let echo = self.echo();
+                let do_echo = self.do_echo();
                 if echo == TELNET_ENABLED && do_echo {
-                    self.output_buffer.lock().await.extend_from_slice(&[ch]);
+                    self.output_buffer().await.extend_from_slice(&[ch]);
 
-                    let prompt_len = self.prompt.read().await.len();
-                    let width = *self.width.read().await;
-                    if (prompt_len + *point) % width == 0 {
-                        self.output(" \x08").await; // Force line wrap
+                    let prompt_len = self.prompt().len();
+                    let width = self.width();
+                    if (prompt_len + point) % width == 0 {
+                        self.output(" \x08").await; // Force line wrapping.
                     }
                 }
             } else {
                 // Insert in middle
-                data.insert(*point, ch);
-                *point += 1;
+                data.insert(point, ch);
+                point += 1;
 
-                let echo = *self.echo.read().await;
-                let do_echo = *self.do_echo.read().await;
+                let echo = self.echo();
+                let do_echo = self.do_echo();
                 if echo == TELNET_ENABLED && do_echo {
                     self.output("\x1b[@").await; // Insert character
-                    self.output_buffer.lock().await.extend_from_slice(&[ch]);
+                    self.output_buffer().await.extend_from_slice(&[ch]);
 
                     // Handle line wrapping for inserted character
-                    let prompt_len = self.prompt.read().await.len();
-                    let width = *self.width.read().await;
+                    let prompt_len = self.prompt().len();
+                    let width = self.width();
                     let end_line = (prompt_len + data.len()) / width;
-                    let point_line = (prompt_len + *point) / width;
+                    let point_line = (prompt_len + point) / width;
 
                     let mut lines = end_line - point_line;
-                    let mut wrap = *point - ((prompt_len + *point) % width);
+                    let mut wrap = point - ((prompt_len + point) % width);
 
                     while lines > 0 {
                         self.output("\r\n\x1b[@").await;
                         wrap += width;
                         if wrap < data.len() {
-                            self.output_buffer.lock().await.extend_from_slice(&data[wrap..=wrap]);
+                            self.output_buffer().await.extend_from_slice(&data[wrap..=wrap]);
                         } else {
                             self.output(" ").await;
                         }
@@ -1861,7 +1929,7 @@ impl Telnet {
                     }
 
                     if end_line > point_line {
-                        let cols = 1 - (((prompt_len + *point) % width) as i32);
+                        let cols = 1 - (((prompt_len + point) % width) as i32);
                         let lines = end_line - point_line;
                         self.output(&format!("\x1b[{lines}A")).await;
                         if cols > 0 {
@@ -1872,34 +1940,37 @@ impl Telnet {
                         }
                     }
 
-                    if (prompt_len + *point) % width == 0 {
-                        if *point < data.len() {
-                            self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+                    if (prompt_len + point) % width == 0 {
+                        if point < data.len() {
+                            self.output_buffer().await.extend_from_slice(&data[point..=point]);
                             self.output("\x08").await;
                         }
                     }
                 }
             }
+
+            self.set_point(point);
         } else {
             self.output(BELL_STR).await;
         }
     }
 
+    #[framed]
     pub async fn delete_char(&self) {
-        let mut data = self.data.lock().await;
-        let point = *self.point.read().await;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         if point < data.len() {
             data.remove(point);
 
-            let echo = *self.echo.read().await;
-            let do_echo = *self.do_echo.read().await;
+            let echo = self.echo();
+            let do_echo = self.do_echo();
             if echo == TELNET_ENABLED && do_echo {
                 self.output("\x1b[P").await; // Delete character
 
                 // Handle line wrapping
-                let prompt_len = self.prompt.read().await.len();
-                let width = *self.width.read().await;
+                let prompt_len = self.prompt().len();
+                let width = self.width();
                 let end_line = (prompt_len + data.len()) / width;
                 let point_line = (prompt_len + point) / width;
 
@@ -1911,7 +1982,7 @@ impl Telnet {
                     self.output(&format!("\r\x1b[{cols}C")).await;
                     wrap += width;
                     if wrap < data.len() {
-                        self.output_buffer.lock().await.extend_from_slice(&data[wrap..=wrap]);
+                        self.output_buffer().await.extend_from_slice(&data[wrap..=wrap]);
                     } else {
                         self.output(" ").await;
                     }
@@ -1932,27 +2003,32 @@ impl Telnet {
                 }
             }
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn erase_char(&self) {
-        if *self.point.read().await > 0 {
+        if self.point() > 0 {
             self.backward_char().await;
             self.delete_char().await;
         }
     }
 
+    #[framed]
     pub async fn erase_line(&self) {
         self.beginning_of_line().await;
         self.kill_line().await;
     }
 
+    #[framed]
     pub async fn kill_line(&self) {
-        let mut data = self.data.lock().await;
-        let point = *self.point.read().await;
+        let mut data = self.data().await;
+        let point = self.point();
 
         if point < data.len() {
-            let echo = *self.echo.read().await;
-            let do_echo = *self.do_echo.read().await;
+            let echo = self.echo();
+            let do_echo = self.do_echo();
             if echo == TELNET_ENABLED && do_echo {
                 self.output("\x1b[J").await; // Clear to end of screen
             }
@@ -1961,7 +2037,7 @@ impl Telnet {
             let killed: Vec<u8> = data.drain(point..).collect();
             if !killed.is_empty() {
                 let killed_str = String::from_utf8_lossy(&killed).to_string();
-                let mut kill_ring = self.kill_ring.lock().await;
+                let mut kill_ring = self.kill_ring().await;
                 if kill_ring.len() >= Self::KILL_RING_MAX {
                     kill_ring.pop_front();
                 }
@@ -1969,17 +2045,17 @@ impl Telnet {
             }
 
             // Update mark if needed
-            let mut mark = self.mark.write().await;
-            if let Some(m) = *mark {
+            if let Some(m) = self.mark() {
                 if m > point {
-                    *mark = Some(point);
+                    self.set_mark(Some(point));
                 }
             }
         }
     }
 
+    #[framed]
     pub async fn yank(&self) {
-        let kill_ring = self.kill_ring.lock().await;
+        let kill_ring = self.kill_ring().await;
         if let Some(text) = kill_ring.back() {
             let text = text.clone();
 
@@ -1991,81 +2067,92 @@ impl Telnet {
         }
     }
 
+    #[framed]
     pub async fn transpose_chars(&self) {
-        let mut data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
-        if *point == 0 || data.len() < 2 {
+        if point == 0 || data.len() < 2 {
             self.output(BELL_STR).await;
             return;
         }
 
-        if *point >= data.len() {
+        if point >= data.len() {
             self.backward_char().await;
-            *point -= 1;
+            point = self.point();
         }
 
-        let point_val = *point;
+        let point_val = point;
         data.swap(point_val - 1, point_val);
 
-        let echo = *self.echo.read().await;
-        let do_echo = *self.do_echo.read().await;
+        let echo = self.echo();
+        let do_echo = self.do_echo();
         if echo == TELNET_ENABLED && do_echo {
             self.output("\x08").await;
-            self.output_buffer.lock().await.extend_from_slice(&data[point_val - 1..=point_val]);
+            self.output_buffer().await.extend_from_slice(&data[point_val - 1..=point_val]);
         }
 
-        *point += 1;
+        point += 1;
 
-        let prompt_len = self.prompt.read().await.len();
-        let width = *self.width.read().await;
-        if (prompt_len + *point) % width == 0 {
-            if *point < data.len() {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+        let prompt_len = self.prompt().len();
+        let width = self.width();
+        if (prompt_len + point) % width == 0 {
+            if point < data.len() {
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
             }
         }
+
+        self.set_point(point);
     }
 
+    /// Move point forward one word.
+    #[framed]
     pub async fn forward_word(&self) {
-        let data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while *point < data.len() && !data[*point].is_ascii_alphabetic() {
+        while point < data.len() && !data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.point.write().await;
+            point = self.point();
         }
 
         // Skip alpha characters
-        while *point < data.len() && data[*point].is_ascii_alphabetic() {
+        while point < data.len() && data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.point.write().await;
+            point = self.point();
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn backward_word(&self) {
-        let data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let data = self.data().await;
+        let mut point = self.point().await;
 
         // Skip non-alpha characters
-        while *point > 0 && !data[*point - 1].is_ascii_alphabetic() {
+        while point > 0 && !data[point - 1].is_ascii_alphabetic() {
             self.backward_char().await;
-            point = self.point.write().await;
+            point = self.point();
         }
 
         // Skip alpha characters
-        while *point > 0 && data[*point - 1].is_ascii_alphabetic() {
+        while point > 0 && data[point - 1].is_ascii_alphabetic() {
             self.backward_char().await;
-            point = self.point.write().await;
+            point = self.point();
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn delete_word(&self) {
-        let data = self.data.lock().await;
-        let point = *self.point.read().await;
+        let data = self.data().await;
+        let point = self.point();
 
         // Count characters to delete
         let mut end = point;
@@ -2084,11 +2171,14 @@ impl Telnet {
         for _ in point..end {
             self.delete_char().await;
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn erase_word(&self) {
-        let data = self.data.lock().await;
-        let point = *self.point.read().await;
+        let data = self.data().await;
+        let point = self.point();
 
         // Count characters to erase
         let mut start = point;
@@ -2107,145 +2197,164 @@ impl Telnet {
         for _ in start..point {
             self.erase_char().await;
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn upcase_word(&self) {
-        let mut data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while *point < data.len() && !data[*point].is_ascii_alphabetic() {
+        while point < data.len() && !data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            data = self.data.lock().await;
-            point = self.point.write().await;
+            data = self.data().await;
+            point = self.point();
         }
 
         // Upcase alpha characters
-        let echo = *self.echo.read().await;
-        let do_echo = *self.do_echo.read().await;
+        let echo = self.echo();
+        let do_echo = self.do_echo();
 
-        while *point < data.len() && data[*point].is_ascii_alphabetic() {
-            if data[*point].is_ascii_lowercase() {
-                data[*point] = data[*point].to_ascii_uppercase();
+        while point < data.len() && data[point].is_ascii_alphabetic() {
+            if data[point].is_ascii_lowercase() {
+                data[point] = data[point].to_ascii_uppercase();
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
             }
 
-            *point += 1;
+            point += 1;
         }
 
-        let prompt_len = self.prompt.read().await.len();
-        let width = *self.width.read().await;
-        if (prompt_len + *point) % width == 0 {
-            if *point < data.len() {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+        let prompt_len = self.prompt().len();
+        let width = self.width();
+        if (prompt_len + point) % width == 0 {
+            if point < data.len() {
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
             }
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn downcase_word(&self) {
-        let mut data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while *point < data.len() && !data[*point].is_ascii_alphabetic() {
+        while point < data.len() && !data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            data = self.data.lock().await;
-            point = self.point.write().await;
+            data = self.data().await;
+            point = self.point();
         }
 
         // Downcase alpha characters
-        let echo = *self.echo.read().await;
-        let do_echo = *self.do_echo.read().await;
+        let echo = self.echo();
+        let do_echo = self.do_echo();
 
-        while *point < data.len() && data[*point].is_ascii_alphabetic() {
-            if data[*point].is_ascii_uppercase() {
-                data[*point] = data[*point].to_ascii_lowercase();
+        while point < data.len() && data[point].is_ascii_alphabetic() {
+            if data[point].is_ascii_uppercase() {
+                data[point] = data[point].to_ascii_lowercase();
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
             }
 
-            *point += 1;
+            point += 1;
         }
 
-        let prompt_len = self.prompt.read().await.len();
-        let width = *self.width.read().await;
-        if (prompt_len + *point) % width == 0 {
-            if *point < data.len() {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+        let prompt_len = self.prompt().len();
+        let width = self.width();
+        if (prompt_len + point) % width == 0 {
+            if point < data.len() {
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
             }
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn capitalize_word(&self) {
-        let mut data = self.data.lock().await;
-        let mut point = self.point.write().await;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while *point < data.len() && !data[*point].is_ascii_alphabetic() {
+        while point < data.len() && !data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            data = self.data.lock().await;
-            point = self.point.write().await;
+            data = self.data().await;
+            point = self.point();
         }
 
         // Capitalize first character
-        let echo = *self.echo.read().await;
-        let do_echo = *self.do_echo.read().await;
+        let echo = self.echo();
+        let do_echo = self.do_echo();
 
-        if *point < data.len() && data[*point].is_ascii_alphabetic() {
-            if data[*point].is_ascii_lowercase() {
-                data[*point] = data[*point].to_ascii_uppercase();
+        if point < data.len() && data[point].is_ascii_alphabetic() {
+            if data[point].is_ascii_lowercase() {
+                data[point] = data[point].to_ascii_uppercase();
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
             }
 
-            *point += 1;
+            point += 1;
         }
 
         // Downcase remaining characters
-        while *point < data.len() && data[*point].is_ascii_alphabetic() {
-            if data[*point].is_ascii_uppercase() {
-                data[*point] = data[*point].to_ascii_lowercase();
+        while point < data.len() && data[point].is_ascii_alphabetic() {
+            if data[point].is_ascii_uppercase() {
+                data[point] = data[point].to_ascii_lowercase();
             }
 
             if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
             }
 
-            *point += 1;
+            point += 1;
         }
 
-        let prompt_len = self.prompt.read().await.len();
-        let width = *self.width.read().await;
-        if (prompt_len + *point) % width == 0 {
-            if *point < data.len() {
-                self.output_buffer.lock().await.extend_from_slice(&data[*point..=*point]);
+        let prompt_len = self.prompt().len();
+        let width = self.width();
+        if (prompt_len + point) % width == 0 {
+            if point < data.len() {
+                self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
             } else {
                 self.output(" \x08").await;
             }
         }
+
+        self.set_point(point);
     }
 
+    #[framed]
     pub async fn transpose_words(&self) {
         self.output(BELL_STR).await;
     }
 
+    #[framed]
+    pub async fn reset_history(&self) {
+        self.history().await.clear();
+        self.set_history_position(None);
+    }
+
+    #[framed]
     pub async fn previous_line(&self) {
-        let mut history_pos = self.history_position.write().await;
-        let history = self.history.lock().await;
+        let mut history_pos = self.history_position().await;
+        let history = self.history().await;
 
         if history.is_empty() {
             self.output(BELL_STR).await;
@@ -2254,9 +2363,9 @@ impl Telnet {
 
         self.erase_line().await;
 
-        match *history_pos {
+        match history_pos {
             None => {
-                *history_pos = Some(history.len() - 1);
+                history_pos = Some(history.len() - 1);
                 if let Some(line) = history.get(history.len() - 1) {
                     let line = line.clone();
 
@@ -2266,7 +2375,7 @@ impl Telnet {
                 }
             }
             Some(pos) if pos > 0 => {
-                *history_pos = Some(pos - 1);
+                history_pos = Some(pos - 1);
                 if let Some(line) = history.get(pos - 1) {
                     let line = line.clone();
 
@@ -2279,17 +2388,20 @@ impl Telnet {
                 self.output(BELL_STR).await;
             }
         }
+
+        self.set_history_position(history_pos);
     }
 
+    #[framed]
     pub async fn next_line(&self) {
-        let mut history_pos = self.history_position.write().await;
-        let history = self.history.lock().await;
+        let mut history_pos = self.history_position();
+        let history = self.history().await;
 
         self.erase_line().await;
 
-        match *history_pos {
+        match history_pos {
             Some(pos) if pos < history.len() - 1 => {
-                *history_pos = Some(pos + 1);
+                history_pos = Some(pos + 1);
                 if let Some(line) = history.get(pos + 1) {
                     let line = line.clone();
 
@@ -2299,87 +2411,206 @@ impl Telnet {
                 }
             }
             Some(_) => {
-                *history_pos = None;
+                history_pos = None;
             }
             None => {
                 self.output(BELL_STR).await;
             }
         }
+
+        self.set_history_position(history_pos);
     }
 
+    #[framed]
     pub async fn do_semicolon(&self) {
-        if *self.point.read().await == 0 {
-            if let Some(session) = &*self.session.read().await {
-                let last = session.last_explicit().await;
-                for ch in last.bytes() {
-                    self.insert_char(ch).await;
-                }
+        if self.point() == 0 {
+            let session = self.session_connection();
+            let last = session.last_explicit().await;
+            for ch in last.bytes() {
+                self.insert_char(ch).await;
             }
         }
         self.insert_char(SEMICOLON).await;
     }
 
+    #[framed]
     pub async fn do_colon(&self) {
-        if *self.point.read().await == 0 {
-            if let Some(session) = &*self.session.read().await {
-                let reply = session.reply_sendlist().await;
-                for ch in reply.bytes() {
-                    self.insert_char(ch).await;
-                }
+        if self.point() == 0 {
+            let session = self.session_connection();
+            let reply = session.reply_sendlist().await;
+            for ch in reply.bytes() {
+                self.insert_char(ch).await;
             }
         }
         self.insert_char(COLON).await;
     }
 
+    /// Accept input line.
+    #[framed]
     pub async fn accept_input(&self) {
-        if let Some(session) = &*self.session.read().await {
-            // Get the input line
-            let data = self.data.lock().await.clone();
-            let line = String::from_utf8_lossy(&data).to_string();
+        let session = self.session_connection();
+        let do_echo = self.do_echo();
 
-            // Reset history position
-            *self.history_position.write().await = None;
-
-            // Add to history if echoing
-            let do_echo = *self.do_echo.read().await;
-            if do_echo && !line.is_empty() {
-                let mut history = self.history.lock().await;
-                if history.len() >= Self::HISTORY_MAX {
-                    history.pop_front();
-                }
-                history.push_back(line.clone());
-            }
-
-            // Flush any pending output
-            if !*self.acknowledge.read().await {
-                while session.output_next(self).await {
-                    session.acknowledge_output().await;
-                }
-            }
-
-            // Echo newline and clear input
-            if *self.undrawn.read().await {
-                session.output(&line).await;
-                session.output("\n").await;
-            } else {
-                if *self.point.read().await < data.len() {
-                    self.end_of_line().await;
-                }
-                let echo = *self.echo.read().await;
-                let do_echo = *self.do_echo.read().await;
-                if echo == TELNET_ENABLED && do_echo {
-                    self.output("\n").await;
-                }
-            }
-
-            // Clear input buffer
-            self.data.lock().await.clear();
-            *self.point.write().await = 0;
-            *self.mark.write().await = None;
-            *self.prompt.write().await = String::new();
-
-            // Process the input
-            session.handle_input(&line).await;
+        // Check if initial options negotiations have finished.
+        if !self.options_finished() {
+            self.check_options(true).await;
         }
+
+        // Reset login timeout.
+        if self.login_timeout() {
+            self.reset_login_timeout().await;
+        }
+
+        // Get the input line.
+        let data = self.data().await;
+        let line = Text::new(String::from_utf8_lossy(&data));
+
+        // Reset history position.
+        // TODO: Should this really be Option<T>?  Should it be numeric?  It's a pointer/iterator into the history.
+        self.set_history_position(None);
+
+        // Add to history if echoing.
+        if do_echo && !line.is_empty() {
+            let mut history = self.history.lock().await;
+            if history.len() >= Self::HISTORY_MAX {
+                history.pop_front();
+            }
+            history.push_back(line.clone());
+        }
+
+        // Flush any pending output to connection.
+        if !self.acknowledge() {
+            while session.output_next(self).await {
+                session.acknowledge_output().await;
+            }
+        }
+
+        // Echo newline and clear input.
+        if self.undrawn() {
+            session.queue_output(&line).await;
+            session.queue_output("\n").await;
+        } else {
+            if self.point() < data.len() {
+                self.end_of_line().await;
+            }
+            if self.echo() == TELNET_ENABLED && do_echo {
+                self.output("\n").await;
+            }
+        }
+
+        // Clear input buffer.
+        (*self.data.lock()).clear();
+        self.set_point(0);
+        self.set_mark(None);
+        self.set_prompt(Text::new());
+
+        // Process the input.
+        session.handle_input(&line).await;
+    }
+}
+
+/// Lock-free atomic required Telnet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTelnet(ArcSwap<TelnetInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct TelnetBorrow(Guard<Arc<TelnetInner>>);
+
+impl TelnetBorrow {
+    pub fn as_ref(&self) -> &TelnetInner {
+        &self.0
+    }
+}
+
+impl AtomicTelnet {
+    pub fn new(telnet: Telnet) -> Self {
+        Self(ArcSwap::new(telnet.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> TelnetBorrow {
+        TelnetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Telnet {
+        Telnet(self.0.load_full())
+    }
+
+    pub fn set(&self, telnet: Telnet) {
+        self.0.store(telnet.0)
+    }
+}
+
+impl From<Telnet> for AtomicTelnet {
+    fn from(telnet: Telnet) -> Self {
+        Self::new(telnet)
+    }
+}
+
+/// Lock-free atomic optional Telnet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTelnetOption(ArcSwapOption<TelnetInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionTelnetBorrow(Guard<Option<Arc<TelnetInner>>>);
+
+impl OptionTelnetBorrow {
+    pub fn as_ref(&self) -> Option<&TelnetInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicTelnetOption {
+    pub fn new(telnet: Option<Telnet>) -> Self {
+        Self(ArcSwapOption::new(telnet.map(|t| t.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionTelnetBorrow {
+        OptionTelnetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Telnet> {
+        self.0.load_full().map(Telnet)
+    }
+
+    pub fn set(&self, telnet: Option<Telnet>) {
+        self.0.store(telnet.map(|t| t.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicTelnetOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Telnet>> for AtomicTelnetOption {
+    fn from(telnet: Option<Telnet>) -> Self {
+        Self::new(telnet)
+    }
+}
+
+impl From<Telnet> for AtomicTelnetOption {
+    fn from(telnet: Telnet) -> Self {
+        Self::new(Some(telnet))
     }
 }
