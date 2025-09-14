@@ -1,26 +1,23 @@
+use crate::atomic::{AtomicNameOption, AtomicOrdSet, AtomicText, AtomicTimestamp};
 use crate::constants::COMMA;
 use crate::name::Name;
 use crate::output::*;
 use crate::session::Session;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::types::{getword, match_keyword, OrderedSet};
+use crate::{getword, match_keyword};
 use async_backtrace::framed;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use im::OrdSet;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
-use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 static DISCUSSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 /// Discussion handle.
 #[derive(Debug, Clone)]
-pub struct Discussion
+pub struct Discussion(pub Arc<DiscussionInner>)
 where
-    Self: Send + Sync + 'static,
-{
-    pub id: usize,
-    pub inner: Arc<RwLock<DiscussionInner>>,
-}
+    Self: Send + Sync + 'static;
 
 #[derive(Debug)]
 pub struct DiscussionInner
@@ -28,16 +25,16 @@ where
     Self: Send + Sync + 'static,
 {
     pub id: usize,
-    pub name: Text,
-    pub title: Text,
-    pub is_public: bool,
-    pub creator: Option<Name>,
-    pub members: OrderedSet<Session>,
-    pub moderators: OrderedSet<Name>,
-    pub allowed: OrderedSet<Name>,
-    pub denied: OrderedSet<Name>,
-    pub creation_time: Timestamp,
-    pub idle_since: Timestamp,
+    pub name: AtomicText,
+    pub title: AtomicText,
+    pub is_public: AtomicBool,
+    pub creator: AtomicNameOption,
+    pub members: AtomicOrdSet<Session>,
+    pub moderators: AtomicOrdSet<Name>,
+    pub allowed: AtomicOrdSet<Name>,
+    pub denied: AtomicOrdSet<Name>,
+    pub creation_time: AtomicTimestamp,
+    pub idle_since: AtomicTimestamp,
 }
 
 impl Discussion {
@@ -48,162 +45,239 @@ impl Discussion {
         let name = name.into();
         let title = title.into();
         let mut creator = None;
-        let mut members = OrderedSet::new();
-        let mut moderators = OrderedSet::new();
-        let allowed = OrderedSet::new();
-        let denied = OrderedSet::new();
+        let mut members = OrdSet::new();
+        let mut moderators = OrdSet::new();
+        let allowed = OrdSet::new();
+        let denied = OrdSet::new();
         let creation_time = Timestamp::new();
         let idle_since = creation_time.clone();
 
         // Set creator and add initial member/moderator if provided.
         if let Some(session) = creator_session {
-            let creator_name = session.name().await;
+            let creator_name = session.name();
             creator = Some(creator_name.clone());
             members.insert(session);
             moderators.insert(creator_name);
         }
 
-        let inner = DiscussionInner { id, name, title, is_public, creator, members, moderators, allowed, denied, creation_time, idle_since };
+        let inner = DiscussionInner {
+            id,
+            name: AtomicText::new(name),
+            title: AtomicText::new(title),
+            is_public: AtomicBool::new(is_public),
+            creator: creator.into(),
+            members: AtomicOrdSet::new(members),
+            moderators: AtomicOrdSet::new(moderators),
+            allowed: AtomicOrdSet::new(allowed),
+            denied: AtomicOrdSet::new(denied),
+            creation_time: AtomicTimestamp::new(creation_time),
+            idle_since: AtomicTimestamp::new(idle_since),
+        };
 
-        Self { id, inner: Arc::new(RwLock::new(inner)) }
+        Self(Arc::new(inner))
     }
 
     /// Get the discussion ID.
     pub fn id(&self) -> usize {
-        self.id
-    }
-
-    /// Obtain read lock on the `DiscussionInner` data.
-    #[framed]
-    pub async fn read(&self) -> RwLockReadGuard<'_, DiscussionInner> {
-        self.inner.read().await
-    }
-
-    /// Obtain write lock on the `DiscussionInner` data.
-    #[framed]
-    pub async fn write(&self) -> RwLockWriteGuard<'_, DiscussionInner> {
-        self.inner.write().await
+        self.0.id
     }
 
     /// Get the discussion name.
-    #[framed]
-    pub async fn name(&self) -> Text {
-        self.read().await.name.clone()
+    pub fn name(&self) -> Text {
+        self.0.name.snapshot()
     }
 
     /// Set the discussion name.
-    #[framed]
-    pub async fn set_name(&self, value: Text) {
-        self.write().await.name = value;
+    pub fn set_name(&self, value: Text) {
+        self.0.name.set(value);
     }
 
     /// Get the discussion title.
-    #[framed]
-    pub async fn title(&self) -> Text {
-        self.read().await.title.clone()
+    pub fn title(&self) -> Text {
+        self.0.title.snapshot()
     }
 
     /// Set the discussion title.
-    #[framed]
-    pub async fn set_title(&self, value: Text) {
-        self.write().await.title = value;
+    pub fn set_title(&self, value: Text) {
+        self.0.title.set(value);
     }
 
     /// Get the is-public flag.
-    #[framed]
-    pub async fn is_public(&self) -> bool {
-        self.read().await.is_public
+    pub fn is_public(&self) -> bool {
+        self.0.is_public.load(Ordering::Relaxed)
     }
 
     /// Set the is-public flag.
-    #[framed]
-    pub async fn set_is_public(&self, value: bool) {
-        self.write().await.is_public = value;
+    pub fn set_public(&self, value: bool) {
+        self.0.is_public.store(value, Ordering::Relaxed);
     }
 
     /// Get the discussion creator, if any.
-    #[framed]
-    pub async fn creator(&self) -> Option<Name> {
-        self.read().await.creator.clone()
+    pub fn creator(&self) -> Option<Name> {
+        self.0.creator.snapshot()
     }
 
     /// Set the discussion creator.
-    #[framed]
-    pub async fn set_creator(&self, value: Option<Name>) {
-        self.write().await.creator = value;
+    pub fn set_creator(&self, value: Option<Name>) {
+        self.0.creator.set(value);
     }
 
     /// Check if the specified name is the creator of the discussion.
-    #[framed]
-    pub async fn is_creator(&self, name: &Name) -> bool {
-        self.read().await.is_creator(name)
+    pub fn is_creator(&self, name: &Name) -> bool {
+        self.0.creator.borrow().as_ref().map_or(false, |creator| creator == name)
     }
 
     /// Check if the specified session is in the members list for the discussion.
-    #[framed]
-    pub async fn is_member(&self, session: &Session) -> bool {
-        self.read().await.is_member(session)
+    pub fn is_member(&self, session: &Session) -> bool {
+        self.0.members.borrow().as_ref().contains(session)
     }
 
     /// Check if the specified name is in the moderators list for the discussion.
-    #[framed]
-    pub async fn is_moderator(&self, name: &Name) -> bool {
-        self.read().await.is_moderator(name)
+    pub fn is_moderator(&self, name: &Name) -> bool {
+        self.0.moderators.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified name is in the allowed list for the discussion.
-    #[framed]
-    pub async fn is_allowed(&self, name: &Name) -> bool {
-        self.read().await.is_allowed(name)
+    pub fn is_allowed(&self, name: &Name) -> bool {
+        self.0.allowed.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified name is in the denied list for the discussion.
-    #[framed]
-    pub async fn is_denied(&self, name: &Name) -> bool {
-        self.read().await.is_denied(name)
+    pub fn is_denied(&self, name: &Name) -> bool {
+        self.0.denied.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified session is permitted to the discussion.
-    #[framed]
-    pub async fn is_permitted(&self, name: &Name) -> bool {
-        self.read().await.is_permitted(name)
+    pub fn is_permitted(&self, name: &Name) -> bool {
+        self.is_creator(name) || self.is_moderator(name) || ((self.is_public() || self.is_allowed(name)) && !self.is_denied(name))
+    }
+
+    /// Get the members of the discussion.
+    pub fn members(&self) -> im::OrdSet<Session> {
+        self.0.members.snapshot()
     }
 
     /// Get the discussion creation timestamp.
-    #[framed]
-    pub async fn creation_time(&self) -> Timestamp {
-        self.read().await.creation_time.clone()
+    pub fn creation_time(&self) -> Timestamp {
+        self.0.creation_time.snapshot()
     }
 
     /// Set the discussion creation timestamp.
-    #[framed]
-    pub async fn set_creation_time(&self, value: Timestamp) {
-        self.write().await.creation_time = value;
+    pub fn set_creation_time(&self, value: Timestamp) {
+        self.0.creation_time.set(value);
     }
 
-    /// Get the discussion idle-since timestamp.
-    #[framed]
-    pub async fn idle_since(&self) -> Timestamp {
-        self.read().await.idle_since.clone()
+    /// Get the idle-since timestamp.
+    pub fn idle_since(&self) -> Timestamp {
+        self.0.idle_since.snapshot()
     }
 
-    /// Set the discussion idle-since timestamp.
-    #[framed]
-    pub async fn set_idle_since(&self, value: Timestamp) {
-        self.write().await.idle_since = value;
+    /// Set the idle-since timestamp.
+    pub fn set_idle_since(&self, value: Timestamp) {
+        self.0.idle_since.set(value);
     }
 
-    /// Reset the discussion idle-since timestamp.
-    #[framed]
-    pub async fn reset_idle_since(&self) {
-        self.write().await.idle_since = Timestamp::new();
+    /// Reset the idle-since timestamp to now.
+    pub fn reset_idle_since(&self) {
+        self.0.idle_since.set(Timestamp::new());
     }
 
-    /// Enqueue an `OutputObj` to all members of the discussion except the sender.
+    /// Get the moderators.
+    pub fn moderators(&self) -> im::OrdSet<Name> {
+        self.0.moderators.snapshot()
+    }
+
+    /// Set the moderators.
+    pub fn set_moderators(&self, value: im::OrdSet<Name>) {
+        self.0.moderators.set(value);
+    }
+
+    /// Add a moderator.
+    pub fn add_moderator(&self, name: Name) {
+        let mut moderators = self.0.moderators.snapshot();
+        moderators.insert(name);
+        self.0.moderators.set(moderators);
+    }
+
+    /// Remove a moderator.
+    pub fn remove_moderator(&self, name: &Name) {
+        let mut moderators = self.0.moderators.snapshot();
+        moderators.remove(name);
+        self.0.moderators.set(moderators);
+    }
+
+    /// Get the allowed users.
+    pub fn allowed(&self) -> im::OrdSet<Name> {
+        self.0.allowed.snapshot()
+    }
+
+    /// Set the allowed users.
+    pub fn set_allowed(&self, value: im::OrdSet<Name>) {
+        self.0.allowed.set(value);
+    }
+
+    /// Add an allowed user.
+    pub fn add_allowed(&self, name: Name) {
+        let mut allowed = self.0.allowed.snapshot();
+        allowed.insert(name);
+        self.0.allowed.set(allowed);
+    }
+
+    /// Remove an allowed user.
+    pub fn remove_allowed(&self, name: &Name) {
+        let mut allowed = self.0.allowed.snapshot();
+        allowed.remove(name);
+        self.0.allowed.set(allowed);
+    }
+
+    /// Get the denied users.
+    pub fn denied(&self) -> im::OrdSet<Name> {
+        self.0.denied.snapshot()
+    }
+
+    /// Set the denied users.
+    pub fn set_denied(&self, value: im::OrdSet<Name>) {
+        self.0.denied.set(value);
+    }
+
+    /// Add a denied user.
+    pub fn add_denied(&self, name: Name) {
+        let mut denied = self.0.denied.snapshot();
+        denied.insert(name);
+        self.0.denied.set(denied);
+    }
+
+    /// Remove a denied user.
+    pub fn remove_denied(&self, name: &Name) {
+        let mut denied = self.0.denied.snapshot();
+        denied.remove(name);
+        self.0.denied.set(denied);
+    }
+
+    /// Set the member list.
+    pub fn set_members(&self, value: im::OrdSet<Session>) {
+        self.0.members.set(value);
+    }
+
+    /// Add a member.
+    pub fn add_member(&self, session: Session) {
+        let mut members = self.0.members.snapshot();
+        members.insert(session);
+        self.0.members.set(members);
+    }
+
+    /// Remove a member.
+    pub fn remove_member(&self, session: &Session) {
+        let mut members = self.0.members.snapshot();
+        members.remove(session);
+        self.0.members.set(members);
+    }
+
+    /// Enqueue an `Output` to all members of the discussion except the sender.
     #[framed]
-    pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>, sender: &Session) {
-        let inner = self.read().await;
-        for member in inner.members.iter() {
+    pub async fn enqueue_others(&self, out: Output, sender: &Session) {
+        let members = self.0.members.snapshot();
+        for member in members.iter() {
             if member != sender {
                 member.enqueue(out.clone()).await;
             }
@@ -213,17 +287,14 @@ impl Discussion {
     /// Destroy the discussion.
     #[framed]
     pub async fn destroy(&self, session: &Session) {
-        let inner = self.read().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if inner.is_creator(&session_name) || inner.is_moderator(&session_name) {
-            Session::remove_discussion(inner.name.clone()).await;
-            let notification = Arc::new(DestroyNotify::new(inner.name.clone(), session_name));
-            inner.enqueue_others(notification, &session).await;
-            let disc = &inner.name;
+        if self.is_creator(&session_name) || self.is_moderator(&session_name) {
+            Session::remove_discussion(disc.clone()).await;
+            self.enqueue_others(DestroyNotify::new(disc.clone(), session_name), &session).await;
             session.output(&format!("You have destroyed discussion {disc}.\n")).await;
         } else {
-            let disc = &inner.name;
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
         }
     }
@@ -231,21 +302,20 @@ impl Discussion {
     /// Join the discussion.
     #[framed]
     pub async fn join(&self, session: &Session) {
-        let mut inner = self.write().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if inner.is_member(session) {
-            let disc = &inner.name;
+        if self.is_member(session) {
             session.output(&format!("You are already a member of discussion {disc}.\n")).await;
         } else {
-            if inner.is_permitted(&session_name) {
-                let notification = Arc::new(JoinNotify::new(inner.name.clone(), session_name));
-                inner.enqueue_others(notification, &session).await;
-                inner.members.insert(session.clone());
-                let disc = &inner.name;
+            if self.is_permitted(&session_name) {
+                self.enqueue_others(JoinNotify::new(disc.clone(), session_name), &session).await;
+
+                let mut members = self.0.members.snapshot();
+                members.insert(session.clone());
+                self.0.members.set(members);
                 session.output(&format!("You are now a member of discussion {disc}.\n")).await;
             } else {
-                let disc = &inner.name;
                 session.output(&format!("You are not permitted to join discussion {disc}.\n")).await;
             }
         }
@@ -254,18 +324,18 @@ impl Discussion {
     /// Quit the discussion.
     #[framed]
     pub async fn quit(&self, session: &Session) {
-        let mut inner = self.write().await;
+        let disc = self.name();
 
-        if inner.is_member(session) {
-            inner.members.shift_remove(session);
-            if session.signed_on().await {
-                let notification = Arc::new(QuitNotify::new(inner.name.clone(), session.name().await));
-                inner.enqueue_others(notification, &session).await;
-                let disc = &inner.name;
+        if self.is_member(session) {
+            let mut members = self.0.members.snapshot();
+            members.remove(session);
+            self.0.members.set(members);
+
+            if session.signed_on() {
+                self.enqueue_others(QuitNotify::new(disc.clone(), session.name()), &session).await;
                 session.output(&format!("You are no longer a member of discussion {disc}.\n")).await;
             }
         } else {
-            let disc = &inner.name;
             session.output(&format!("You are not a member of discussion {disc}.\n")).await;
         }
     }
@@ -273,11 +343,10 @@ impl Discussion {
     /// Permit someone to the discussion.
     #[framed]
     pub async fn permit(&self, session: &Session, args: &str) {
-        let mut inner = self.write().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if !(inner.is_creator(&session_name) || inner.is_moderator(&session_name)) {
-            let disc = &inner.name;
+        if !(self.is_creator(&session_name) || self.is_moderator(&session_name)) {
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
@@ -288,55 +357,52 @@ impl Discussion {
             remaining = rest;
 
             if let Some(_) = match_keyword(user, "others", 6) {
-                if inner.is_public {
-                    let disc = &inner.name;
+                if self.is_public() {
                     session.output(&format!("Discussion {disc} is already public.\n")).await;
                 } else {
-                    inner.is_public = true;
-                    let notification = Arc::new(PublicNotify::new(inner.name.clone(), session_name.clone()));
-                    inner.enqueue_others(notification, &session).await;
-                    let disc = &inner.name;
+                    self.set_public(true);
+                    self.enqueue_others(PublicNotify::new(disc.clone(), session_name.clone()), &session).await;
                     session.output(&format!("You have made discussion {disc} public.\n")).await;
                 }
             } else {
                 let (found_session, matches) = session.find_session(user).await;
 
                 if let Some(s) = found_session {
-                    let name = &s.name().await;
+                    let name = s.name();
 
-                    if inner.is_public {
-                        if inner.is_denied(name) {
-                            inner.denied.retain(|n| n != name);
-                            let notification = Arc::new(PermitNotify::new(inner.name.clone(), true, name.clone(), true));
-                            inner.enqueue_others(notification, &session).await;
-                            let disc = &inner.name;
+                    if self.is_public() {
+                        if self.is_denied(&name) {
+                            let denied = self.0.denied.snapshot();
+                            let denied = denied.without(&name);
+                            self.0.denied.set(denied);
+                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), true), &session).await;
                             session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
-                        } else if inner.is_allowed(name) {
-                            let disc = &inner.name;
+                        } else if self.is_allowed(&name) {
                             session.output(&format!("{name} is already explicitly permitted to public discussion {disc}.\n")).await;
                         } else {
-                            inner.allowed.insert(name.clone());
-                            let notification = Arc::new(PermitNotify::new(inner.name.clone(), true, name.clone(), false));
-                            inner.enqueue_others(notification, &session).await;
-                            let disc = &inner.name;
+                            let mut allowed = self.0.allowed.snapshot();
+                            allowed.insert(name.clone());
+                            self.0.allowed.set(allowed);
+                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), false), &session).await;
                             session.output(&format!("You have explicitly permitted {name} to public discussion {disc}.\n")).await;
                         }
                     } else {
-                        if inner.is_denied(name) {
-                            inner.denied.retain(|n| n != name);
-                            inner.allowed.insert(name.clone());
-                            let notification = Arc::new(PermitNotify::new(inner.name.clone(), false, name.clone(), true));
-                            inner.enqueue_others(notification, &session).await;
-                            let disc = &inner.name;
+                        if self.is_denied(&name) {
+                            let denied = self.0.denied.snapshot();
+                            let denied = denied.without(&name);
+                            self.0.denied.set(denied);
+                            let mut allowed = self.0.allowed.snapshot();
+                            allowed.insert(name.clone());
+                            self.0.allowed.set(allowed);
+                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), true), &session).await;
                             session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
-                        } else if inner.is_allowed(name) {
-                            let disc = &inner.name;
+                        } else if self.is_allowed(&name) {
                             session.output(&format!("{name} is already permitted to discussion {disc}.\n")).await;
                         } else {
-                            inner.allowed.insert(name.clone());
-                            let notification = Arc::new(PermitNotify::new(inner.name.clone(), false, name.clone(), false));
-                            inner.enqueue_others(notification, &session).await;
-                            let disc = &inner.name;
+                            let mut allowed = self.0.allowed.snapshot();
+                            allowed.insert(name.clone());
+                            self.0.allowed.set(allowed);
+                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), false), &session).await;
                             session.output(&format!("You have permitted {name} to discussion {disc}.\n")).await;
                         }
                     }
@@ -350,11 +416,10 @@ impl Discussion {
     /// Depermit someone from the discussion.
     #[framed]
     pub async fn depermit(&self, session: &Session, args: &str) {
-        let mut inner = self.write().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if !(inner.is_creator(&session_name) || inner.is_moderator(&session_name)) {
-            let disc = &inner.name;
+        if !(self.is_creator(&session_name) || self.is_moderator(&session_name)) {
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
@@ -365,80 +430,82 @@ impl Discussion {
             remaining = rest;
 
             if let Some(_) = match_keyword(user, "others", 6) {
-                if inner.is_public {
-                    inner.is_public = false;
+                if self.is_public() {
+                    self.set_public(false);
 
                     // Add current members to allowed list.
                     let mut new_allowed = Vec::new();
-                    for member in inner.members.iter() {
-                        let member_name = member.name().await;
-                        if !inner.is_allowed(&member_name) {
+                    let members = self.0.members.snapshot();
+                    for member in members.iter() {
+                        let member_name = member.name();
+                        if !self.is_allowed(&member_name) {
                             new_allowed.push(member_name)
                         }
                     }
 
+                    let mut allowed = self.0.allowed.snapshot();
                     for name in new_allowed {
-                        inner.allowed.insert(name);
+                        allowed.insert(name);
                     }
+                    self.0.allowed.set(allowed);
 
-                    let notification = Arc::new(PrivateNotify::new(inner.name.clone(), session_name.clone()));
-                    inner.enqueue_others(notification, &session).await;
-                    let disc = &inner.name;
+                    self.enqueue_others(PrivateNotify::new(disc.clone(), session_name.clone()), &session).await;
                     session.output(&format!("You have made discussion {disc} private.\n")).await;
                 } else {
-                    let disc = &inner.name;
                     session.output(&format!("Discussion {disc} is already private.\n")).await;
                 }
             } else {
                 let (found_session, matches) = session.find_session(user).await;
 
                 if let Some(s) = found_session {
-                    let name = &s.name().await;
+                    let name = s.name();
 
-                    if inner.is_public {
-                        inner.allowed.retain(|n| n != name);
+                    if self.is_public() {
+                        let allowed = self.0.allowed.snapshot();
+                        let allowed = allowed.without(&name);
+                        self.0.allowed.set(allowed);
 
-                        if inner.is_denied(name) {
-                            let disc = &inner.name;
+                        if self.is_denied(&name) {
                             session.output(&format!("{name} is already depermitted from discussion {disc}.\n")).await;
                         } else {
-                            inner.denied.insert(name.clone());
-                            if inner.is_member(&s) {
-                                inner.members.shift_remove(&s);
-                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, Some(name.clone())));
-                                inner.enqueue_others(notification, &session).await;
-                                let disc = &inner.name;
+                            let mut denied = self.0.denied.snapshot();
+                            denied.insert(name.clone());
+                            self.0.denied.set(denied);
+
+                            if self.is_member(&s) {
+                                let mut members = self.0.members.snapshot();
+                                members.remove(&s);
+                                self.0.members.set(members);
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, Some(name.clone())), &session).await;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), true, name.clone(), true, None));
-                                inner.enqueue_others(notification, &session).await;
-                                let disc = &inner.name;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, None), &session).await;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         }
                     } else {
-                        if inner.is_allowed(name) {
-                            inner.allowed.retain(|n| n != name);
-                            if inner.is_member(&s) {
-                                inner.members.shift_remove(&s);
-                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), false, Some(name.clone())));
-                                inner.enqueue_others(notification, &session).await;
-                                let disc = &inner.name;
+                        if self.is_allowed(&name) {
+                            let allowed = self.0.allowed.snapshot();
+                            let allowed = allowed.without(&name);
+                            self.0.allowed.set(allowed);
+
+                            if self.is_member(&s) {
+                                let mut members = self.0.members.snapshot();
+                                members.remove(&s);
+                                self.0.members.set(members);
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, Some(name.clone())), &session).await;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), false, None));
-                                inner.enqueue_others(notification, &session).await;
-                                let disc = &inner.name;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, None), &session).await;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
-                        } else if inner.is_denied(name) {
-                            let disc = &inner.name;
+                        } else if self.is_denied(&name) {
                             session.output(&format!("{name} is already explicitly depermitted from private discussion {disc}.\n")).await;
                         } else {
-                            inner.denied.insert(name.clone());
-                            let notification = Arc::new(DepermitNotify::new(inner.name.clone(), false, name.clone(), true, None));
-                            inner.enqueue_others(notification, &session).await;
-                            let disc = &inner.name;
+                            let mut denied = self.0.denied.snapshot();
+                            denied.insert(name.clone());
+                            self.0.denied.set(denied);
+                            self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), true, None), &session).await;
                             session.output(&format!("You have explicitly depermitted {name} from discussion {disc}.\n")).await;
                         }
                     }
@@ -452,11 +519,10 @@ impl Discussion {
     /// Appoint a new moderator for the discussion.
     #[framed]
     pub async fn appoint(&self, session: &Session, args: &str) {
-        let inner = self.read().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if !(inner.is_creator(&session_name) || inner.is_moderator(&session_name) || session.priv_level().await >= 50) {
-            let disc = &inner.name;
+        if !(self.is_creator(&session_name) || self.is_moderator(&session_name) || session.priv_level() >= 50) {
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
@@ -474,11 +540,10 @@ impl Discussion {
     /// Unappoint an existing moderator from the discussion.
     #[framed]
     pub async fn unappoint(&self, session: &Session, args: &str) {
-        let inner = self.read().await;
-        let session_name = session.name().await;
+        let session_name = session.name();
+        let disc = self.name();
 
-        if !(inner.is_creator(&session_name) || inner.is_moderator(&session_name)) {
-            let disc = &inner.name;
+        if !(self.is_creator(&session_name) || self.is_moderator(&session_name)) {
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
             return;
         }
@@ -497,37 +562,38 @@ impl Discussion {
 impl DiscussionInner {
     /// Check if the specified name is the creator of the discussion.
     pub fn is_creator(&self, name: &Name) -> bool {
-        self.creator.as_ref() == Some(name)
+        self.creator.borrow().as_ref().map(|inner| inner == name).unwrap_or(false)
     }
 
     /// Check if the specified session is in the members list for the discussion.
     pub fn is_member(&self, session: &Session) -> bool {
-        self.members.contains(session)
+        self.members.borrow().as_ref().contains(session)
     }
 
     /// Check if the specified name is in the moderators list for the discussion.
     pub fn is_moderator(&self, name: &Name) -> bool {
-        self.moderators.contains(name)
+        self.moderators.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified name is in the allowed list for the discussion.
     pub fn is_allowed(&self, name: &Name) -> bool {
-        self.allowed.contains(name)
+        self.allowed.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified name is in the denied list for the discussion.
     pub fn is_denied(&self, name: &Name) -> bool {
-        self.denied.contains(name)
+        self.denied.borrow().as_ref().contains(name)
     }
 
     /// Check if the specified session is permitted to the discussion.
     pub fn is_permitted(&self, name: &Name) -> bool {
-        self.is_creator(name) || self.is_moderator(name) || ((self.is_public || self.is_allowed(name)) && !self.is_denied(name))
+        self.is_creator(name) || self.is_moderator(name) || ((self.is_public.load(Ordering::Relaxed) || self.is_allowed(name)) && !self.is_denied(name))
     }
 
-    /// Enqueue an `OutputObj` to all members of the discussion except the sender.
-    pub async fn enqueue_others(&self, out: Arc<dyn OutputObj>, sender: &Session) {
-        for member in self.members.iter() {
+    /// Enqueue an `Output` to all members of the discussion except the sender.
+    pub async fn enqueue_others(&self, out: Output, sender: &Session) {
+        let members = self.members.borrow();
+        for member in members.as_ref().iter() {
             if member != sender {
                 member.enqueue(out.clone()).await;
             }
@@ -537,14 +603,26 @@ impl DiscussionInner {
 
 impl PartialEq for Discussion {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.0.id == other.0.id
     }
 }
 
 impl Eq for Discussion {}
 
+impl PartialOrd for Discussion {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Discussion {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.id.cmp(&other.0.id)
+    }
+}
+
 impl std::hash::Hash for Discussion {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
+        self.0.id.hash(state);
     }
 }

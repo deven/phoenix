@@ -1,6 +1,8 @@
+#![recursion_limit = "256"]
 #![deny(rust_2018_idioms, nonstandard_style, unused_must_use, clippy::all)]
 #![warn(future_incompatible, missing_docs, clippy::pedantic, clippy::cargo)]
 
+pub mod atomic;
 pub mod constants;
 pub mod discussion;
 pub mod name;
@@ -12,9 +14,6 @@ pub mod telnet;
 pub mod text;
 pub mod timestamp;
 pub mod user;
-
-// Order-preserving set type
-pub type OrderedSet<T> = indexmap::IndexSet<T>;
 
 /// Phoenix server version.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

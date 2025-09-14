@@ -1,9 +1,11 @@
+use crate::atomic::{AtomicOrdSet, AtomicText};
 use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::session::Session;
 use crate::text::Text;
-use crate::types::OrderedSet;
+use im::OrdSet;
 use std::fmt::Write;
+use std::sync::Arc;
 
 //#[derive(Debug, Clone)]
 //pub enum Sendable {
@@ -11,54 +13,131 @@ use std::fmt::Write;
 //    Discussion(Discussion),
 //}
 
+/// Sendlist handle.
 #[derive(Debug, Clone)]
-pub struct Sendlist {
-    pub errors: String,
-    pub typed: String,
-    pub sessions: OrderedSet<Session>,
-    pub discussions: OrderedSet<Discussion>,
+pub struct Sendlist(pub Arc<SendlistInner>);
+
+#[derive(Debug)]
+pub struct SendlistInner {
+    pub errors: AtomicText,
+    pub typed: AtomicText,
+    pub sessions: AtomicOrdSet<Session>,
+    pub discussions: AtomicOrdSet<Discussion>,
 }
 
 impl Sendlist {
+    /// Get the errors text.
+    pub fn errors(&self) -> Text {
+        self.0.errors.snapshot()
+    }
+
+    /// Get the typed text.
+    pub fn typed(&self) -> Text {
+        self.0.typed.snapshot()
+    }
+
+    /// Get the sessions.
+    pub fn sessions(&self) -> OrdSet<Session> {
+        self.0.sessions.snapshot()
+    }
+
+    /// Get the discussions.
+    pub fn discussions(&self) -> OrdSet<Discussion> {
+        self.0.discussions.snapshot()
+    }
+
+    /// Set the errors text.
+    pub fn set_errors(&self, value: Text) {
+        self.0.errors.set(value);
+    }
+
+    /// Set the typed text.
+    pub fn set_typed(&self, value: Text) {
+        self.0.typed.set(value);
+    }
+
+    /// Set the sessions.
+    pub fn set_sessions(&self, value: OrdSet<Session>) {
+        self.0.sessions.set(value);
+    }
+
+    /// Add a session.
+    pub fn add_session(&self, session: Session) {
+        let mut sessions = self.0.sessions.snapshot();
+        sessions.insert(session);
+        self.0.sessions.set(sessions);
+    }
+
+    /// Remove a session.
+    pub fn remove_session(&self, session: &Session) {
+        let mut sessions = self.0.sessions.snapshot();
+        sessions.remove(session);
+        self.0.sessions.set(sessions);
+    }
+
+    /// Set the discussions.
+    pub fn set_discussions(&self, value: OrdSet<Discussion>) {
+        self.0.discussions.set(value);
+    }
+
+    /// Add a discussion.
+    pub fn add_discussion(&self, discussion: Discussion) {
+        let mut discussions = self.0.discussions.snapshot();
+        discussions.insert(discussion);
+        self.0.discussions.set(discussions);
+    }
+
+    /// Remove a discussion.
+    pub fn remove_discussion(&self, discussion: &Discussion) {
+        let mut discussions = self.0.discussions.snapshot();
+        discussions.remove(discussion);
+        self.0.discussions.set(discussions);
+    }
+
     pub async fn new(sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Self {
-        let mut sendlist = Self { errors: String::new(), typed: String::new(), sessions: OrderedSet::new(), discussions: OrderedSet::new() };
+        let inner = SendlistInner {
+            errors: AtomicText::new(Text::new("")),
+            typed: AtomicText::new(Text::new("")),
+            sessions: AtomicOrdSet::empty(),
+            discussions: AtomicOrdSet::empty(),
+        };
+        let sendlist = Self(Arc::new(inner));
         sendlist.set(sender, typed, multi, do_sessions, do_discussions).await;
         sendlist
     }
 
-    pub async fn set(&mut self, sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) {
-        if self.typed == typed {
+    pub async fn set(&self, sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) {
+        if self.0.typed.snapshot().as_str() == typed {
             return; // Return if sendlist unchanged
         }
 
-        self.errors.clear();
-        self.typed = typed.to_string();
-        self.sessions.clear();
-        self.discussions.clear();
+        let mut errors = String::new();
+        let mut sessions = OrdSet::new();
+        let mut discussions = OrdSet::new();
 
         if typed.is_empty() {
             return;
         }
 
-        let mut non_matches: OrderedSet<Text> = OrderedSet::new();
+        let mut non_matches: OrdSet<Text> = OrdSet::new();
         for part in typed.split(SEPARATOR as char).map(str::trim).filter(|s| !s.is_empty()) {
             let (found_session, session_matches, found_discussion, discussion_matches) =
                 sender.find_sendable(part, !multi, false, do_sessions, do_discussions).await;
 
             if let Some(session) = found_session {
-                self.sessions.insert(session);
+                sessions.insert(session);
             } else if let Some(discussion) = found_discussion {
-                self.discussions.insert(discussion);
+                discussions.insert(discussion);
             } else if multi {
                 for s in session_matches {
-                    self.sessions.insert(s);
+                    sessions.insert(s);
                 }
 
                 for d in discussion_matches {
-                    self.discussions.insert(d);
+                    discussions.insert(d);
                 }
             } else {
-                self.errors.reserve(128);
+                errors.reserve(128);
 
                 let part = part.replace(UNQUOTED_UNDERSCORE as char, "_");
                 let sessions = session_matches.len();
@@ -69,18 +148,18 @@ impl Sendlist {
                         match i {
                             0 => {
                                 let s = if sessions == 1 { "" } else { "s" };
-                                write!(self.errors, "\"{part}\" matches {sessions} name{s}: ");
+                                write!(errors, "\"{part}\" matches {sessions} name{s}: ");
                             }
-                            _ if i == sessions - 1 => self.errors += " and ",
-                            _ => self.errors += ", ",
+                            _ if i == sessions - 1 => errors += " and ",
+                            _ => errors += ", ",
                         };
 
-                        self.errors += &s.name().await;
+                        errors += &s.name().to_string();
                     }
 
-                    self.errors += if discussions > 0 { "; and " } else { ".\n" };
+                    errors += if discussions > 0 { "; and " } else { ".\n" };
                 } else if discussions > 0 {
-                    write!(self.errors, "\"{part}\" matches ");
+                    write!(errors, "\"{part}\" matches ");
                 }
 
                 if discussions > 0 {
@@ -88,16 +167,16 @@ impl Sendlist {
                         match i {
                             0 => {
                                 let s = if discussions == 1 { "" } else { "s" };
-                                write!(self.errors, "{discussions} discussion{s}: ");
+                                write!(errors, "{discussions} discussion{s}: ");
                             }
-                            _ if i == discussions - 1 => self.errors += " and ",
-                            _ => self.errors += ", ",
+                            _ if i == discussions - 1 => errors += " and ",
+                            _ => errors += ", ",
                         };
 
-                        self.errors += &d.name().await;
+                        errors += &d.name().to_string();
                     }
 
-                    self.errors += ".\n";
+                    errors += ".\n";
                 }
 
                 if sessions == 0 && discussions == 0 {
@@ -108,32 +187,40 @@ impl Sendlist {
 
         if !non_matches.is_empty() {
             for (i, s) in non_matches.iter().enumerate() {
-                self.errors += match i {
+                errors += match i {
                     0 => "No names matched \"",
                     _ if i == non_matches.len() - 1 => "\" or \"",
                     _ => "\", \"",
                 };
 
-                self.errors += s;
+                errors += s.as_str();
             }
-            self.errors += "\".\n";
+            errors += "\".\n";
         }
+
+        // Update all atomic fields
+        self.0.errors.set(Text::new(&errors));
+        self.0.typed.set(Text::new(typed));
+        self.0.sessions.set(sessions);
+        self.0.discussions.set(discussions);
     }
 
-    pub async fn expand(&self, who: &mut OrderedSet<Session>, sender: Option<Session>) -> usize {
+    pub async fn expand(&self, who: &mut OrdSet<Session>, sender: Option<Session>) -> usize {
         who.clear();
 
         // Add all sessions from sendlist
-        for session in &self.sessions {
+        let sessions = self.0.sessions.snapshot();
+        for session in sessions.iter() {
             who.insert(session.clone());
         }
 
         // Add all members from discussions
-        for discussion in &self.discussions {
-            let ref members = discussion.read().await.members;
+        let discussions = self.0.discussions.snapshot();
+        for discussion in discussions.iter() {
+            let members = discussion.members();
             for member in members.iter() {
                 match &sender {
-                    Some(sender) if sender.id == member.id => {}
+                    Some(sender) if sender.id() == member.id() => {}
                     _ => {
                         who.insert(member.clone());
                     }

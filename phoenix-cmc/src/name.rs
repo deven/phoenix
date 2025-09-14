@@ -1,5 +1,4 @@
 use crate::text::Text;
-use arc_swap::{ArcSwap, Guard};
 use std::borrow::Borrow;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -8,7 +7,7 @@ use std::sync::Arc;
 
 /// Name handle.
 #[derive(Debug, Clone, Eq)]
-pub struct Name(Arc<NameInner>);
+pub struct Name(pub Arc<NameInner>);
 
 #[derive(Debug)]
 pub struct NameInner
@@ -112,6 +111,24 @@ impl PartialEq<Name> for Text {
     }
 }
 
+impl PartialEq<NameInner> for Name {
+    fn eq(&self, other: &NameInner) -> bool {
+        self.0.name == other.name
+    }
+}
+
+impl PartialEq<Name> for NameInner {
+    fn eq(&self, other: &Name) -> bool {
+        self.name == other.0.name
+    }
+}
+
+impl PartialEq for NameInner {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
 impl PartialOrd for Name {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
@@ -153,38 +170,5 @@ impl Deref for Name {
 impl Borrow<Text> for Name {
     fn borrow(&self) -> &Text {
         &self.0.name
-    }
-}
-
-/// Lock-free atomic Name storage using arc_swap.
-pub struct CurrentName(ArcSwap<NameInner>);
-
-/// Borrow that pins the current value (no Arc clone).
-pub struct NameBorrow<'a>(Guard<'a, Arc<NameInner>>);
-
-impl<'a> Deref for NameBorrow<'a> {
-    type Target = NameInner;
-    fn deref(&self) -> &NameInner {
-        &*self.0
-    }
-}
-
-impl CurrentName {
-    pub fn new(name: Name) -> Self {
-        Self(ArcSwap::new(name.0))
-    }
-
-    /// Zero-clone, guard-backed borrow valid for this scope.
-    pub fn borrow(&self) -> NameBorrow<'_> {
-        NameBorrow(self.0.load())
-    }
-
-    /// Snapshot: clones the Arc (no guard to hold).
-    pub fn snapshot(&self) -> Name {
-        Name(self.0.load_full())
-    }
-
-    pub fn set(&self, name: Name) {
-        self.0.store(name.0)
     }
 }

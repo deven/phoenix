@@ -3,8 +3,9 @@ use crate::sendlist::Sendlist;
 use crate::telnet::Telnet;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
-use async_trait::async_trait;
+use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 // Output types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,23 +45,285 @@ pub enum OutputClass {
     NotificationClass,
 }
 
-#[async_trait]
-pub trait OutputObj: Send + Sync {
-    fn output_type(&self) -> OutputType;
-    fn output_class(&self) -> OutputClass;
-    fn time(&self) -> Timestamp;
-    async fn output(&self, telnet: &Arc<Telnet>);
+/// Unified output object enum that replaces the OutputObj trait
+#[derive(Debug, Clone, PartialEq)]
+pub enum Output {
+    Text(TextOutput),
+    Message(Message),
+    EntryNotify(EntryNotify),
+    ExitNotify(ExitNotify),
+    TransferNotify(TransferNotify),
+    AttachNotify(AttachNotify),
+    DetachNotify(DetachNotify),
+    HereNotify(HereNotify),
+    AwayNotify(AwayNotify),
+    BusyNotify(BusyNotify),
+    GoneNotify(GoneNotify),
+    CreateNotify(CreateNotify),
+    DestroyNotify(DestroyNotify),
+    JoinNotify(JoinNotify),
+    QuitNotify(QuitNotify),
+    PublicNotify(PublicNotify),
+    PrivateNotify(PrivateNotify),
+    PermitNotify(PermitNotify),
+    DepermitNotify(DepermitNotify),
+    AppointNotify(AppointNotify),
+    UnappointNotify(UnappointNotify),
+    RenameNotify(RenameNotify),
+}
+
+impl Output {
+    pub fn output_type(&self) -> OutputType {
+        match self {
+            Output::Text(obj) => obj.output_type(),
+            Output::Message(obj) => obj.output_type(),
+            Output::EntryNotify(obj) => obj.output_type(),
+            Output::ExitNotify(obj) => obj.output_type(),
+            Output::TransferNotify(obj) => obj.output_type(),
+            Output::AttachNotify(obj) => obj.output_type(),
+            Output::DetachNotify(obj) => obj.output_type(),
+            Output::HereNotify(obj) => obj.output_type(),
+            Output::AwayNotify(obj) => obj.output_type(),
+            Output::BusyNotify(obj) => obj.output_type(),
+            Output::GoneNotify(obj) => obj.output_type(),
+            Output::CreateNotify(obj) => obj.output_type(),
+            Output::DestroyNotify(obj) => obj.output_type(),
+            Output::JoinNotify(obj) => obj.output_type(),
+            Output::QuitNotify(obj) => obj.output_type(),
+            Output::PublicNotify(obj) => obj.output_type(),
+            Output::PrivateNotify(obj) => obj.output_type(),
+            Output::PermitNotify(obj) => obj.output_type(),
+            Output::DepermitNotify(obj) => obj.output_type(),
+            Output::AppointNotify(obj) => obj.output_type(),
+            Output::UnappointNotify(obj) => obj.output_type(),
+            Output::RenameNotify(obj) => obj.output_type(),
+        }
+    }
+
+    pub fn output_class(&self) -> OutputClass {
+        match self {
+            Output::Text(obj) => obj.output_class(),
+            Output::Message(obj) => obj.output_class(),
+            Output::EntryNotify(obj) => obj.output_class(),
+            Output::ExitNotify(obj) => obj.output_class(),
+            Output::TransferNotify(obj) => obj.output_class(),
+            Output::AttachNotify(obj) => obj.output_class(),
+            Output::DetachNotify(obj) => obj.output_class(),
+            Output::HereNotify(obj) => obj.output_class(),
+            Output::AwayNotify(obj) => obj.output_class(),
+            Output::BusyNotify(obj) => obj.output_class(),
+            Output::GoneNotify(obj) => obj.output_class(),
+            Output::CreateNotify(obj) => obj.output_class(),
+            Output::DestroyNotify(obj) => obj.output_class(),
+            Output::JoinNotify(obj) => obj.output_class(),
+            Output::QuitNotify(obj) => obj.output_class(),
+            Output::PublicNotify(obj) => obj.output_class(),
+            Output::PrivateNotify(obj) => obj.output_class(),
+            Output::PermitNotify(obj) => obj.output_class(),
+            Output::DepermitNotify(obj) => obj.output_class(),
+            Output::AppointNotify(obj) => obj.output_class(),
+            Output::UnappointNotify(obj) => obj.output_class(),
+            Output::RenameNotify(obj) => obj.output_class(),
+        }
+    }
+
+    pub fn time(&self) -> Timestamp {
+        match self {
+            Output::Text(obj) => obj.time(),
+            Output::Message(obj) => obj.time(),
+            Output::EntryNotify(obj) => obj.time(),
+            Output::ExitNotify(obj) => obj.time(),
+            Output::TransferNotify(obj) => obj.time(),
+            Output::AttachNotify(obj) => obj.time(),
+            Output::DetachNotify(obj) => obj.time(),
+            Output::HereNotify(obj) => obj.time(),
+            Output::AwayNotify(obj) => obj.time(),
+            Output::BusyNotify(obj) => obj.time(),
+            Output::GoneNotify(obj) => obj.time(),
+            Output::CreateNotify(obj) => obj.time(),
+            Output::DestroyNotify(obj) => obj.time(),
+            Output::JoinNotify(obj) => obj.time(),
+            Output::QuitNotify(obj) => obj.time(),
+            Output::PublicNotify(obj) => obj.time(),
+            Output::PrivateNotify(obj) => obj.time(),
+            Output::PermitNotify(obj) => obj.time(),
+            Output::DepermitNotify(obj) => obj.time(),
+            Output::AppointNotify(obj) => obj.time(),
+            Output::UnappointNotify(obj) => obj.time(),
+            Output::RenameNotify(obj) => obj.time(),
+        }
+    }
+
+    pub async fn output(&self, telnet: &Telnet) {
+        match self {
+            Output::Text(obj) => obj.output(telnet).await,
+            Output::Message(obj) => obj.output(telnet).await,
+            Output::EntryNotify(obj) => obj.output(telnet).await,
+            Output::ExitNotify(obj) => obj.output(telnet).await,
+            Output::TransferNotify(obj) => obj.output(telnet).await,
+            Output::AttachNotify(obj) => obj.output(telnet).await,
+            Output::DetachNotify(obj) => obj.output(telnet).await,
+            Output::HereNotify(obj) => obj.output(telnet).await,
+            Output::AwayNotify(obj) => obj.output(telnet).await,
+            Output::BusyNotify(obj) => obj.output(telnet).await,
+            Output::GoneNotify(obj) => obj.output(telnet).await,
+            Output::CreateNotify(obj) => obj.output(telnet).await,
+            Output::DestroyNotify(obj) => obj.output(telnet).await,
+            Output::JoinNotify(obj) => obj.output(telnet).await,
+            Output::QuitNotify(obj) => obj.output(telnet).await,
+            Output::PublicNotify(obj) => obj.output(telnet).await,
+            Output::PrivateNotify(obj) => obj.output(telnet).await,
+            Output::PermitNotify(obj) => obj.output(telnet).await,
+            Output::DepermitNotify(obj) => obj.output(telnet).await,
+            Output::AppointNotify(obj) => obj.output(telnet).await,
+            Output::UnappointNotify(obj) => obj.output(telnet).await,
+            Output::RenameNotify(obj) => obj.output(telnet).await,
+        }
+    }
+}
+
+// From implementations for easy conversion
+impl From<TextOutput> for Output {
+    fn from(obj: TextOutput) -> Self {
+        Output::Text(obj)
+    }
+}
+
+impl From<Message> for Output {
+    fn from(obj: Message) -> Self {
+        Output::Message(obj)
+    }
+}
+
+impl From<EntryNotify> for Output {
+    fn from(obj: EntryNotify) -> Self {
+        Output::EntryNotify(obj)
+    }
+}
+
+impl From<ExitNotify> for Output {
+    fn from(obj: ExitNotify) -> Self {
+        Output::ExitNotify(obj)
+    }
+}
+
+impl From<TransferNotify> for Output {
+    fn from(obj: TransferNotify) -> Self {
+        Output::TransferNotify(obj)
+    }
+}
+
+impl From<AttachNotify> for Output {
+    fn from(obj: AttachNotify) -> Self {
+        Output::AttachNotify(obj)
+    }
+}
+
+impl From<DetachNotify> for Output {
+    fn from(obj: DetachNotify) -> Self {
+        Output::DetachNotify(obj)
+    }
+}
+
+impl From<HereNotify> for Output {
+    fn from(obj: HereNotify) -> Self {
+        Output::HereNotify(obj)
+    }
+}
+
+impl From<AwayNotify> for Output {
+    fn from(obj: AwayNotify) -> Self {
+        Output::AwayNotify(obj)
+    }
+}
+
+impl From<BusyNotify> for Output {
+    fn from(obj: BusyNotify) -> Self {
+        Output::BusyNotify(obj)
+    }
+}
+
+impl From<GoneNotify> for Output {
+    fn from(obj: GoneNotify) -> Self {
+        Output::GoneNotify(obj)
+    }
+}
+
+impl From<CreateNotify> for Output {
+    fn from(obj: CreateNotify) -> Self {
+        Output::CreateNotify(obj)
+    }
+}
+
+impl From<DestroyNotify> for Output {
+    fn from(obj: DestroyNotify) -> Self {
+        Output::DestroyNotify(obj)
+    }
+}
+
+impl From<JoinNotify> for Output {
+    fn from(obj: JoinNotify) -> Self {
+        Output::JoinNotify(obj)
+    }
+}
+
+impl From<QuitNotify> for Output {
+    fn from(obj: QuitNotify) -> Self {
+        Output::QuitNotify(obj)
+    }
+}
+
+impl From<PublicNotify> for Output {
+    fn from(obj: PublicNotify) -> Self {
+        Output::PublicNotify(obj)
+    }
+}
+
+impl From<PrivateNotify> for Output {
+    fn from(obj: PrivateNotify) -> Self {
+        Output::PrivateNotify(obj)
+    }
+}
+
+impl From<PermitNotify> for Output {
+    fn from(obj: PermitNotify) -> Self {
+        Output::PermitNotify(obj)
+    }
+}
+
+impl From<DepermitNotify> for Output {
+    fn from(obj: DepermitNotify) -> Self {
+        Output::DepermitNotify(obj)
+    }
+}
+
+impl From<AppointNotify> for Output {
+    fn from(obj: AppointNotify) -> Self {
+        Output::AppointNotify(obj)
+    }
+}
+
+impl From<UnappointNotify> for Output {
+    fn from(obj: UnappointNotify) -> Self {
+        Output::UnappointNotify(obj)
+    }
+}
+
+impl From<RenameNotify> for Output {
+    fn from(obj: RenameNotify) -> Self {
+        Output::RenameNotify(obj)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct TextOutput {
-    pub text: String,
+    pub text: Text,
     pub time: Timestamp,
 }
 
 impl TextOutput {
-    pub fn new(text: String) -> Self {
-        Self { text, time: Timestamp::new() }
+    pub fn new(text: impl Into<Text>) -> Output {
+        Output::Text(Self { text: text.into(), time: Timestamp::new() })
     }
 }
 
@@ -78,13 +341,17 @@ impl OutputObj for TextOutput {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         telnet.output(&self.text).await;
     }
 }
 
+/// Message handle.
 #[derive(Debug, Clone)]
-pub struct Message {
+pub struct Message(pub Arc<MessageInner>);
+
+#[derive(Debug)]
+pub struct MessageInner {
     pub output_type: OutputType,
     pub from: Name,
     pub to: Arc<Sendlist>,
@@ -93,15 +360,16 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(output_type: OutputType, sender: Name, dest: Arc<Sendlist>, msg: impl Into<Text>) -> Self {
-        Self { output_type, from: sender, to: dest, text: msg.into(), time: Timestamp::new() }
+    pub fn new(output_type: OutputType, sender: Name, dest: Arc<Sendlist>, msg: impl Into<Text>) -> Output {
+        let inner = MessageInner { output_type, from: sender, to: dest, text: msg.into(), time: Timestamp::new() };
+        Output::Message(Self(Arc::new(inner)))
     }
 }
 
 #[async_trait]
 impl OutputObj for Message {
     fn output_type(&self) -> OutputType {
-        self.output_type
+        self.0.output_type
     }
 
     fn output_class(&self) -> OutputClass {
@@ -109,11 +377,11 @@ impl OutputObj for Message {
     }
 
     fn time(&self) -> Timestamp {
-        self.time
+        self.0.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
-        telnet.print_message(self.output_type, self.time, &self.from, &self.to, &self.text).await;
+    async fn output(&self, telnet: &Telnet) {
+        telnet.print_message(self.0.output_type, self.0.time, &self.0.from, &self.0.to, &self.0.text).await;
     }
 }
 
@@ -124,8 +392,8 @@ pub struct EntryNotify {
 }
 
 impl EntryNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::EntryNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -143,7 +411,7 @@ impl OutputObj for EntryNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} has entered Phoenix! [{stamp}] ***\n")).await;
@@ -157,8 +425,8 @@ pub struct ExitNotify {
 }
 
 impl ExitNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::ExitNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -176,7 +444,7 @@ impl OutputObj for ExitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} has left Phoenix! [{stamp}] ***\n")).await;
@@ -190,8 +458,8 @@ pub struct TransferNotify {
 }
 
 impl TransferNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::TransferNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -209,7 +477,7 @@ impl OutputObj for TransferNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} has transferred to new connection. [{stamp}] ***\n")).await;
@@ -223,8 +491,8 @@ pub struct AttachNotify {
 }
 
 impl AttachNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::AttachNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -242,7 +510,7 @@ impl OutputObj for AttachNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} is now attached. [{stamp}] ***\n")).await;
@@ -257,8 +525,8 @@ pub struct DetachNotify {
 }
 
 impl DetachNotify {
-    pub fn new(who: Name, i: bool) -> Self {
-        Self { name: who, intentional: i, time: Timestamp::new() }
+    pub fn new(who: Name, i: bool) -> Output {
+        Output::DetachNotify(Self { name: who, intentional: i, time: Timestamp::new() })
     }
 }
 
@@ -276,7 +544,7 @@ impl OutputObj for DetachNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         let intentionally = if self.intentional { "intentionally" } else { "accidentally" };
@@ -291,8 +559,8 @@ pub struct HereNotify {
 }
 
 impl HereNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::HereNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -310,7 +578,7 @@ impl OutputObj for HereNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} is now here. [{stamp}] ***\n")).await;
@@ -324,8 +592,8 @@ pub struct AwayNotify {
 }
 
 impl AwayNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::AwayNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -343,7 +611,7 @@ impl OutputObj for AwayNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} is now away. [{stamp}] ***\n")).await;
@@ -357,8 +625,8 @@ pub struct BusyNotify {
 }
 
 impl BusyNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::BusyNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -376,7 +644,7 @@ impl OutputObj for BusyNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} is now busy. [{stamp}] ***\n")).await;
@@ -390,8 +658,8 @@ pub struct GoneNotify {
 }
 
 impl GoneNotify {
-    pub fn new(who: Name) -> Self {
-        Self { name: who, time: Timestamp::new() }
+    pub fn new(who: Name) -> Output {
+        Output::GoneNotify(Self { name: who, time: Timestamp::new() })
     }
 }
 
@@ -409,7 +677,7 @@ impl OutputObj for GoneNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let stamp = &self.time.stamp();
         telnet.output(&format!("*** {name} is now gone. [{stamp}] ***\n")).await;
@@ -426,8 +694,8 @@ pub struct CreateNotify {
 }
 
 impl CreateNotify {
-    pub fn new(disc_name: Text, disc_title: Text, is_public: bool, creator: Name) -> Self {
-        Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator, time: Timestamp::new() }
+    pub fn new(disc_name: Text, disc_title: Text, is_public: bool, creator: Name) -> Output {
+        Output::CreateNotify(Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator, time: Timestamp::new() })
     }
 }
 
@@ -445,7 +713,7 @@ impl OutputObj for CreateNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let creator = &self.creator;
         let disc = &self.discussion_name;
         let title = &self.discussion_title;
@@ -466,8 +734,8 @@ pub struct DestroyNotify {
 }
 
 impl DestroyNotify {
-    pub fn new(disc_name: Text, who: Name) -> Self {
-        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, who: Name) -> Output {
+        Output::DestroyNotify(Self { discussion_name: disc_name, name: who, time: Timestamp::new() })
     }
 }
 
@@ -485,7 +753,7 @@ impl OutputObj for DestroyNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -501,8 +769,8 @@ pub struct JoinNotify {
 }
 
 impl JoinNotify {
-    pub fn new(disc_name: Text, who: Name) -> Self {
-        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, who: Name) -> Output {
+        Output::JoinNotify(Self { discussion_name: disc_name, name: who, time: Timestamp::new() })
     }
 }
 
@@ -520,7 +788,7 @@ impl OutputObj for JoinNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -536,8 +804,8 @@ pub struct QuitNotify {
 }
 
 impl QuitNotify {
-    pub fn new(disc_name: Text, who: Name) -> Self {
-        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, who: Name) -> Output {
+        Output::QuitNotify(Self { discussion_name: disc_name, name: who, time: Timestamp::new() })
     }
 }
 
@@ -555,7 +823,7 @@ impl OutputObj for QuitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -571,8 +839,8 @@ pub struct PublicNotify {
 }
 
 impl PublicNotify {
-    pub fn new(disc_name: Text, who: Name) -> Self {
-        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, who: Name) -> Output {
+        Output::PublicNotify(Self { discussion_name: disc_name, name: who, time: Timestamp::new() })
     }
 }
 
@@ -590,7 +858,7 @@ impl OutputObj for PublicNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -606,8 +874,8 @@ pub struct PrivateNotify {
 }
 
 impl PrivateNotify {
-    pub fn new(disc_name: Text, who: Name) -> Self {
-        Self { discussion_name: disc_name, name: who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, who: Name) -> Output {
+        Output::PrivateNotify(Self { discussion_name: disc_name, name: who, time: Timestamp::new() })
     }
 }
 
@@ -625,7 +893,7 @@ impl OutputObj for PrivateNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -643,8 +911,8 @@ pub struct PermitNotify {
 }
 
 impl PermitNotify {
-    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool) -> Self {
-        Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, time: Timestamp::new() }
+    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool) -> Output {
+        Output::PermitNotify(Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, time: Timestamp::new() })
     }
 }
 
@@ -662,7 +930,7 @@ impl OutputObj for PermitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
@@ -693,8 +961,15 @@ pub struct DepermitNotify {
 }
 
 impl DepermitNotify {
-    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool, removed_who: Option<Name>) -> Self {
-        Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, removed: removed_who, time: Timestamp::new() }
+    pub fn new(disc_name: Text, public: bool, who: Name, flag: bool, removed_who: Option<Name>) -> Output {
+        Output::DepermitNotify(Self {
+            discussion_name: disc_name,
+            is_public: public,
+            name: who,
+            is_explicit: flag,
+            removed: removed_who,
+            time: Timestamp::new(),
+        })
     }
 }
 
@@ -712,16 +987,21 @@ impl OutputObj for DepermitNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
-        let session_name = telnet.session_name().await;
+    async fn output(&self, telnet: &Telnet) {
+        let session_name = telnet.session_name();
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
         if self.is_public {
             if let Some(removed) = &self.removed {
-                if removed == session_name {
-                    telnet.output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
+                if let Some(session_name) = &session_name {
+                    let session_name = Name::new(session_name.as_str(), None::<String>);
+                    if removed == &session_name {
+                        telnet.output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
+                    } else {
+                        telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                    }
                 } else {
                     telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                 }
@@ -733,8 +1013,13 @@ impl OutputObj for DepermitNotify {
                 telnet.output(&format!("*** {name} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
-                    if removed == session_name {
-                        telnet.output(&format!("*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
+                    if let Some(session_name) = &session_name {
+                        let session_name = Name::new(session_name.as_str(), None::<String>);
+                        if removed == &session_name {
+                            telnet.output(&format!("*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
+                        } else {
+                            telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
+                        }
                     } else {
                         telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                     }
@@ -774,10 +1059,15 @@ impl OutputObj for AppointNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
-        let session_name = telnet.session_name().await;
+    async fn output(&self, telnet: &Telnet) {
+        let session_name = telnet.session_name();
         let appointer = &self.appointer;
-        let appointee = &self.appointee.you(session_name);
+        let appointee = if let Some(session_name) = &session_name {
+            let session_name = Name::new(session_name.as_str(), None::<String>);
+            self.appointee.you(&session_name)
+        } else {
+            self.appointee.as_str()
+        };
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
@@ -813,10 +1103,15 @@ impl OutputObj for UnappointNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
-        let session_name = telnet.session_name().await;
+    async fn output(&self, telnet: &Telnet) {
+        let session_name = telnet.session_name();
         let unappointer = &self.unappointer;
-        let unappointee = &self.unappointee.you(session_name);
+        let unappointee = if let Some(session_name) = &session_name {
+            let session_name = Name::new(session_name.as_str(), None::<String>);
+            self.unappointee.you(&session_name)
+        } else {
+            self.unappointee.as_str()
+        };
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
@@ -832,8 +1127,8 @@ pub struct RenameNotify {
 }
 
 impl RenameNotify {
-    pub fn new(oldstr: impl Into<Text>, newstr: impl Into<Text>) -> Self {
-        Self { oldname: oldstr.into(), newname: newstr.into(), time: Timestamp::new() }
+    pub fn new(oldstr: impl Into<Text>, newstr: impl Into<Text>) -> Output {
+        Output::RenameNotify(Self { oldname: oldstr.into(), newname: newstr.into(), time: Timestamp::new() })
     }
 }
 
@@ -851,7 +1146,7 @@ impl OutputObj for RenameNotify {
         self.time
     }
 
-    async fn output(&self, telnet: &Arc<Telnet>) {
+    async fn output(&self, telnet: &Telnet) {
         let oldname = &self.oldname;
         let newname = &self.newname;
         let stamp = &self.time.stamp();
@@ -862,7 +1157,7 @@ impl OutputObj for RenameNotify {
 // Output stream for queuing output objects
 #[derive(Debug)]
 pub struct OutputStream {
-    pub queue: tokio::sync::Mutex<Vec<Arc<dyn OutputObj>>>,
+    pub queue: tokio::sync::Mutex<Vec<Output>>,
     pub acknowledged: std::sync::atomic::AtomicUsize,
     pub sent: std::sync::atomic::AtomicUsize,
 }
@@ -880,20 +1175,20 @@ impl OutputStream {
         }
     }
 
-    pub async fn attach(&self, telnet: &Arc<Telnet>) {
+    pub async fn attach(&self, telnet: &Telnet) {
         self.sent.store(0, std::sync::atomic::Ordering::Relaxed);
         self.acknowledged.store(0, std::sync::atomic::Ordering::Relaxed);
 
-        if telnet.acknowledge().await {
+        if telnet.acknowledge() {
             while self.send_next(telnet).await {}
         }
     }
 
-    pub async fn enqueue(&self, telnet: Option<&Arc<Telnet>>, out: Arc<dyn OutputObj>) {
+    pub async fn enqueue(&self, telnet: Option<&Telnet>, out: Output) {
         self.queue.lock().await.push(out);
 
         if let Some(telnet) = telnet {
-            if telnet.acknowledge().await {
+            if telnet.acknowledge() {
                 while self.send_next(telnet).await {}
             } else if self.queue.lock().await.len() == 1 {
                 self.send_next(telnet).await;
@@ -901,9 +1196,9 @@ impl OutputStream {
         }
     }
 
-    pub async fn unenqueue(&self, out: &dyn OutputObj) {
+    pub async fn unenqueue(&self, out: &Output) {
         let mut queue = self.queue.lock().await;
-        queue.retain(|item| !std::ptr::eq(item.as_ref() as *const _, out as *const _));
+        queue.retain(|item| item != out);
     }
 
     pub async fn dequeue(&self) {
@@ -917,7 +1212,7 @@ impl OutputStream {
         }
     }
 
-    pub async fn send_next(&self, telnet: &Arc<Telnet>) -> bool {
+    pub async fn send_next(&self, telnet: &Telnet) -> bool {
         let queue = self.queue.lock().await;
         let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
 

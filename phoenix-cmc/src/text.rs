@@ -626,7 +626,7 @@ impl From<Box<str>> for Text {
 }
 
 // Small newtype so the owner satisfies AsRef<[u8]>
-struct ArcStrOwner(Arc<str>);
+struct ArcStrOwner(pub Arc<str>);
 impl AsRef<[u8]> for ArcStrOwner {
     #[inline]
     fn as_ref(&self) -> &[u8] {
