@@ -5,11 +5,348 @@ use crate::sendlist::{Sendlist, SendlistInner};
 use crate::session::{Session, SessionConnection, SessionInner};
 use crate::telnet::{Telnet, TelnetInner};
 use crate::text::Text;
-use crate::user::{User, UserInner};
 use crate::timestamp::Timestamp;
+use crate::user::{User, UserInner};
 use arc_swap::{ArcSwap, ArcSwapOption, Guard};
 use im::{HashMap, HashSet, OrdMap, OrdSet, Vector};
+use std::sync::atomic::{AtomicBool, AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize, AtomicU16, AtomicU32, AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
+
+// AtomicUsizeOption
+#[derive(Debug)]
+pub struct AtomicUsizeOption(AtomicUsize);
+
+impl AtomicUsizeOption {
+    const NONE: usize = usize::MAX;
+
+    pub fn new(value: Option<usize>) -> Self {
+        Self(AtomicUsize::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<usize> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<usize>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+
+    pub fn swap(&self, value: Option<usize>, ordering: Ordering) -> Option<usize> {
+        match self.0.swap(value.unwrap_or(Self::NONE), ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn compare_exchange(&self, current: Option<usize>, new: Option<usize>, success: Ordering, failure: Ordering) -> Result<Option<usize>, Option<usize>> {
+        match self.0.compare_exchange(current.unwrap_or(Self::NONE), new.unwrap_or(Self::NONE), success, failure) {
+            Ok(Self::NONE) => Ok(None),
+            Ok(v) => Ok(Some(v)),
+            Err(Self::NONE) => Err(None),
+            Err(v) => Err(Some(v)),
+        }
+    }
+}
+
+// AtomicU64Option
+#[derive(Debug)]
+pub struct AtomicU64Option(AtomicU64);
+
+impl AtomicU64Option {
+    const NONE: u64 = u64::MAX;
+
+    pub fn new(value: Option<u64>) -> Self {
+        Self(AtomicU64::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<u64> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<u64>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+
+    pub fn swap(&self, value: Option<u64>, ordering: Ordering) -> Option<u64> {
+        match self.0.swap(value.unwrap_or(Self::NONE), ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+}
+
+// AtomicU32Option
+#[derive(Debug)]
+pub struct AtomicU32Option(AtomicU32);
+
+impl AtomicU32Option {
+    const NONE: u32 = u32::MAX;
+
+    pub fn new(value: Option<u32>) -> Self {
+        Self(AtomicU32::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<u32> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<u32>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+
+    pub fn swap(&self, value: Option<u32>, ordering: Ordering) -> Option<u32> {
+        match self.0.swap(value.unwrap_or(Self::NONE), ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+}
+
+// AtomicU16Option
+#[derive(Debug)]
+pub struct AtomicU16Option(AtomicU16);
+
+impl AtomicU16Option {
+    const NONE: u16 = u16::MAX;
+
+    pub fn new(value: Option<u16>) -> Self {
+        Self(AtomicU16::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<u16> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<u16>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicU8Option
+#[derive(Debug)]
+pub struct AtomicU8Option(AtomicU8);
+
+impl AtomicU8Option {
+    const NONE: u8 = u8::MAX;
+
+    pub fn new(value: Option<u8>) -> Self {
+        Self(AtomicU8::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<u8> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<u8>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicIsizeOption
+#[derive(Debug)]
+pub struct AtomicIsizeOption(AtomicIsize);
+
+impl AtomicIsizeOption {
+    const NONE: isize = isize::MAX;
+
+    pub fn new(value: Option<isize>) -> Self {
+        Self(AtomicIsize::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<isize> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<isize>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicI64Option
+#[derive(Debug)]
+pub struct AtomicI64Option(AtomicI64);
+
+impl AtomicI64Option {
+    const NONE: i64 = i64::MAX;
+
+    pub fn new(value: Option<i64>) -> Self {
+        Self(AtomicI64::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<i64> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<i64>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicI32Option
+#[derive(Debug)]
+pub struct AtomicI32Option(AtomicI32);
+
+impl AtomicI32Option {
+    const NONE: i32 = i32::MAX;
+
+    pub fn new(value: Option<i32>) -> Self {
+        Self(AtomicI32::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<i32> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<i32>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicI16Option
+#[derive(Debug)]
+pub struct AtomicI16Option(AtomicI16);
+
+impl AtomicI16Option {
+    const NONE: i16 = i16::MAX;
+
+    pub fn new(value: Option<i16>) -> Self {
+        Self(AtomicI16::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<i16> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<i16>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicI8Option
+#[derive(Debug)]
+pub struct AtomicI8Option(AtomicI8);
+
+impl AtomicI8Option {
+    const NONE: i8 = i8::MAX;
+
+    pub fn new(value: Option<i8>) -> Self {
+        Self(AtomicI8::new(value.unwrap_or(Self::NONE)))
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<i8> {
+        match self.0.load(ordering) {
+            Self::NONE => None,
+            v => Some(v),
+        }
+    }
+
+    pub fn store(&self, value: Option<i8>, ordering: Ordering) {
+        self.0.store(value.unwrap_or(Self::NONE), ordering);
+    }
+}
+
+// AtomicBoolOption
+#[derive(Debug)]
+pub struct AtomicBoolOption {
+    has_value: AtomicBool,
+    value: AtomicBool,
+}
+
+impl AtomicBoolOption {
+    pub fn new(value: Option<bool>) -> Self {
+        Self { has_value: AtomicBool::new(value.is_some()), value: AtomicBool::new(value.unwrap_or(false)) }
+    }
+
+    pub fn load(&self, ordering: Ordering) -> Option<bool> {
+        if self.has_value.load(ordering) {
+            Some(self.value.load(ordering))
+        } else {
+            None
+        }
+    }
+
+    pub fn store(&self, value: Option<bool>, ordering: Ordering) {
+        match value {
+            Some(v) => {
+                self.value.store(v, ordering);
+                self.has_value.store(true, ordering);
+            }
+            None => {
+                self.has_value.store(false, ordering);
+            }
+        }
+    }
+
+    pub fn swap(&self, value: Option<bool>, ordering: Ordering) -> Option<bool> {
+        let had_value = self.has_value.swap(value.is_some(), ordering);
+        if had_value {
+            let old_value = self.value.swap(value.unwrap_or(false), ordering);
+            Some(old_value)
+        } else {
+            if let Some(v) = value {
+                self.value.store(v, ordering);
+            }
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_atomic_usize_option() {
+        let opt = AtomicUsizeOption::new(Some(42));
+        assert_eq!(opt.load(Ordering::Relaxed), Some(42));
+
+        opt.store(None, Ordering::Relaxed);
+        assert_eq!(opt.load(Ordering::Relaxed), None);
+
+        opt.store(Some(100), Ordering::Relaxed);
+        assert_eq!(opt.swap(Some(200), Ordering::Relaxed), Some(100));
+        assert_eq!(opt.load(Ordering::Relaxed), Some(200));
+    }
+
+    #[test]
+    fn test_atomic_bool_option() {
+        let opt = AtomicBoolOption::new(Some(true));
+        assert_eq!(opt.load(Ordering::Relaxed), Some(true));
+
+        opt.store(None, Ordering::Relaxed);
+        assert_eq!(opt.load(Ordering::Relaxed), None);
+
+        opt.store(Some(false), Ordering::Relaxed);
+        assert_eq!(opt.load(Ordering::Relaxed), Some(false));
+    }
+}
 
 /// Lock-free atomic OrdSet storage using arc_swap.
 #[derive(Debug)]
