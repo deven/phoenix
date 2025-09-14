@@ -11,7 +11,6 @@ description = "Phoenix Computer-Mediated Communication system"
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 indexmap = "2"
-dashmap = "5"
 anyhow = "1"
 thiserror = "1"
 bytes = "1"
@@ -27,6 +26,7 @@ async-trait = "0.1"
 unicase = "2.8.1"
 async-backtrace = "0.2.7"
 arc-swap = "1.7"
+im = "15"
 
 [profile.release]
 lto = true

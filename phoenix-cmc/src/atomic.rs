@@ -1,0 +1,1303 @@
+use crate::discussion::{Discussion, DiscussionInner};
+use crate::name::{Name, NameInner};
+use crate::output::{Message, MessageInner};
+use crate::sendlist::{Sendlist, SendlistInner};
+use crate::session::{Session, SessionConnection, SessionInner};
+use crate::telnet::{Telnet, TelnetInner};
+use crate::text::Text;
+use crate::user::{User, UserInner};
+use crate::timestamp::Timestamp;
+use arc_swap::{ArcSwap, ArcSwapOption, Guard};
+use im::{HashMap, HashSet, OrdMap, OrdSet, Vector};
+use std::sync::Arc;
+
+/// Lock-free atomic OrdSet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicOrdSet<T>(ArcSwap<OrdSet<T>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OrdSetBorrow<T>(Guard<Arc<OrdSet<T>>>);
+
+impl<T> OrdSetBorrow<T> {
+    pub fn as_ref(&self) -> &OrdSet<T> {
+        &self.0
+    }
+}
+
+impl<T> AtomicOrdSet<T> {
+    pub fn new(set: OrdSet<T>) -> Self {
+        Self(ArcSwap::new(set))
+    }
+
+    pub fn empty() -> Self {
+        Self::new(OrdSet::new())
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OrdSetBorrow<T> {
+        OrdSetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> OrdSet<T> {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, set: OrdSet<T>) {
+        self.0.store(set)
+    }
+
+    /// Check if the set is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.load().is_empty()
+    }
+
+    /// Get the size of the set.
+    pub fn len(&self) -> usize {
+        self.0.load().len()
+    }
+}
+
+impl<T> Default for AtomicOrdSet<T> {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl<T> From<OrdSet<T>> for AtomicOrdSet<T> {
+    fn from(set: OrdSet<T>) -> Self {
+        Self::new(set)
+    }
+}
+
+/// Lock-free atomic HashSet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicHashSet<T>(ArcSwap<HashSet<T>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct HashSetBorrow<T>(Guard<Arc<HashSet<T>>>);
+
+impl<T> HashSetBorrow<T> {
+    pub fn as_ref(&self) -> &HashSet<T> {
+        &self.0
+    }
+}
+
+impl<T> AtomicHashSet<T> {
+    pub fn new(set: HashSet<T>) -> Self {
+        Self(ArcSwap::new(set))
+    }
+
+    pub fn empty() -> Self {
+        Self::new(HashSet::new())
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> HashSetBorrow<T> {
+        HashSetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> HashSet<T> {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, set: HashSet<T>) {
+        self.0.store(set)
+    }
+
+    /// Check if the set is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.load().is_empty()
+    }
+
+    /// Get the size of the set.
+    pub fn len(&self) -> usize {
+        self.0.load().len()
+    }
+}
+
+impl<T> Default for AtomicHashSet<T> {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl<T> From<HashSet<T>> for AtomicHashSet<T> {
+    fn from(set: HashSet<T>) -> Self {
+        Self::new(set)
+    }
+}
+
+/// Lock-free atomic Vector storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicVector<T>(ArcSwap<Vector<T>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct VectorBorrow<T>(Guard<Arc<Vector<T>>>);
+
+impl<T> VectorBorrow<T> {
+    pub fn as_ref(&self) -> &Vector<T> {
+        &self.0
+    }
+}
+
+impl<T> AtomicVector<T> {
+    pub fn new(vec: Vector<T>) -> Self {
+        Self(ArcSwap::new(vec))
+    }
+
+    pub fn empty() -> Self {
+        Self::new(Vector::new())
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> VectorBorrow<T> {
+        VectorBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Vector<T> {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, vec: Vector<T>) {
+        self.0.store(vec)
+    }
+
+    /// Check if the vector is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.load().is_empty()
+    }
+
+    /// Get the length of the vector.
+    pub fn len(&self) -> usize {
+        self.0.load().len()
+    }
+}
+
+impl<T> Default for AtomicVector<T> {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl<T> From<Vector<T>> for AtomicVector<T> {
+    fn from(vec: Vector<T>) -> Self {
+        Self::new(vec)
+    }
+}
+
+/// Lock-free atomic OrdMap storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicOrdMap<K, V>(ArcSwap<OrdMap<K, V>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OrdMapBorrow<K, V>(Guard<Arc<OrdMap<K, V>>>);
+
+impl<K, V> OrdMapBorrow<K, V> {
+    pub fn as_ref(&self) -> &OrdMap<K, V> {
+        &self.0
+    }
+}
+
+impl<K, V> AtomicOrdMap<K, V> {
+    pub fn new(map: OrdMap<K, V>) -> Self {
+        Self(ArcSwap::new(map))
+    }
+
+    pub fn empty() -> Self {
+        Self::new(OrdMap::new())
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OrdMapBorrow<K, V> {
+        OrdMapBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> OrdMap<K, V> {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, map: OrdMap<K, V>) {
+        self.0.store(map)
+    }
+
+    /// Check if the map is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.load().is_empty()
+    }
+
+    /// Get the size of the map.
+    pub fn len(&self) -> usize {
+        self.0.load().len()
+    }
+}
+
+impl<K, V> Default for AtomicOrdMap<K, V> {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl<K, V> From<OrdMap<K, V>> for AtomicOrdMap<K, V> {
+    fn from(map: OrdMap<K, V>) -> Self {
+        Self::new(map)
+    }
+}
+
+/// Lock-free atomic HashMap storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicHashMap<K, V>(ArcSwap<HashMap<K, V>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct HashMapBorrow<K, V>(Guard<Arc<HashMap<K, V>>>);
+
+impl<K, V> HashMapBorrow<K, V> {
+    pub fn as_ref(&self) -> &HashMap<K, V> {
+        &self.0
+    }
+}
+
+impl<K, V> AtomicHashMap<K, V> {
+    pub fn new(map: HashMap<K, V>) -> Self {
+        Self(ArcSwap::new(map))
+    }
+
+    pub fn empty() -> Self {
+        Self::new(HashMap::new())
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> HashMapBorrow<K, V> {
+        HashMapBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> HashMap<K, V> {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, map: HashMap<K, V>) {
+        self.0.store(map)
+    }
+
+    /// Check if the map is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.load().is_empty()
+    }
+
+    /// Get the size of the map.
+    pub fn len(&self) -> usize {
+        self.0.load().len()
+    }
+
+    /// Get a value by key, returning Some(value.clone()) if found.
+    pub fn get<Q>(&self, key: &Q) -> Option<V>
+    where
+        K: std::borrow::Borrow<Q>,
+        Q: std::hash::Hash + Eq + ?Sized,
+        V: Clone,
+    {
+        self.0.load().get(key).cloned()
+    }
+
+    /// Remove a key-value pair, returning the old value if it existed.
+    pub fn remove<Q>(&self, key: &Q) -> Option<V>
+    where
+        K: std::hash::Hash + Eq + Clone,
+        V: Clone,
+        K: std::borrow::Borrow<Q>,
+        Q: std::hash::Hash + Eq + ?Sized,
+    {
+        let current = self.0.load_full();
+        if let Some(old_value) = current.get(key) {
+            let old_value = old_value.clone();
+            let new_map = current.without(key);
+            self.0.store(Arc::new(new_map));
+            Some(old_value)
+        } else {
+            None
+        }
+    }
+
+    /// Insert a key-value pair, returning the old value if it existed.
+    pub fn insert(&self, key: K, value: V) -> Option<V>
+    where
+        K: std::hash::Hash + Eq + Clone,
+        V: Clone,
+    {
+        let current = self.0.load_full();
+        let old_value = current.get(&key).cloned();
+        let new_map = current.update(key, value);
+        self.0.store(Arc::new(new_map));
+        old_value
+    }
+
+    /// Get an iterator over all key-value pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (K, V)> + '_
+    where
+        K: Clone,
+        V: Clone,
+    {
+        self.snapshot().iter().map(|(k, v)| (k.clone(), v.clone())).collect::<Vec<_>>().into_iter()
+    }
+}
+
+impl<K, V> Default for AtomicHashMap<K, V> {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl<K, V> From<HashMap<K, V>> for AtomicHashMap<K, V> {
+    fn from(map: HashMap<K, V>) -> Self {
+        Self::new(map)
+    }
+}
+
+/// Lock-free atomic required Discussion storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicDiscussion(ArcSwap<DiscussionInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct DiscussionBorrow(Guard<Arc<DiscussionInner>>);
+
+impl DiscussionBorrow {
+    pub fn as_ref(&self) -> &DiscussionInner {
+        &self.0
+    }
+}
+
+impl AtomicDiscussion {
+    pub fn new(discussion: Discussion) -> Self {
+        Self(ArcSwap::new(discussion.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> DiscussionBorrow {
+        DiscussionBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Discussion {
+        Discussion(self.0.load_full())
+    }
+
+    pub fn set(&self, discussion: Discussion) {
+        self.0.store(discussion.0)
+    }
+}
+
+impl From<Discussion> for AtomicDiscussion {
+    fn from(discussion: Discussion) -> Self {
+        Self::new(discussion)
+    }
+}
+
+/// Lock-free atomic optional Discussion storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicDiscussionOption(ArcSwapOption<DiscussionInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionDiscussionBorrow(Guard<Option<Arc<DiscussionInner>>>);
+
+impl OptionDiscussionBorrow {
+    pub fn as_ref(&self) -> Option<&DiscussionInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicDiscussionOption {
+    pub fn new(discussion: Option<Discussion>) -> Self {
+        Self(ArcSwapOption::new(discussion.map(|d| d.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionDiscussionBorrow {
+        OptionDiscussionBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Discussion> {
+        self.0.load_full().map(Discussion)
+    }
+
+    pub fn set(&self, discussion: Option<Discussion>) {
+        self.0.store(discussion.map(|d| d.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicDiscussionOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Discussion>> for AtomicDiscussionOption {
+    fn from(discussion: Option<Discussion>) -> Self {
+        Self::new(discussion)
+    }
+}
+
+impl From<Discussion> for AtomicDiscussionOption {
+    fn from(discussion: Discussion) -> Self {
+        Self::new(Some(discussion))
+    }
+}
+
+/// Lock-free atomic required Name storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicName(ArcSwap<NameInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct NameBorrow(Guard<Arc<NameInner>>);
+
+impl NameBorrow {
+    pub fn as_ref(&self) -> &NameInner {
+        &self.0
+    }
+}
+
+impl AtomicName {
+    pub fn new(name: Name) -> Self {
+        Self(ArcSwap::new(name.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> NameBorrow {
+        NameBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Name {
+        Name(self.0.load_full())
+    }
+
+    pub fn set(&self, name: Name) {
+        self.0.store(name.0)
+    }
+}
+
+impl From<Name> for AtomicName {
+    fn from(name: Name) -> Self {
+        Self::new(name)
+    }
+}
+
+/// Lock-free atomic optional Name storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicNameOption(ArcSwapOption<NameInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionNameBorrow(Guard<Option<Arc<NameInner>>>);
+
+impl OptionNameBorrow {
+    pub fn as_ref(&self) -> Option<&NameInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicNameOption {
+    pub fn new(name: Option<Name>) -> Self {
+        Self(ArcSwapOption::new(name.map(|n| n.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionNameBorrow {
+        OptionNameBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Name> {
+        self.0.load_full().map(Name)
+    }
+
+    pub fn set(&self, name: Option<Name>) {
+        self.0.store(name.map(|n| n.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicNameOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Name>> for AtomicNameOption {
+    fn from(name: Option<Name>) -> Self {
+        Self::new(name)
+    }
+}
+
+impl From<Name> for AtomicNameOption {
+    fn from(name: Name) -> Self {
+        Self::new(Some(name))
+    }
+}
+
+/// Lock-free atomic required Message storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicMessage(ArcSwap<MessageInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct MessageBorrow(Guard<Arc<MessageInner>>);
+
+impl MessageBorrow {
+    pub fn as_ref(&self) -> &MessageInner {
+        &self.0
+    }
+}
+
+impl AtomicMessage {
+    pub fn new(message: Message) -> Self {
+        Self(ArcSwap::new(message.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> MessageBorrow {
+        MessageBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Message {
+        Message(self.0.load_full())
+    }
+
+    pub fn set(&self, message: Message) {
+        self.0.store(message.0)
+    }
+}
+
+impl From<Message> for AtomicMessage {
+    fn from(message: Message) -> Self {
+        Self::new(message)
+    }
+}
+
+/// Lock-free atomic optional Message storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicMessageOption(ArcSwapOption<MessageInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionMessageBorrow(Guard<Option<Arc<MessageInner>>>);
+
+impl OptionMessageBorrow {
+    pub fn as_ref(&self) -> Option<&MessageInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicMessageOption {
+    pub fn new(message: Option<Message>) -> Self {
+        Self(ArcSwapOption::new(message.map(|m| m.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionMessageBorrow {
+        OptionMessageBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Message> {
+        self.0.load_full().map(Message)
+    }
+
+    pub fn set(&self, message: Option<Message>) {
+        self.0.store(message.map(|m| m.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicMessageOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Message>> for AtomicMessageOption {
+    fn from(message: Option<Message>) -> Self {
+        Self::new(message)
+    }
+}
+
+impl From<Message> for AtomicMessageOption {
+    fn from(message: Message) -> Self {
+        Self::new(Some(message))
+    }
+}
+
+/// Lock-free atomic required Sendlist storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSendlist(ArcSwap<SendlistInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct SendlistBorrow(Guard<Arc<SendlistInner>>);
+
+impl SendlistBorrow {
+    pub fn as_ref(&self) -> &SendlistInner {
+        &self.0
+    }
+}
+
+impl AtomicSendlist {
+    pub fn new(sendlist: Sendlist) -> Self {
+        Self(ArcSwap::new(sendlist.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> SendlistBorrow {
+        SendlistBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Sendlist {
+        Sendlist(self.0.load_full())
+    }
+
+    pub fn set(&self, sendlist: Sendlist) {
+        self.0.store(sendlist.0)
+    }
+}
+
+impl From<Sendlist> for AtomicSendlist {
+    fn from(sendlist: Sendlist) -> Self {
+        Self::new(sendlist)
+    }
+}
+
+/// Lock-free atomic optional Sendlist storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSendlistOption(ArcSwapOption<SendlistInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionSendlistBorrow(Guard<Option<Arc<SendlistInner>>>);
+
+impl OptionSendlistBorrow {
+    pub fn as_ref(&self) -> Option<&SendlistInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicSendlistOption {
+    pub fn new(sendlist: Option<Sendlist>) -> Self {
+        Self(ArcSwapOption::new(sendlist.map(|s| s.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionSendlistBorrow {
+        OptionSendlistBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Sendlist> {
+        self.0.load_full().map(Sendlist)
+    }
+
+    pub fn set(&self, sendlist: Option<Sendlist>) {
+        self.0.store(sendlist.map(|s| s.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicSendlistOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Sendlist>> for AtomicSendlistOption {
+    fn from(sendlist: Option<Sendlist>) -> Self {
+        Self::new(sendlist)
+    }
+}
+
+impl From<Sendlist> for AtomicSendlistOption {
+    fn from(sendlist: Sendlist) -> Self {
+        Self::new(Some(sendlist))
+    }
+}
+
+/// Lock-free atomic required Session storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSession(ArcSwap<SessionInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct SessionBorrow(Guard<Arc<SessionInner>>);
+
+impl SessionBorrow {
+    pub fn as_ref(&self) -> &SessionInner {
+        &self.0
+    }
+}
+
+impl AtomicSession {
+    pub fn new(session: Session) -> Self {
+        Self(ArcSwap::new(session.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> SessionBorrow {
+        SessionBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Session {
+        Session(self.0.load_full())
+    }
+
+    pub fn set(&self, session: Session) {
+        self.0.store(session.0)
+    }
+}
+
+impl From<Session> for AtomicSession {
+    fn from(session: Session) -> Self {
+        Self::new(session)
+    }
+}
+
+/// Lock-free atomic optional Session storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSessionOption(ArcSwapOption<SessionInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionSessionBorrow(Guard<Option<Arc<SessionInner>>>);
+
+impl OptionSessionBorrow {
+    pub fn as_ref(&self) -> Option<&SessionInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicSessionOption {
+    pub fn new(session: Option<Session>) -> Self {
+        Self(ArcSwapOption::new(session.map(|s| s.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionSessionBorrow {
+        OptionSessionBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Session> {
+        self.0.load_full().map(Session)
+    }
+
+    pub fn set(&self, session: Option<Session>) {
+        self.0.store(session.map(|s| s.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicSessionOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Session>> for AtomicSessionOption {
+    fn from(session: Option<Session>) -> Self {
+        Self::new(session)
+    }
+}
+
+impl From<Session> for AtomicSessionOption {
+    fn from(session: Session) -> Self {
+        Self::new(Some(session))
+    }
+}
+
+/// Lock-free atomic SessionConnection storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSessionConnection(ArcSwap<SessionConnection>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct SessionConnectionBorrow(Guard<Arc<SessionConnection>>);
+
+impl SessionConnectionBorrow {
+    pub fn as_ref(&self) -> &SessionConnection {
+        &self.0
+    }
+}
+
+impl AtomicSessionConnection {
+    pub fn new(connection: SessionConnection) -> Self {
+        Self(ArcSwap::new(Arc::new(connection)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> SessionConnectionBorrow {
+        SessionConnectionBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> SessionConnection {
+        (*self.0.load_full()).clone()
+    }
+
+    pub fn set(&self, connection: SessionConnection) {
+        self.0.store(Arc::new(connection))
+    }
+}
+
+impl From<SessionConnection> for AtomicSessionConnection {
+    fn from(connection: SessionConnection) -> Self {
+        Self::new(connection)
+    }
+}
+
+/// Lock-free atomic required Telnet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTelnet(ArcSwap<TelnetInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct TelnetBorrow(Guard<Arc<TelnetInner>>);
+
+impl TelnetBorrow {
+    pub fn as_ref(&self) -> &TelnetInner {
+        &self.0
+    }
+}
+
+impl AtomicTelnet {
+    pub fn new(telnet: Telnet) -> Self {
+        Self(ArcSwap::new(telnet.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> TelnetBorrow {
+        TelnetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Telnet {
+        Telnet(self.0.load_full())
+    }
+
+    pub fn set(&self, telnet: Telnet) {
+        self.0.store(telnet.0)
+    }
+}
+
+impl From<Telnet> for AtomicTelnet {
+    fn from(telnet: Telnet) -> Self {
+        Self::new(telnet)
+    }
+}
+
+/// Lock-free atomic optional Telnet storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTelnetOption(ArcSwapOption<Arc<TelnetInner>>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionTelnetBorrow(Guard<Option<Arc<TelnetInner>>>);
+
+impl OptionTelnetBorrow {
+    pub fn as_ref(&self) -> Option<&TelnetInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicTelnetOption {
+    pub fn new(telnet: Option<Telnet>) -> Self {
+        Self(ArcSwapOption::new(telnet.map(|t| t.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionTelnetBorrow {
+        OptionTelnetBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Telnet> {
+        self.0.load_full().map(Telnet)
+    }
+
+    pub fn set(&self, telnet: Option<Telnet>) {
+        self.0.store(telnet.map(|t| t.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+
+    /// Get the prompt if telnet exists.
+    pub fn prompt(&self) -> Option<Text> {
+        self.snapshot().map(|t| t.prompt())
+    }
+
+    /// Set do echo flag if telnet exists.
+    pub fn set_do_echo(&self, value: bool) {
+        if let Some(telnet) = self.snapshot() {
+            telnet.set_do_echo(value);
+        }
+    }
+
+    /// Output to telnet if it exists.
+    pub async fn output(&self, text: &str) {
+        if let Some(telnet) = self.snapshot() {
+            telnet.output(text).await;
+        }
+    }
+}
+
+impl Default for AtomicTelnetOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Telnet>> for AtomicTelnetOption {
+    fn from(telnet: Option<Telnet>) -> Self {
+        Self::new(telnet)
+    }
+}
+
+impl From<Telnet> for AtomicTelnetOption {
+    fn from(telnet: Telnet) -> Self {
+        Self::new(Some(telnet))
+    }
+}
+
+/// Lock-free atomic required Text storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicText(ArcSwap<Text>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct TextBorrow(Guard<Arc<Text>>);
+
+impl TextBorrow {
+    pub fn as_ref(&self) -> &Text {
+        &self.0
+    }
+}
+
+impl AtomicText {
+    pub fn new(text: Text) -> Self {
+        Self(ArcSwap::new(Arc::new(text)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> TextBorrow {
+        TextBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Text {
+        self.0.load_full().as_ref().clone()
+    }
+
+    pub fn set(&self, text: Text) {
+        self.0.store(Arc::new(text))
+    }
+}
+
+impl From<Text> for AtomicText {
+    fn from(text: Text) -> Self {
+        Self::new(text)
+    }
+}
+
+/// Lock-free atomic optional Text storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTextOption(ArcSwapOption<Text>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionTextBorrow(Guard<Option<Arc<Text>>>);
+
+impl OptionTextBorrow {
+    pub fn as_ref(&self) -> Option<&Text> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicTextOption {
+    pub fn new(text: Option<Text>) -> Self {
+        Self(ArcSwapOption::new(text.map(Arc::new)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionTextBorrow {
+        OptionTextBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<Text> {
+        self.0.load_full().map(|t| t.as_ref().clone())
+    }
+
+    pub fn set(&self, text: Option<Text>) {
+        self.0.store(text.map(Arc::new))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicTextOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<Text>> for AtomicTextOption {
+    fn from(text: Option<Text>) -> Self {
+        Self::new(text)
+    }
+}
+
+impl From<Text> for AtomicTextOption {
+    fn from(text: Text) -> Self {
+        Self::new(Some(text))
+    }
+}
+
+/// Lock-free atomic required Timestamp storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicTimestamp(ArcSwap<Timestamp>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct TimestampBorrow(Guard<Arc<Timestamp>>);
+
+impl TimestampBorrow {
+    pub fn as_ref(&self) -> &Timestamp {
+        &self.0
+    }
+}
+
+impl AtomicTimestamp {
+    pub fn new(timestamp: Timestamp) -> Self {
+        Self(ArcSwap::new(Arc::new(timestamp)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> TimestampBorrow {
+        TimestampBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Timestamp {
+        self.0.load_full().as_ref().clone()
+    }
+
+    pub fn set(&self, timestamp: Timestamp) {
+        self.0.store(Arc::new(timestamp))
+    }
+}
+
+impl From<Timestamp> for AtomicTimestamp {
+    fn from(timestamp: Timestamp) -> Self {
+        Self::new(timestamp)
+    }
+}
+
+/// Lock-free atomic required User storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicUser(ArcSwap<UserInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct UserBorrow(Guard<Arc<UserInner>>);
+
+impl UserBorrow {
+    pub fn as_ref(&self) -> &UserInner {
+        &self.0
+    }
+}
+
+impl AtomicUser {
+    pub fn new(user: User) -> Self {
+        Self(ArcSwap::new(user.0))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> UserBorrow {
+        UserBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> User {
+        User(self.0.load_full())
+    }
+
+    pub fn set(&self, user: User) {
+        self.0.store(user.0)
+    }
+}
+
+impl From<User> for AtomicUser {
+    fn from(user: User) -> Self {
+        Self::new(user)
+    }
+}
+
+/// Lock-free atomic optional User storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicUserOption(ArcSwapOption<UserInner>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct OptionUserBorrow(Guard<Option<Arc<UserInner>>>);
+
+impl OptionUserBorrow {
+    pub fn as_ref(&self) -> Option<&UserInner> {
+        self.0.as_ref().map(|arc| &**arc)
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+impl AtomicUserOption {
+    pub fn new(user: Option<User>) -> Self {
+        Self(ArcSwapOption::new(user.map(|u| u.0)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> OptionUserBorrow {
+        OptionUserBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Option<User> {
+        self.0.load_full().map(User)
+    }
+
+    pub fn set(&self, user: Option<User>) {
+        self.0.store(user.map(|u| u.0))
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.0.load().is_some()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.load().is_none()
+    }
+}
+
+impl Default for AtomicUserOption {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
+impl From<Option<User>> for AtomicUserOption {
+    fn from(user: Option<User>) -> Self {
+        Self::new(user)
+    }
+}
+
+impl From<User> for AtomicUserOption {
+    fn from(user: User) -> Self {
+        Self::new(Some(user))
+    }
+}

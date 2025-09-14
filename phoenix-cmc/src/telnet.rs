@@ -1,14 +1,13 @@
+use crate::atomic::{AtomicNameOption, AtomicSessionConnection, AtomicText};
 use crate::constants::*;
-use crate::name::AtomicNameOption;
 use crate::name::Name;
 use crate::output::OutputType;
 use crate::sendlist::Sendlist;
 use crate::server::Server;
-use crate::session::{AtomicSessionConnection, LoginSession, Session, SessionConnection};
+use crate::session::{LoginSession, Session, SessionConnection};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use crate::VERSION;
-use arc_swap::{ArcSwap, ArcSwapOption, Guard};
 use async_backtrace::framed;
 use bytes::{Bytes, BytesMut};
 use std::collections::VecDeque;
@@ -16,7 +15,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 
 pub const BELL_STR: &str = "\x07";
 
@@ -72,7 +71,7 @@ pub enum TelnetSubnegotiationState {
 
 /// Telnet handle.
 #[derive(Debug, Clone)]
-pub struct Telnet(Arc<TelnetInner>);
+pub struct Telnet(pub Arc<TelnetInner>);
 
 #[derive(Debug)]
 pub struct TelnetInner
@@ -117,6 +116,7 @@ where
     pub do_echo: AtomicBool,
     pub acknowledge: AtomicBool,
     pub outstanding: AtomicUsize,
+    pub welcome_sent: AtomicBool,
 
     // Telnet options
     pub echo: AtomicU8,
@@ -196,6 +196,7 @@ impl Telnet {
             do_echo: AtomicBool::new(true),
             acknowledge: AtomicBool::new(false),
             outstanding: AtomicUsize::new(2), // Start with 2 for initial timing marks
+            welcome_sent: AtomicBool::new(false),
             echo: AtomicU8::new(0),
             lsga: AtomicU8::new(0),
             rsga: AtomicU8::new(0),
@@ -213,7 +214,7 @@ impl Telnet {
 
     /// Get the TCP stream.
     #[framed]
-    pub async fn stream(&self) -> MutexGuard<TcpStream> {
+    pub async fn stream(&self) -> MutexGuard<'_, TcpStream> {
         self.0.stream.lock().await
     }
 
@@ -320,7 +321,7 @@ impl Telnet {
 
     /// Get the data buffer.
     #[framed]
-    pub async fn data(&self) -> MutexGuard<Vec<u8>> {
+    pub async fn data(&self) -> MutexGuard<'_, Vec<u8>> {
         self.0.data.lock().await
     }
 
@@ -359,7 +360,7 @@ impl Telnet {
 
     /// Get the input history.
     #[framed]
-    pub async fn history(&self) -> MutexGuard<VecDeque<Text>> {
+    pub async fn history(&self) -> MutexGuard<'_, VecDeque<Text>> {
         self.0.history.lock().await
     }
 
@@ -378,7 +379,7 @@ impl Telnet {
 
     /// Get the kill ring.
     #[framed]
-    pub async fn kill_ring(&self) -> MutexGuard<VecDeque<Text>> {
+    pub async fn kill_ring(&self) -> MutexGuard<'_, VecDeque<Text>> {
         self.0.kill_ring.lock().await
     }
 
@@ -394,24 +395,24 @@ impl Telnet {
 
     /// Get the output buffer.
     #[framed]
-    pub async fn output_buffer(&self) -> MutexGuard<BytesMut> {
+    pub async fn output_buffer(&self) -> MutexGuard<'_, BytesMut> {
         self.0.output_buffer.lock().await
     }
 
     /// Get the command buffer.
     #[framed]
-    pub async fn command_buffer(&self) -> MutexGuard<BytesMut> {
+    pub async fn command_buffer(&self) -> MutexGuard<'_, BytesMut> {
         self.0.command_buffer.lock().await
     }
 
     /// Get the TELNET state.
-    pub fn state(&self, value: TelnetState) {
+    pub fn state(&self) -> TelnetState {
         *self.0.state.load_full()
     }
 
     /// Set the TELNET state.
     pub fn set_state(&self, value: TelnetState) {
-        self.0.state.set(Arc::new(TelnetState));
+        self.0.state.set(Arc::new(value));
     }
 
     /// Get the undrawn flag.
@@ -444,14 +445,34 @@ impl Telnet {
         self.0.acknowledge.store(value, Ordering::Relaxed);
     }
 
-    /// Get the outstanding flag.
-    pub fn outstanding(&self) -> bool {
+    /// Get the outstanding count.
+    pub fn outstanding(&self) -> usize {
         self.0.outstanding.load(Ordering::Relaxed)
     }
 
-    /// Set the outstanding flag.
-    pub fn set_outstanding(&self, value: bool) {
+    /// Set the outstanding count.
+    pub fn set_outstanding(&self, value: usize) {
         self.0.outstanding.store(value, Ordering::Relaxed);
+    }
+
+    /// Increment the outstanding count.
+    pub fn increment_outstanding(&self) {
+        self.0.outstanding.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Decrement the outstanding count.
+    pub fn decrement_outstanding(&self) {
+        self.0.outstanding.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| if x > 0 { Some(x - 1) } else { None }).ok();
+    }
+
+    /// Get the welcome sent flag.
+    pub fn welcome_sent(&self) -> bool {
+        self.0.welcome_sent.load(Ordering::Relaxed)
+    }
+
+    /// Set the welcome sent flag.
+    pub fn set_welcome_sent(&self, value: bool) {
+        self.0.welcome_sent.store(value, Ordering::Relaxed);
     }
 
     /// Get the echo option state.
@@ -516,12 +537,12 @@ impl Telnet {
 
     /// Get the TELNET option subnegotiation state.
     pub fn sb_state(&self) -> TelnetSubnegotiationState {
-        *self.0.state.load_full()
+        *self.0.sb_state.load_full()
     }
 
     /// Set the TELNET option subnegotiation state.
     pub fn set_sb_state(&self, value: TelnetSubnegotiationState) {
-        self.0.state.set(Arc::new(TelnetState));
+        self.0.sb_state.set(Arc::new(value));
     }
 
     /// Initiate TELNET protocol option negotiations and session login sequence.
@@ -556,7 +577,23 @@ impl Telnet {
         self.output(")\n\n").await;
     }
 
+    /// Send welcome message.
+    #[framed]
+    pub async fn welcome(&self) {
+        if !self.welcome_sent() {
+            self.output("\nWelcome to Phoenix! (").await;
+            self.output(VERSION).await;
+            self.output(")\n\n").await;
+            self.set_welcome_sent(true);
+        }
+    }
+
     // Check if initial option negotiations are finished.
+    pub fn options_finished(&self) -> bool {
+        // Options are finished when they are not in their negotiation states
+        !(self.lbin() == TELNET_WILL_WONT || self.rbin() == TELNET_DO_DONT || self.echo() == TELNET_WILL_WONT)
+    }
+
     #[framed]
     pub async fn check_options(&self, force: bool) {
         if force {
@@ -592,13 +629,13 @@ impl Telnet {
         }
 
         // See if local TRANSMIT-BINARY option worked.
-        if !self.lbin() {
+        if self.lbin() == 0 {
             // We were denied binary transmission.  Blow it off and do it anyhow.
             self.output("Binary output refused, but the refusal will be ignored...\n").await;
         }
 
         // See if remote TRANSMIT-BINARY option worked.
-        if !self.rbin() {
+        if self.rbin() == 0 {
             // Client refuses to send binary data; that's okay.
             self.output("Binary input refused.  Use compose sequences as necessary.\n").await;
         }
@@ -609,10 +646,11 @@ impl Telnet {
             self.output("Sorry, your telnet client is broken.  Output may be lost by the network.\n\n").await;
         }
 
+        // TODO: Add server shutdown warning if needed
         // Warn if about to shut down!
-        if server.shutting_down() {
-            self.output("*** This server is about to shut down! ***\n\n").await;
-        }
+        // if server.shutting_down() {
+        //     self.output("*** This server is about to shut down! ***\n\n").await;
+        // }
 
         // Send login prompt.
         self.output("login: ").await;
@@ -677,84 +715,84 @@ impl Telnet {
     /// Send IAC WILL ECHO option sequence.
     #[framed]
     pub async fn will_echo(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]).await;
         self.set_echo(self.echo() | TELNET_WILL_WONT);
     }
 
     /// Send IAC WONT ECHO option sequence.
     #[framed]
     pub async fn wont_echo(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]).await;
         self.set_echo(self.echo() & !TELNET_WILL_WONT);
     }
 
     /// Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
     #[framed]
     pub async fn will_lsga(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await;
         self.set_lsga(self.lsga() | TELNET_WILL_WONT);
     }
 
     /// Send IAC WONT SUPPRESS-GO-AHEAD option sequence. (local)
     #[framed]
     pub async fn wont_lsga(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await;
         self.set_lsga(self.lsga() & !TELNET_WILL_WONT);
     }
 
     /// Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
     #[framed]
     pub async fn do_rsga(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await;
         self.set_rsga(self.rsga() | TELNET_DO_DONT);
     }
 
     /// Send IAC DONT SUPPRESS-GO-AHEAD option sequence. (remote)
     #[framed]
     pub async fn dont_rsga(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await;
         self.set_rsga(self.rsga() & !TELNET_DO_DONT);
     }
 
     /// Send IAC WILL TRANSMIT-BINARY option sequence. (local)
     #[framed]
     pub async fn will_lbin(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await;
         self.set_lbin(self.lbin() | TELNET_WILL_WONT);
     }
 
     /// Send IAC WONT TRANSMIT-BINARY option sequence. (local)
     #[framed]
     pub async fn wont_lbin(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await;
         self.set_lbin(self.lbin() & !TELNET_WILL_WONT);
     }
 
     /// Send IAC DO TRANSMIT-BINARY option sequence. (remote)
     #[framed]
     pub async fn do_rbin(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await;
         self.set_rbin(self.rbin() | TELNET_DO_DONT);
     }
 
     /// Send IAC DONT TRANSMIT-BINARY option sequence. (remote)
     #[framed]
     pub async fn dont_rbin(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await;
         self.set_rbin(self.rbin() & !TELNET_DO_DONT);
     }
 
     /// Send IAC DO NAWS option sequence.
     #[framed]
     pub async fn do_naws(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await;
         self.set_naws(self.naws() | TELNET_DO_DONT);
     }
 
     /// Send IAC DONT NAWS option sequence.
     #[framed]
     pub async fn dont_naws(&self) {
-        self.command([TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await;
         self.set_naws(self.naws() & !TELNET_DO_DONT);
     }
 
@@ -776,7 +814,7 @@ impl Telnet {
         if self.echo() == TELNET_ENABLED && self.do_echo() {
             let prompt_len = self.prompt().len();
 
-            if prompt_len == 0 && self.data().is_empty() {
+            if prompt_len == 0 && self.data().await.is_empty() {
                 return;
             }
 
@@ -1050,7 +1088,7 @@ impl Telnet {
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
         loop {
-            if self.closing().await {
+            if self.closing() {
                 return Ok(());
             }
 
@@ -1478,6 +1516,9 @@ impl Telnet {
             // Ignore subnegotiation data in other states.
             _ => {}
         }
+
+        // Save the final subnegotiation state.
+        self.set_sb_state(sb_state);
 
         Ok(())
     }
@@ -1958,7 +1999,7 @@ impl Telnet {
     #[framed]
     pub async fn delete_char(&self) {
         let mut data = self.data().await;
-        let mut point = self.point();
+        let point = self.point();
 
         if point < data.len() {
             data.remove(point);
@@ -2036,7 +2077,7 @@ impl Telnet {
             // Save killed text to kill ring
             let killed: Vec<u8> = data.drain(point..).collect();
             if !killed.is_empty() {
-                let killed_str = String::from_utf8_lossy(&killed).to_string();
+                let killed_str = Text::new(String::from_utf8_lossy(&killed).to_string());
                 let mut kill_ring = self.kill_ring().await;
                 if kill_ring.len() >= Self::KILL_RING_MAX {
                     kill_ring.pop_front();
@@ -2353,7 +2394,7 @@ impl Telnet {
 
     #[framed]
     pub async fn previous_line(&self) {
-        let mut history_pos = self.history_position().await;
+        let mut history_pos = self.history_position();
         let history = self.history().await;
 
         if history.is_empty() {
@@ -2425,7 +2466,7 @@ impl Telnet {
     pub async fn do_semicolon(&self) {
         if self.point() == 0 {
             let session = self.session_connection();
-            let last = session.last_explicit().await;
+            let last = session.last_explicit();
             for ch in last.bytes() {
                 self.insert_char(ch).await;
             }
@@ -2437,7 +2478,7 @@ impl Telnet {
     pub async fn do_colon(&self) {
         if self.point() == 0 {
             let session = self.session_connection();
-            let reply = session.reply_sendlist().await;
+            let reply = session.reply_sendlist();
             for ch in reply.bytes() {
                 self.insert_char(ch).await;
             }
@@ -2457,8 +2498,8 @@ impl Telnet {
         }
 
         // Reset login timeout.
-        if self.login_timeout() {
-            self.reset_login_timeout().await;
+        if session.login_timeout().is_some() {
+            session.set_login_timeout(None);
         }
 
         // Get the input line.
@@ -2471,7 +2512,7 @@ impl Telnet {
 
         // Add to history if echoing.
         if do_echo && !line.is_empty() {
-            let mut history = self.history.lock().await;
+            let mut history = self.history().await;
             if history.len() >= Self::HISTORY_MAX {
                 history.pop_front();
             }
@@ -2487,8 +2528,9 @@ impl Telnet {
 
         // Echo newline and clear input.
         if self.undrawn() {
-            session.queue_output(&line).await;
-            session.queue_output("\n").await;
+            let session = self.session_connection();
+            session.output(&line.as_str()).await;
+            session.output("\n").await;
         } else {
             if self.point() < data.len() {
                 self.end_of_line().await;
@@ -2499,118 +2541,12 @@ impl Telnet {
         }
 
         // Clear input buffer.
-        (*self.data.lock()).clear();
+        self.data().await.clear();
         self.set_point(0);
         self.set_mark(None);
-        self.set_prompt(Text::new());
+        self.set_prompt(Text::new(""));
 
         // Process the input.
-        session.handle_input(&line).await;
-    }
-}
-
-/// Lock-free atomic required Telnet storage using arc_swap.
-#[derive(Debug)]
-pub struct AtomicTelnet(ArcSwap<TelnetInner>);
-
-/// Borrow that pins the current value (no Arc clone).
-pub struct TelnetBorrow(Guard<Arc<TelnetInner>>);
-
-impl TelnetBorrow {
-    pub fn as_ref(&self) -> &TelnetInner {
-        &self.0
-    }
-}
-
-impl AtomicTelnet {
-    pub fn new(telnet: Telnet) -> Self {
-        Self(ArcSwap::new(telnet.0))
-    }
-
-    /// Zero-clone, guard-backed borrow valid for this scope.
-    pub fn borrow(&self) -> TelnetBorrow {
-        TelnetBorrow(self.0.load())
-    }
-
-    /// Snapshot: clones the Arc (no guard to hold).
-    pub fn snapshot(&self) -> Telnet {
-        Telnet(self.0.load_full())
-    }
-
-    pub fn set(&self, telnet: Telnet) {
-        self.0.store(telnet.0)
-    }
-}
-
-impl From<Telnet> for AtomicTelnet {
-    fn from(telnet: Telnet) -> Self {
-        Self::new(telnet)
-    }
-}
-
-/// Lock-free atomic optional Telnet storage using arc_swap.
-#[derive(Debug)]
-pub struct AtomicTelnetOption(ArcSwapOption<TelnetInner>);
-
-/// Borrow that pins the current value (no Arc clone).
-pub struct OptionTelnetBorrow(Guard<Option<Arc<TelnetInner>>>);
-
-impl OptionTelnetBorrow {
-    pub fn as_ref(&self) -> Option<&TelnetInner> {
-        self.0.as_ref().map(|arc| &**arc)
-    }
-
-    pub fn is_some(&self) -> bool {
-        self.0.is_some()
-    }
-
-    pub fn is_none(&self) -> bool {
-        self.0.is_none()
-    }
-}
-
-impl AtomicTelnetOption {
-    pub fn new(telnet: Option<Telnet>) -> Self {
-        Self(ArcSwapOption::new(telnet.map(|t| t.0)))
-    }
-
-    /// Zero-clone, guard-backed borrow valid for this scope.
-    pub fn borrow(&self) -> OptionTelnetBorrow {
-        OptionTelnetBorrow(self.0.load())
-    }
-
-    /// Snapshot: clones the Arc (no guard to hold).
-    pub fn snapshot(&self) -> Option<Telnet> {
-        self.0.load_full().map(Telnet)
-    }
-
-    pub fn set(&self, telnet: Option<Telnet>) {
-        self.0.store(telnet.map(|t| t.0))
-    }
-
-    pub fn is_some(&self) -> bool {
-        self.0.load().is_some()
-    }
-
-    pub fn is_none(&self) -> bool {
-        self.0.load().is_none()
-    }
-}
-
-impl Default for AtomicTelnetOption {
-    fn default() -> Self {
-        Self::new(None)
-    }
-}
-
-impl From<Option<Telnet>> for AtomicTelnetOption {
-    fn from(telnet: Option<Telnet>) -> Self {
-        Self::new(telnet)
-    }
-}
-
-impl From<Telnet> for AtomicTelnetOption {
-    fn from(telnet: Telnet) -> Self {
-        Self::new(Some(telnet))
+        session.handle_input(line).await;
     }
 }

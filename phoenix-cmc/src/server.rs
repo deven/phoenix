@@ -4,28 +4,30 @@ use crate::text::Text;
 use anyhow::Result;
 use async_backtrace::framed;
 use log::{error, info};
-use std::mem;
+use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{broadcast, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::broadcast;
 use tokio::task::AbortHandle;
 use tokio::time::Duration;
 
 /// Server handle.
 #[derive(Debug, Clone)]
-pub struct Server(Arc<RwLock<ServerInner>>);
+pub struct Server(pub Arc<ServerInner>)
+where
+    Self: Send + Sync + 'static;
 
 #[derive(Debug)]
 pub struct ServerInner
 where
     Self: Send + Sync + 'static,
 {
-    pub listener: Arc<TcpListener>,
-    pub port: u16,
-    pub debug: bool,
-    pub shutdown_tx: broadcast::Sender<()>,
-    pub shutdown_handle: Option<AbortHandle>,
-    pub restarting: bool,
+    pub listener: ArcSwap<TcpListener>,
+    pub port: AtomicU16,
+    pub debug: AtomicBool,
+    pub shutdown_tx: ArcSwap<broadcast::Sender<()>>,
+    pub shutdown_handle: ArcSwapOption<AbortHandle>,
+    pub restarting: AtomicBool,
 }
 
 impl Server {
@@ -37,88 +39,88 @@ impl Server {
         let shutdown_handle = None;
         let restarting = false;
 
-        let inner = ServerInner { listener, port, debug, shutdown_tx, shutdown_handle, restarting };
+        let inner = ServerInner {
+            listener: ArcSwap::new(listener),
+            port: AtomicU16::new(port),
+            debug: AtomicBool::new(debug),
+            shutdown_tx: ArcSwap::new(Arc::new(shutdown_tx)),
+            shutdown_handle: ArcSwapOption::new(shutdown_handle),
+            restarting: AtomicBool::new(restarting),
+        };
 
-        Ok(Self(Arc::new(RwLock::new(inner))))
-    }
-
-    /// Obtain read lock on the `ServerInner` data.
-    #[framed]
-    pub async fn read(&self) -> RwLockReadGuard<'_, ServerInner> {
-        self.0.read().await
-    }
-
-    /// Obtain write lock on the `ServerInner` data.
-    #[framed]
-    pub async fn write(&self) -> RwLockWriteGuard<'_, ServerInner> {
-        self.0.write().await
+        Ok(Self(Arc::new(inner)))
     }
 
     /// Get the `TcpListener` object.
-    #[framed]
-    pub async fn listener(&self) -> Arc<TcpListener> {
-        self.read().await.listener.clone()
+    pub fn listener(&self) -> Arc<TcpListener> {
+        self.0.listener.load_full()
+    }
+
+    /// Set the `TcpListener` object.
+    pub fn set_listener(&self, value: TcpListener) {
+        self.0.listener.store(Arc::new(value));
     }
 
     /// Get the TCP listening port number.
-    #[framed]
-    pub async fn port(&self) -> u16 {
-        self.read().await.port
+    pub fn port(&self) -> u16 {
+        self.0.port.load(Ordering::Relaxed)
+    }
+
+    /// Set the TCP listening port number.
+    pub fn set_port(&self, value: u16) {
+        self.0.port.store(value, Ordering::Relaxed);
     }
 
     /// Get the debugging flag.
-    #[framed]
-    pub async fn debug(&self) -> bool {
-        self.read().await.debug
+    pub fn debug(&self) -> bool {
+        self.0.debug.load(Ordering::Relaxed)
     }
 
     /// Set the debugging flag.
-    #[framed]
-    pub async fn set_debug(&self, value: bool) {
-        self.write().await.debug = value;
+    pub fn set_debug(&self, value: bool) {
+        self.0.debug.store(value, Ordering::Relaxed);
     }
 
     /// Get the shutdown `broadcast::Sender`.
-    #[framed]
-    pub async fn shutdown_tx(&self) -> broadcast::Sender<()> {
-        self.read().await.shutdown_tx.clone()
+    pub fn shutdown_tx(&self) -> broadcast::Sender<()> {
+        (*self.0.shutdown_tx.load_full()).clone()
+    }
+
+    /// Set the shutdown `broadcast::Sender`.
+    pub fn set_shutdown_tx(&self, value: broadcast::Sender<()>) {
+        self.0.shutdown_tx.store(Arc::new(value));
     }
 
     /// Get the shutdown `AbortHandle`, if any.
-    #[framed]
-    pub async fn shutdown_handle(&self) -> Option<AbortHandle> {
-        self.read().await.shutdown_handle.clone()
+    pub fn shutdown_handle(&self) -> Option<AbortHandle> {
+        self.0.shutdown_handle.load_full().map(|arc| (*arc).clone())
     }
 
     /// Set the shutdown `AbortHandle`.
-    #[framed]
-    pub async fn set_shutdown_handle(&self, value: Option<AbortHandle>) {
-        self.write().await.shutdown_handle = value;
+    pub fn set_shutdown_handle(&self, value: Option<AbortHandle>) {
+        self.0.shutdown_handle.store(value.map(Arc::new));
     }
 
     /// Take the shutdown `AbortHandle`, if any.
-    #[framed]
-    pub async fn take_shutdown_handle(&self) -> Option<AbortHandle> {
-        mem::take(&mut self.write().await.shutdown_handle)
+    pub fn take_shutdown_handle(&self) -> Option<AbortHandle> {
+        self.0.shutdown_handle.swap(None).map(|arc| Arc::try_unwrap(arc).unwrap_or_else(|arc| (*arc).clone()))
     }
 
     /// Get the restarting flag.
-    #[framed]
-    pub async fn restarting(&self) -> bool {
-        self.read().await.restarting
+    pub fn restarting(&self) -> bool {
+        self.0.restarting.load(Ordering::Relaxed)
     }
 
     /// Set the restarting flag.
-    #[framed]
-    pub async fn set_restarting(&self, value: bool) {
-        self.write().await.restarting = value;
+    pub fn set_restarting(&self, value: bool) {
+        self.0.restarting.store(value, Ordering::Relaxed);
     }
 
     /// Run the Phoenix server.
     pub async fn run(&self) -> Result<()> {
         // Accept loop
         loop {
-            match self.listener().await.accept().await {
+            match self.listener().accept().await {
                 Ok((stream, addr)) => {
                     info!("New connection from {addr}");
 
@@ -139,20 +141,17 @@ impl Server {
 
     /// Handle a new TCP connection.
     pub async fn handle_connection(&self, stream: TcpStream) -> Result<()> {
-        // Set TCP options
+        // Set TCP options.
         stream.set_nodelay(true)?;
 
-        // Create telnet connection
-        let telnet = Telnet::new(stream).await;
+        // Create `Telnet` with associated `LoginSession`.
+        let telnet = Telnet::new(stream, self.clone());
 
-        // Create session
-        let session = Session::new(self.clone(), telnet.clone()).await;
+        // Initiate TELNET protocol option negotiations and session login sequence.
+        telnet.init_login_sequence().await;
 
-        // Initialize login sequence
-        session.init_login_sequence().await;
-
-        // Handle telnet I/O
-        let mut shutdown_rx = self.shutdown_tx().await.subscribe();
+        // Handle network I/O.
+        let mut shutdown_rx = self.shutdown_tx().subscribe();
         tokio::select! {
             _ = shutdown_rx.recv() => {
                 telnet.output("\n\n*** Server is shutting down ***\n").await;
@@ -166,10 +165,12 @@ impl Server {
                 }
 
                 // Detach or close session
-                if session.signed_on().await {
-                    session.detach(&telnet, false).await;
-                } else {
-                    session.close(false).await;
+                if let Some(session) = telnet.session() {
+                    if session.signed_on() {
+                        session.detach(&telnet, false).await;
+                    } else {
+                        session.close(false).await;
+                    }
                 }
             }
         }
@@ -189,10 +190,10 @@ impl Server {
 
     /// Cancel a server restart/shutdown.
     pub async fn cancel_shutdown(&self) -> Option<bool> {
-        let mut inner = self.write().await;
-        let restarting = mem::take(&mut inner.restarting);
+        let restarting = self.restarting();
+        self.set_restarting(false);
 
-        if let Some(handle) = mem::take(&mut inner.shutdown_handle) {
+        if let Some(handle) = self.take_shutdown_handle() {
             handle.abort();
             Some(restarting)
         } else {
@@ -208,7 +209,7 @@ impl Server {
         let action = if restart { "restart" } else { "shutdown" };
         info!("Server {action} scheduled by {who} in {seconds} seconds.");
 
-        self.set_restarting(restart).await;
+        self.set_restarting(restart);
 
         let action = if restart { "restarting" } else { "shutting down" };
 
@@ -234,13 +235,13 @@ impl Server {
             server.perform_shutdown_or_restart(restart).await;
         });
 
-        self.set_shutdown_handle(Some(handle.abort_handle())).await;
+        self.set_shutdown_handle(Some(handle.abort_handle()));
     }
 
     /// Perform a server shutdown or restart.
     pub async fn perform_shutdown_or_restart(&self, restart: bool) {
         // Signal all connections to shut down gracefully.
-        let _ = self.shutdown_tx().await.send(());
+        let _ = self.shutdown_tx().send(());
 
         // Give connections time to close.
         tokio::time::sleep(Duration::from_secs(2)).await;
