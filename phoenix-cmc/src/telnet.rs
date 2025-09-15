@@ -57,18 +57,6 @@ pub const TELNET_WILL_WONT: u8 = 1;
 pub const TELNET_DO_DONT: u8 = 2;
 pub const TELNET_ENABLED: u8 = TELNET_DO_DONT | TELNET_WILL_WONT;
 
-// Telnet subnegotiation states
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TelnetSubnegotiationState {
-    Idle,
-    NAWSWidthHigh,
-    NAWSWidthLow,
-    NAWSHeightHigh,
-    NAWSHeightLow,
-    NAWSDone,
-    Unknown,
-}
-
 /// Telnet handle.
 #[derive(Debug, Clone)]
 pub struct Telnet(pub Arc<TelnetInner>);
@@ -95,12 +83,12 @@ where
     // Input buffer and editing
     pub data: Mutex<Vec<u8>>,
     pub point: AtomicUsize,
-    pub mark: ArcSwapOption<usize>,
+    pub mark: AtomicUsizeOption,
     pub prompt: AtomicText,
 
     // History and kill ring
     pub history: Mutex<VecDeque<Text>>,
-    pub history_position: ArcSwapOption<usize>,
+    pub history_position: AtomicUsizeOption,
     pub kill_ring: Mutex<VecDeque<Text>>,
 
     // Reply tracking
@@ -111,7 +99,11 @@ where
     pub command_buffer: Mutex<BytesMut>,
 
     // Telnet state
-    pub state: ArcSwap<TelnetState>,
+    pub state: AtomicU8,
+
+    // Subnegotiation state
+    pub sb_state: AtomicU8,
+
     pub undrawn: AtomicBool,
     pub do_echo: AtomicBool,
     pub acknowledge: AtomicBool,
@@ -125,38 +117,97 @@ where
     pub lbin: AtomicU8,
     pub rbin: AtomicU8,
     pub naws: AtomicU8,
-
-    // Subnegotiation state
-    pub sb_state: ArcSwap<TelnetSubnegotiationState>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 pub enum TelnetState {
-    Data,
-    IAC,
-    Will,
-    Wont,
-    Do,
-    Dont,
-    SubnegotiationBegin,
-    SubnegotiationEnd,
-    Return,
-    Escape,
-    CSI,
+    Data = 0,
+    IAC = 1,
+    Will = 2,
+    Wont = 3,
+    Do = 4,
+    Dont = 5,
+    SubnegotiationBegin = 6,
+    SubnegotiationEnd = 7,
+    Return = 8,
+    Escape = 9,
+    CSI = 10,
     // Compose states
-    ControlC,
-    ControlX,
-    ControlI,
-    ControlL,
-    ControlO,
-    Umlaut,
-    Backquote,
-    AcuteAccent,
-    Carat,
-    Tilde,
-    Slash,
-    Cedilla,
-    DegreeSign,
+    ControlC = 11,
+    ControlX = 12,
+    ControlI = 13,
+    ControlL = 14,
+    ControlO = 15,
+    Umlaut = 16,
+    Backquote = 17,
+    AcuteAccent = 18,
+    Carat = 19,
+    Tilde = 20,
+    Slash = 21,
+    Cedilla = 22,
+    DegreeSign = 23,
+}
+
+impl TelnetState {
+    #[inline]
+    fn from_u8(n: u8) -> Self {
+        match n {
+            0 => Self::Data,
+            1 => Self::IAC,
+            2 => Self::Will,
+            3 => Self::Wont,
+            4 => Self::Do,
+            5 => Self::Dont,
+            6 => Self::SubnegotiationBegin,
+            7 => Self::SubnegotiationEnd,
+            8 => Self::Return,
+            9 => Self::Escape,
+            10 => Self::CSI,
+            11 => Self::ControlC,
+            12 => Self::ControlX,
+            13 => Self::ControlI,
+            14 => Self::ControlL,
+            15 => Self::ControlO,
+            16 => Self::Umlaut,
+            17 => Self::Backquote,
+            18 => Self::AcuteAccent,
+            19 => Self::Carat,
+            20 => Self::Tilde,
+            21 => Self::Slash,
+            22 => Self::Cedilla,
+            23 => Self::DegreeSign,
+            _ => Self::Data,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum TelnetSubnegotiationState {
+    Idle = 0,
+    NAWSWidthHigh = 1,
+    NAWSWidthLow = 2,
+    NAWSHeightHigh = 3,
+    NAWSHeightLow = 4,
+    NAWSDone = 5,
+    Unknown = 6,
+}
+
+impl TelnetSubnegotiationState {
+    #[inline]
+    fn from_u8(n: u8) -> Self {
+        match n {
+            0 => Self::Idle,
+            1 => Self::NAWSWidthHigh,
+            2 => Self::NAWSWidthLow,
+            3 => Self::NAWSHeightHigh,
+            4 => Self::NAWSHeightLow,
+            5 => Self::NAWSDone,
+            6 => Self::Unknown,
+            _ => Self::Idle,
+        }
+    }
 }
 
 impl Telnet {
@@ -183,27 +234,27 @@ impl Telnet {
             naws_height: AtomicUsize::new(0),
             data: Mutex::new(Vec::with_capacity(Self::INPUT_SIZE)),
             point: AtomicUsize::new(0),
-            mark: ArcSwapOption::new(None),
+            mark: AtomicUsizeOption::new(None),
             prompt: AtomicText::new(Text::default()),
             history: Mutex::new(VecDeque::with_capacity(Self::HISTORY_MAX)),
-            history_position: ArcSwapOption::new(None),
+            history_position: AtomicUsizeOption::new(None),
             kill_ring: Mutex::new(VecDeque::with_capacity(Self::KILL_RING_MAX)),
             reply_to: None.into(),
             output_buffer: Mutex::new(BytesMut::with_capacity(Self::BUF_SIZE)),
             command_buffer: Mutex::new(BytesMut::with_capacity(1024)),
-            state: ArcSwap::new(Arc::new(TelnetState::Data)),
             undrawn: AtomicBool::new(false),
             do_echo: AtomicBool::new(true),
             acknowledge: AtomicBool::new(false),
             outstanding: AtomicUsize::new(2), // Start with 2 for initial timing marks
             welcome_sent: AtomicBool::new(false),
+            state: AtomicU8::new(TelnetState::Data as u8),
+            sb_state: AtomicU8::new(TelnetSubnegotiationState::Idle as u8),
             echo: AtomicU8::new(0),
             lsga: AtomicU8::new(0),
             rsga: AtomicU8::new(0),
             lbin: AtomicU8::new(0),
             rbin: AtomicU8::new(0),
             naws: AtomicU8::new(0),
-            sb_state: ArcSwap::new(Arc::new(TelnetSubnegotiationState::Idle)),
         };
 
         let telnet = Telnet(Arc::new(inner));
@@ -337,15 +388,12 @@ impl Telnet {
 
     /// Get the mark location, if any.
     pub fn mark(&self) -> Option<usize> {
-        match *self.0.mark.borrow() {
-            Some(mark) => Some(mark),
-            None => None,
-        }
+        self.0.mark.load(Ordering::Relaxed)
     }
 
     /// Set the mark location.
     pub fn set_mark(&self, value: Option<usize>) {
-        self.0.mark.set(Arc::new(value));
+        self.0.mark.store(Arc::new(value), Ordering::Relaxed);
     }
 
     /// Get the prompt.
@@ -354,8 +402,8 @@ impl Telnet {
     }
 
     /// Set the prompt.
-    pub fn set_prompt(&self, value: Text) {
-        self.0.prompt.set(value)
+    pub fn set_prompt(&self, value: impl Into<Text>) {
+        self.0.prompt.set(value.into())
     }
 
     /// Get the input history.
@@ -366,15 +414,12 @@ impl Telnet {
 
     /// Get the history position, if any.
     pub fn history_position(&self) -> Option<usize> {
-        match *self.0.history_position.borrow() {
-            Some(history_position) => Some(history_position),
-            None => None,
-        }
+        self.0.history_position.load(Ordering::Relaxed)
     }
 
     /// Set the history position.
     pub fn set_history_position(&self, value: Option<usize>) {
-        self.0.history_position.set(Arc::new(value));
+        self.0.history_position.store(value, Ordering::Relaxed);
     }
 
     /// Get the kill ring.
@@ -389,8 +434,8 @@ impl Telnet {
     }
 
     /// Set the reply-to name.
-    pub fn set_reply_to(&self, value: Option<Name>) {
-        self.0.reply_to.set(value);
+    pub fn set_reply_to(&self, value: impl Into<Option<Name>>) {
+        self.0.reply_to.set(value.into());
     }
 
     /// Get the output buffer.
@@ -403,16 +448,6 @@ impl Telnet {
     #[framed]
     pub async fn command_buffer(&self) -> MutexGuard<'_, BytesMut> {
         self.0.command_buffer.lock().await
-    }
-
-    /// Get the TELNET state.
-    pub fn state(&self) -> TelnetState {
-        *self.0.state.load_full()
-    }
-
-    /// Set the TELNET state.
-    pub fn set_state(&self, value: TelnetState) {
-        self.0.state.set(Arc::new(value));
     }
 
     /// Get the undrawn flag.
@@ -475,6 +510,26 @@ impl Telnet {
         self.0.welcome_sent.store(value, Ordering::Relaxed);
     }
 
+    /// Get the TELNET state.
+    pub fn state(&self) -> TelnetState {
+        TelnetState::from_u8(self.0.state.load(Ordering::Relaxed))
+    }
+
+    /// Set the TELNET state.
+    pub fn set_state(&self, value: TelnetState) {
+        self.0.state.store(value as u8, Ordering::Relaxed);
+    }
+
+    /// Get the TELNET option subnegotiation state.
+    pub fn sb_state(&self) -> TelnetSubnegotiationState {
+        TelnetSubnegotiationState::from_u8(self.0.sb_state.load(Ordering::Relaxed))
+    }
+
+    /// Set the TELNET option subnegotiation state.
+    pub fn set_sb_state(&self, value: TelnetSubnegotiationState) {
+        self.0.sb_state.store(value as u8, Ordering::Relaxed);
+    }
+
     /// Get the echo option state.
     pub fn echo(&self) -> u8 {
         self.0.echo.load(Ordering::Relaxed)
@@ -533,16 +588,6 @@ impl Telnet {
     /// Set the NAWS option state.
     pub fn set_naws(&self, value: u8) {
         self.0.naws.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the TELNET option subnegotiation state.
-    pub fn sb_state(&self) -> TelnetSubnegotiationState {
-        *self.0.sb_state.load_full()
-    }
-
-    /// Set the TELNET option subnegotiation state.
-    pub fn set_sb_state(&self, value: TelnetSubnegotiationState) {
-        self.0.sb_state.set(Arc::new(value));
     }
 
     /// Initiate TELNET protocol option negotiations and session login sequence.
@@ -676,10 +721,11 @@ impl Telnet {
 
     /// Add bytes to output buffer.
     #[framed]
-    pub async fn output(self: &Self, data: &str) {
+    pub async fn output(self: &Self, data: impl AsRef<str>) {
         let mut output = self.output_buffer().await;
+        let data_str = data.as_ref();
 
-        for &byte in data.as_bytes() {
+        for &byte in data_str.as_bytes() {
             match byte {
                 x if x == TelnetCommand::IAC as u8 => {
                     output.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);

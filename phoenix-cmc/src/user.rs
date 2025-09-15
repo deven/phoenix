@@ -2,6 +2,7 @@ use crate::atomic::{AtomicHashMap, AtomicOrdSet, AtomicText, AtomicTextOption, A
 use crate::session::Session;
 use crate::text::Text;
 use anyhow::Result;
+use arc_swap::ArcSwapOption;
 use async_backtrace::framed;
 use im::Vector;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
@@ -192,7 +193,7 @@ impl UserManager {
 
         for line in reader.lines() {
             let line = line?;
-            if line.starts_with('#') || line.trim().is_empty() {
+            if line.starts_with("#") || line.trim().is_empty() {
                 continue;
             }
 
