@@ -14,6 +14,7 @@ use std::sync::Arc;
 
 // AtomicUsizeOption
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicUsizeOption(AtomicUsize);
 
 impl AtomicUsizeOption {
@@ -53,6 +54,7 @@ impl AtomicUsizeOption {
 
 // AtomicU64Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicU64Option(AtomicU64);
 
 impl AtomicU64Option {
@@ -83,6 +85,7 @@ impl AtomicU64Option {
 
 // AtomicU32Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicU32Option(AtomicU32);
 
 impl AtomicU32Option {
@@ -113,6 +116,7 @@ impl AtomicU32Option {
 
 // AtomicU16Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicU16Option(AtomicU16);
 
 impl AtomicU16Option {
@@ -136,6 +140,7 @@ impl AtomicU16Option {
 
 // AtomicU8Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicU8Option(AtomicU8);
 
 impl AtomicU8Option {
@@ -159,6 +164,7 @@ impl AtomicU8Option {
 
 // AtomicIsizeOption
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicIsizeOption(AtomicIsize);
 
 impl AtomicIsizeOption {
@@ -182,6 +188,7 @@ impl AtomicIsizeOption {
 
 // AtomicI64Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicI64Option(AtomicI64);
 
 impl AtomicI64Option {
@@ -205,6 +212,7 @@ impl AtomicI64Option {
 
 // AtomicI32Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicI32Option(AtomicI32);
 
 impl AtomicI32Option {
@@ -228,6 +236,7 @@ impl AtomicI32Option {
 
 // AtomicI16Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicI16Option(AtomicI16);
 
 impl AtomicI16Option {
@@ -251,6 +260,7 @@ impl AtomicI16Option {
 
 // AtomicI8Option
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AtomicI8Option(AtomicI8);
 
 impl AtomicI8Option {
