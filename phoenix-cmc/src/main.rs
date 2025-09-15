@@ -3,7 +3,6 @@ use log::info;
 use phoenix_cmc::{server, server::Server, VERSION};
 use std::env;
 use std::path::PathBuf;
-use std::sync::Arc;
 use tokio::signal;
 
 const DEFAULT_PORT: u16 = 9999;
