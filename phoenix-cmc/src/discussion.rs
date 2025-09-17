@@ -527,8 +527,24 @@ impl Discussion {
             let (user, rest) = getword(remaining, Some(COMMA as char));
             remaining = rest;
 
-            // Handle appointments - would need FindSession implementation
-            session.output(&format!("Appointment handling for '{user}' not yet implemented.\n")).await;
+            let (found_session, matches) = session.find_session(user).await;
+
+            if let Some(s) = found_session {
+                let name = s.name();
+
+                if self.is_moderator(&name) {
+                    session.output(&format!("{name} is already a moderator of discussion {disc}.\n")).await;
+                } else {
+                    let mut moderators = self.0.moderators.snapshot();
+                    moderators.insert(name.clone());
+                    self.0.moderators.set(moderators);
+
+                    self.enqueue_others(Output::AppointNotify(AppointNotify::new(disc.clone(), session_name.clone(), name.clone())), &session).await;
+                    session.output(&format!("You have appointed {name} as a moderator of discussion {disc}.\n")).await;
+                }
+            } else {
+                session.session_matches(user, &matches).await;
+            }
         }
     }
 
@@ -548,8 +564,26 @@ impl Discussion {
             let (user, rest) = getword(remaining, Some(COMMA as char));
             remaining = rest;
 
-            // Handle unappointments - would need FindSession implementation
-            session.output(&format!("Unappointment handling for '{user}' not yet implemented.\n")).await;
+            let (found_session, matches) = session.find_session(user).await;
+
+            if let Some(s) = found_session {
+                let name = s.name();
+
+                if self.is_creator(&name) {
+                    session.output(&format!("{name} is the creator of discussion {disc} and may not be unappointed.\n")).await;
+                } else if !self.is_moderator(&name) {
+                    session.output(&format!("{name} is not a moderator of discussion {disc}.\n")).await;
+                } else {
+                    let mut moderators = self.0.moderators.snapshot();
+                    moderators.remove(&name);
+                    self.0.moderators.set(moderators);
+
+                    self.enqueue_others(Output::UnappointNotify(UnappointNotify::new(disc.clone(), session_name.clone(), name.clone())), &session).await;
+                    session.output(&format!("You have unappointed {name} as a moderator of discussion {disc}.\n")).await;
+                }
+            } else {
+                session.session_matches(user, &matches).await;
+            }
         }
     }
 }
