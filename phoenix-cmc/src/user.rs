@@ -13,14 +13,10 @@ static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 /// User handle.
 #[derive(Debug, Clone)]
-pub struct User(pub Arc<UserInner>)
-where
-    Self: Send + Sync + 'static;
+pub struct User(pub Arc<UserInner>);
 
 #[derive(Debug)]
 pub struct UserInner
-where
-    Self: Send + Sync + 'static,
 {
     pub id: usize,
     pub sessions: AtomicOrdSet<Session>,
@@ -123,8 +119,6 @@ pub struct UserManager(pub Arc<UserManagerInner>);
 
 #[derive(Debug)]
 pub struct UserManagerInner
-where
-    Self: Send + Sync + 'static,
 {
     pub users: AtomicHashMap<Text, User>,
     pub last_update: ArcSwapOption<SystemTime>,
@@ -275,3 +269,12 @@ impl std::hash::Hash for User {
         self.0.id.hash(state);
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<User>();
+    assert_send_sync_static::<UserInner>();
+    assert_send_sync_static::<UserManager>();
+    assert_send_sync_static::<UserManagerInner>();
+};

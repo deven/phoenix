@@ -1175,3 +1175,35 @@ impl Default for OutputStream {
         Self::new()
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<AppointNotify>();
+    assert_send_sync_static::<AttachNotify>();
+    assert_send_sync_static::<AwayNotify>();
+    assert_send_sync_static::<BusyNotify>();
+    assert_send_sync_static::<CreateNotify>();
+    assert_send_sync_static::<DepermitNotify>();
+    assert_send_sync_static::<DestroyNotify>();
+    assert_send_sync_static::<DetachNotify>();
+    assert_send_sync_static::<EntryNotify>();
+    assert_send_sync_static::<ExitNotify>();
+    assert_send_sync_static::<GoneNotify>();
+    assert_send_sync_static::<HereNotify>();
+    assert_send_sync_static::<JoinNotify>();
+    assert_send_sync_static::<Message>();
+    assert_send_sync_static::<MessageInner>();
+    assert_send_sync_static::<Output>();
+    assert_send_sync_static::<OutputClass>();
+    assert_send_sync_static::<OutputStream>();
+    assert_send_sync_static::<OutputType>();
+    assert_send_sync_static::<PermitNotify>();
+    assert_send_sync_static::<PrivateNotify>();
+    assert_send_sync_static::<PublicNotify>();
+    assert_send_sync_static::<QuitNotify>();
+    assert_send_sync_static::<RenameNotify>();
+    assert_send_sync_static::<TextOutput>();
+    assert_send_sync_static::<TransferNotify>();
+    assert_send_sync_static::<UnappointNotify>();
+};

@@ -63,8 +63,6 @@ pub struct Telnet(pub Arc<TelnetInner>);
 
 #[derive(Debug)]
 pub struct TelnetInner
-where
-    Self: Send + Sync + 'static,
 {
     // Connection
     pub stream: Mutex<TcpStream>,
@@ -2585,3 +2583,14 @@ impl Telnet {
         session.handle_input(line).await;
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<Telnet>();
+    assert_send_sync_static::<TelnetInner>();
+    assert_send_sync_static::<TelnetCommand>();
+    assert_send_sync_static::<TelnetOption>();
+    assert_send_sync_static::<TelnetState>();
+    assert_send_sync_static::<TelnetSubnegotiationState>();
+};
