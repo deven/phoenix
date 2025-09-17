@@ -1,4 +1,4 @@
-use crate::atomic::{AtomicHashMap, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicTelnetOption, AtomicText, AtomicUserOption};
+use crate::atomic::{AtomicAwayState, AtomicHashMap, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicTelnetOption, AtomicText, AtomicUserOption};
 use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::name::Name;
@@ -15,7 +15,7 @@ use async_backtrace::framed;
 use im::OrdSet;
 use log::info;
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU8, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -146,29 +146,6 @@ impl From<u8> for AwayState {
             3 => AwayState::Gone,
             _ => AwayState::default(),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct AtomicAwayState(AtomicU8);
-
-impl AtomicAwayState {
-    pub fn new(state: AwayState) -> Self {
-        Self(AtomicU8::new(state.into()))
-    }
-
-    pub fn get(&self) -> AwayState {
-        AwayState::from(self.0.load(Ordering::Acquire))
-    }
-
-    pub fn set(&self, state: AwayState) {
-        self.0.store(state.into(), Ordering::Release)
-    }
-}
-
-impl Default for AtomicAwayState {
-    fn default() -> Self {
-        Self::new(AwayState::default())
     }
 }
 
