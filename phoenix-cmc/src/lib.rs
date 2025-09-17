@@ -1,6 +1,6 @@
-#![recursion_limit = "256"]
+//#![recursion_limit = "256"]
 #![deny(rust_2018_idioms, nonstandard_style, unused_must_use, clippy::all)]
-#![warn(future_incompatible, missing_docs, clippy::pedantic, clippy::cargo)]
+//#![warn(future_incompatible, missing_docs, clippy::pedantic, clippy::cargo)]
 
 pub mod atomic;
 pub mod constants;
