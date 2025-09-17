@@ -16,8 +16,7 @@ static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
 pub struct User(pub Arc<UserInner>);
 
 #[derive(Debug)]
-pub struct UserInner
-{
+pub struct UserInner {
     pub id: usize,
     pub sessions: AtomicOrdSet<Session>,
     pub username: AtomicText,
@@ -28,8 +27,6 @@ pub struct UserInner
 }
 
 impl User {
-    const BUF_SIZE: usize = 1024;
-
     #[framed]
     pub async fn new(login: impl Into<Text>, pass: Option<String>, names: Option<&str>, bl: Option<impl Into<Text>>, p: i32) -> Self {
         let id = USER_COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -118,8 +115,7 @@ impl User {
 pub struct UserManager(pub Arc<UserManagerInner>);
 
 #[derive(Debug)]
-pub struct UserManagerInner
-{
+pub struct UserManagerInner {
     pub users: AtomicHashMap<Text, User>,
     pub last_update: ArcSwapOption<SystemTime>,
 }
@@ -271,7 +267,7 @@ impl std::hash::Hash for User {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<User>();
     assert_send_sync_static::<UserInner>();

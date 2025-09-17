@@ -10,8 +10,7 @@ use std::sync::Arc;
 pub struct Name(pub Arc<NameInner>);
 
 #[derive(Debug, Eq)]
-pub struct NameInner
-{
+pub struct NameInner {
     pub name: Text,
     pub blurb: Option<Text>,
     pub name_blurb: Text,
@@ -20,7 +19,7 @@ pub struct NameInner
 
 impl Name {
     /// Create a `Name` with an optional blurb.
-    pub fn new(name: impl AsRef<str>, blurb: Option<String>) -> Self {
+    pub fn new(name: impl AsRef<str>, blurb: Option<Text>) -> Self {
         let name = name.as_ref();
         let name_len = name.len();
 
@@ -172,7 +171,7 @@ impl Borrow<Text> for Name {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Name>();
     assert_send_sync_static::<NameInner>();
