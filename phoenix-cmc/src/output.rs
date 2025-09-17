@@ -312,7 +312,7 @@ impl From<RenameNotify> for Output {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TextOutput {
     pub text: Text,
     pub time: Timestamp,
@@ -341,10 +341,10 @@ impl TextOutput {
 }
 
 /// Message handle.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Message(pub Arc<MessageInner>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MessageInner {
     pub output_type: OutputType,
     pub from: Name,
@@ -371,12 +371,20 @@ impl Message {
         self.0.time
     }
 
+    pub fn text(&self) -> &Text {
+        &self.0.text
+    }
+
+    pub fn to(&self) -> &Sendlist {
+        &self.0.to
+    }
+
     pub async fn output(&self, telnet: &Telnet) {
         telnet.print_message(self.0.output_type, self.0.time, &self.0.from, &self.0.to, &self.0.text).await;
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EntryNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -406,7 +414,7 @@ impl EntryNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExitNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -436,7 +444,7 @@ impl ExitNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TransferNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -466,7 +474,7 @@ impl TransferNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AttachNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -496,7 +504,7 @@ impl AttachNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DetachNotify {
     pub name: Name,
     pub intentional: bool,
@@ -528,7 +536,7 @@ impl DetachNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct HereNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -558,7 +566,7 @@ impl HereNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AwayNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -588,7 +596,7 @@ impl AwayNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BusyNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -618,7 +626,7 @@ impl BusyNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GoneNotify {
     pub name: Name,
     pub time: Timestamp,
@@ -648,7 +656,7 @@ impl GoneNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CreateNotify {
     pub discussion_name: Text,
     pub discussion_title: Text,
@@ -687,7 +695,7 @@ impl CreateNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DestroyNotify {
     pub discussion_name: Text,
     pub name: Name,
@@ -719,7 +727,7 @@ impl DestroyNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct JoinNotify {
     pub discussion_name: Text,
     pub name: Name,
@@ -751,7 +759,7 @@ impl JoinNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct QuitNotify {
     pub discussion_name: Text,
     pub name: Name,
@@ -783,7 +791,7 @@ impl QuitNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PublicNotify {
     pub discussion_name: Text,
     pub name: Name,
@@ -815,7 +823,7 @@ impl PublicNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PrivateNotify {
     pub discussion_name: Text,
     pub name: Name,
@@ -847,7 +855,7 @@ impl PrivateNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PermitNotify {
     pub discussion_name: Text,
     pub is_public: bool,
@@ -893,7 +901,7 @@ impl PermitNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DepermitNotify {
     pub discussion_name: Text,
     pub is_public: bool,
@@ -971,7 +979,7 @@ impl DepermitNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AppointNotify {
     pub discussion_name: Text,
     pub appointer: Name,
@@ -1012,7 +1020,7 @@ impl AppointNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnappointNotify {
     pub discussion_name: Text,
     pub unappointer: Name,
@@ -1053,7 +1061,7 @@ impl UnappointNotify {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RenameNotify {
     pub oldname: Text,
     pub newname: Text,

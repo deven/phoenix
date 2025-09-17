@@ -50,7 +50,7 @@ where
 
     // I/O handling
     pub output_buffer: Mutex<String>,
-    pub pending: ArcSwap<OutputStream>,
+    pub pending: Mutex<OutputStream>,
 
     // User preferences and variables
     pub user_vars: ArcSwap<HashMap<Text, Text>>,
@@ -149,6 +149,7 @@ impl From<u8> for AwayState {
     }
 }
 
+#[derive(Debug)]
 pub struct AtomicAwayState(AtomicU8);
 
 impl AtomicAwayState {
@@ -322,20 +323,60 @@ impl LoginSession {
             return;
         }
 
-        let line = if line.is_empty() {
+        let blurb_text = if line.is_empty() {
             if let Some(user) = self.user() {
-                user.blurb().as_ref().map(|b| Text::new(b.as_str())).unwrap_or_else(|| Text::new(""))
+                user.blurb().as_ref().map(|b| b.to_string()).unwrap_or_else(|| String::new())
             } else {
-                Text::new("")
+                String::new()
             }
         } else {
-            line
+            line.to_string()
         };
 
-        // At this point we would transition to a full Session
-        // This is where we'd create the Session object and add to SESSIONS
-        // For now, just mark as logged in
-        self.switch_login_state(LoginState::PreLogin, None).await;
+        // Create a full Session to complete the login process
+        if let Some(telnet) = self.telnet() {
+            let session = Session::new(self.server().clone(), telnet).await;
+
+            // Transfer the login state to the session
+            if let Some(user) = self.user() {
+                session.set_user(Some(user.clone()));
+                session.set_priv_level(user.priv_level());
+                user.add_session(session.clone());
+            }
+
+            // Set the name and blurb
+            session.set_name(Name::new(&name, Some(blurb_text)));
+            session.set_signed_on(true);
+
+            // Add to global sessions and remove from inits
+            SESSIONS.insert(session.id(), session.clone());
+            // Note: INITS removal would need the session ID, which we don't have from LoginSession
+
+            // Send entry notification
+            session.notify_entry().await;
+
+            // Welcome message and automatic commands
+            session.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
+
+            // Make sure discussion A exists
+            match session.find_sendable("A", false, true, true, true).await {
+                (_, _, None, _) => {
+                    let disc = Discussion::new(None, "A", "General Discussion", true).await;
+                    DISCUSSIONS.insert(Text::from("A"), disc);
+                }
+                _ => {}
+            }
+
+            // Automatic commands
+            session.do_join("A").await;
+            session.do_send("A").await;
+            session.do_who("").await;
+            session.do_howmany("").await;
+
+            if let Some(telnet) = session.telnet() {
+                telnet.reset_history().await;
+            }
+        }
     }
 
     pub async fn handle_transfer_input(&self, line: Text) {
@@ -372,11 +413,11 @@ impl LoginSession {
         self.output("\n").await;
     }
 
-    pub async fn switch_login_state(&self, state: LoginState, prompt: Option<impl Into<Text>>) {
+    pub async fn switch_login_state(&self, state: LoginState, prompt: Option<&str>) {
         self.set_login_state(state);
         if let Some(prompt) = prompt {
             if let Some(telnet) = self.telnet() {
-                telnet.output(prompt.into()).await;
+                telnet.output(prompt).await;
             }
         }
     }
@@ -428,7 +469,7 @@ impl LoginSession {
     }
 
     pub fn set_login_state(&self, state: LoginState) {
-        self.login_state.set(state);
+        self.login_state.store(Arc::new(state));
     }
 
     pub fn login_timeout(&self) -> Option<AbortHandle> {
@@ -472,6 +513,75 @@ impl LoginSession {
     pub async fn init_login_sequence(&self) {
         self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
     }
+
+    pub async fn check_name_availability(&self, name: &str, double_check: bool, _transferring: bool) -> bool {
+        if name.eq_ignore_ascii_case("me") {
+            self.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
+            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+            return false;
+        }
+
+        if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
+            let my_user = self.user();
+            let found_user_ref = Some(found_user);
+            match (my_user, found_user_ref) {
+                (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
+                    let now = if double_check { " now" } else { "" };
+                    self.output(&format!("\"{reserved}\" is{now} a reserved name.  Choose another.\n")).await;
+                    self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        // Note: LoginSession doesn't have find_sendable, so we need to check SESSIONS and DISCUSSIONS directly
+        // Check for existing sessions with this name
+        for (_, existing_session) in SESSIONS.iter() {
+            if existing_session.name().name().eq_ignore_ascii_case(name) {
+                let my_user = self.user();
+                let their_user = existing_session.user();
+                match (my_user, their_user) {
+                    (Some(my_user), Some(their_user)) if my_user.username() == their_user.username() && existing_session.priv_level() > 0 => {
+                        if let Some(_their_telnet) = existing_session.telnet() {
+                            if _transferring {
+                                self.output("Transferring active session...\n").await;
+                                // TODO: Implement session transfer for LoginSession
+                                return false;
+                            } else {
+                                let now = if double_check { " now" } else { "" };
+                                self.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
+                                self.switch_login_state(LoginState::AwaitingTransferConfirmation, Some("Transfer active session? [no] ")).await;
+                            }
+                        } else {
+                            self.output("Attaching to detached session...\n").await;
+                            // TODO: Implement session attachment for LoginSession
+                            return false;
+                        }
+                    }
+                    _ => {
+                        let found_name = existing_session.name();
+                        let already = if double_check { "now" } else { "already" };
+                        self.output(&format!("The name \"{found_name}\" is {already} in use.  Choose another.\n")).await;
+                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+                    }
+                }
+                return false;
+            }
+        }
+
+        // Check for discussion name conflicts
+        for (disc_name, _) in DISCUSSIONS.iter() {
+            if disc_name.eq_ignore_ascii_case(name) {
+                let already = if double_check { "now" } else { "already" };
+                self.output(&format!("There is {already} a discussion named \"{disc_name}\".  Choose another name.\n")).await;
+                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 impl Session {
@@ -488,7 +598,7 @@ impl Session {
             user: AtomicUserOption::new(None),
             telnet: AtomicTelnetOption::new(Some(telnet.clone())),
             output_buffer: Mutex::new(String::new()),
-            pending: ArcSwap::new(Arc::new(OutputStream::new())),
+            pending: Mutex::new(OutputStream::new()),
             user_vars: ArcSwap::new(Arc::new(HashMap::new())),
             sys_vars: ArcSwap::new(Arc::new(HashMap::new())),
             signal_public: AtomicBool::new(true),
@@ -618,6 +728,11 @@ impl Session {
         VecDeque::new() // SessionInner doesn't have lines field
     }
 
+    /// Get the output buffer.
+    pub async fn output_buffer(&self) -> tokio::sync::MutexGuard<'_, String> {
+        self.0.output_buffer.lock().await
+    }
+
     /// Append text to output buffer.
     pub async fn output(&self, text: impl AsRef<str>) {
         let mut buffer = self.output_buffer().await;
@@ -625,13 +740,13 @@ impl Session {
     }
 
     /// Get the `OutputStream`.
-    pub fn pending(&self) -> Arc<OutputStream> {
-        self.0.pending.load_full()
+    pub async fn pending(&self) -> tokio::sync::MutexGuard<'_, OutputStream> {
+        self.0.pending.lock().await
     }
 
     /// Set the `OutputStream`.
-    pub fn set_pending(&self, value: OutputStream) {
-        self.0.pending.store(Arc::new(value));
+    pub async fn set_pending(&self, value: OutputStream) {
+        *self.0.pending.lock().await = value;
     }
 
     /// Get a user variable.
@@ -642,7 +757,7 @@ impl Session {
 
     /// Set a user variable.
     pub fn set_user_var(&self, key: impl Into<Text>, value: impl Into<Text>) {
-        let vars = self.0.user_vars.load_full();
+        let vars = self.0.user_vars.load();
         let mut new_vars = (**vars).clone();
         new_vars.insert(key.into(), value.into());
         self.0.user_vars.store(Arc::new(new_vars));
@@ -650,7 +765,7 @@ impl Session {
 
     /// Remove a user variable.
     pub fn remove_user_var(&self, key: impl AsRef<str>) -> Option<Text> {
-        let vars = self.0.user_vars.load_full();
+        let vars = self.0.user_vars.load();
         let mut new_vars = (**vars).clone();
         let result = new_vars.remove(key.as_ref());
         self.0.user_vars.store(Arc::new(new_vars));
@@ -670,7 +785,7 @@ impl Session {
 
     /// Set a system variable.
     pub fn set_sys_var(&self, key: impl Into<Text>, value: impl Into<Text>) {
-        let vars = self.0.sys_vars.load_full();
+        let vars = self.0.sys_vars.load();
         let mut new_vars = (**vars).clone();
         new_vars.insert(key.into(), value.into());
         self.0.sys_vars.store(Arc::new(new_vars));
@@ -678,7 +793,7 @@ impl Session {
 
     /// Remove a system variable.
     pub fn remove_sys_var(&self, key: impl AsRef<str>) -> Option<Text> {
-        let vars = self.0.sys_vars.load_full();
+        let vars = self.0.sys_vars.load();
         let mut new_vars = (**vars).clone();
         let result = new_vars.remove(key.as_ref());
         self.0.sys_vars.store(Arc::new(new_vars));
@@ -800,7 +915,8 @@ impl Session {
 
     /// Set the name.
     pub fn set_name(&self, value: impl AsRef<str>) {
-        self.0.name.set(Name::new(value.as_ref(), self.blurb()));
+        let blurb = self.blurb().map(|t| t.to_string());
+        self.0.name.set(Name::new(value.as_ref(), blurb));
     }
 
     /// Check if a blurb is set.
@@ -810,23 +926,25 @@ impl Session {
 
     /// Get the blurb, if any.
     pub fn blurb(&self) -> Option<Text> {
-        self.0.name.borrow().blurb().clone()
+        self.0.name.borrow().blurb().cloned()
     }
 
     /// Set the blurb.
     pub fn set_blurb(&self, value: Option<impl AsRef<str>>) {
-        self.0.name.set(Some(Name::new(self.name_only(), value)));
+        let blurb = value.map(|s| s.as_ref().to_string());
+        self.0.name.set(Name::new(self.name_only(), blurb));
     }
 
     /// Remove the blurb.
     pub fn remove_blurb(&self) {
         if self.has_blurb() {
-            self.0.name.set(Some(Name::new(self.name_only(), None)));
+            self.0.name.set(Name::new(self.name_only(), None));
         }
     }
 
     /// Set both name and blurb atomically.
     pub fn set_name_and_blurb(&self, name: impl AsRef<str>, blurb: Option<impl AsRef<str>>) {
+        let blurb = blurb.map(|s| s.as_ref().to_string());
         self.0.name.set(Name::new(name.as_ref(), blurb));
     }
 
@@ -896,11 +1014,16 @@ impl Session {
         self.0.oops_text.set(value.into());
     }
 
-    pub async fn name_user(&self) -> Text {
+    pub fn name_user(&self) -> Text {
         let name = self.name();
-        // For now, just return the name since we can't access User fields
-        // TODO: Add method to User to get login name
-        Text::from(name.name())
+        let user = self.user();
+        if let Some(user) = user {
+            let username = user.username();
+            let name_user = format!("{name} ({username})");
+            Text::from(name_user)
+        } else {
+            name.name().clone()
+        }
     }
 
     pub async fn close(&self, drain: bool) {
@@ -916,7 +1039,7 @@ impl Session {
         // Quit all discussions silently
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|(key, _)| key.clone()).collect();
         for key in &disc_keys {
-            if let Some(disc) = DISCUSSIONS.get(&key) {
+            if let Some(disc) = DISCUSSIONS.get(key) {
                 disc.quit(&self).await;
             }
         }
@@ -940,7 +1063,7 @@ impl Session {
         new_telnet.set_session(self.clone());
 
         if let Some(old) = old_telnet {
-            let who = self.name_user().await;
+            let who = self.name_user();
             info!("Transfer: {who} from fd to new connection");
             old.output("*** This session has been transferred to a new connection. ***\n").await;
             old.close(true).await;
@@ -956,7 +1079,7 @@ impl Session {
         self.set_telnet(Some(telnet.clone()));
         telnet.set_session(self.clone());
 
-        let who = self.name_user().await;
+        let who = self.name_user();
         info!("Attach: {who} on new connection");
 
         self.enqueue_others(AttachNotify::new(self.name())).await;
@@ -968,8 +1091,8 @@ impl Session {
     pub async fn detach(&self, telnet: &Telnet, intentional: bool) {
         if self.signed_on() && self.priv_level() > 0 {
             if let Some(t) = self.telnet() {
-                if t == telnet {
-                    let who = self.name_user().await;
+                if Arc::ptr_eq(&t.0, &telnet.0) {
+                    let who = self.name_user();
                     if intentional {
                         info!("Detach: {who} (intentional)");
                     } else {
@@ -1032,7 +1155,7 @@ impl Session {
 
     pub async fn enqueue_others(&self, out: Output) {
         for (_, session) in SESSIONS.iter() {
-            if session != self {
+            if &session != self {
                 session.enqueue(out.clone()).await;
             }
         }
@@ -1109,10 +1232,10 @@ impl Session {
         // If we have exactly one match total, use it
         if session_matches.len() + discussion_matches.len() == 1 {
             if session_matches.len() == 1 {
-                session = session_matches.first().cloned();
+                session = session_matches.iter().next().cloned();
             }
             if discussion_matches.len() == 1 {
-                discussion = discussion_matches.first().cloned();
+                discussion = discussion_matches.iter().next().cloned();
             }
         }
 
@@ -1130,7 +1253,7 @@ impl Session {
     }
 
     pub async fn notify_entry(&self) {
-        let who = self.name_user().await;
+        let who = self.name_user();
         if let Some(_telnet) = self.telnet() {
             info!("Enter: {who} on connection");
         } else {
@@ -1145,7 +1268,7 @@ impl Session {
     }
 
     pub async fn notify_exit(&self) {
-        let who = self.name_user().await;
+        let who = self.name_user();
         if let Some(_telnet) = self.telnet() {
             info!("Exit: {who} on connection");
         } else {
@@ -1167,207 +1290,6 @@ impl Session {
         self.enqueue_output().await;
     }
 
-    pub async fn save_input_line(&self, line: Text) {
-        self.lines().await.push(line);
-    }
-
-    pub async fn handle_login_input(&self, line: Text) {
-        let line = line.trim();
-
-        if let Some(args) = match_keyword(line, "/bye", 4) {
-            self.do_bye(args).await;
-            return;
-        }
-
-        if line.is_empty() {
-            if let Some(telnet) = self.telnet() {
-                telnet.output("login: ").await;
-            }
-            return;
-        }
-
-        let user = (*USER_MANAGER).get_user(&line).await;
-        self.set_user(user.clone());
-
-        if user.is_none() || user.as_ref().unwrap().password().is_some() {
-            // Need password
-            if let Some(telnet) = self.telnet() {
-                let echo = telnet.echo();
-                if echo == 0 {
-                    telnet.output("\n\x07Sorry, password probably WILL echo.\n\n").await;
-                } else if echo != TELNET_ENABLED {
-                    telnet.output("\nWarning: password may echo.\n\n").await;
-                }
-
-                telnet.set_do_echo(false);
-                self.switch_login_state(LoginState::AwaitingPassword, Some("Password: ")).await;
-            }
-        } else {
-            // No password required (guest account)
-            self.print_reserved_names().await;
-            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-        }
-    }
-
-    pub async fn handle_password_input(&self, line: &str) {
-        if let Some(telnet) = self.telnet() {
-            telnet.output("\n").await;
-            telnet.set_do_echo(true);
-        }
-
-        (*USER_MANAGER).update_all().await.ok();
-
-        let valid = if let Some(user) = self.user() {
-            if let Some(password) = &user.password() {
-                verify_password(line, password)
-            } else {
-                false
-            }
-        } else {
-            false
-        };
-
-        if !valid {
-            self.output("Login incorrect.\n").await;
-            let attempts = self.attempts().fetch_add(1, Ordering::Relaxed) + 1;
-            if attempts >= Session::MAX_LOGIN_ATTEMPTS {
-                self.close(true).await;
-                return;
-            }
-
-            self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
-            self.set_user(None);
-            return;
-        }
-
-        self.print_reserved_names().await;
-        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-    }
-
-    pub async fn print_reserved_names(&self) {
-        if let Some(user) = self.user() {
-            if let Some(first) = user.reserved().front() {
-                self.output(&format!("\nYour default (reserved) name is \"{first}\".\n")).await;
-
-                let reserved = user.reserved();
-                let count = reserved.len();
-                if count > 1 {
-                    self.output("\nYou also have \"").await;
-                    self.output(&reserved[1]).await;
-
-                    for i in 2..count - 1 {
-                        self.output("\", \"").await;
-                        self.output(&reserved[i]).await;
-                    }
-
-                    if count > 2 {
-                        self.output("\" and \"").await;
-                        self.output(&reserved[count - 1]).await;
-                    }
-
-                    self.output("\" reserved.\n").await;
-                }
-            }
-
-            self.output("\n").await;
-        }
-    }
-
-    pub async fn handle_name_input(&self, line: &str) {
-        let line = line.trim();
-        let name = if line.is_empty() {
-            if let Some(user) = self.user() {
-                if let Some(reserved) = user.reserved().front() {
-                    reserved.clone()
-                } else {
-                    if let Some(telnet) = self.telnet() {
-                        telnet.output("Enter name: ").await;
-                    }
-                    return;
-                }
-            } else {
-                return;
-            }
-        } else {
-            Text::new(line)
-        };
-
-        self.name.set(name.clone());
-
-        if self.check_name_availability(&name, false, false).await {
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
-        }
-    }
-
-    pub async fn handle_blurb_input(&self, line: &str) {
-        if !self.check_name_availability(&self.name(), true, false).await {
-            return;
-        }
-
-        let line = if line.is_empty() {
-            if let Some(user) = self.user() {
-                user.blurb().as_ref().map(|b| b.as_str()).unwrap_or("").to_string()
-            } else {
-                String::new()
-            }
-        } else {
-            line.to_string()
-        };
-
-        self.do_blurb(&line, true).await;
-
-        //self.switch_login_state(LoginState::LoggedIn, None);
-
-        self.set_signed_on(true);
-
-        if let Some(user) = self.user() {
-            self.set_priv_level(user.priv_level());
-            user.add_session(self.clone());
-        }
-
-        SESSIONS.insert(self.id(), self.clone());
-        INITS.remove(&self.id());
-
-        self.notify_entry().await;
-
-        // Welcome message and automatic commands
-        self.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
-
-        // Make sure discussion A exists
-        match self.find_sendable("A", false, true, true, true).await {
-            (_, _, None, _) => {
-                let disc = Discussion::new(None, "A", "General Discussion", true).await;
-                DISCUSSIONS.insert(Text::from("A"), disc);
-            }
-            _ => {}
-        }
-
-        // Automatic commands
-        self.do_join("A").await;
-        self.do_send("A").await;
-        self.do_who("").await;
-        self.do_howmany("").await;
-
-        if let Some(telnet) = self.telnet() {
-            telnet.reset_history().await;
-        }
-
-        //self.switch_login_state(LoginState::LoggedIn, None).await;
-    }
-
-    pub async fn handle_transfer_input(&self, line: &str) {
-        if match_keyword(line, "yes", 1).is_none() {
-            self.output("Session not transferred.\n").await;
-            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-            return;
-        }
-
-        if self.check_name_availability(&self.name(), true, true).await {
-            self.output("(That session is now gone.)\n").await;
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
-        }
-    }
-
     pub async fn process_input(&self, line: Text) {
         if line.starts_with("!") {
             let line = line[1..].trim();
@@ -1385,7 +1307,7 @@ impl Session {
             } else {
                 self.output("Unknown !command.\n").await;
             }
-        } else if line.starts_with('/') {
+        } else if line.starts_with("/") {
             let line = line[1..].trim();
             if let Some(args) = match_keyword(line, "/who", 2) {
                 self.do_who(args).await;
@@ -1459,77 +1381,10 @@ impl Session {
         }
     }
 
-    pub async fn check_name_availability(&self, name: &str, double_check: bool, transferring: bool) -> bool {
-        if name.eq_ignore_ascii_case("me") {
-            self.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
-            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-            return false;
-        }
-
-        if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
-            let my_user = self.user();
-            let found_user_ref = Some(found_user);
-            match (my_user, found_user_ref) {
-                (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
-                    let now = if double_check { " now" } else { "" };
-                    self.output(&format!("\"{reserved}\" is{now} a reserved name.  Choose another.\n")).await;
-                    self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-                    return false;
-                }
-                _ => {}
-            }
-        }
-
-        match self.find_sendable(name, false, true, true, true).await {
-            (Some(found_session), _, _, _) => {
-                let my_user = self.user();
-                let their_user = found_session.user();
-                match (my_user, their_user) {
-                    (Some(my_user), Some(their_user)) if my_user.username() == their_user.username() && found_session.priv_level() > 0 => {
-                        if let Some(their_telnet) = found_session.telnet() {
-                            if transferring {
-                                self.output("Transferring active session...\n").await;
-                                found_session.transfer(self.telnet().unwrap()).await;
-                                self.set_telnet(None);
-                                self.close(true).await;
-                            } else {
-                                let now = if double_check { " now" } else { "" };
-                                self.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
-                                self.switch_login_state(LoginState::AwaitingTransferConfirmation, Some("Transfer active session? [no] ")).await;
-                            }
-                        } else {
-                            self.output("Attaching to detached session...\n").await;
-                            found_session.attach(self.telnet().unwrap()).await;
-                            self.set_telnet(None);
-                            self.close(true).await;
-                        }
-                    }
-                    _ => {
-                        let found_name = found_session.name();
-                        let already = if double_check { "now" } else { "already" };
-                        self.output(&format!("The name \"{found_name}\" is {already} in use.  Choose another.\n")).await;
-                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-                    }
-                }
-
-                false
-            }
-            (_, _, Some(found_discussion), _) => {
-                let found_name = found_discussion.name();
-                let already = if double_check { "now" } else { "already" };
-                self.output(&format!("There is {already} a discussion named \"{found_name}\".  Choose another name.\n")).await;
-                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-
-                false
-            }
-            _ => true,
-        }
-    }
-
     /// Reset idle time to now.
     pub async fn reset_idle(&self, min: usize) -> i64 {
         let now = Timestamp::new();
-        let idle = (now - **self.idle_since()) / 60;
+        let idle = (now - *self.idle_since()) / 60;
 
         if min > 0 && idle >= min as i64 {
             self.output("[You were idle for").await;
@@ -1543,7 +1398,7 @@ impl Session {
 
     pub async fn print_time_long(&self, minutes: i32) {
         // Determine time format (0 = verbose, 1 = both, 2 = terse)
-        let format = if let Some(fmt) = self.get_sys_var("time_format").await {
+        let format = if let Some(fmt) = self.get_sys_var("time_format") {
             match fmt.as_str() {
                 "verbose" => 0,
                 "both" => 1,
@@ -1551,10 +1406,10 @@ impl Session {
                 _ => 0,
             }
         } else {
-            match DEFAULTS.get(&Text::from("time_format")).map(|s| s.as_str()) {
-                Some("verbose") => 0,
-                Some("both") => 1,
-                Some("terse") => 2,
+            match DEFAULTS.get(&Text::from("time_format")) {
+                Some(s) if s.as_str() == "verbose" => 0,
+                Some(s) if s.as_str() == "both" => 1,
+                Some(s) if s.as_str() == "terse" => 2,
                 _ => 0,
             }
         };
@@ -1616,16 +1471,16 @@ impl Session {
     }
 
     pub async fn do_restart(&self, args: &str) {
-        let who = self.name_user().await;
+        let who = self.name_user();
         let name = self.name();
 
         if args == "!" {
             // Immediate restart
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-            self.server.schedule_restart(who, 0).await;
+            self.server().schedule_restart(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel restart
-            match self.server.cancel_shutdown().await {
+            match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
                     Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
@@ -1640,7 +1495,7 @@ impl Session {
             // Delayed restart
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
-            self.server.schedule_restart(who.clone(), seconds).await;
+            self.server().schedule_restart(who.clone(), seconds).await;
         }
     }
 
@@ -1651,10 +1506,10 @@ impl Session {
         if args == "!" {
             // Immediate shutdown
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-            self.server.schedule_shutdown(who, 0).await;
+            self.server().schedule_shutdown(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel shutdown
-            match self.server.cancel_shutdown().await {
+            match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
                     Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
@@ -1669,7 +1524,7 @@ impl Session {
             // Delayed shutdown
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
-            self.server.schedule_shutdown(who.clone(), seconds).await;
+            self.server().schedule_shutdown(who.clone(), seconds).await;
         }
     }
 
@@ -1729,13 +1584,13 @@ impl Session {
 
         // Find longest idle time for formatting.
         for session in &who {
-            let days = (now - **session.idle_since()) / 86400;
+            let days = (now - *session.idle_since()) / 86400;
             if days == 0 {
                 continue;
             }
 
             let mut width = days.to_string().len();
-            if session.telnet().is_none() || (now - **session.login_time()) >= 31536000 {
+            if session.telnet().is_none() || (now - *session.login_time()) >= 31536000 {
                 width += 1;
             }
             if width > extend {
@@ -1763,7 +1618,7 @@ impl Session {
 
             // Login time or "detached".
             if session.telnet().is_some() {
-                let login_time = **session.login_time();
+                let login_time = *session.login_time();
                 if (now - login_time) < 86400 {
                     self.output(&login_time.date(11, 8)).await;
                 } else if (now - login_time) < 31536000 {
@@ -1779,7 +1634,7 @@ impl Session {
             }
 
             // Idle time.
-            let idle = (now - **session.idle_since()) / 60;
+            let idle = (now - *session.idle_since()) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1800,7 +1655,7 @@ impl Session {
             }
 
             // Away state.
-            match session.away_state() {
+            match session.away() {
                 AwayState::Here => self.output("Here\n").await,
                 AwayState::Away => self.output("Away\n").await,
                 AwayState::Busy => self.output("Busy\n").await,
@@ -1855,7 +1710,7 @@ impl Session {
             self.output(name.column_display()).await;
 
             // Idle time.
-            let idle = (now - **session.idle_since()) / 60;
+            let idle = (now - *session.idle_since()) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1919,13 +1774,13 @@ impl Session {
 
         // Find longest idle time for formatting.
         for session in &who {
-            let days = (now - **session.idle_since()) / 86400;
+            let days = (now - *session.idle_since()) / 86400;
             if days == 0 {
                 continue;
             }
 
             let mut width = days.to_string().len();
-            if (now - **session.login_time()) >= 31536000 {
+            if (now - *session.login_time()) >= 31536000 {
                 width += 1;
             }
             if width > extend {
@@ -1952,7 +1807,7 @@ impl Session {
             self.output(name.column_display()).await;
 
             // Login time.
-            let login_time = **session.login_time();
+            let login_time = *session.login_time();
             if (now - login_time) < 86400 {
                 self.output(&login_time.date(11, 8)).await;
             } else if (now - login_time) < 31536000 {
@@ -1965,7 +1820,7 @@ impl Session {
             }
 
             // Idle time.
-            let idle = (now - **session.idle_since()) / 60;
+            let idle = (now - *session.idle_since()) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -1986,7 +1841,7 @@ impl Session {
             }
 
             // Away state.
-            match session.away_state() {
+            match session.away() {
                 AwayState::Here => self.output("Here  ").await,
                 AwayState::Away => self.output("Away  ").await,
                 AwayState::Busy => self.output("Busy  ").await,
@@ -2002,9 +1857,8 @@ impl Session {
             }
 
             // File descriptor.
-            if let Some(telnet) = session.telnet() {
-                let fd = telnet.fd();
-                self.output(&format!("{fd:2} ")).await;
+            if session.telnet().is_some() {
+                self.output("?? ").await;
             } else {
                 self.output("-- ").await;
             }
@@ -2032,7 +1886,7 @@ impl Session {
             let mut end = args.len();
 
             if args.len() == 3 && args.eq_ignore_ascii_case("off") {
-                if entry || !self.blurb().is_empty() {
+                if entry || self.blurb().map_or(false, |b| !b.is_empty()) {
                     self.reset_idle(10).await;
                     self.remove_blurb();
                     if !entry {
@@ -2050,7 +1904,7 @@ impl Session {
                 self.reset_idle(10).await;
 
                 let blurb = &args[start..end];
-                self.set_blurb(blurb).await;
+                self.set_blurb(Some(blurb));
                 if !entry {
                     self.output(&format!("Your blurb has been set to [{blurb}].\n")).await;
                 }
@@ -2058,7 +1912,7 @@ impl Session {
         } else if entry {
             self.remove_blurb();
         } else if self.has_blurb() {
-            let blurb = self.blurb();
+            let blurb = self.blurb().unwrap();
             self.output(&format!("Your blurb is currently set to [{blurb}].\n")).await;
         } else {
             self.output("You do not currently have a blurb set.\n").await;
@@ -2180,7 +2034,7 @@ impl Session {
             return;
         }
 
-        let discussions = if args.is_empty() { DISCUSSIONS.iter().map(|r| r.value().clone()).collect() } else { sendlist.discussions() };
+        let discussions = if args.is_empty() { DISCUSSIONS.iter().map(|r| r.1.clone()).collect() } else { sendlist.discussions() };
 
         self.output("\n Name            Users  Idle  Title\n").await;
         self.output(" ----            -----  ----  -----\n").await;
@@ -2198,7 +2052,7 @@ impl Session {
             let is_member = if members.contains(self) { '*' } else { ' ' };
             self.output(&format!("{member_count:>3}{is_member} ")).await;
 
-            let idle = (now - **disc.idle_since()) / 60;
+            let idle = (now - disc.idle_since()) / 60;
             if idle > 0 {
                 let hours = idle / 60;
                 let minutes = idle % 60;
@@ -2216,7 +2070,7 @@ impl Session {
                 self.output("         ").await;
             }
 
-            if disc.is_permitted(&self.name()).await {
+            if disc.is_permitted(&self.name()) {
                 let title = &disc.title();
                 if title.len() > 49 {
                     self.output(&format!("{title:<48.48}+\n")).await;
@@ -2260,7 +2114,7 @@ impl Session {
                 self.set_signal_public(false);
                 self.output("Signals for public messages are now off.\n").await;
             } else if args.is_empty() {
-                let on = if self.signal_public.load(Ordering::Relaxed) { "on" } else { "off" };
+                let on = if self.signal_public() { "on" } else { "off" };
                 self.output(&format!("Signals are {on} for public messages.\n")).await;
             } else {
                 self.output("Usage: /signal public [on|off]\n").await;
@@ -2274,14 +2128,14 @@ impl Session {
                 self.set_signal_private(false);
                 self.output("Signals for private messages are now off.\n").await;
             } else if args.is_empty() {
-                let on = if self.signal_private.load(Ordering::Relaxed) { "on" } else { "off" };
+                let on = if self.signal_private() { "on" } else { "off" };
                 self.output(&format!("Signals are {on} for private messages.\n")).await;
             } else {
                 self.output("Usage: /signal private [on|off]\n").await;
             }
         } else if args.is_empty() {
-            let pub_sig = self.signal_public.load(Ordering::Relaxed);
-            let priv_sig = self.signal_private.load(Ordering::Relaxed);
+            let pub_sig = self.signal_public();
+            let priv_sig = self.signal_private();
 
             if pub_sig == priv_sig {
                 let on = if pub_sig { "on" } else { "off" };
@@ -2351,7 +2205,7 @@ impl Session {
     pub async fn print_sendlist(&self, sendlist: &Sendlist) {
         if !sendlist.sessions().is_empty() {
             let mut first = true;
-            for session in &sendlist.sessions {
+            for session in &sendlist.sessions() {
                 if first {
                     first = false;
                 } else {
@@ -2483,7 +2337,7 @@ impl Session {
         }
 
         let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
-        DISCUSSIONS.insert(name.to_string(), disc.clone());
+        DISCUSSIONS.insert(name.to_string().into(), disc.clone());
 
         self.enqueue_others(CreateNotify::new(disc.name(), disc.title(), disc.is_public(), self.name())).await;
 
@@ -2601,7 +2455,7 @@ impl Session {
         }
 
         match self.find_sendable(args, false, true, true, true).await {
-            (Some(found_session), _, _, _) if found_session != self => {
+            (Some(found_session), _, _, _) if &found_session != self => {
                 let found_name = found_session.name();
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
             }
@@ -2612,10 +2466,10 @@ impl Session {
             _ => {}
         }
 
-        self.enqueue_others(RenameNotify::new(self.name(), args)).await;
+        self.enqueue_others(RenameNotify::new(self.name().name().clone(), args)).await;
 
         self.output(&format!("You have changed your name to \"{args}\".\n")).await;
-        self.name.set(Name::new(args, self.blurb()));
+        self.set_name(Name::new(args, self.blurb().map(|b| b.to_string())));
     }
 
     pub async fn do_set(&self, args: &str) {
@@ -2631,10 +2485,10 @@ impl Session {
             if let Some(telnet) = self.telnet() {
                 let (val, _) = getword(value, None);
                 if let Some(_) = match_keyword(val, "on", 2) {
-                    telnet.set_echo(TELNET_ENABLED).await;
+                    telnet.set_echo(TELNET_ENABLED);
                     self.output("Remote echoing is now enabled.\n").await;
                 } else if let Some(_) = match_keyword(val, "off", 3) {
-                    telnet.set_echo(0).await;
+                    telnet.set_echo(0);
                     self.output("Remote echoing is now disabled.\n").await;
                 } else {
                     self.output("Usage: /set echo=[on|off]\n").await;
@@ -2644,8 +2498,8 @@ impl Session {
             if let Ok(height) = value.parse::<usize>() {
                 if height > 0 {
                     if let Some(telnet) = self.telnet() {
-                        let h = telnet.set_height(height).await;
-                        self.output(&format!("Terminal height is now set to {h}.\n")).await;
+                        telnet.set_height(height);
+                        self.output(&format!("Terminal height is now set to {height}.\n")).await;
                     }
                 } else {
                     self.output("Usage: /set height=<number of rows>\n").await;
@@ -2673,8 +2527,8 @@ impl Session {
             if let Ok(width) = value.parse::<usize>() {
                 if width > 0 {
                     if let Some(telnet) = self.telnet() {
-                        let w = telnet.set_width(width).await;
-                        self.output(&format!("Terminal width is now set to {w}.\n")).await;
+                        telnet.set_width(width);
+                        self.output(&format!("Terminal width is now set to {width}.\n")).await;
                     }
                 } else {
                     self.output("Usage: /set width=<number of columns>\n").await;
@@ -2689,13 +2543,12 @@ impl Session {
 
     pub async fn set_idle(&self, args: &str) {
         let now = Timestamp::new();
-        let current_idle = (now - **self.idle_since()) / 60;
+        let current_idle = (now - *self.idle_since()) / 60;
 
         // Parse time specification: <d>d<hh>:<mm>
         let mut chars = args.trim().chars().peekable();
         let mut days = 0i64;
         let mut hours = 0i64;
-        let mut minutes = 0i64;
 
         // Parse first number
         let mut num = 0i64;
@@ -2760,7 +2613,7 @@ impl Session {
             }
         }
 
-        minutes = num;
+        let minutes = num;
 
         // Skip trailing whitespace
         while chars.peek() == Some(&' ') {
@@ -2778,19 +2631,19 @@ impl Session {
         let new_idle_since = Timestamp::from_unix(now.unix() - total_minutes * 60);
 
         // Check permissions
-        if new_idle_since < **self.login_time() && self.priv_level() < 50 {
+        if new_idle_since < *self.login_time() && self.priv_level() < 50 {
             self.output("Sorry, you can't be idle longer than you've been signed on.\n").await;
             return;
         }
 
         // Set the new idle time
-        self.set_idle_since(new_idle_since).await;
-        if **self.idle_since() < **self.login_time() {
-            self.set_login_time(**self.idle_since());
+        self.set_idle_since(new_idle_since);
+        if *self.idle_since() < *self.login_time() {
+            self.set_login_time(*self.idle_since());
         }
 
         // Output results
-        let new_idle = (now - **self.idle_since()) / 60;
+        let new_idle = (now - *self.idle_since()) / 60;
 
         if current_idle > 0 && current_idle != new_idle {
             self.output("[You were idle for").await;
@@ -2808,7 +2661,7 @@ impl Session {
             self.output(".\n").await;
         } else {
             self.output("Your idle time has been reset.\n").await;
-            self.set_idle_since(now).await;
+            self.set_idle_since(now);
         }
     }
 
@@ -2824,7 +2677,7 @@ impl Session {
             remaining = rest;
 
             if var.starts_with('$') {
-                if let Some(value) = self.user_vars.load().get(&Text::from(var)) {
+                if let Some(value) = self.get_user_var(var) {
                     self.output(&format!("{var} = \"{value}\"\n")).await;
                 } else {
                     self.output(&format!("Unknown user variable: \"{var}\"\n")).await;
@@ -2839,17 +2692,17 @@ impl Session {
                 }
             } else if let Some(_) = match_keyword(var, "height", 6) {
                 if let Some(telnet) = self.telnet() {
-                    let height = telnet.set_height(0).await;
+                    let height = telnet.height();
                     self.output(&format!("Terminal height is currently set to {height}.\n")).await;
                 }
             } else if let Some(_) = match_keyword(var, "idle", 4) {
                 let now = Timestamp::new();
                 self.output("Your idle time is").await;
-                self.print_time_long(((now - **self.idle_since()) / 60) as i32).await;
+                self.print_time_long(((now - *self.idle_since()) / 60) as i32).await;
                 self.output(".\n").await;
             } else if let Some(_) = match_keyword(var, "time_format", 11) {
                 self.output("Your time format is ").await;
-                if let Some(format) = self.get_sys_var("time_format").await {
+                if let Some(format) = self.get_sys_var("time_format") {
                     match format.as_str() {
                         "verbose" => self.output("verbose.\n").await,
                         "both" => self.output("both verbose and terse.\n").await,
@@ -2858,15 +2711,15 @@ impl Session {
                     }
                 } else {
                     self.output("the default: ").await;
-                    match DEFAULTS.get(&Text::from("time_format")).map(|s| s.as_str()) {
-                        Some("verbose") => self.output("verbose.\n").await,
-                        Some("both") => self.output("both verbose and terse.\n").await,
-                        Some("terse") => self.output("terse.\n").await,
+                    match DEFAULTS.get(&Text::from("time_format")) {
+                        Some(s) if s.as_str() == "verbose" => self.output("verbose.\n").await,
+                        Some(s) if s.as_str() == "both" => self.output("both verbose and terse.\n").await,
+                        Some(s) if s.as_str() == "terse" => self.output("terse.\n").await,
                         _ => self.output("verbose.\n").await,
                     }
                 }
             } else if let Some(_) = match_keyword(var, "uptime", 6) {
-                let uptime = if let Some(system_up) = system_uptime() {
+                let uptime = if let Some(system_up) = system_uptime().await {
                     // TODO: Replace with actual server start uptime when available
                     system_up / 60
                 } else {
@@ -2879,7 +2732,7 @@ impl Session {
                 self.print_time_long(uptime as i32).await;
                 self.output(".\n").await;
 
-                if let Some(system_up) = system_uptime() {
+                if let Some(system_up) = system_uptime().await {
                     let system_minutes = system_up / 60;
                     self.output("(This machine has been running for").await;
                     self.print_time_long(system_minutes as i32).await;
@@ -2889,7 +2742,7 @@ impl Session {
                 self.output(&format!("Phoenix server version: {VERSION}\n")).await;
             } else if let Some(_) = match_keyword(var, "width", 5) {
                 if let Some(telnet) = self.telnet() {
-                    let width = telnet.set_width(0).await;
+                    let width = telnet.width();
                     self.output(&format!("Terminal width is currently set to {width}.\n")).await;
                 }
             } else {
@@ -2906,7 +2759,7 @@ impl Session {
 
         if let Some(last_msg) = self.last_message() {
             let sendlist = Sendlist::new(&self, args, false, true, true).await;
-            self.send_message(&sendlist, &last_msg.text).await;
+            self.send_message(&sendlist, last_msg.text()).await;
         } else {
             self.output("You have no previous message to resend.\n").await;
         }
@@ -2930,10 +2783,10 @@ impl Session {
         } else {
             if let Some(last_msg) = self.last_message() {
                 let sendlist = Sendlist::new(&self, args, false, true, true).await;
-                let text = last_msg.text.clone();
-                let to = last_msg.to.clone();
+                let text = last_msg.text().clone();
+                let to = last_msg.to().clone();
 
-                self.send_message(&to, &*self.oops_text.load()).await;
+                self.send_message(&to, &*self.oops_text()).await;
                 self.send_message(&sendlist, &text).await;
                 self.set_last_sendlist(Some(sendlist.clone()));
             } else {
@@ -3421,7 +3274,7 @@ impl Session {
         self.set_last_sendlist(Some(sendlist.clone()));
 
         if msg_start.is_empty() {
-            let sendlist_typed = &sendlist.typed;
+            let sendlist_typed = sendlist.typed();
             if sendlist_str == "default" {
                 self.output("\x07\x07There is no message after \"default\". (message not sent)\n").await;
             } else if is_explicit {
@@ -3453,7 +3306,7 @@ impl Session {
 
         let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
 
-        let msg = Message::new(output_type, self.name(), sendlist.clone(), text);
+        let msg = Message::new(output_type, self.name(), Arc::new(sendlist.clone()), text);
         if let Output::Message(message) = &msg {
             self.set_last_message(Some(message.clone()));
         }
@@ -3468,7 +3321,7 @@ impl Session {
 
         self.output("(message sent to ").await;
         self.print_sendlist(sendlist).await;
-        self.output(")");
+        self.output(")").await;
 
         if idle >= 30 {
             self.output(&format!(" [idle {idle}]")).await;
@@ -3493,10 +3346,10 @@ impl Session {
         } else {
             let sendlist = Sendlist::new(&self, args, true, true, true).await;
 
-            let total = sendlist.expand(&mut who, None).await;
+            let _total = sendlist.expand(&mut who, None).await;
 
             if !sendlist.errors().is_empty() {
-                errors = sendlist.errors();
+                errors = sendlist.errors().to_string();
             }
 
             if who.is_empty() {
@@ -3525,7 +3378,7 @@ impl Session {
                     _ => self.output(", ").await,
                 };
 
-                self.output(&session.name());
+                self.output(&session.name()).await;
             }
 
             self.output(".\n").await;
@@ -3546,7 +3399,7 @@ impl Session {
                     _ => self.output(", ").await,
                 };
 
-                self.output(disc.name());
+                self.output(disc.name()).await;
             }
 
             self.output(".\n").await;
@@ -3557,23 +3410,37 @@ impl Session {
 }
 
 impl SessionConnection {
-    pub fn name_opt(&self) -> Option<&Name> {
+    pub fn login_session(&self) -> Option<&LoginSession> {
         match self {
-            SessionConnection::PreLogin(session) => None,
-            SessionConnection::LoggedIn(session) => Some(self.name()),
+            SessionConnection::PreLogin(session) => Some(&session),
+            SessionConnection::LoggedIn(_session) => None,
         }
     }
 
-    pub fn signal_private(&self) {
+    pub fn session(&self) -> Option<&Session> {
         match self {
-            SessionConnection::PreLogin(session) => false,
+            SessionConnection::PreLogin(_session) => None,
+            SessionConnection::LoggedIn(session) => Some(&session),
+        }
+    }
+
+    pub fn name_opt(&self) -> Option<Name> {
+        match self {
+            SessionConnection::PreLogin(_session) => None,
+            SessionConnection::LoggedIn(session) => Some(session.name()),
+        }
+    }
+
+    pub fn signal_private(&self) -> bool {
+        match self {
+            SessionConnection::PreLogin(_session) => false,
             SessionConnection::LoggedIn(session) => session.signal_private(),
         }
     }
 
-    pub fn signal_public(&self) {
+    pub fn signal_public(&self) -> bool {
         match self {
-            SessionConnection::PreLogin(session) => false,
+            SessionConnection::PreLogin(_session) => false,
             SessionConnection::LoggedIn(session) => session.signal_public(),
         }
     }

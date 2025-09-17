@@ -1,4 +1,4 @@
-use crate::atomic::{AtomicNameOption, AtomicSessionConnection, AtomicText};
+use crate::atomic::{AtomicNameOption, AtomicSessionConnection, AtomicText, AtomicUsizeOption, SessionConnectionBorrow};
 use crate::constants::*;
 use crate::name::Name;
 use crate::output::OutputType;
@@ -227,7 +227,7 @@ impl Telnet {
             stream: Mutex::new(stream),
             closing: AtomicBool::new(false),
             close_on_eof: AtomicBool::new(true),
-            session_connection: AtomicSessionConnection::new(SessionConnection::PreLogin(login_session.clone())),
+            session_connection: AtomicSessionConnection::new(SessionConnection::PreLogin(login_session)),
             width: AtomicUsize::new(Self::DEFAULT_WIDTH),
             height: AtomicUsize::new(Self::DEFAULT_HEIGHT),
             naws_width: AtomicUsize::new(0),
@@ -258,7 +258,9 @@ impl Telnet {
         };
 
         let telnet = Telnet(Arc::new(inner));
-        login_session.set_telnet(telnet.clone());
+        if let Some(login_session) = telnet.session_connection().login_session() {
+            login_session.set_telnet(Some(telnet.clone()));
+        }
 
         telnet
     }
@@ -290,8 +292,8 @@ impl Telnet {
     }
 
     /// Get the `SessionConnection`.
-    pub fn session_connection(&self) -> SessionConnection {
-        self.0.session_connection.snapshot()
+    pub fn session_connection(&self) -> SessionConnectionBorrow {
+        self.0.session_connection.borrow()
     }
 
     /// Set the `SessionConnection`.
@@ -299,25 +301,14 @@ impl Telnet {
         self.0.session_connection.set(value);
     }
 
-    /// Get the `LoginSession`, if any.
-    pub fn login_session(&self) -> Option<LoginSession> {
-        match self.session_connection() {
-            SessionConnection::PreLogin(login_session) => Some(login_session),
-            _ => None,
-        }
+    /// Get the `Session`, if any.
+    pub fn session(&self) -> Option<Session> {
+        self.session_connection().session().cloned()
     }
 
     /// Set the `LoginSession`.
     pub fn set_login_session(&self, value: LoginSession) {
         self.set_session_connection(SessionConnection::PreLogin(value));
-    }
-
-    /// Get the `Session`, if any.
-    pub fn session(&self) -> Option<Session> {
-        match self.session_connection() {
-            SessionConnection::LoggedIn(session) => Some(session),
-            _ => None,
-        }
     }
 
     /// Set the `Session`.
@@ -327,7 +318,7 @@ impl Telnet {
 
     /// Get the session name, if any.
     pub fn session_name(&self) -> Option<Text> {
-        self.session().map(|s| s.name())
+        self.session().map(|s| s.name().name().clone())
     }
 
     /// Get the terminal width.
@@ -393,7 +384,7 @@ impl Telnet {
 
     /// Set the mark location.
     pub fn set_mark(&self, value: Option<usize>) {
-        self.0.mark.store(Arc::new(value), Ordering::Relaxed);
+        self.0.mark.store(value, Ordering::Relaxed);
     }
 
     /// Get the prompt.
@@ -962,86 +953,84 @@ impl Telnet {
         let signal_public = session.signal_public();
         let signal_private = session.signal_private();
         let width = self.width();
-        let from_name = from.name();
-        let from_blurb = from.blurb();
-
         match output_type {
             OutputType::PublicMessage => {
                 if signal_public {
                     self.output(BELL_STR).await;
                 }
-                self.output(&format!("\n -> From {from_name}{from_blurb} to everyone:")).await;
+                self.output(&format!("\n -> From {} to everyone:", from.as_str())).await;
             }
             OutputType::PrivateMessage => {
-                // Save name to reply to
-                self.set_reply_to(from.clone());
+                if let Some(session) = session.session() {
+                    // Save name to reply to
+                    self.set_reply_to(from.clone());
 
-                // Decide if "private"
-                let mut is_private = false;
-                if to.sessions.contains(&session) {
-                    is_private = true;
-                } else {
-                    for disc in &to.discussions {
-                        if disc.is_member(&session).await && !disc.is_public().await {
-                            is_private = true;
-                            break;
+                    // Decide if "private"
+                    let mut is_private = false;
+                    if to.sessions().contains(session) {
+                        is_private = true;
+                    } else {
+                        for disc in &to.discussions() {
+                            if disc.is_member(session) && !disc.is_public() {
+                                is_private = true;
+                                break;
+                            }
                         }
                     }
-                }
 
-                // Print message header
-                if is_private {
-                    session.set_reply_sendlist(&from.name).await;
+                    // Print message header
+                    if is_private {
+                        session.set_reply_sendlist(from.name().clone());
 
-                    if signal_private {
-                        self.output(BELL_STR).await;
-                    }
-                    if to.sessions.contains(&session) {
-                        self.output("\n >> Private message from ").await;
-                    } else {
-                        if !signal_private && signal_public {
+                        if signal_private {
                             self.output(BELL_STR).await;
                         }
-                        self.output("\n >> From ").await;
+                        if to.sessions().contains(&session) {
+                            self.output("\n >> Private message from ").await;
+                        } else {
+                            if !signal_private && signal_public {
+                                self.output(BELL_STR).await;
+                            }
+                            self.output("\n >> From ").await;
+                        }
+                    } else {
+                        if signal_public {
+                            self.output(BELL_STR).await;
+                        }
+                        self.output("\n -> From ").await;
                     }
-                } else {
-                    if signal_public {
-                        self.output(BELL_STR).await;
-                    }
-                    self.output("\n -> From ").await;
                 }
 
-                self.output(&from.name).await;
-                self.output(&from.blurb).await;
+                self.output(from.as_str()).await;
 
-                if to.sessions.len() > 1 || !to.discussions.is_empty() {
+                if to.sessions().len() > 1 || !to.discussions().is_empty() {
                     self.output(" to ").await;
                     let mut first = true;
 
-                    for s in &to.sessions {
+                    for s in &to.sessions() {
                         if first {
                             first = false;
                         } else {
                             self.output(", ").await;
                         }
-                        self.output(&s.name().await).await;
+                        self.output(s.name().name().as_str()).await;
                     }
 
-                    if !to.discussions.is_empty() {
+                    if !to.discussions().is_empty() {
                         if !first {
                             self.output("; ").await;
                         }
-                        let s = if to.discussions.len() == 1 { "" } else { "s" };
+                        let s = if to.discussions().len() == 1 { "" } else { "s" };
                         self.output(&format!("discussion{s} ")).await;
                         first = true;
 
-                        for discussion in &to.discussions {
+                        for discussion in &to.discussions() {
                             if first {
                                 first = false;
                             } else {
                                 self.output(", ").await;
                             }
-                            self.output(&discussion.name().await).await;
+                            self.output(discussion.name().as_str()).await;
                         }
                     }
                 }
@@ -1498,8 +1487,8 @@ impl Telnet {
                 match self.sb_state() {
                     // NAWS subnegotiation was successful; set the new size.
                     TelnetSubnegotiationState::NAWSDone => {
-                        self.set_new_width(self.naws_width());
-                        self.set_new_height(self.naws_height());
+                        self.set_new_width(self.naws_width()).await;
+                        self.set_new_height(self.naws_height()).await;
                     }
 
                     // Subnegotiation was unsuccessful; do nothing.
@@ -1639,7 +1628,7 @@ impl Telnet {
         match byte {
             CONTROL_E => {
                 // Toggle remote echo
-                self.set_echo(self.echo() != TELNET_ENABLED);
+                self.set_echo(if self.echo() != TELNET_ENABLED { TELNET_ENABLED } else { 0 });
             }
             _ => {
                 self.output(BELL_STR).await;
@@ -2219,7 +2208,7 @@ impl Telnet {
     #[framed]
     pub async fn backward_word(&self) {
         let data = self.data().await;
-        let mut point = self.point().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
         while point > 0 && !data[point - 1].is_ascii_alphabetic() {

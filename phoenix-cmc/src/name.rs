@@ -9,7 +9,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Eq)]
 pub struct Name(pub Arc<NameInner>);
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct NameInner
 where
     Self: Send + Sync + 'static,
@@ -22,12 +22,12 @@ where
 
 impl Name {
     /// Create a `Name` with an optional blurb.
-    pub fn new(name: impl AsRef<str>, blurb: Option<impl AsRef<str>>) -> Self {
+    pub fn new(name: impl AsRef<str>, blurb: Option<String>) -> Self {
         let name = name.as_ref();
         let name_len = name.len();
 
         let (name_blurb, name, blurb) = if let Some(blurb) = blurb {
-            let blurb = blurb.as_ref();
+            let blurb: &str = blurb.as_ref();
             let name_blurb = Text::from(format!("{name} [{blurb}]"));
             let name = name_blurb.slice(0..name_len);
             let blurb_start = name_len + 2; // skip name and " ["

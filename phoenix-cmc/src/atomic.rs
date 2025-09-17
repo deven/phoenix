@@ -9,6 +9,7 @@ use crate::timestamp::Timestamp;
 use crate::user::{User, UserInner};
 use arc_swap::{ArcSwap, ArcSwapOption, Guard};
 use im::{HashMap, HashSet, OrdMap, OrdSet, Vector};
+use std::hash::Hash;
 use std::sync::atomic::{AtomicBool, AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize, AtomicU16, AtomicU32, AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 
@@ -363,17 +364,17 @@ mod tests {
 pub struct AtomicOrdSet<T>(ArcSwap<OrdSet<T>>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct OrdSetBorrow<T>(Guard<Arc<OrdSet<T>>>);
+pub struct OrdSetBorrow<T: Ord>(Guard<Arc<OrdSet<T>>>);
 
-impl<T> OrdSetBorrow<T> {
+impl<T: Ord> OrdSetBorrow<T> {
     pub fn as_ref(&self) -> &OrdSet<T> {
         &self.0
     }
 }
 
-impl<T> AtomicOrdSet<T> {
+impl<T: Ord> AtomicOrdSet<T> {
     pub fn new(set: OrdSet<T>) -> Self {
-        Self(ArcSwap::new(set))
+        Self(ArcSwap::new(Arc::new(set)))
     }
 
     pub fn empty() -> Self {
@@ -391,7 +392,7 @@ impl<T> AtomicOrdSet<T> {
     }
 
     pub fn set(&self, set: OrdSet<T>) {
-        self.0.store(set)
+        self.0.store(Arc::new(set))
     }
 
     /// Check if the set is empty.
@@ -405,34 +406,40 @@ impl<T> AtomicOrdSet<T> {
     }
 }
 
-impl<T> Default for AtomicOrdSet<T> {
+impl<T: Ord> Default for AtomicOrdSet<T> {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<T> From<OrdSet<T>> for AtomicOrdSet<T> {
+impl<T: Ord> From<OrdSet<T>> for AtomicOrdSet<T> {
     fn from(set: OrdSet<T>) -> Self {
         Self::new(set)
     }
 }
 
+impl<T: Ord + Clone> PartialEq for AtomicOrdSet<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.snapshot() == other.snapshot()
+    }
+}
+
 /// Lock-free atomic HashSet storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicHashSet<T>(ArcSwap<HashSet<T>>);
+pub struct AtomicHashSet<T: Hash + Eq + Clone>(ArcSwap<HashSet<T>>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct HashSetBorrow<T>(Guard<Arc<HashSet<T>>>);
+pub struct HashSetBorrow<T: Hash + Eq + Clone>(Guard<Arc<HashSet<T>>>);
 
-impl<T> HashSetBorrow<T> {
+impl<T: Hash + Eq + Clone> HashSetBorrow<T> {
     pub fn as_ref(&self) -> &HashSet<T> {
         &self.0
     }
 }
 
-impl<T> AtomicHashSet<T> {
+impl<T: Hash + Eq + Clone> AtomicHashSet<T> {
     pub fn new(set: HashSet<T>) -> Self {
-        Self(ArcSwap::new(set))
+        Self(ArcSwap::new(Arc::new(set)))
     }
 
     pub fn empty() -> Self {
@@ -450,7 +457,7 @@ impl<T> AtomicHashSet<T> {
     }
 
     pub fn set(&self, set: HashSet<T>) {
-        self.0.store(set)
+        self.0.store(Arc::new(set))
     }
 
     /// Check if the set is empty.
@@ -464,13 +471,13 @@ impl<T> AtomicHashSet<T> {
     }
 }
 
-impl<T> Default for AtomicHashSet<T> {
+impl<T: Hash + Eq + Clone> Default for AtomicHashSet<T> {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<T> From<HashSet<T>> for AtomicHashSet<T> {
+impl<T: Hash + Eq + Clone> From<HashSet<T>> for AtomicHashSet<T> {
     fn from(set: HashSet<T>) -> Self {
         Self::new(set)
     }
@@ -478,20 +485,20 @@ impl<T> From<HashSet<T>> for AtomicHashSet<T> {
 
 /// Lock-free atomic Vector storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicVector<T>(ArcSwap<Vector<T>>);
+pub struct AtomicVector<T: Clone>(ArcSwap<Vector<T>>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct VectorBorrow<T>(Guard<Arc<Vector<T>>>);
+pub struct VectorBorrow<T: Clone>(Guard<Arc<Vector<T>>>);
 
-impl<T> VectorBorrow<T> {
+impl<T: Clone> VectorBorrow<T> {
     pub fn as_ref(&self) -> &Vector<T> {
         &self.0
     }
 }
 
-impl<T> AtomicVector<T> {
+impl<T: Clone> AtomicVector<T> {
     pub fn new(vec: Vector<T>) -> Self {
-        Self(ArcSwap::new(vec))
+        Self(ArcSwap::new(Arc::new(vec)))
     }
 
     pub fn empty() -> Self {
@@ -509,7 +516,7 @@ impl<T> AtomicVector<T> {
     }
 
     pub fn set(&self, vec: Vector<T>) {
-        self.0.store(vec)
+        self.0.store(Arc::new(vec))
     }
 
     /// Check if the vector is empty.
@@ -523,13 +530,13 @@ impl<T> AtomicVector<T> {
     }
 }
 
-impl<T> Default for AtomicVector<T> {
+impl<T: Clone> Default for AtomicVector<T> {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<T> From<Vector<T>> for AtomicVector<T> {
+impl<T: Clone> From<Vector<T>> for AtomicVector<T> {
     fn from(vec: Vector<T>) -> Self {
         Self::new(vec)
     }
@@ -537,20 +544,20 @@ impl<T> From<Vector<T>> for AtomicVector<T> {
 
 /// Lock-free atomic OrdMap storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicOrdMap<K, V>(ArcSwap<OrdMap<K, V>>);
+pub struct AtomicOrdMap<K: Ord + Clone, V: Clone>(ArcSwap<OrdMap<K, V>>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct OrdMapBorrow<K, V>(Guard<Arc<OrdMap<K, V>>>);
+pub struct OrdMapBorrow<K: Ord + Clone, V: Clone>(Guard<Arc<OrdMap<K, V>>>);
 
-impl<K, V> OrdMapBorrow<K, V> {
+impl<K: Ord + Clone, V: Clone> OrdMapBorrow<K, V> {
     pub fn as_ref(&self) -> &OrdMap<K, V> {
         &self.0
     }
 }
 
-impl<K, V> AtomicOrdMap<K, V> {
+impl<K: Ord + Clone, V: Clone> AtomicOrdMap<K, V> {
     pub fn new(map: OrdMap<K, V>) -> Self {
-        Self(ArcSwap::new(map))
+        Self(ArcSwap::new(Arc::new(map)))
     }
 
     pub fn empty() -> Self {
@@ -568,7 +575,7 @@ impl<K, V> AtomicOrdMap<K, V> {
     }
 
     pub fn set(&self, map: OrdMap<K, V>) {
-        self.0.store(map)
+        self.0.store(Arc::new(map))
     }
 
     /// Check if the map is empty.
@@ -582,13 +589,13 @@ impl<K, V> AtomicOrdMap<K, V> {
     }
 }
 
-impl<K, V> Default for AtomicOrdMap<K, V> {
+impl<K: Ord + Clone, V: Clone> Default for AtomicOrdMap<K, V> {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<K, V> From<OrdMap<K, V>> for AtomicOrdMap<K, V> {
+impl<K: Ord + Clone, V: Clone> From<OrdMap<K, V>> for AtomicOrdMap<K, V> {
     fn from(map: OrdMap<K, V>) -> Self {
         Self::new(map)
     }
@@ -596,20 +603,20 @@ impl<K, V> From<OrdMap<K, V>> for AtomicOrdMap<K, V> {
 
 /// Lock-free atomic HashMap storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicHashMap<K, V>(ArcSwap<HashMap<K, V>>);
+pub struct AtomicHashMap<K: Hash + Eq + Clone, V: Clone>(ArcSwap<HashMap<K, V>>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct HashMapBorrow<K, V>(Guard<Arc<HashMap<K, V>>>);
+pub struct HashMapBorrow<K: Hash + Eq + Clone, V: Clone>(Guard<Arc<HashMap<K, V>>>);
 
-impl<K, V> HashMapBorrow<K, V> {
+impl<K: Hash + Eq + Clone, V: Clone> HashMapBorrow<K, V> {
     pub fn as_ref(&self) -> &HashMap<K, V> {
         &self.0
     }
 }
 
-impl<K, V> AtomicHashMap<K, V> {
+impl<K: Hash + Eq + Clone, V: Clone> AtomicHashMap<K, V> {
     pub fn new(map: HashMap<K, V>) -> Self {
-        Self(ArcSwap::new(map))
+        Self(ArcSwap::new(Arc::new(map)))
     }
 
     pub fn empty() -> Self {
@@ -627,7 +634,7 @@ impl<K, V> AtomicHashMap<K, V> {
     }
 
     pub fn set(&self, map: HashMap<K, V>) {
-        self.0.store(map)
+        self.0.store(Arc::new(map))
     }
 
     /// Check if the map is empty.
@@ -692,13 +699,13 @@ impl<K, V> AtomicHashMap<K, V> {
     }
 }
 
-impl<K, V> Default for AtomicHashMap<K, V> {
+impl<K: Hash + Eq + Clone, V: Clone> Default for AtomicHashMap<K, V> {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<K, V> From<HashMap<K, V>> for AtomicHashMap<K, V> {
+impl<K: Hash + Eq + Clone, V: Clone> From<HashMap<K, V>> for AtomicHashMap<K, V> {
     fn from(map: HashMap<K, V>) -> Self {
         Self::new(map)
     }
@@ -820,6 +827,18 @@ pub struct NameBorrow(Guard<Arc<NameInner>>);
 impl NameBorrow {
     pub fn as_ref(&self) -> &NameInner {
         &self.0
+    }
+
+    pub fn name(&self) -> &Text {
+        &self.0.name
+    }
+
+    pub fn has_blurb(&self) -> bool {
+        self.0.blurb.is_some()
+    }
+
+    pub fn blurb(&self) -> Option<&Text> {
+        self.0.blurb.as_ref()
     }
 }
 
@@ -1245,6 +1264,64 @@ impl SessionConnectionBorrow {
     pub fn as_ref(&self) -> &SessionConnection {
         &self.0
     }
+
+    pub async fn init_login_sequence(&self) {
+        self.0.init_login_sequence().await
+    }
+
+    pub fn signal_public(&self) -> bool {
+        self.0.signal_public()
+    }
+
+    pub fn signal_private(&self) -> bool {
+        self.0.signal_private()
+    }
+
+    pub async fn acknowledge_output(&self) {
+        self.0.acknowledge_output().await
+    }
+
+    pub fn last_explicit(&self) -> Text {
+        self.0.last_explicit()
+    }
+
+    pub fn reply_sendlist(&self) -> Text {
+        self.0.reply_sendlist()
+    }
+
+    pub async fn output(&self, text: &str) {
+        self.0.output(text).await
+    }
+
+    pub fn login_timeout(&self) -> Option<tokio::task::AbortHandle> {
+        self.0.login_timeout()
+    }
+
+    pub fn set_login_timeout(&self, handle: Option<tokio::task::AbortHandle>) {
+        self.0.set_login_timeout(handle)
+    }
+
+    pub async fn output_next(&self, telnet: &crate::telnet::Telnet) -> bool {
+        self.0.output_next(telnet).await
+    }
+
+    pub async fn handle_input(&self, line: crate::text::Text) {
+        self.0.handle_input(line).await
+    }
+
+    pub fn session(&self) -> Option<&crate::session::Session> {
+        match self.0.as_ref() {
+            crate::session::SessionConnection::LoggedIn(session) => Some(session),
+            _ => None,
+        }
+    }
+
+    pub fn login_session(&self) -> Option<&crate::session::LoginSession> {
+        match self.0.as_ref() {
+            crate::session::SessionConnection::PreLogin(login_session) => Some(login_session),
+            _ => None,
+        }
+    }
 }
 
 impl AtomicSessionConnection {
@@ -1255,11 +1332,6 @@ impl AtomicSessionConnection {
     /// Zero-clone, guard-backed borrow valid for this scope.
     pub fn borrow(&self) -> SessionConnectionBorrow {
         SessionConnectionBorrow(self.0.load())
-    }
-
-    /// Snapshot: clones the Arc (no guard to hold).
-    pub fn snapshot(&self) -> SessionConnection {
-        (*self.0.load_full()).clone()
     }
 
     pub fn set(&self, connection: SessionConnection) {
@@ -1314,14 +1386,14 @@ impl From<Telnet> for AtomicTelnet {
 
 /// Lock-free atomic optional Telnet storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicTelnetOption(ArcSwapOption<Arc<TelnetInner>>);
+pub struct AtomicTelnetOption(ArcSwapOption<Telnet>);
 
 /// Borrow that pins the current value (no Arc clone).
-pub struct OptionTelnetBorrow(Guard<Option<Arc<TelnetInner>>>);
+pub struct OptionTelnetBorrow(Guard<Option<Arc<Telnet>>>);
 
 impl OptionTelnetBorrow {
     pub fn as_ref(&self) -> Option<&TelnetInner> {
-        self.0.as_ref().map(|arc| &**arc)
+        self.0.as_ref().map(|telnet| &*telnet.0)
     }
 
     pub fn is_some(&self) -> bool {
@@ -1335,7 +1407,7 @@ impl OptionTelnetBorrow {
 
 impl AtomicTelnetOption {
     pub fn new(telnet: Option<Telnet>) -> Self {
-        Self(ArcSwapOption::new(telnet.map(|t| t.0)))
+        Self(ArcSwapOption::new(telnet.map(Arc::new)))
     }
 
     /// Zero-clone, guard-backed borrow valid for this scope.
@@ -1345,11 +1417,11 @@ impl AtomicTelnetOption {
 
     /// Snapshot: clones the Arc (no guard to hold).
     pub fn snapshot(&self) -> Option<Telnet> {
-        self.0.load_full().map(Telnet)
+        self.0.load_full().map(|arc_telnet| (*arc_telnet).clone())
     }
 
     pub fn set(&self, telnet: Option<Telnet>) {
-        self.0.store(telnet.map(|t| t.0))
+        self.0.store(telnet.map(Arc::new))
     }
 
     pub fn is_some(&self) -> bool {
@@ -1434,6 +1506,12 @@ impl AtomicText {
 impl From<Text> for AtomicText {
     fn from(text: Text) -> Self {
         Self::new(text)
+    }
+}
+
+impl PartialEq for AtomicText {
+    fn eq(&self, other: &Self) -> bool {
+        *self.0.load_full() == *other.0.load_full()
     }
 }
 

@@ -14,10 +14,10 @@ use std::sync::Arc;
 //}
 
 /// Sendlist handle.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sendlist(pub Arc<SendlistInner>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SendlistInner {
     pub errors: AtomicText,
     pub typed: AtomicText,
@@ -148,7 +148,7 @@ impl Sendlist {
                         match i {
                             0 => {
                                 let s = if sessions == 1 { "" } else { "s" };
-                                write!(errors, "\"{part}\" matches {sessions} name{s}: ");
+                                let _ = write!(errors, "\"{part}\" matches {sessions} name{s}: ");
                             }
                             _ if i == sessions - 1 => errors += " and ",
                             _ => errors += ", ",
@@ -159,7 +159,7 @@ impl Sendlist {
 
                     errors += if discussions > 0 { "; and " } else { ".\n" };
                 } else if discussions > 0 {
-                    write!(errors, "\"{part}\" matches ");
+                    let _ = write!(errors, "\"{part}\" matches ");
                 }
 
                 if discussions > 0 {
@@ -167,7 +167,7 @@ impl Sendlist {
                         match i {
                             0 => {
                                 let s = if discussions == 1 { "" } else { "s" };
-                                write!(errors, "{discussions} discussion{s}: ");
+                                let _ = write!(errors, "{discussions} discussion{s}: ");
                             }
                             _ if i == discussions - 1 => errors += " and ",
                             _ => errors += ", ",
