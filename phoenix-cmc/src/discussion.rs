@@ -15,14 +15,10 @@ static DISCUSSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 /// Discussion handle.
 #[derive(Debug, Clone)]
-pub struct Discussion(pub Arc<DiscussionInner>)
-where
-    Self: Send + Sync + 'static;
+pub struct Discussion(pub Arc<DiscussionInner>);
 
 #[derive(Debug)]
 pub struct DiscussionInner
-where
-    Self: Send + Sync + 'static,
 {
     pub id: usize,
     pub name: AtomicText,
@@ -626,3 +622,10 @@ impl std::hash::Hash for Discussion {
         self.0.id.hash(state);
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<Discussion>();
+    assert_send_sync_static::<DiscussionInner>();
+};

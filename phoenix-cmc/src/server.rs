@@ -14,14 +14,10 @@ use tokio::time::Duration;
 
 /// Server handle.
 #[derive(Debug, Clone)]
-pub struct Server(pub Arc<ServerInner>)
-where
-    Self: Send + Sync + 'static;
+pub struct Server(pub Arc<ServerInner>);
 
 #[derive(Debug)]
 pub struct ServerInner
-where
-    Self: Send + Sync + 'static,
 {
     pub listener: ArcSwap<TcpListener>,
     pub port: AtomicU16,
@@ -268,3 +264,10 @@ pub async fn is_port_busy(port: u16) -> bool {
         Err(_) => true, // Port is busy
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<Server>();
+    assert_send_sync_static::<ServerInner>();
+};

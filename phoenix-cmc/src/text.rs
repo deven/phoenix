@@ -1517,3 +1517,10 @@ mod tests {
         assert_eq!(result.as_str(), "Hello World");
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<ArcStrOwner>();
+    assert_send_sync_static::<Text>();
+};

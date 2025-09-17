@@ -11,8 +11,6 @@ pub struct Name(pub Arc<NameInner>);
 
 #[derive(Debug, Eq)]
 pub struct NameInner
-where
-    Self: Send + Sync + 'static,
 {
     pub name: Text,
     pub blurb: Option<Text>,
@@ -172,3 +170,10 @@ impl Borrow<Text> for Name {
         &self.0.name
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<Name>();
+    assert_send_sync_static::<NameInner>();
+};

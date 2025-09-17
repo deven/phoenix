@@ -36,9 +36,7 @@ static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new);
 pub struct Session(pub Arc<SessionInner>);
 
 #[derive(Debug)]
-pub struct SessionInner
-where
-    Self: Send + Sync + 'static,
+pub enum SessionInner
 {
     // Immutable fields
     pub id: usize,
@@ -3518,3 +3516,14 @@ impl std::hash::Hash for Session {
         self.id().hash(state);
     }
 }
+
+//#[cfg(test)]
+fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<LoginSession>();
+    assert_send_sync_static::<LoginState>();
+    assert_send_sync_static::<AwayState>();
+    assert_send_sync_static::<Session>();
+    assert_send_sync_static::<SessionConnection>();
+    assert_send_sync_static::<SessionInner>();
+};
