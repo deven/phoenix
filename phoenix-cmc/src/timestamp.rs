@@ -1,7 +1,7 @@
 use chrono::{DateTime, Duration, Local, TimeZone};
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Timestamp {
     pub time: DateTime<Local>,
 }
@@ -156,7 +156,7 @@ pub async fn system_uptime() -> Option<i64> {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Timestamp>();
 };

@@ -17,8 +17,7 @@ use tokio::time::Duration;
 pub struct Server(pub Arc<ServerInner>);
 
 #[derive(Debug)]
-pub struct ServerInner
-{
+pub struct ServerInner {
     pub listener: ArcSwap<TcpListener>,
     pub port: AtomicU16,
     pub debug: AtomicBool,
@@ -162,7 +161,8 @@ impl Server {
                 }
 
                 // Detach or close session
-                if let Some(session) = telnet.session() {
+                let session = telnet.session();
+                {
                     if session.signed_on() {
                         session.detach(&telnet, false).await;
                     } else {
@@ -266,7 +266,7 @@ pub async fn is_port_busy(port: u16) -> bool {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Server>();
     assert_send_sync_static::<ServerInner>();

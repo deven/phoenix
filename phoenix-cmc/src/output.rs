@@ -332,7 +332,7 @@ impl TextOutput {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -368,7 +368,7 @@ impl Message {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.0.time
+        self.0.time.clone()
     }
 
     pub fn text(&self) -> &Text {
@@ -380,7 +380,7 @@ impl Message {
     }
 
     pub async fn output(&self, telnet: &Telnet) {
-        telnet.print_message(self.0.output_type, self.0.time, &self.0.from, &self.0.to, &self.0.text).await;
+        telnet.print_message(self.0.output_type, self.0.time.clone(), &self.0.from, &self.0.to, &self.0.text).await;
     }
 }
 
@@ -404,7 +404,7 @@ impl EntryNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -434,7 +434,7 @@ impl ExitNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -464,7 +464,7 @@ impl TransferNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -494,7 +494,7 @@ impl AttachNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -525,7 +525,7 @@ impl DetachNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -556,7 +556,7 @@ impl HereNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -586,7 +586,7 @@ impl AwayNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -616,7 +616,7 @@ impl BusyNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -646,7 +646,7 @@ impl GoneNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -679,7 +679,7 @@ impl CreateNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -716,7 +716,7 @@ impl DestroyNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -748,7 +748,7 @@ impl JoinNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -780,7 +780,7 @@ impl QuitNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -812,7 +812,7 @@ impl PublicNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -844,7 +844,7 @@ impl PrivateNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -878,7 +878,7 @@ impl PermitNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -932,7 +932,7 @@ impl DepermitNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -943,13 +943,8 @@ impl DepermitNotify {
 
         if self.is_public {
             if let Some(removed) = &self.removed {
-                if let Some(session_name) = &session_name {
-                    let session_name = Name::new(session_name.as_str(), None::<String>);
-                    if removed == &session_name {
-                        telnet.output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
-                    } else {
-                        telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
-                    }
+                if removed == &session_name {
+                    telnet.output(&format!("*** {name} has depermitted and removed you from discussion {disc}. [{stamp}] ***\n")).await;
                 } else {
                     telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                 }
@@ -961,13 +956,8 @@ impl DepermitNotify {
                 telnet.output(&format!("*** {name} has explicitly depermitted you from private discussion {disc}. [{stamp}] ***\n")).await;
             } else {
                 if let Some(removed) = &self.removed {
-                    if let Some(session_name) = &session_name {
-                        let session_name = Name::new(session_name.as_str(), None::<String>);
-                        if removed == &session_name {
-                            telnet.output(&format!("*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
-                        } else {
-                            telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
-                        }
+                    if removed == &session_name {
+                        telnet.output(&format!("*** {name} has depermitted and removed you from private discussion {disc}. [{stamp}] ***\n")).await;
                     } else {
                         telnet.output(&format!("*** {removed} has been removed from discussion {disc}. [{stamp}] ***\n")).await;
                     }
@@ -1001,18 +991,13 @@ impl AppointNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
         let session_name = telnet.session_name();
         let appointer = &self.appointer;
-        let appointee = if let Some(session_name) = &session_name {
-            let session_name = Name::new(session_name.as_str(), None::<String>);
-            self.appointee.you(&session_name)
-        } else {
-            self.appointee.as_str()
-        };
+        let appointee = self.appointee.you(&session_name);
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
@@ -1042,18 +1027,13 @@ impl UnappointNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
         let session_name = telnet.session_name();
         let unappointer = &self.unappointer;
-        let unappointee = if let Some(session_name) = &session_name {
-            let session_name = Name::new(session_name.as_str(), None::<String>);
-            self.unappointee.you(&session_name)
-        } else {
-            self.unappointee.as_str()
-        };
+        let unappointee = self.unappointee.you(&session_name);
         let disc = &self.discussion_name;
         let stamp = &self.time.stamp();
 
@@ -1082,7 +1062,7 @@ impl RenameNotify {
     }
 
     pub fn time(&self) -> Timestamp {
-        self.time
+        self.time.clone()
     }
 
     pub async fn output(&self, telnet: &Telnet) {
@@ -1177,7 +1157,7 @@ impl Default for OutputStream {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<AppointNotify>();
     assert_send_sync_static::<AttachNotify>();

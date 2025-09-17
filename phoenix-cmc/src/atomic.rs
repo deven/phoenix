@@ -2,7 +2,7 @@ use crate::discussion::{Discussion, DiscussionInner};
 use crate::name::{Name, NameInner};
 use crate::output::{Message, MessageInner};
 use crate::sendlist::{Sendlist, SendlistInner};
-use crate::session::{AwayState, Session, SessionConnection, SessionInner};
+use crate::session::{AwayState, LoginState, Session, SessionInner, SessionType};
 use crate::telnet::{Telnet, TelnetInner};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
@@ -361,7 +361,7 @@ mod tests {
 
 /// Lock-free atomic OrdSet storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicOrdSet<T>(ArcSwap<OrdSet<T>>);
+pub struct AtomicOrdSet<T: Ord>(ArcSwap<OrdSet<T>>);
 
 /// Borrow that pins the current value (no Arc clone).
 pub struct OrdSetBorrow<T: Ord>(Guard<Arc<OrdSet<T>>>);
@@ -1253,95 +1253,26 @@ impl From<Session> for AtomicSessionOption {
     }
 }
 
-/// Lock-free atomic SessionConnection storage using arc_swap.
 #[derive(Debug)]
-pub struct AtomicSessionConnection(ArcSwap<SessionConnection>);
+pub struct AtomicLoginState(AtomicU8);
 
-/// Borrow that pins the current value (no Arc clone).
-pub struct SessionConnectionBorrow(Guard<Arc<SessionConnection>>);
-
-impl SessionConnectionBorrow {
-    pub fn as_ref(&self) -> &SessionConnection {
-        &self.0
+impl AtomicLoginState {
+    pub fn new(state: LoginState) -> Self {
+        Self(AtomicU8::new(state.into()))
     }
 
-    pub async fn init_login_sequence(&self) {
-        self.0.init_login_sequence().await
+    pub fn get(&self) -> LoginState {
+        LoginState::from(self.0.load(Ordering::Acquire))
     }
 
-    pub fn signal_public(&self) -> bool {
-        self.0.signal_public()
-    }
-
-    pub fn signal_private(&self) -> bool {
-        self.0.signal_private()
-    }
-
-    pub async fn acknowledge_output(&self) {
-        self.0.acknowledge_output().await
-    }
-
-    pub fn last_explicit(&self) -> Text {
-        self.0.last_explicit()
-    }
-
-    pub fn reply_sendlist(&self) -> Text {
-        self.0.reply_sendlist()
-    }
-
-    pub async fn output(&self, text: &str) {
-        self.0.output(text).await
-    }
-
-    pub fn login_timeout(&self) -> Option<tokio::task::AbortHandle> {
-        self.0.login_timeout()
-    }
-
-    pub fn set_login_timeout(&self, handle: Option<tokio::task::AbortHandle>) {
-        self.0.set_login_timeout(handle)
-    }
-
-    pub async fn output_next(&self, telnet: &crate::telnet::Telnet) -> bool {
-        self.0.output_next(telnet).await
-    }
-
-    pub async fn handle_input(&self, line: crate::text::Text) {
-        self.0.handle_input(line).await
-    }
-
-    pub fn session(&self) -> Option<&crate::session::Session> {
-        match self.0.as_ref() {
-            crate::session::SessionConnection::LoggedIn(session) => Some(session),
-            _ => None,
-        }
-    }
-
-    pub fn login_session(&self) -> Option<&crate::session::LoginSession> {
-        match self.0.as_ref() {
-            crate::session::SessionConnection::PreLogin(login_session) => Some(login_session),
-            _ => None,
-        }
+    pub fn set(&self, state: LoginState) {
+        self.0.store(state.into(), Ordering::Release)
     }
 }
 
-impl AtomicSessionConnection {
-    pub fn new(connection: SessionConnection) -> Self {
-        Self(ArcSwap::new(Arc::new(connection)))
-    }
-
-    /// Zero-clone, guard-backed borrow valid for this scope.
-    pub fn borrow(&self) -> SessionConnectionBorrow {
-        SessionConnectionBorrow(self.0.load())
-    }
-
-    pub fn set(&self, connection: SessionConnection) {
-        self.0.store(Arc::new(connection))
-    }
-}
-
-impl From<SessionConnection> for AtomicSessionConnection {
-    fn from(connection: SessionConnection) -> Self {
-        Self::new(connection)
+impl Default for AtomicLoginState {
+    fn default() -> Self {
+        Self::new(LoginState::default())
     }
 }
 
@@ -1365,6 +1296,45 @@ impl AtomicAwayState {
 impl Default for AtomicAwayState {
     fn default() -> Self {
         Self::new(AwayState::default())
+    }
+}
+
+/// Lock-free atomic required SessionType storage using arc_swap.
+#[derive(Debug)]
+pub struct AtomicSessionType(ArcSwap<SessionType>);
+
+/// Borrow that pins the current value (no Arc clone).
+pub struct SessionTypeBorrow(Guard<Arc<SessionType>>);
+
+impl SessionTypeBorrow {
+    pub fn as_ref(&self) -> &SessionType {
+        &self.0
+    }
+}
+
+impl AtomicSessionType {
+    pub fn new(session_type: SessionType) -> Self {
+        Self(ArcSwap::new(Arc::new(session_type)))
+    }
+
+    /// Zero-clone, guard-backed borrow valid for this scope.
+    pub fn borrow(&self) -> SessionTypeBorrow {
+        SessionTypeBorrow(self.0.load())
+    }
+
+    /// Snapshot: clones the Arc (no guard to hold).
+    pub fn snapshot(&self) -> Arc<SessionType> {
+        self.0.load_full()
+    }
+
+    pub fn set(&self, session_type: SessionType) {
+        self.0.store(Arc::new(session_type))
+    }
+}
+
+impl From<SessionType> for AtomicSessionType {
+    fn from(session_type: SessionType) -> Self {
+        Self::new(session_type)
     }
 }
 
@@ -1751,14 +1721,14 @@ impl From<User> for AtomicUserOption {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<AtomicAwayState>();
     assert_send_sync_static::<AtomicBoolOption>();
     assert_send_sync_static::<AtomicDiscussion>();
     assert_send_sync_static::<AtomicDiscussionOption>();
-    assert_send_sync_static::<AtomicHashMap>();
-    assert_send_sync_static::<AtomicHashSet>();
+    assert_send_sync_static::<AtomicHashMap<u8, u16>>();
+    assert_send_sync_static::<AtomicHashSet<u8>>();
     assert_send_sync_static::<AtomicI16Option>();
     assert_send_sync_static::<AtomicI32Option>();
     assert_send_sync_static::<AtomicI64Option>();
@@ -1768,12 +1738,11 @@ const _: () = {
     assert_send_sync_static::<AtomicMessageOption>();
     assert_send_sync_static::<AtomicName>();
     assert_send_sync_static::<AtomicNameOption>();
-    assert_send_sync_static::<AtomicOrdMap>();
-    assert_send_sync_static::<AtomicOrdSet>();
+    assert_send_sync_static::<AtomicOrdMap<u8, u16>>();
+    assert_send_sync_static::<AtomicOrdSet<u8>>();
     assert_send_sync_static::<AtomicSendlist>();
     assert_send_sync_static::<AtomicSendlistOption>();
     assert_send_sync_static::<AtomicSession>();
-    assert_send_sync_static::<AtomicSessionConnection>();
     assert_send_sync_static::<AtomicSessionOption>();
     assert_send_sync_static::<AtomicTelnet>();
     assert_send_sync_static::<AtomicTelnetOption>();
@@ -1787,10 +1756,10 @@ const _: () = {
     assert_send_sync_static::<AtomicUser>();
     assert_send_sync_static::<AtomicUserOption>();
     assert_send_sync_static::<AtomicUsizeOption>();
-    assert_send_sync_static::<AtomicVector>();
+    assert_send_sync_static::<AtomicVector<u8>>();
     assert_send_sync_static::<DiscussionBorrow>();
-    assert_send_sync_static::<HashMapBorrow>();
-    assert_send_sync_static::<HashSetBorrow>();
+    assert_send_sync_static::<HashMapBorrow<u8, u16>>();
+    assert_send_sync_static::<HashSetBorrow<u8>>();
     assert_send_sync_static::<MessageBorrow>();
     assert_send_sync_static::<NameBorrow>();
     assert_send_sync_static::<OptionDiscussionBorrow>();
@@ -1801,14 +1770,13 @@ const _: () = {
     assert_send_sync_static::<OptionTelnetBorrow>();
     assert_send_sync_static::<OptionTextBorrow>();
     assert_send_sync_static::<OptionUserBorrow>();
-    assert_send_sync_static::<OrdMapBorrow>();
-    assert_send_sync_static::<OrdSetBorrow>();
+    assert_send_sync_static::<OrdMapBorrow<u8, u16>>();
+    assert_send_sync_static::<OrdSetBorrow<u8>>();
     assert_send_sync_static::<SendlistBorrow>();
     assert_send_sync_static::<SessionBorrow>();
-    assert_send_sync_static::<SessionConnectionBorrow>();
     assert_send_sync_static::<TelnetBorrow>();
     assert_send_sync_static::<TextBorrow>();
     assert_send_sync_static::<TimestampBorrow>();
     assert_send_sync_static::<UserBorrow>();
-    assert_send_sync_static::<VectorBorrow>();
+    assert_send_sync_static::<VectorBorrow<u8>>();
 };

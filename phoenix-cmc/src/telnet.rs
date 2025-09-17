@@ -1,10 +1,10 @@
-use crate::atomic::{AtomicNameOption, AtomicSessionConnection, AtomicText, AtomicUsizeOption, SessionConnectionBorrow};
+use crate::atomic::{AtomicNameOption, AtomicSession, AtomicText, AtomicUsizeOption};
 use crate::constants::*;
 use crate::name::Name;
 use crate::output::OutputType;
 use crate::sendlist::Sendlist;
 use crate::server::Server;
-use crate::session::{LoginSession, Session, SessionConnection};
+use crate::session::Session;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use crate::VERSION;
@@ -62,15 +62,14 @@ pub const TELNET_ENABLED: u8 = TELNET_DO_DONT | TELNET_WILL_WONT;
 pub struct Telnet(pub Arc<TelnetInner>);
 
 #[derive(Debug)]
-pub struct TelnetInner
-{
+pub struct TelnetInner {
     // Connection
     pub stream: Mutex<TcpStream>,
     pub closing: AtomicBool,
     pub close_on_eof: AtomicBool,
 
     // Session
-    pub session_connection: AtomicSessionConnection,
+    pub session: AtomicSession,
 
     // Terminal settings
     pub width: AtomicUsize,
@@ -220,12 +219,12 @@ impl Telnet {
 
     /// Create a new `Telnet` with its associated `LoginSession`.
     pub fn new(stream: TcpStream, server: Server) -> Self {
-        let login_session = LoginSession::new(server);
+        let session = Session::new(server, None);
         let inner = TelnetInner {
             stream: Mutex::new(stream),
             closing: AtomicBool::new(false),
             close_on_eof: AtomicBool::new(true),
-            session_connection: AtomicSessionConnection::new(SessionConnection::PreLogin(login_session)),
+            session: AtomicSession::new(session),
             width: AtomicUsize::new(Self::DEFAULT_WIDTH),
             height: AtomicUsize::new(Self::DEFAULT_HEIGHT),
             naws_width: AtomicUsize::new(0),
@@ -256,9 +255,7 @@ impl Telnet {
         };
 
         let telnet = Telnet(Arc::new(inner));
-        if let Some(login_session) = telnet.session_connection().login_session() {
-            login_session.set_telnet(Some(telnet.clone()));
-        }
+        telnet.session().set_telnet(Some(telnet.clone()));
 
         telnet
     }
@@ -289,34 +286,19 @@ impl Telnet {
         self.0.close_on_eof.store(value, Ordering::Relaxed);
     }
 
-    /// Get the `SessionConnection`.
-    pub fn session_connection(&self) -> SessionConnectionBorrow {
-        self.0.session_connection.borrow()
-    }
-
-    /// Set the `SessionConnection`.
-    pub fn set_session_connection(&self, value: SessionConnection) {
-        self.0.session_connection.set(value);
-    }
-
-    /// Get the `Session`, if any.
-    pub fn session(&self) -> Option<Session> {
-        self.session_connection().session().cloned()
-    }
-
-    /// Set the `LoginSession`.
-    pub fn set_login_session(&self, value: LoginSession) {
-        self.set_session_connection(SessionConnection::PreLogin(value));
+    /// Get the `Session`.
+    pub fn session(&self) -> Session {
+        self.0.session.snapshot()
     }
 
     /// Set the `Session`.
     pub fn set_session(&self, value: Session) {
-        self.set_session_connection(SessionConnection::LoggedIn(value));
+        self.0.session.set(value);
     }
 
-    /// Get the session name, if any.
-    pub fn session_name(&self) -> Option<Text> {
-        self.session().map(|s| s.name().name().clone())
+    /// Get the session name.
+    pub fn session_name(&self) -> Name {
+        self.session().name()
     }
 
     /// Get the terminal width.
@@ -586,7 +568,7 @@ impl Telnet {
         self.init_telnet_options().await;
 
         // Initiate session login sequence.
-        let session = self.session_connection();
+        let session = self.session();
         session.init_login_sequence().await;
     }
 
@@ -947,7 +929,7 @@ impl Telnet {
 
     #[framed]
     pub async fn print_message(&self, output_type: OutputType, time: Timestamp, from: &Name, to: &Arc<Sendlist>, start: &str) {
-        let session = self.session_connection();
+        let session = self.session();
         let signal_public = session.signal_public();
         let signal_private = session.signal_private();
         let width = self.width();
@@ -959,44 +941,42 @@ impl Telnet {
                 self.output(&format!("\n -> From {} to everyone:", from.as_str())).await;
             }
             OutputType::PrivateMessage => {
-                if let Some(session) = session.session() {
-                    // Save name to reply to
-                    self.set_reply_to(from.clone());
+                // Save name to reply to
+                self.set_reply_to(from.clone());
 
-                    // Decide if "private"
-                    let mut is_private = false;
-                    if to.sessions().contains(session) {
-                        is_private = true;
-                    } else {
-                        for disc in &to.discussions() {
-                            if disc.is_member(session) && !disc.is_public() {
-                                is_private = true;
-                                break;
-                            }
+                // Decide if "private"
+                let mut is_private = false;
+                if to.sessions().contains(&session) {
+                    is_private = true;
+                } else {
+                    for disc in &to.discussions() {
+                        if disc.is_member(&session) && !disc.is_public() {
+                            is_private = true;
+                            break;
                         }
                     }
+                }
 
-                    // Print message header
-                    if is_private {
-                        session.set_reply_sendlist(from.name().clone());
+                // Print message header
+                if is_private {
+                    session.set_reply_sendlist(from.name().clone());
 
-                        if signal_private {
-                            self.output(BELL_STR).await;
-                        }
-                        if to.sessions().contains(&session) {
-                            self.output("\n >> Private message from ").await;
-                        } else {
-                            if !signal_private && signal_public {
-                                self.output(BELL_STR).await;
-                            }
-                            self.output("\n >> From ").await;
-                        }
-                    } else {
-                        if signal_public {
-                            self.output(BELL_STR).await;
-                        }
-                        self.output("\n -> From ").await;
+                    if signal_private {
+                        self.output(BELL_STR).await;
                     }
+                    if to.sessions().contains(&session) {
+                        self.output("\n >> Private message from ").await;
+                    } else {
+                        if !signal_private && signal_public {
+                            self.output(BELL_STR).await;
+                        }
+                        self.output("\n >> From ").await;
+                    }
+                } else {
+                    if signal_public {
+                        self.output(BELL_STR).await;
+                    }
+                    self.output("\n -> From ").await;
                 }
 
                 self.output(from.as_str()).await;
@@ -1351,7 +1331,7 @@ impl Telnet {
             x if x == TelnetOption::TimingMark as u8 => {
                 self.decrement_outstanding();
                 if self.acknowledge() {
-                    let session = self.session_connection();
+                    let session = self.session();
                     session.acknowledge_output().await;
                 }
                 if self.outstanding() == 0 {
@@ -2498,7 +2478,7 @@ impl Telnet {
     #[framed]
     pub async fn do_semicolon(&self) {
         if self.point() == 0 {
-            let session = self.session_connection();
+            let session = self.session();
             let last = session.last_explicit();
             for ch in last.bytes() {
                 self.insert_char(ch).await;
@@ -2510,7 +2490,7 @@ impl Telnet {
     #[framed]
     pub async fn do_colon(&self) {
         if self.point() == 0 {
-            let session = self.session_connection();
+            let session = self.session();
             let reply = session.reply_sendlist();
             for ch in reply.bytes() {
                 self.insert_char(ch).await;
@@ -2522,7 +2502,7 @@ impl Telnet {
     /// Accept input line.
     #[framed]
     pub async fn accept_input(&self) {
-        let session = self.session_connection();
+        let session = self.session();
         let do_echo = self.do_echo();
 
         // Check if initial options negotiations have finished.
@@ -2561,7 +2541,7 @@ impl Telnet {
 
         // Echo newline and clear input.
         if self.undrawn() {
-            let session = self.session_connection();
+            let session = self.session();
             session.output(&line.as_str()).await;
             session.output("\n").await;
         } else {
@@ -2585,7 +2565,7 @@ impl Telnet {
 }
 
 //#[cfg(test)]
-fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Telnet>();
     assert_send_sync_static::<TelnetInner>();
