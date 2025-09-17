@@ -2,7 +2,7 @@ use crate::discussion::{Discussion, DiscussionInner};
 use crate::name::{Name, NameInner};
 use crate::output::{Message, MessageInner};
 use crate::sendlist::{Sendlist, SendlistInner};
-use crate::session::{Session, SessionConnection, SessionInner};
+use crate::session::{AwayState, Session, SessionConnection, SessionInner};
 use crate::telnet::{Telnet, TelnetInner};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
@@ -1342,6 +1342,29 @@ impl AtomicSessionConnection {
 impl From<SessionConnection> for AtomicSessionConnection {
     fn from(connection: SessionConnection) -> Self {
         Self::new(connection)
+    }
+}
+
+#[derive(Debug)]
+pub struct AtomicAwayState(AtomicU8);
+
+impl AtomicAwayState {
+    pub fn new(state: AwayState) -> Self {
+        Self(AtomicU8::new(state.into()))
+    }
+
+    pub fn get(&self) -> AwayState {
+        AwayState::from(self.0.load(Ordering::Acquire))
+    }
+
+    pub fn set(&self, state: AwayState) {
+        self.0.store(state.into(), Ordering::Release)
+    }
+}
+
+impl Default for AtomicAwayState {
+    fn default() -> Self {
+        Self::new(AwayState::default())
     }
 }
 
