@@ -1094,25 +1094,29 @@ impl OutputStream {
         }
     }
 
-    pub async fn attach(&self, telnet: &Telnet) {
+    pub async fn attach(&self, telnet: &Telnet) -> tokio::io::Result<()> {
         self.sent.store(0, std::sync::atomic::Ordering::Relaxed);
         self.acknowledged.store(0, std::sync::atomic::Ordering::Relaxed);
 
         if telnet.acknowledge() {
-            while self.send_next(telnet).await {}
+            while self.send_next(telnet).await? {}
         }
+
+        Ok(())
     }
 
-    pub async fn enqueue(&self, telnet: Option<&Telnet>, out: Output) {
+    pub async fn enqueue(&self, telnet: Option<&Telnet>, out: Output) -> tokio::io::Result<()> {
         self.queue.lock().await.push(out);
 
         if let Some(telnet) = telnet {
             if telnet.acknowledge() {
-                while self.send_next(telnet).await {}
+                while self.send_next(telnet).await? {}
             } else if self.queue.lock().await.len() == 1 {
-                self.send_next(telnet).await;
+                self.send_next(telnet).await?;
             }
         }
+
+        Ok(())
     }
 
     pub async fn unenqueue(&self, out: &Output) {
@@ -1131,11 +1135,11 @@ impl OutputStream {
         }
     }
 
-    pub async fn send_next(&self, telnet: &Telnet) -> bool {
+    pub async fn send_next(&self, telnet: &Telnet) -> tokio::io::Result<bool> {
         let queue = self.queue.lock().await;
         let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
 
-        if sent >= queue.len() {
+        let result = if sent >= queue.len() {
             telnet.redraw_input().await;
             false
         } else {
@@ -1143,10 +1147,12 @@ impl OutputStream {
 
             telnet.undraw_input().await;
             out.output(telnet).await;
-            telnet.timing_mark().await;
+            telnet.timing_mark().await?;
             self.sent.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             true
-        }
+        };
+
+        Ok(result)
     }
 }
 

@@ -144,14 +144,14 @@ impl Server {
         let telnet = Telnet::new(stream, self.clone());
 
         // Initiate TELNET protocol option negotiations and session login sequence.
-        telnet.init_login_sequence().await;
+        telnet.init_login_sequence().await?;
 
         // Handle network I/O.
         let mut shutdown_rx = self.shutdown_tx().subscribe();
         tokio::select! {
             _ = shutdown_rx.recv() => {
                 telnet.output("\n\n*** Server is shutting down ***\n").await;
-                telnet.close(true).await;
+                telnet.close(true).await?;
             }
             result = telnet.handle_input() => {
                 if let Err(e) = result {
@@ -164,9 +164,9 @@ impl Server {
                 let session = telnet.session();
                 {
                     if session.signed_on() {
-                        session.detach(&telnet, false).await;
+                        session.detach(&telnet, false).await?;
                     } else {
-                        session.close(false).await;
+                        session.close(false).await?;
                     }
                 }
             }
