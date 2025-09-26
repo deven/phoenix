@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: discussion module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::atomic::{AtomicNameOption, AtomicOrdSet, AtomicText, AtomicTimestamp};
 use crate::constants::COMMA;
 use crate::name::Name;

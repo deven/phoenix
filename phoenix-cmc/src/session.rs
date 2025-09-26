@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: session module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::atomic::{
     AtomicAwayState, AtomicHashMap, AtomicLoginState, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicSessionType, AtomicTelnetOption, AtomicText,
     AtomicTextOption, AtomicUserOption, SessionTypeBorrow,

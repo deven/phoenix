@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: text module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 //#![no_std]
 
 extern crate alloc;

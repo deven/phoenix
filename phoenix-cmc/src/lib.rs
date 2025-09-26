@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: crate root
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 //#![recursion_limit = "256"]
 #![deny(rust_2018_idioms, nonstandard_style, unused_must_use, clippy::all)]
 //#![warn(future_incompatible, missing_docs, clippy::pedantic, clippy::cargo)]

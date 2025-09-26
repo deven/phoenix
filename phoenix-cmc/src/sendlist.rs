@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: sendlist module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::atomic::{AtomicOrdSet, AtomicText};
 use crate::constants::*;
 use crate::discussion::Discussion;

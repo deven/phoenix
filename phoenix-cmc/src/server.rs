@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: server module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::session::Session;
 use crate::telnet::Telnet;
 use crate::text::Text;
