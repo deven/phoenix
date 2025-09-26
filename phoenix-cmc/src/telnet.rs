@@ -727,6 +727,10 @@ impl Telnet {
         self.output(VERSION).await;
         self.output(")\n\n").await;
 
+        // Flush all telnet options and welcome banner to client
+        println!("=== DEBUG: Flushing telnet options and welcome banner ===");
+        self.flush_output().await?;
+
         Ok(())
     }
 
@@ -834,7 +838,7 @@ impl Telnet {
             }
         }
 
-        // Close the underlying stream
+        // Always attempt to close the underlying stream.
         if let Err(e) = self.stream().await.shutdown().await {
             println!("=== DEBUG: Error shutting down stream: {} ===", e);
             if result.is_ok() {
@@ -875,6 +879,7 @@ impl Telnet {
     #[framed]
     pub async fn command(&self, data: &[u8]) -> tokio::io::Result<()> {
         self.command_buffer().await.extend_from_slice(data);
+        self.flush_output().await?;
 
         Ok(())
     }
@@ -885,6 +890,7 @@ impl Telnet {
         if self.acknowledge() {
             self.increment_outstanding();
             self.output_buffer().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
+            self.flush_output().await?;
         }
 
         Ok(())
@@ -2726,51 +2732,55 @@ impl Telnet {
         }
 
         // Get the input line.
-        let data = self.data().await;
-        let line = Text::new(String::from_utf8_lossy(&data));
+        let line = {
+            let mut data = self.data().await;
+            let line = Text::new(String::from_utf8_lossy(&data));
 
-        // Reset history position.
-        // TODO: Should this really be Option<T>?  Should it be numeric?  It's a pointer/iterator into the history.
-        self.set_history_position(None);
+            // Reset history position.
+            // TODO: Should this really be Option<T>?  Should it be numeric?  It's a pointer/iterator into the history.
+            self.set_history_position(None);
 
-        // Add to history if echoing.
-        if do_echo && !line.is_empty() {
-            let mut history = self.history().await;
-            if history.len() >= Self::HISTORY_MAX {
-                history.pop_front();
+            // Add to history if echoing.
+            if do_echo && !line.is_empty() {
+                let mut history = self.history().await;
+                if history.len() >= Self::HISTORY_MAX {
+                    history.pop_front();
+                }
+                history.push_back(line.clone());
             }
-            history.push_back(line.clone());
-        }
 
-        // Flush any pending output to connection.
-        if !self.acknowledge() {
-            while session.output_next(self).await? {
-                session.acknowledge_output().await;
+            // Flush any pending output to connection.
+            if !self.acknowledge() {
+                while session.output_next(self).await? {
+                    session.acknowledge_output().await;
+                }
             }
-        }
 
-        // Echo newline and clear input.
-        if self.undrawn() {
-            let session = self.session();
-            session.output(&line.as_str()).await;
-            session.output("\n").await;
-        } else {
-            if self.point() < data.len() {
-                self.end_of_line().await;
+            // Echo newline and clear input.
+            if self.undrawn() {
+                let session = self.session();
+                session.output(&line.as_str()).await;
+                session.output("\n").await;
+            } else {
+                if self.point() < data.len() {
+                    self.end_of_line().await;
+                }
+                if self.echo() == TELNET_ENABLED && do_echo {
+                    self.output("\n").await;
+                }
             }
-            if self.echo() == TELNET_ENABLED && do_echo {
-                self.output("\n").await;
-            }
-        }
 
-        // Clear input buffer.
-        self.data().await.clear();
-        self.set_point(0);
-        self.set_mark(None);
-        self.set_prompt(Text::new(""));
+            // Clear input buffer.
+            data.clear();
+            self.set_point(0);
+            self.set_mark(None);
+            self.set_prompt(Text::new(""));
+
+            line
+        };
 
         // Process the input.
-        session.handle_input(line).await;
+        session.handle_input(line).await?;
 
         Ok(())
     }
@@ -2780,8 +2790,8 @@ impl Telnet {
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Telnet>();
-    assert_send_sync_static::<TelnetInner>();
     assert_send_sync_static::<TelnetCommand>();
+    assert_send_sync_static::<TelnetInner>();
     assert_send_sync_static::<TelnetOption>();
     assert_send_sync_static::<TelnetState>();
     assert_send_sync_static::<TelnetSubnegotiationState>();
