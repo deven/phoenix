@@ -281,13 +281,15 @@ impl Session {
 
     /// Enqueue output buffer as a new `TextOutput`.
     #[framed]
-    pub async fn enqueue_output(&self) {
+    pub async fn enqueue_output(&self) -> tokio::io::Result<()> {
         let mut output_buffer = self.output_buffer().await;
         if !output_buffer.is_empty() {
             let text_output = TextOutput::new(output_buffer.clone());
-            self.pending().await.enqueue(self.telnet().as_ref(), text_output).await;
+            self.pending().await.enqueue(self.telnet().as_ref(), text_output).await?;
             output_buffer.clear();
         }
+
+        Ok(())
     }
 
     /// Get the `OutputStream`.
@@ -298,7 +300,7 @@ impl Session {
 
     /// Send the next output in the output stream.
     #[framed]
-    pub async fn output_next(&self, telnet: &Telnet) -> bool {
+    pub async fn output_next(&self, telnet: &Telnet) -> tokio::io::Result<bool> {
         self.pending().await.send_next(telnet).await
     }
 
@@ -351,13 +353,15 @@ impl Session {
 
     /// Switch login state and prompt.
     #[framed]
-    pub async fn switch_login_state(&self, state: LoginState, prompt: Option<&str>) {
+    pub async fn switch_login_state(&self, state: LoginState, prompt: Option<&str>) -> tokio::io::Result<()> {
         self.set_login_state(state);
         if let Some(prompt) = prompt {
             if let Some(telnet) = self.telnet() {
                 telnet.output(prompt).await;
             }
         }
+
+        Ok(())
     }
 
     /// Get the login timeout Tokio task `AbortHandle`, if any.
@@ -786,34 +790,36 @@ impl Session {
 
     /// Handle a line of input.
     #[framed]
-    pub async fn handle_input(&self, line: Text) {
+    pub async fn handle_input(&self, line: Text) -> tokio::io::Result<()> {
         self.pending().await.dequeue().await;
 
         match self.login_state() {
-            LoginState::PreLogin => self.save_input_line(line).await,
-            LoginState::AwaitingLogin => self.handle_login_input(line).await,
-            LoginState::AwaitingPassword => self.handle_password_input(line).await,
-            LoginState::AwaitingName => self.handle_name_input(line).await,
-            LoginState::AwaitingBlurb => self.handle_blurb_input(line).await,
-            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(line).await,
-            LoginState::LoggedIn => self.process_input(line).await,
+            LoginState::PreLogin => self.save_input_line(line).await?,
+            LoginState::AwaitingLogin => self.handle_login_input(line).await?,
+            LoginState::AwaitingPassword => self.handle_password_input(line).await?,
+            LoginState::AwaitingName => self.handle_name_input(line).await?,
+            LoginState::AwaitingBlurb => self.handle_blurb_input(line).await?,
+            LoginState::AwaitingTransferConfirmation => self.handle_transfer_input(line).await?,
+            LoginState::LoggedIn => self.process_input(line).await?,
         }
 
-        self.enqueue_output().await;
+        self.enqueue_output().await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn handle_login_input(&self, line: Text) {
+    pub async fn handle_login_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
         if let Some(args) = match_keyword(&line, "/bye", 4) {
-            self.do_bye(args).await;
-            return;
+            self.do_bye(args).await?;
+            return Ok(());
         }
         if line.is_empty() {
             if let Some(telnet) = self.telnet() {
                 telnet.output("login: ").await;
             }
-            return;
+            return Ok(());
         }
         let user = (*USER_MANAGER).get_user(&line).await;
         self.set_user(user.clone());
@@ -827,16 +833,18 @@ impl Session {
             let attempts = self.increment_attempts();
             if attempts >= MAX_LOGIN_ATTEMPTS {
                 self.close(true).await;
-                return;
+                return Ok(());
             }
             if let Some(telnet) = self.telnet() {
                 telnet.output("login: ").await;
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn handle_password_input(&self, line: Text) {
+    pub async fn handle_password_input(&self, line: Text) -> tokio::io::Result<()> {
         if let Some(telnet) = self.telnet() {
             telnet.output("\n").await;
             telnet.set_do_echo(true);
@@ -857,37 +865,39 @@ impl Session {
             self.output("Login incorrect.\n").await;
             let attempts = self.increment_attempts();
             if attempts >= MAX_LOGIN_ATTEMPTS {
-                self.close(true).await;
-                return;
+                self.close(true).await?;
+                return Ok(());
             }
-            self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
+            self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
             self.set_user(None);
-            return;
+            return Ok(());
         }
 
         if let Some(user) = self.user() {
             if user.reserved().is_empty() {
                 self.output("You don't have any reserved names.\n").await;
                 self.close(true).await;
-                return;
+                return Ok(());
             }
 
             let reserved = user.reserved();
             if reserved.len() == 1 {
                 let name = reserved[0].clone();
-                if self.check_name_availability(&name, false, false).await {
-                    self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
+                if self.check_name_availability(Some(&name), false, false).await? {
+                    self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
                 }
-                return;
+                return Ok(());
             }
         }
 
         self.print_reserved_names().await;
-        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn handle_name_input(&self, line: Text) {
+    pub async fn handle_name_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
         let name = if line.is_empty() {
             if let Some(user) = self.user() {
@@ -897,34 +907,36 @@ impl Session {
                     if let Some(telnet) = self.telnet() {
                         telnet.output("Enter name: ").await;
                     }
-                    return;
+                    return Ok(());
                 }
             } else {
-                return;
+                return Ok(());
             }
         } else {
             Text::new(line)
         };
 
-        if self.check_name_availability(&name, false, false).await {
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
+        if self.check_name_availability(Some(&name), false, false).await? {
+            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn handle_blurb_input(&self, line: Text) {
+    pub async fn handle_blurb_input(&self, line: Text) -> tokio::io::Result<()> {
         let name = if let Some(user) = self.user() {
             if let Some(reserved) = user.reserved().front() {
                 reserved.clone()
             } else {
-                return;
+                return Ok(());
             }
         } else {
-            return;
+            return Ok(());
         };
 
-        if !self.check_name_availability(&name, true, false).await {
-            return;
+        if !self.check_name_availability(Some(&name), true, false).await? {
+            return Ok(());
         }
 
         let blurb_text = if line.is_empty() {
@@ -980,31 +992,35 @@ impl Session {
                 telnet.reset_history().await;
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn handle_transfer_input(&self, line: Text) {
+    pub async fn handle_transfer_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
         if match_keyword(&line, "yes", 1).is_none() {
             self.output("Session not transferred.\n").await;
-            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-            return;
+            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+            return Ok(());
         }
 
         let name = if let Some(user) = self.user() {
             if let Some(reserved) = user.reserved().front() {
                 reserved.clone()
             } else {
-                return;
+                return Ok(());
             }
         } else {
-            return;
+            return Ok(());
         };
 
-        if self.check_name_availability(&name, true, true).await {
+        if self.check_name_availability(Some(&name), true, true).await? {
             self.output("(That session is now gone.)\n").await;
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await;
+            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
         }
+
+        Ok(())
     }
 
     #[framed]
@@ -1019,21 +1035,24 @@ impl Session {
     }
 
     #[framed]
-    pub async fn save_input_line(&self, line: Text) {
+    pub async fn save_input_line(&self, line: Text) -> tokio::io::Result<()> {
         self.lines().await.push_back(line);
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn init_login_sequence(&self) {
-        self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
+    pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
+        self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
+        Ok(())
     }
 
     #[framed]
-    pub async fn check_name_availability(&self, name: &str, double_check: bool, _transferring: bool) -> bool {
+    pub async fn check_name_availability<'a>(&self, name: Option<&'a str>, double_check: bool, transferring: bool) -> tokio::io::Result<bool> {
         if name.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
             self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-            return false;
+            return Ok(false);
         }
 
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
@@ -1043,8 +1062,8 @@ impl Session {
                 (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
                     let now = if double_check { " now" } else { "" };
                     self.output(&format!("\"{reserved}\" is{now} a reserved name.  Choose another.\n")).await;
-                    self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-                    return false;
+                    self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+                    return Ok(false);
                 }
                 _ => {}
             }
@@ -1059,10 +1078,10 @@ impl Session {
                 match (my_user, their_user) {
                     (Some(my_user), Some(their_user)) if my_user.username() == their_user.username() && existing_session.priv_level() > 0 => {
                         if let Some(_their_telnet) = existing_session.telnet() {
-                            if _transferring {
+                            if transferring {
                                 self.output("Transferring active session...\n").await;
                                 // TODO: Implement session transfer for LoginSession
-                                return false;
+                                return Ok(false);
                             } else {
                                 let now = if double_check { " now" } else { "" };
                                 self.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
@@ -1071,17 +1090,17 @@ impl Session {
                         } else {
                             self.output("Attaching to detached session...\n").await;
                             // TODO: Implement session attachment for LoginSession
-                            return false;
+                            return Ok(false);
                         }
                     }
                     _ => {
                         let found_name = existing_session.name();
                         let already = if double_check { "now" } else { "already" };
                         self.output(&format!("The name \"{found_name}\" is {already} in use.  Choose another.\n")).await;
-                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
                     }
                 }
-                return false;
+                return Ok(false);
             }
         }
 
@@ -1091,33 +1110,33 @@ impl Session {
                 let already = if double_check { "now" } else { "already" };
                 self.output(&format!("There is {already} a discussion named \"{disc_name}\".  Choose another name.\n")).await;
                 self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-                return false;
+                return Ok(false);
             }
         }
 
-        true
+        Ok(true)
     }
 
     #[framed]
-    pub async fn close(&self, drain: bool) {
+    pub async fn close(&self, drain: bool) -> tokio::io::Result<()> {
         let id = self.id();
         SESSIONS.remove(&id);
 
         if self.signed_on() {
-            self.notify_exit().await;
+            self.notify_exit().await?;
         }
 
         // Quit all discussions silently
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|(key, _)| key.clone()).collect();
         for key in &disc_keys {
             if let Some(disc) = DISCUSSIONS.get(key) {
-                disc.quit(&self).await;
+                disc.quit(&self).await?;
             }
         }
 
         // Close telnet connection if attached
         if let Some(telnet) = self.telnet() {
-            telnet.close(drain).await;
+            telnet.close(drain).await?;
         }
         self.set_telnet(None);
 
@@ -1126,10 +1145,12 @@ impl Session {
             user.remove_session(self);
             self.set_user(None);
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn transfer(&self, new_telnet: Telnet) {
+    pub async fn transfer(&self, new_telnet: Telnet) -> tokio::io::Result<()> {
         let old_telnet = self.telnet();
         self.set_telnet(Some(new_telnet.clone()));
         new_telnet.set_session(self.clone());
@@ -1138,31 +1159,35 @@ impl Session {
             let who = self.name_user();
             info!("Transfer: {who} from fd to new connection");
             old.output("*** This session has been transferred to a new connection. ***\n").await;
-            old.close(true).await;
+            old.close(true).await?;
         }
 
-        self.enqueue_others(TransferNotify::new(self.name())).await;
-        self.pending().await.attach(&new_telnet).await;
+        self.enqueue_others(TransferNotify::new(self.name())).await?;
+        self.pending().await.attach(&new_telnet).await?;
         self.output("*** End of reviewed output. ***\n").await;
-        self.enqueue_output().await;
+        self.enqueue_output().await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn attach(&self, telnet: Telnet) {
+    pub async fn attach(&self, telnet: Telnet) -> tokio::io::Result<()> {
         self.set_telnet(Some(telnet.clone()));
         telnet.set_session(self.clone());
 
         let who = self.name_user();
         info!("Attach: {who} on new connection");
 
-        self.enqueue_others(AttachNotify::new(self.name())).await;
-        self.pending().await.attach(&telnet).await;
+        self.enqueue_others(AttachNotify::new(self.name())).await?;
+        self.pending().await.attach(&telnet).await?;
         self.output("*** End of reviewed output. ***\n").await;
-        self.enqueue_output().await;
+        self.enqueue_output().await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn detach(&self, telnet: &Telnet, intentional: bool) {
+    pub async fn detach(&self, telnet: &Telnet, intentional: bool) -> tokio::io::Result<()> {
         if self.signed_on() && self.priv_level() > 0 {
             if let Some(t) = self.telnet() {
                 if Arc::ptr_eq(&t.0, &telnet.0) {
@@ -1173,21 +1198,31 @@ impl Session {
                         info!("Detach: {who} (accidental)");
                     };
 
-                    self.enqueue_others(DetachNotify::new(self.name(), intentional)).await;
+                    self.enqueue_others(DetachNotify::new(self.name(), intentional)).await?;
                     self.set_telnet(None);
                 }
             }
         } else {
-            self.close(true).await;
+            self.close(true).await?;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn announce(message: &str) {
+    pub async fn announce(message: &str) -> tokio::io::Result<()> {
+        let mut result = Ok(());
+
         for (_, session) in SESSIONS.iter() {
             session.output(message).await;
-            session.enqueue_output().await;
+            if let Err(e) = session.enqueue_output().await {
+                if result.is_ok() {
+                    result = Err(e);
+                }
+            }
         }
+
+        result
     }
 
     #[framed]
@@ -1196,22 +1231,32 @@ impl Session {
     }
 
     #[framed]
-    pub async fn enqueue(&self, out: Output) {
-        self.enqueue_output().await;
+    pub async fn enqueue(&self, out: Output) -> tokio::io::Result<()> {
+        self.enqueue_output().await?;
         if let Some(telnet) = self.telnet() {
-            self.pending().await.enqueue(Some(&telnet), out).await;
+            self.pending().await.enqueue(Some(&telnet), out).await?;
         } else {
-            self.pending().await.enqueue(None, out).await;
+            self.pending().await.enqueue(None, out).await?;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn enqueue_others(&self, out: Output) {
+    pub async fn enqueue_others(&self, out: Output) -> tokio::io::Result<()> {
+        let mut result = Ok(());
+
         for (_, session) in SESSIONS.iter() {
             if &session != self {
-                session.enqueue(out.clone()).await;
+                if let Err(e) = session.enqueue(out.clone()).await {
+                    if result.is_ok() {
+                        result = Err(e);
+                    }
+                }
             }
         }
+
+        result
     }
 
     #[framed]
@@ -1305,7 +1350,7 @@ impl Session {
     }
 
     #[framed]
-    pub async fn notify_entry(&self) {
+    pub async fn notify_entry(&self) -> tokio::io::Result<()> {
         let who = self.name_user();
         if let Some(_telnet) = self.telnet() {
             info!("Enter: {who} on connection");
@@ -1317,11 +1362,13 @@ impl Session {
         self.set_idle_since(now.clone());
         self.set_login_time(now);
 
-        self.enqueue_others(EntryNotify::new(self.name())).await;
+        self.enqueue_others(EntryNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn notify_exit(&self) {
+    pub async fn notify_exit(&self) -> tokio::io::Result<()> {
         let who = self.name_user();
         if let Some(_telnet) = self.telnet() {
             info!("Exit: {who} on connection");
@@ -1329,99 +1376,103 @@ impl Session {
             info!("Exit: {who}, detached");
         }
 
-        self.enqueue_others(ExitNotify::new(self.name())).await;
+        self.enqueue_others(ExitNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn process_input(&self, line: Text) {
+    pub async fn process_input(&self, line: Text) -> tokio::io::Result<()> {
         if line.starts_with("!") {
             let line = line[1..].trim();
             if self.priv_level() < 50 {
                 self.output("Sorry, all !commands are privileged.\n").await;
-                return;
+                return Ok(());
             }
 
             if let Some(args) = match_keyword(line, "!restart", 8) {
-                self.do_restart(args).await;
+                self.do_restart(args).await?;
             } else if let Some(args) = match_keyword(line, "!down", 5) {
-                self.do_down(args).await;
+                self.do_down(args).await?;
             } else if let Some(args) = match_keyword(line, "!nuke", 5) {
-                self.do_nuke(args).await;
+                self.do_nuke(args).await?;
             } else {
                 self.output("Unknown !command.\n").await;
             }
         } else if line.starts_with("/") {
             let line = line[1..].trim();
             if let Some(args) = match_keyword(line, "/who", 2) {
-                self.do_who(args).await;
+                self.do_who(args).await?;
             } else if let Some(args) = match_keyword(line, "/idle", 2) {
-                self.do_idle(args).await;
+                self.do_idle(args).await?;
             } else if let Some(args) = match_keyword(line, "/blurb", 3) {
-                self.do_blurb(args, false).await;
+                self.do_blurb(args, false).await?;
             } else if let Some(args) = match_keyword(line, "/here", 2) {
-                self.do_here(args).await;
+                self.do_here(args).await?;
             } else if let Some(args) = match_keyword(line, "/away", 2) {
-                self.do_away(args).await;
+                self.do_away(args).await?;
             } else if let Some(args) = match_keyword(line, "/busy", 2) {
-                self.do_busy(args).await;
+                self.do_busy(args).await?;
             } else if let Some(args) = match_keyword(line, "/gone", 2) {
-                self.do_gone(args).await;
+                self.do_gone(args).await?;
             } else if let Some(args) = match_keyword(line, "/help", 2) {
-                self.do_help(args).await;
+                self.do_help(args).await?;
             } else if let Some(args) = match_keyword(line, "/send", 2) {
-                self.do_send(args).await;
+                self.do_send(args).await?;
             } else if let Some(args) = match_keyword(line, "/bye", 4) {
-                self.do_bye(args).await;
+                self.do_bye(args).await?;
             } else if let Some(args) = match_keyword(line, "/what", 3) {
-                self.do_what(args).await;
+                self.do_what(args).await?;
             } else if let Some(args) = match_keyword(line, "/join", 2) {
-                self.do_join(args).await;
+                self.do_join(args).await?;
             } else if let Some(args) = match_keyword(line, "/quit", 2) {
-                self.do_quit(args).await;
+                self.do_quit(args).await?;
             } else if let Some(args) = match_keyword(line, "/create", 3) {
-                self.do_create(args).await;
+                self.do_create(args).await?;
             } else if let Some(args) = match_keyword(line, "/destroy", 4) {
-                self.do_destroy(args).await;
+                self.do_destroy(args).await?;
             } else if let Some(args) = match_keyword(line, "/permit", 4) {
-                self.do_permit(args).await;
+                self.do_permit(args).await?;
             } else if let Some(args) = match_keyword(line, "/depermit", 4) {
-                self.do_depermit(args).await;
+                self.do_depermit(args).await?;
             } else if let Some(args) = match_keyword(line, "/appoint", 4) {
-                self.do_appoint(args).await;
+                self.do_appoint(args).await?;
             } else if let Some(args) = match_keyword(line, "/unappoint", 10) {
-                self.do_unappoint(args).await;
+                self.do_unappoint(args).await?;
             } else if let Some(args) = match_keyword(line, "/rename", 7) {
-                self.do_rename(args).await;
+                self.do_rename(args).await?;
             } else if let Some(args) = match_keyword(line, "/clear", 3) {
-                self.do_clear(args).await;
+                self.do_clear(args).await?;
             } else if let Some(args) = match_keyword(line, "/unidle", 7) {
-                self.do_unidle(args).await;
+                self.do_unidle(args).await?;
             } else if let Some(args) = match_keyword(line, "/detach", 4) {
-                self.do_detach(args).await;
+                self.do_detach(args).await?;
             } else if let Some(args) = match_keyword(line, "/howmany", 3) {
-                self.do_howmany(args).await;
+                self.do_howmany(args).await?;
             } else if let Some(args) = match_keyword(line, "/why", 4) {
-                self.do_why(args).await;
+                self.do_why(args).await?;
             } else if let Some(args) = match_keyword(line, "/date", 3) {
-                self.do_date(args).await;
+                self.do_date(args).await?;
             } else if let Some(args) = match_keyword(line, "/signal", 3) {
-                self.do_signal(args).await;
+                self.do_signal(args).await?;
             } else if let Some(args) = match_keyword(line, "/set", 4) {
-                self.do_set(args).await;
+                self.do_set(args).await?;
             } else if let Some(args) = match_keyword(line, "/display", 2) {
-                self.do_display(args).await;
+                self.do_display(args).await?;
             } else if let Some(args) = match_keyword(line, "/also", 3) {
-                self.do_also(args).await;
+                self.do_also(args).await?;
             } else if let Some(args) = match_keyword(line, "/oops", 3) {
-                self.do_oops(args).await;
+                self.do_oops(args).await?;
             } else {
                 self.output("Unknown /command.  Type /help for help.\n").await;
             }
         } else if line == " " {
-            self.do_reset().await;
+            self.do_reset().await?;
         } else if !line.is_empty() {
-            self.do_message(&line).await;
+            self.do_message(&line).await?;
         }
+
+        Ok(())
     }
 
     /// Reset idle time to now.
@@ -1516,67 +1567,71 @@ impl Session {
     }
 
     #[framed]
-    pub async fn do_restart(&self, args: &str) {
+    pub async fn do_restart(&self, args: &str) -> tokio::io::Result<()> {
         let who = self.name_user();
         let name = self.name();
 
         if args == "!" {
             // Immediate restart
-            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
+            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await?;
             self.server().schedule_restart(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel restart
             match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
-                    Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
+                    Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await?;
                 }
                 Some(false) => {
                     info!("Shutdown cancelled by {who}.");
-                    Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
+                    Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await?;
                 }
                 None => self.output("The server was not about to shut down or restart.\n").await,
             }
         } else {
             // Delayed restart
             let seconds = args.parse::<u64>().unwrap_or(30);
-            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await;
+            Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await?;
             self.server().schedule_restart(who.clone(), seconds).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_down(&self, args: &str) {
+    pub async fn do_down(&self, args: &str) -> tokio::io::Result<()> {
         let who = self.name_user();
         let name = self.name();
 
         if args == "!" {
             // Immediate shutdown
-            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
+            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await?;
             self.server().schedule_shutdown(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
             // Cancel shutdown
             match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
-                    Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await;
+                    Self::announce(&format!("*** {name} has cancelled the server restart. ***\n")).await?;
                 }
                 Some(false) => {
                     info!("Shutdown cancelled by {who}.");
-                    Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await;
+                    Self::announce(&format!("*** {name} has cancelled the server shutdown. ***\n")).await?;
                 }
                 None => self.output("The server was not about to shut down or restart.\n").await,
             }
         } else {
             // Delayed shutdown
             let seconds = args.parse::<u64>().unwrap_or(30);
-            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await;
+            Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await?;
             self.server().schedule_shutdown(who.clone(), seconds).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_nuke(&self, args: &str) {
+    pub async fn do_nuke(&self, args: &str) -> tokio::io::Result<()> {
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
@@ -1599,10 +1654,10 @@ impl Session {
                     telnet.undraw_input().await;
                     telnet.output(&format!("\x07\x07\x07*** You have been nuked by {by_name}. ***\n")).await;
                     telnet.redraw_input().await;
-                    telnet.close(drain).await;
+                    telnet.close(drain).await?;
                 } else {
                     info!("{who}, detached, has been nuked by {by_who}");
-                    target.close(true).await;
+                    target.close(true).await?;
                 }
             }
             (_, matches) => {
@@ -1610,15 +1665,19 @@ impl Session {
                 self.session_matches(args, &matches).await;
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_bye(&self, _args: &str) {
-        self.close(true).await;
+    pub async fn do_bye(&self, _args: &str) -> tokio::io::Result<()> {
+        self.close(true).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_who(&self, args: &str) {
+    pub async fn do_who(&self, args: &str) -> tokio::io::Result<()> {
         // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
@@ -1626,7 +1685,7 @@ impl Session {
                 self.output("\x07\x07").await;
                 self.output(&errors).await;
             }
-            return;
+            return Ok(());
         }
 
         let now = Timestamp::new();
@@ -1724,10 +1783,12 @@ impl Session {
             self.output("\x07\x07").await;
             self.output(&errors).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_idle(&self, args: &str) {
+    pub async fn do_idle(&self, args: &str) -> tokio::io::Result<()> {
         // Get set of users to display.
         let (who, errors, msg) = self.get_who_set(args).await;
         if who.is_empty() {
@@ -1735,7 +1796,7 @@ impl Session {
                 self.output("\x07\x07").await;
                 self.output(&errors).await;
             }
-            return;
+            return Ok(());
         }
 
         let now = Timestamp::new();
@@ -1801,14 +1862,16 @@ impl Session {
             self.output("\x07\x07").await;
             self.output(&errors).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_why(&self, args: &str) {
+    pub async fn do_why(&self, args: &str) -> tokio::io::Result<()> {
         // This is a privileged command.
         if self.priv_level() < 50 {
             self.output("Why not?\n").await;
-            return;
+            return Ok(());
         }
 
         // Get set of users to display.
@@ -1818,7 +1881,7 @@ impl Session {
                 self.output("\x07\x07").await;
                 self.output(&errors).await;
             }
-            return;
+            return Ok(());
         }
 
         let now = Timestamp::new();
@@ -1928,10 +1991,12 @@ impl Session {
             self.output("\x07\x07").await;
             self.output(&errors).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_blurb(&self, args: &str, entry: bool) {
+    pub async fn do_blurb(&self, args: &str, entry: bool) -> tokio::io::Result<()> {
         let args = args.trim();
 
         if !args.is_empty() {
@@ -1970,81 +2035,97 @@ impl Session {
         } else {
             self.output("You do not currently have a blurb set.\n").await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_here(&self, args: &str) {
+    pub async fn do_here(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await;
+            self.do_blurb(args, false).await?;
         }
         self.output("You are now \"here\".\n").await;
         self.set_away(AwayState::Here);
-        self.enqueue_others(HereNotify::new(self.name())).await;
+        self.enqueue_others(HereNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_away(&self, args: &str) {
+    pub async fn do_away(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await;
+            self.do_blurb(args, false).await?;
         }
         self.output("You are now \"away\".\n").await;
         self.set_away(AwayState::Away);
-        self.enqueue_others(AwayNotify::new(self.name())).await;
+        self.enqueue_others(AwayNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_busy(&self, args: &str) {
+    pub async fn do_busy(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await;
+            self.do_blurb(args, false).await?;
         }
         self.output("You are now \"busy\".\n").await;
         self.set_away(AwayState::Busy);
-        self.enqueue_others(BusyNotify::new(self.name())).await;
+        self.enqueue_others(BusyNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_gone(&self, args: &str) {
+    pub async fn do_gone(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await;
+            self.do_blurb(args, false).await?;
         }
         self.output("You are now \"gone\".\n").await;
         self.set_away(AwayState::Gone);
-        self.enqueue_others(GoneNotify::new(self.name())).await;
+        self.enqueue_others(GoneNotify::new(self.name())).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_clear(&self, _args: &str) {
+    pub async fn do_clear(&self, _args: &str) -> tokio::io::Result<()> {
         self.output("\x1b[H\x1b[J").await;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_unidle(&self, _args: &str) {
+    pub async fn do_unidle(&self, _args: &str) -> tokio::io::Result<()> {
         let idle = self.reset_idle(1).await;
         if idle == 0 {
             self.output("Your idle time has been reset.\n").await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_detach(&self, _args: &str) {
+    pub async fn do_detach(&self, _args: &str) -> tokio::io::Result<()> {
         if self.priv_level() > 0 {
             self.reset_idle(10).await;
             self.output("You have been detached.\n").await;
-            self.enqueue_output().await;
+            self.enqueue_output().await?;
             if let Some(telnet) = self.telnet() {
-                telnet.close(true).await;
+                telnet.close(true).await?;
             }
         } else {
             self.output("Guest users are not allowed to detach from the system.  Use /bye to sign off.\n").await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_howmany(&self, _args: &str) {
+    pub async fn do_howmany(&self, _args: &str) -> tokio::io::Result<()> {
         let mut here = 0;
         let mut away = 0;
         let mut busy = 0;
@@ -2080,20 +2161,22 @@ impl Session {
 
         let disc_count = DISCUSSIONS.len();
         self.output(&format!("\nDiscussions in use: {disc_count}\n\n")).await;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_what(&self, args: &str) {
+    pub async fn do_what(&self, args: &str) -> tokio::io::Result<()> {
         if DISCUSSIONS.is_empty() {
             self.output("No discussions currently exist.\n").await;
-            return;
+            return Ok(());
         }
 
         let sendlist = Sendlist::new(&self, args, true, false, true).await;
 
         if !args.is_empty() && sendlist.discussions().is_empty() {
             self.output(&sendlist.errors().to_string()).await;
-            return;
+            return Ok(());
         }
 
         let discussions = if args.is_empty() { DISCUSSIONS.iter().map(|r| r.1.clone()).collect() } else { sendlist.discussions() };
@@ -2148,17 +2231,21 @@ impl Session {
             self.output("\x07\x07").await;
             self.output(&sendlist.errors().to_string()).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_date(&self, _args: &str) {
+    pub async fn do_date(&self, _args: &str) -> tokio::io::Result<()> {
         let t = Timestamp::new();
         let date = t.date(0, 0);
         self.output(&format!("{date}\n")).await;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_signal(&self, args: &str) {
+    pub async fn do_signal(&self, args: &str) -> tokio::io::Result<()> {
         let mut args = args;
 
         if let Some(_rest) = match_keyword(args, "on", 2) {
@@ -2212,10 +2299,12 @@ impl Session {
         } else {
             self.output("Usage: /signal [public|private] [on|off]\n").await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_send(&self, args: &str) {
+    pub async fn do_send(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             if let Some(sendlist) = self.default_sendlist() {
                 self.output("You are sending to ").await;
@@ -2224,13 +2313,13 @@ impl Session {
             } else {
                 self.output("Your default sendlist is turned off.\n").await;
             }
-            return;
+            return Ok(());
         }
 
         if args.eq_ignore_ascii_case("off") {
             self.set_default_sendlist(None);
             self.output("Your default sendlist has been turned off.\n").await;
-            return;
+            return Ok(());
         }
 
         // Parse the sendlist
@@ -2258,13 +2347,15 @@ impl Session {
 
         if sendlist.sessions().is_empty() && sendlist.discussions().is_empty() {
             self.output("Your default sendlist is unchanged.\n").await;
-            return;
+            return Ok(());
         }
 
         self.set_default_sendlist(Some(sendlist.clone()));
         self.output("You are now sending to ").await;
         self.print_sendlist(&sendlist).await;
         self.output(".\n").await;
+
+        Ok(())
     }
 
     #[framed]
@@ -2308,10 +2399,10 @@ impl Session {
     }
 
     #[framed]
-    pub async fn do_join(&self, args: &str) {
+    pub async fn do_join(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /join <disc>[,<disc>...]\n").await;
-            return;
+            return Ok(());
         }
 
         let mut remaining = args;
@@ -2320,17 +2411,19 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.join(&self).await,
+                (Some(discussion), _) => discussion.join(&self).await?,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_quit(&self, args: &str) {
+    pub async fn do_quit(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /quit <disc>[,<disc>...]\n").await;
-            return;
+            return Ok(());
         }
 
         let mut remaining = args;
@@ -2339,17 +2432,19 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.quit(&self).await,
+                (Some(discussion), _) => discussion.quit(&self).await?,
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.quit(&self).await,
+                    (Some(discussion), _) => discussion.quit(&self).await?,
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_create(&self, args: &str) {
+    pub async fn do_create(&self, args: &str) -> tokio::io::Result<()> {
         let mut args = args;
         let mut is_public = true;
 
@@ -2370,12 +2465,12 @@ impl Session {
         let (name, title) = getword(args, None);
         if name.is_empty() || title.is_empty() {
             self.output("Usage: /create [public|private] <name> <title>\n").await;
-            return;
+            return Ok(());
         }
 
         if name.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  (not created)\n").await;
-            return;
+            return Ok(());
         }
 
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
@@ -2388,19 +2483,19 @@ impl Session {
 
             let a = if is_same_user { "your" } else { "a" };
             self.output(&format!("\"{reserved}\" is {a} reserved name. (not created)\n")).await;
-            return;
+            return Ok(());
         }
 
         match self.find_sendable(name, false, true, true, true).await {
             (Some(session), _, _, _) => {
                 let name = session.name();
                 self.output(&format!("There is already someone named \"{name}\". (not created)\n")).await;
-                return;
+                return Ok(());
             }
             (_, _, Some(discussion), _) => {
                 let name = discussion.name();
                 self.output(&format!("There is already a discussion named \"{name}\". (not created)\n")).await;
-                return;
+                return Ok(());
             }
             _ => {}
         }
@@ -2408,18 +2503,20 @@ impl Session {
         let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
         DISCUSSIONS.insert(name.to_string().into(), disc.clone());
 
-        self.enqueue_others(CreateNotify::new(disc.name(), disc.title(), disc.is_public(), self.name())).await;
+        self.enqueue_others(CreateNotify::new(disc.name(), disc.title(), disc.is_public(), self.name())).await?;
 
         let name = disc.name();
         let title = disc.title();
         self.output(&format!("You have created discussion {name}, \"{title}\".\n")).await;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_destroy(&self, args: &str) {
+    pub async fn do_destroy(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /destroy <disc>[,<disc>...]\n").await;
-            return;
+            return Ok(());
         }
 
         let mut remaining = args;
@@ -2428,93 +2525,103 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.destroy(&self).await,
+                (Some(discussion), _) => discussion.destroy(&self).await?,
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.destroy(&self).await,
+                    (Some(discussion), _) => discussion.destroy(&self).await?,
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_permit(&self, args: &str) {
+    pub async fn do_permit(&self, args: &str) -> tokio::io::Result<()> {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /permit <disc> <person>[,<person>...]\n").await;
-            return;
+            return Ok(());
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.permit(&self, rest).await,
+            (Some(discussion), _) => discussion.permit(&self, rest).await?,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.permit(&self, rest).await,
+                (Some(discussion), _) => discussion.permit(&self, rest).await?,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_depermit(&self, args: &str) {
+    pub async fn do_depermit(&self, args: &str) -> tokio::io::Result<()> {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /depermit <disc> <person>[,<person>...]\n").await;
-            return;
+            return Ok(());
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.depermit(&self, rest).await,
+            (Some(discussion), _) => discussion.depermit(&self, rest).await?,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.depermit(&self, rest).await,
+                (Some(discussion), _) => discussion.depermit(&self, rest).await?,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_appoint(&self, args: &str) {
+    pub async fn do_appoint(&self, args: &str) -> tokio::io::Result<()> {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /appoint <disc> <person>[,<person>...]\n").await;
-            return;
+            return Ok(());
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.appoint(&self, rest).await,
+            (Some(discussion), _) => discussion.appoint(&self, rest).await?,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.appoint(&self, rest).await,
+                (Some(discussion), _) => discussion.appoint(&self, rest).await?,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_unappoint(&self, args: &str) {
+    pub async fn do_unappoint(&self, args: &str) -> tokio::io::Result<()> {
         let (name, rest) = getword(args, None);
         if name.is_empty() || rest.is_empty() {
             self.output("Usage: /unappoint <disc> <person>[,<person>...]\n").await;
-            return;
+            return Ok(());
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.unappoint(&self, rest).await,
+            (Some(discussion), _) => discussion.unappoint(&self, rest).await?,
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.unappoint(&self, rest).await,
+                (Some(discussion), _) => discussion.unappoint(&self, rest).await?,
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_rename(&self, args: &str) {
+    pub async fn do_rename(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /rename <name>\n").await;
-            return;
+            return Ok(());
         }
 
         if args.eq_ignore_ascii_case("me") {
             self.output("The keyword \"me\" is reserved.  (name unchanged)\n").await;
-            return;
+            return Ok(());
         }
 
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(args).await {
@@ -2523,7 +2630,7 @@ impl Session {
             match (my_user, found_user_ref) {
                 (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
                     self.output(&format!("\"{reserved}\" is a reserved name.  (name unchanged)\n")).await;
-                    return;
+                    return Ok(());
                 }
                 _ => {}
             }
@@ -2541,18 +2648,20 @@ impl Session {
             _ => {}
         }
 
-        self.enqueue_others(RenameNotify::new(self.name().name().clone(), args)).await;
+        self.enqueue_others(RenameNotify::new(self.name().name().clone(), args)).await?;
 
         self.output(&format!("You have changed your name to \"{args}\".\n")).await;
         self.set_name_and_blurb(args.into(), self.blurb());
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_set(&self, args: &str) {
+    pub async fn do_set(&self, args: &str) -> tokio::io::Result<()> {
         let (var, value) = getword(args, Some('='));
         if var.is_empty() || value.is_empty() {
             self.output("Usage: /set <variable>=<value>\n").await;
-            return;
+            return Ok(());
         }
 
         if var.starts_with('$') {
@@ -2584,7 +2693,7 @@ impl Session {
                 self.output("Usage: /set height=<number of rows>\n").await;
             }
         } else if let Some(_) = match_keyword(var, "idle", 4) {
-            self.set_idle(value).await;
+            self.set_idle(value).await?;
         } else if let Some(_) = match_keyword(var, "time_format", 11) {
             if let Some(_) = match_keyword(value, "verbose", 7) {
                 self.set_sys_var("time_format", "verbose");
@@ -2615,10 +2724,12 @@ impl Session {
         } else {
             self.output(&format!("Unknown system variable: \"{var}\"\n")).await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn set_idle(&self, args: &str) {
+    pub async fn set_idle(&self, args: &str) -> tokio::io::Result<()> {
         let now = Timestamp::new();
         let current_idle = (now.unix() - self.idle_since().unix()) / 60;
 
@@ -2700,7 +2811,7 @@ impl Session {
         // If there are remaining characters, it's a syntax error
         if chars.peek().is_some() {
             self.output("Syntax error in time specification.  Format: <d>d<hh>:<mm>\n").await;
-            return;
+            return Ok(());
         }
 
         // Calculate new idle_since timestamp
@@ -2710,7 +2821,7 @@ impl Session {
         // Check permissions
         if new_idle_since < *self.login_time() && self.priv_level() < 50 {
             self.output("Sorry, you can't be idle longer than you've been signed on.\n").await;
-            return;
+            return Ok(());
         }
 
         // Set the new idle time
@@ -2740,13 +2851,15 @@ impl Session {
             self.output("Your idle time has been reset.\n").await;
             self.set_idle_since(now);
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_display(&self, args: &str) {
+    pub async fn do_display(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /display <variable>[,<variable>...]\n").await;
-            return;
+            return Ok(());
         }
 
         let mut remaining = args;
@@ -2827,28 +2940,32 @@ impl Session {
                 self.output(&format!("Unknown system variable: \"{var}\"\n")).await;
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_also(&self, args: &str) {
+    pub async fn do_also(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /also <sendlist>\n").await;
-            return;
+            return Ok(());
         }
 
         if let Some(last_msg) = self.last_message() {
             let sendlist = Sendlist::new(&self, args, false, true, true).await;
-            self.send_message(&sendlist, last_msg.text()).await;
+            self.send_message(&sendlist, last_msg.text()).await?;
         } else {
             self.output("You have no previous message to resend.\n").await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_oops(&self, args: &str) {
+    pub async fn do_oops(&self, args: &str) -> tokio::io::Result<()> {
         if args.is_empty() {
             self.output("Usage: /oops <sendlist> OR /oops text [<message>]\n").await;
-            return;
+            return Ok(());
         }
 
         if let Some(text_args) = match_keyword(args, "text", 4) {
@@ -2866,17 +2983,19 @@ impl Session {
                 let text = last_msg.text().clone();
                 let to = last_msg.to().clone();
 
-                self.send_message(&to, &*self.oops_text()).await;
-                self.send_message(&sendlist, &text).await;
+                self.send_message(&to, &*self.oops_text()).await?;
+                self.send_message(&sendlist, &text).await?;
                 self.set_last_sendlist(Some(sendlist.clone()));
             } else {
                 self.output("You have no previous message to resend.\n").await;
             }
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_help(&self, args: &str) {
+    pub async fn do_help(&self, args: &str) -> tokio::io::Result<()> {
         let args = args.trim();
 
         if match_keyword(args, "/who", 2).is_some()
@@ -3320,15 +3439,19 @@ impl Session {
             )
             .await;
         }
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_reset(&self) {
+    pub async fn do_reset(&self) -> tokio::io::Result<()> {
         self.reset_idle(1).await;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn do_message(&self, line: &str) {
+    pub async fn do_message(&self, line: &str) -> tokio::io::Result<()> {
         let (msg_start, sendlist_str, last_explicit, is_explicit) = message_start(line);
         let msg_start = msg_start.trim();
 
@@ -3341,14 +3464,14 @@ impl Session {
                 last.clone()
             } else {
                 self.output("\x07\x07You have no previous sendlist. (message not sent)\n").await;
-                return;
+                return Ok(());
             }
         } else if sendlist_str.eq_ignore_ascii_case("default") {
             if let Some(default) = self.default_sendlist() {
                 default.clone()
             } else {
                 self.output("\x07\x07You have no default sendlist. (message not sent)\n").await;
-                return;
+                return Ok(());
             }
         } else {
             Sendlist::new(&self, &sendlist_str, false, true, true).await
@@ -3365,14 +3488,18 @@ impl Session {
             } else {
                 self.output(&format!("\x07\x07There is no message after \"{sendlist_typed};\". (message not sent)\n")).await;
             }
-            return;
+            return Ok(());
         }
 
-        self.send_message(&sendlist, msg_start).await;
+        self.send_message(&sendlist, msg_start).await?;
+
+        Ok(())
     }
 
     #[framed]
-    pub async fn send_message(&self, sendlist: &Sendlist, text: &str) {
+    pub async fn send_message(&self, sendlist: &Sendlist, text: &str) -> tokio::io::Result<()> {
+        let mut result = Ok(());
+
         if !sendlist.errors().is_empty() {
             self.output("\x07\x07").await;
             self.output(&sendlist.errors().to_string()).await;
@@ -3380,7 +3507,7 @@ impl Session {
 
         if sendlist.sessions().is_empty() && sendlist.discussions().is_empty() {
             self.output("Your message is unchanged.\n").await;
-            return;
+            return Ok(());
         }
 
         let idle = self.reset_idle(30).await;
@@ -3396,7 +3523,11 @@ impl Session {
         }
 
         for session in &who {
-            session.enqueue(msg.clone()).await;
+            if let Err(e) = session.enqueue(msg.clone()).await {
+                if result.is_ok() {
+                    result = Err(e);
+                }
+            }
         }
 
         for disc in &sendlist.discussions() {
@@ -3411,6 +3542,8 @@ impl Session {
             self.output(&format!(" [idle {idle}]")).await;
         }
         self.output("\n").await;
+
+        Ok(())
     }
 
     #[framed]

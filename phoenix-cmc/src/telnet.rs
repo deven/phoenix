@@ -563,34 +563,38 @@ impl Telnet {
 
     /// Initiate TELNET protocol option negotiations and session login sequence.
     #[framed]
-    pub async fn init_login_sequence(&self) {
+    pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
         // Initiate TELNET protocol option negotiations.
-        self.init_telnet_options().await;
+        self.init_telnet_options().await?;
 
         // Initiate session login sequence.
         let session = self.session();
-        session.init_login_sequence().await;
+        session.init_login_sequence().await?;
+
+        Ok(())
     }
 
     /// Initiate TELNET protocol option negotiations.
     #[framed]
-    pub async fn init_telnet_options(&self) {
+    pub async fn init_telnet_options(&self) -> tokio::io::Result<()> {
         // Test TIMING-MARK option before sending initial option negotiations.
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
 
         // Start initial options negotiations.
-        self.will_lsga().await; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
-        self.do_rsga().await; // Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
-        self.will_lbin().await; // Send IAC WILL TRANSMIT-BINARY option sequence. (local)
-        self.do_rbin().await; // Send IAC DO TRANSMIT-BINARY option sequence. (remote)
-        self.will_echo().await; // Send IAC WILL ECHO option sequence.
-        self.do_naws().await; // Send IAC DO NAWS option sequence.
+        self.will_lsga().await?; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
+        self.do_rsga().await?; // Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
+        self.will_lbin().await?; // Send IAC WILL TRANSMIT-BINARY option sequence. (local)
+        self.do_rbin().await?; // Send IAC DO TRANSMIT-BINARY option sequence. (remote)
+        self.will_echo().await?; // Send IAC WILL ECHO option sequence.
+        self.do_naws().await?; // Send IAC DO NAWS option sequence.
 
         // Send welcome banner.
         self.output("\nWelcome to Phoenix! (").await;
         self.output(VERSION).await;
         self.output(")\n\n").await;
+
+        Ok(())
     }
 
     /// Send welcome message.
@@ -673,21 +677,36 @@ impl Telnet {
     }
 
     #[framed]
-    pub async fn close(self: &Self, drain: bool) {
+    pub async fn close(self: &Self, drain: bool) -> tokio::io::Result<()> {
         self.set_closing(true);
+        let mut result = Ok(());
 
         if drain {
             self.set_do_echo(false);
             if self.acknowledge() {
-                self.timing_mark().await;
+                if let Err(e) = self.timing_mark().await {
+                    if result.is_ok() {
+                        result = Err(e);
+                    }
+                }
             } else {
                 // Flush all pending output
-                self.flush_output().await.ok();
+                if let Err(e) = self.flush_output().await {
+                    if result.is_ok() {
+                        result = Err(e);
+                    }
+                }
             }
         }
 
         // Close the underlying stream
-        self.stream().await.shutdown().await.ok();
+        if let Err(e) = self.stream().await.shutdown().await {
+            if result.is_ok() {
+                result = Err(e);
+            }
+        }
+
+        result
     }
 
     /// Add bytes to output buffer.
@@ -716,101 +735,129 @@ impl Telnet {
 
     /// Add bytes to command output buffer.
     #[framed]
-    pub async fn command(&self, data: &[u8]) {
+    pub async fn command(&self, data: &[u8]) -> tokio::io::Result<()> {
         self.command_buffer().await.extend_from_slice(data);
+
+        Ok(())
     }
 
     /// Send IAC DO TIMING-MARK option sequence, to output buffer instead of command buffer.
     #[framed]
-    pub async fn timing_mark(&self) {
+    pub async fn timing_mark(&self) -> tokio::io::Result<()> {
         if self.acknowledge() {
             self.increment_outstanding();
             self.output_buffer().await.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
         }
+
+        Ok(())
     }
 
     /// Send IAC WILL ECHO option sequence.
     #[framed]
-    pub async fn will_echo(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]).await;
+    pub async fn will_echo(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::Echo as u8]).await?;
         self.set_echo(self.echo() | TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC WONT ECHO option sequence.
     #[framed]
-    pub async fn wont_echo(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]).await;
+    pub async fn wont_echo(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::Echo as u8]).await?;
         self.set_echo(self.echo() & !TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
     #[framed]
-    pub async fn will_lsga(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await;
+    pub async fn will_lsga(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await?;
         self.set_lsga(self.lsga() | TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC WONT SUPPRESS-GO-AHEAD option sequence. (local)
     #[framed]
-    pub async fn wont_lsga(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+    pub async fn wont_lsga(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await?;
         self.set_lsga(self.lsga() & !TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
     #[framed]
-    pub async fn do_rsga(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await;
+    pub async fn do_rsga(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await?;
         self.set_rsga(self.rsga() | TELNET_DO_DONT);
+
+        Ok(())
     }
 
     /// Send IAC DONT SUPPRESS-GO-AHEAD option sequence. (remote)
     #[framed]
-    pub async fn dont_rsga(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await;
+    pub async fn dont_rsga(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await?;
         self.set_rsga(self.rsga() & !TELNET_DO_DONT);
+
+        Ok(())
     }
 
     /// Send IAC WILL TRANSMIT-BINARY option sequence. (local)
     #[framed]
-    pub async fn will_lbin(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await;
+    pub async fn will_lbin(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await?;
         self.set_lbin(self.lbin() | TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC WONT TRANSMIT-BINARY option sequence. (local)
     #[framed]
-    pub async fn wont_lbin(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await;
+    pub async fn wont_lbin(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await?;
         self.set_lbin(self.lbin() & !TELNET_WILL_WONT);
+
+        Ok(())
     }
 
     /// Send IAC DO TRANSMIT-BINARY option sequence. (remote)
     #[framed]
-    pub async fn do_rbin(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await;
+    pub async fn do_rbin(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await?;
         self.set_rbin(self.rbin() | TELNET_DO_DONT);
+
+        Ok(())
     }
 
     /// Send IAC DONT TRANSMIT-BINARY option sequence. (remote)
     #[framed]
-    pub async fn dont_rbin(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await;
+    pub async fn dont_rbin(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await?;
         self.set_rbin(self.rbin() & !TELNET_DO_DONT);
+
+        Ok(())
     }
 
     /// Send IAC DO NAWS option sequence.
     #[framed]
-    pub async fn do_naws(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await;
+    pub async fn do_naws(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await?;
         self.set_naws(self.naws() | TELNET_DO_DONT);
+
+        Ok(())
     }
 
     /// Send IAC DONT NAWS option sequence.
     #[framed]
-    pub async fn dont_naws(&self) {
-        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await;
+    pub async fn dont_naws(&self) -> tokio::io::Result<()> {
+        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await?;
         self.set_naws(self.naws() & !TELNET_DO_DONT);
+
+        Ok(())
     }
 
     #[framed]
@@ -1161,7 +1208,7 @@ impl Telnet {
             CONTROL_C => self.set_state(TelnetState::ControlC),
             CONTROL_D => {
                 if self.close_on_eof() && self.data().await.is_empty() {
-                    self.close(true).await;
+                    self.close(true).await?;
                 } else {
                     self.delete_char().await;
                 }
@@ -1185,13 +1232,14 @@ impl Telnet {
             COLON => self.do_colon().await,
             RETURN => {
                 self.set_state(TelnetState::Return);
-                self.accept_input().await;
+                self.accept_input().await?;
             }
-            NEWLINE => self.accept_input().await,
+            NEWLINE => self.accept_input().await?,
             ESCAPE => self.set_state(TelnetState::Escape),
             CSI => self.set_state(TelnetState::CSI),
             _ => self.insert_char(byte).await,
         }
+
         Ok(())
     }
 
@@ -1206,7 +1254,7 @@ impl Telnet {
 
             // Are we here?  Yes!  Queue confirmation to command queue, to be output as soon as possible.
             x if x == TelnetCommand::AreYouThere as u8 => {
-                self.command(b"\r\n[Yes]\r\n").await;
+                self.command(b"\r\n[Yes]\r\n").await?;
                 self.set_state(TelnetState::Data);
             }
 
@@ -1238,6 +1286,7 @@ impl Telnet {
             // Ignore any other TELNET command.
             _ => self.set_state(TelnetState::Data),
         }
+
         Ok(())
     }
 
@@ -1253,11 +1302,11 @@ impl Telnet {
                     if (rbin & TELNET_DO_DONT) == 0 {
                         // Turn on TRANSMIT-BINARY option.
                         rbin |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await?;
 
                         // Me, too!
                         if self.lbin() == 0 {
-                            self.will_lbin().await;
+                            self.will_lbin().await?;
                         }
                     }
                 } else {
@@ -1265,7 +1314,7 @@ impl Telnet {
                     if (rbin & TELNET_DO_DONT) != 0 {
                         // Turn off TRANSMIT-BINARY option.
                         rbin &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
                 self.set_rbin(rbin);
@@ -1282,11 +1331,11 @@ impl Telnet {
                     if (rsga & TELNET_DO_DONT) == 0 {
                         // Turn on SUPPRESS-GO-AHEAD option.
                         rsga |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await?;
 
                         // Me, too!
                         if self.lsga() == 0 {
-                            self.will_lsga().await;
+                            self.will_lsga().await?;
                         }
                     }
                 } else {
@@ -1294,7 +1343,7 @@ impl Telnet {
                     if (rsga & TELNET_DO_DONT) != 0 {
                         // Turn off SUPPRESS-GO-AHEAD option.
                         rsga &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
                 self.set_rsga(rsga);
@@ -1311,14 +1360,14 @@ impl Telnet {
                     if (naws & TELNET_DO_DONT) == 0 {
                         // Turn on NAWS option.
                         naws |= TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await?;
                     }
                 } else {
                     naws &= !TELNET_WILL_WONT;
                     if (naws & TELNET_DO_DONT) != 0 {
                         // Turn off NAWS option.
                         naws &= !TELNET_DO_DONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
                 self.set_naws(naws);
@@ -1342,7 +1391,7 @@ impl Telnet {
             // Don't know this option, refuse it.
             _ => {
                 if matches!(state, TelnetState::Will) {
-                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, byte]).await;
+                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, byte]).await?;
                 }
             }
         }
@@ -1363,11 +1412,11 @@ impl Telnet {
                     if (lbin & TELNET_WILL_WONT) == 0 {
                         // Turn on TRANSMIT-BINARY option.
                         lbin |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await?;
 
                         // You can too.
                         if self.rbin() == 0 {
-                            self.do_rbin().await;
+                            self.do_rbin().await?;
                         }
                     }
                 } else {
@@ -1375,7 +1424,7 @@ impl Telnet {
                     if (lbin & TELNET_WILL_WONT) != 0 {
                         // Turn off TRANSMIT-BINARY option.
                         lbin &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await?;
                     }
                 }
                 self.set_lbin(lbin);
@@ -1392,14 +1441,14 @@ impl Telnet {
                     if (echo & TELNET_WILL_WONT) == 0 {
                         // Turn on ECHO option.
                         echo |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await?;
                     }
                 } else {
                     echo &= !TELNET_DO_DONT;
                     if (echo & TELNET_WILL_WONT) != 0 {
                         // Turn off ECHO option.
                         echo &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await?;
                     }
                 }
                 self.set_echo(echo);
@@ -1416,11 +1465,11 @@ impl Telnet {
                     if (lsga & TELNET_WILL_WONT) == 0 {
                         // Turn on SUPPRESS-GO-AHEAD option.
                         lsga |= TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await?;
 
                         // You can too.
                         if self.rsga() == 0 {
-                            self.do_rsga().await;
+                            self.do_rsga().await?;
                         }
                     }
                 } else {
@@ -1428,7 +1477,7 @@ impl Telnet {
                     if (lsga & TELNET_WILL_WONT) != 0 {
                         // Turn off SUPPRESS-GO-AHEAD option.
                         lsga &= !TELNET_WILL_WONT;
-                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await;
+                        self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await?;
                     }
                 }
                 self.set_lsga(lsga);
@@ -1440,7 +1489,7 @@ impl Telnet {
             // Don't know this option, refuse it.
             _ => {
                 if matches!(state, TelnetState::Do) {
-                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, byte]).await;
+                    self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, byte]).await?;
                 }
             }
         }
@@ -1585,6 +1634,7 @@ impl Telnet {
                 self.set_state(TelnetState::Data);
             }
         }
+
         Ok(())
     }
 
@@ -1597,6 +1647,7 @@ impl Telnet {
             b'D' => self.backward_char().await,
             _ => self.output(BELL_STR).await,
         }
+
         self.set_state(TelnetState::Data);
         Ok(())
     }
@@ -1612,6 +1663,7 @@ impl Telnet {
                 self.output(BELL_STR).await;
             }
         }
+
         self.set_state(TelnetState::Data);
         Ok(())
     }
@@ -2501,7 +2553,7 @@ impl Telnet {
 
     /// Accept input line.
     #[framed]
-    pub async fn accept_input(&self) {
+    pub async fn accept_input(&self) -> tokio::io::Result<()> {
         let session = self.session();
         let do_echo = self.do_echo();
 
@@ -2534,7 +2586,7 @@ impl Telnet {
 
         // Flush any pending output to connection.
         if !self.acknowledge() {
-            while session.output_next(self).await {
+            while session.output_next(self).await? {
                 session.acknowledge_output().await;
             }
         }
@@ -2561,6 +2613,8 @@ impl Telnet {
 
         // Process the input.
         session.handle_input(line).await;
+
+        Ok(())
     }
 }
 
