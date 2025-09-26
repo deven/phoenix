@@ -277,6 +277,7 @@ impl Discussion {
         for member in members.iter() {
             if member != sender {
                 if let Err(e) = member.enqueue(out.clone()).await {
+                    println!("=== DEBUG: Error in enqueue() during enqueue_others(): {} ===", e);
                     if result.is_ok() {
                         result = Err(e);
                     }

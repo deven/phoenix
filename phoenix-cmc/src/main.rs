@@ -12,6 +12,8 @@ const LIBDIR: &str = "phoenix";
 pub async fn main() -> Result<()> {
     env_logger::init();
 
+    println!("=== DEBUG: Starting main() ===");
+
     let args: Vec<String> = env::args().collect();
     let program = &args[0];
     let mut port = DEFAULT_PORT;
@@ -53,24 +55,32 @@ pub async fn main() -> Result<()> {
 
     // If --cron option was given, check if the listening port is busy
     if cron && server::is_port_busy(port).await {
+        println!("=== DEBUG: Port {port} is busy, exiting (cron mode) ===");
         return Ok(());
     }
+
+    println!("=== DEBUG: Parsed args - port: {port}, cron: {cron}, debug: {debug} ===");
 
     // Change to LIBDIR (create if necessary)
     let libdir = PathBuf::from(LIBDIR);
     if !libdir.exists() {
+        println!("=== DEBUG: Creating libdir: {:?} ===", libdir);
         std::fs::create_dir(&libdir)?;
     }
+    println!("=== DEBUG: Changing to libdir: {:?} ===", libdir);
     env::set_current_dir(&libdir)?;
 
     // Create logs subdirectory
     let logs_dir = PathBuf::from("logs");
     if !logs_dir.exists() {
+        println!("=== DEBUG: Creating logs dir: {:?} ===", logs_dir);
         std::fs::create_dir(&logs_dir)?;
     }
 
     // Initialize server
+    println!("=== DEBUG: Creating server on port {port} ===");
     let server = Server::new(port, debug).await?;
+    println!("=== DEBUG: Server created successfully ===");
     let pid = std::process::id();
     info!("Started Phoenix server, version {VERSION}.");
     info!("Listening for connections on TCP port {port}. (pid {pid})");
@@ -81,8 +91,10 @@ pub async fn main() -> Result<()> {
     let mut sigquit = signal::unix::signal(signal::unix::SignalKind::quit())?;
 
     // Main event loop
+    println!("=== DEBUG: Starting main event loop ===");
     tokio::select! {
         result = server.run() => {
+            println!("=== DEBUG: Server.run() returned: {:?} ===", result);
             if let Err(e) = result {
                 log::error!("Server error: {e}");
                 return Err(e);

@@ -219,7 +219,9 @@ impl Telnet {
 
     /// Create a new `Telnet` with its associated `LoginSession`.
     pub fn new(stream: TcpStream, server: Server) -> Self {
+        println!("=== DEBUG: Telnet::new() creating new session ===");
         let session = Session::new(server, None);
+        println!("=== DEBUG: Telnet::new() session created with ID: {} ===", session.id());
         let inner = TelnetInner {
             stream: Mutex::new(stream),
             closing: AtomicBool::new(false),
@@ -344,6 +346,7 @@ impl Telnet {
     /// Get the data buffer.
     #[framed]
     pub async fn data(&self) -> MutexGuard<'_, Vec<u8>> {
+        println!("=== DEBUG: self.data() called ===");
         self.0.data.lock().await
     }
 
@@ -488,6 +491,10 @@ impl Telnet {
 
     /// Set the TELNET state.
     pub fn set_state(&self, value: TelnetState) {
+        let old_state = self.state();
+        if old_state != value {
+            println!("=== DEBUG: TELNET state change: {:?} -> {:?} ===", old_state, value);
+        }
         self.0.state.store(value as u8, Ordering::Relaxed);
     }
 
@@ -564,12 +571,19 @@ impl Telnet {
     /// Initiate TELNET protocol option negotiations and session login sequence.
     #[framed]
     pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
+        println!("=== DEBUG: Telnet::init_login_sequence() starting ===");
+
         // Initiate TELNET protocol option negotiations.
+        println!("=== DEBUG: Starting init_telnet_options() ===");
         self.init_telnet_options().await?;
+        println!("=== DEBUG: init_telnet_options() completed ===");
 
         // Initiate session login sequence.
+        println!("=== DEBUG: Getting session for login sequence ===");
         let session = self.session();
+        println!("=== DEBUG: Starting session.init_login_sequence() ===");
         session.init_login_sequence().await?;
+        println!("=== DEBUG: session.init_login_sequence() completed ===");
 
         Ok(())
     }
@@ -685,6 +699,7 @@ impl Telnet {
             self.set_do_echo(false);
             if self.acknowledge() {
                 if let Err(e) = self.timing_mark().await {
+                    println!("=== DEBUG: Error in timing_mark() during close(): {} ===", e);
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -692,6 +707,7 @@ impl Telnet {
             } else {
                 // Flush all pending output
                 if let Err(e) = self.flush_output().await {
+                    println!("=== DEBUG: Error in flush_output() during close(): {} ===", e);
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -701,6 +717,7 @@ impl Telnet {
 
         // Close the underlying stream
         if let Err(e) = self.stream().await.shutdown().await {
+            println!("=== DEBUG: Error shutting down stream: {} ===", e);
             if result.is_ok() {
                 result = Err(e);
             }
@@ -712,8 +729,10 @@ impl Telnet {
     /// Add bytes to output buffer.
     #[framed]
     pub async fn output(self: &Self, data: impl AsRef<str>) {
-        let mut output = self.output_buffer().await;
         let data_str = data.as_ref();
+        println!("=== DEBUG: Telnet::output() called with: '{}' ===", data_str);
+        let mut output = self.output_buffer().await;
+        println!("=== DEBUG: Got output buffer lock ===");
 
         for &byte in data_str.as_bytes() {
             match byte {
@@ -1145,21 +1164,37 @@ impl Telnet {
 
     #[framed]
     pub async fn handle_input(&self) -> tokio::io::Result<()> {
+        println!("=== DEBUG: Telnet::handle_input() starting ===");
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
         loop {
             if self.closing() {
+                println!("=== DEBUG: Telnet is closing, exiting handle_input() ===");
                 return Ok(());
             }
 
             // Read from socket
+            println!("=== DEBUG: About to read from socket ===");
             let n = {
                 let mut stream = self.stream().await;
                 match stream.read(&mut buffer).await {
-                    Ok(0) => return Ok(()), // EOF
-                    Ok(n) => n,
-                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => continue,
-                    Err(e) => return Err(e),
+                    Ok(0) => {
+                        println!("=== DEBUG: Socket read returned EOF ===");
+                        return Ok(());
+                    }
+                    Ok(n) => {
+                        println!("=== DEBUG: Socket read {} bytes ===", n);
+                        debug_format_bytes(&buffer[..n], "RECEIVED FROM CLIENT");
+                        n
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        println!("=== DEBUG: Socket read would block, continuing ===");
+                        continue;
+                    }
+                    Err(e) => {
+                        println!("=== DEBUG: Socket read error: {} ===", e);
+                        return Err(e);
+                    }
                 }
             };
 
@@ -1201,6 +1236,7 @@ impl Telnet {
 
     #[framed]
     pub async fn process_data_byte(&self, byte: u8) -> tokio::io::Result<()> {
+        println!("=== DEBUG: process_data_byte(0x{:02x} '{}') ===", byte, if byte >= 32 && byte <= 126 { byte as char } else { '.' });
         match byte {
             x if x == TelnetCommand::IAC as u8 => self.set_state(TelnetState::IAC),
             CONTROL_A => self.beginning_of_line().await,
@@ -1231,6 +1267,7 @@ impl Telnet {
             SEMICOLON => self.do_semicolon().await,
             COLON => self.do_colon().await,
             RETURN => {
+                println!("=== DEBUG: Processing RETURN, calling accept_input() ===");
                 self.set_state(TelnetState::Return);
                 self.accept_input().await?;
             }
