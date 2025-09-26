@@ -273,8 +273,8 @@ impl Discussion {
     pub async fn enqueue_others(&self, out: Output, sender: &Session) -> tokio::io::Result<()> {
         let mut result = Ok(());
 
-        let members = self.0.members.snapshot();
-        for member in members.iter() {
+        let members = self.0.members.borrow();
+        for member in members.as_ref().iter() {
             if member != sender {
                 if let Err(e) = member.enqueue(out.clone()).await {
                     println!("=== DEBUG: Error in enqueue() during enqueue_others(): {} ===", e);
@@ -608,48 +608,6 @@ impl Discussion {
         }
 
         Ok(())
-    }
-}
-
-impl DiscussionInner {
-    /// Check if the specified name is the creator of the discussion.
-    pub fn is_creator(&self, name: &Name) -> bool {
-        self.creator.borrow().as_ref().map(|inner| inner == name).unwrap_or(false)
-    }
-
-    /// Check if the specified session is in the members list for the discussion.
-    pub fn is_member(&self, session: &Session) -> bool {
-        self.members.borrow().as_ref().contains(session)
-    }
-
-    /// Check if the specified name is in the moderators list for the discussion.
-    pub fn is_moderator(&self, name: &Name) -> bool {
-        self.moderators.borrow().as_ref().contains(name)
-    }
-
-    /// Check if the specified name is in the allowed list for the discussion.
-    pub fn is_allowed(&self, name: &Name) -> bool {
-        self.allowed.borrow().as_ref().contains(name)
-    }
-
-    /// Check if the specified name is in the denied list for the discussion.
-    pub fn is_denied(&self, name: &Name) -> bool {
-        self.denied.borrow().as_ref().contains(name)
-    }
-
-    /// Check if the specified session is permitted to the discussion.
-    pub fn is_permitted(&self, name: &Name) -> bool {
-        self.is_creator(name) || self.is_moderator(name) || ((self.is_public.load(Ordering::Relaxed) || self.is_allowed(name)) && !self.is_denied(name))
-    }
-
-    /// Enqueue an `Output` to all members of the discussion except the sender.
-    pub async fn enqueue_others(&self, out: Output, sender: &Session) {
-        let members = self.members.borrow();
-        for member in members.as_ref().iter() {
-            if member != sender {
-                member.enqueue(out.clone()).await;
-            }
-        }
     }
 }
 
