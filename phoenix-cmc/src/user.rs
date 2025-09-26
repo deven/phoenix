@@ -230,10 +230,13 @@ impl Default for UserManager {
 pub fn verify_password(input: &str, encrypted: &str) -> bool {
     use argon2::{Argon2, PasswordHash, PasswordVerifier};
 
+    println!("=== DEBUG: verify_password(input={input:?}, encrypted={encrypted:?}) ===");
     // First try modern Argon2 verification
     if let Ok(parsed_hash) = PasswordHash::new(encrypted) {
         let argon2 = Argon2::default();
-        return argon2.verify_password(input.as_bytes(), &parsed_hash).is_ok();
+        let result = argon2.verify_password(input.as_bytes(), &parsed_hash).is_ok();
+        println!("=== DEBUG: result={result:?} ===");
+        return result;
     }
 
     false

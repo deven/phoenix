@@ -179,6 +179,7 @@ impl Session {
     /// Create a new session in PreLogin state.
     pub fn new(server: Server, telnet: Option<Telnet>) -> Self {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
+        println!("=== DEBUG: Session::new() creating session with ID: {} ===", id);
         let now = Timestamp::new();
         let inner = SessionInner {
             id,
@@ -197,12 +198,17 @@ impl Session {
         };
 
         let session = Self(Arc::new(inner));
+        println!("=== DEBUG: Session::new() created session wrapper ===");
 
         // Set telnet session.
         if let Some(telnet) = telnet {
+            println!("=== DEBUG: Setting telnet session reference ===");
             telnet.set_session(session.clone());
+        } else {
+            println!("=== DEBUG: No telnet connection to link ===");
         }
 
+        println!("=== DEBUG: Session::new() completed for ID: {} ===", id);
         session
     }
 
@@ -406,70 +412,98 @@ impl Session {
 
     /// Get the `Name` object.
     pub fn name(&self) -> Name {
-        match self.session_type().as_ref() {
+        println!("=== DEBUG: name() called ===");
+        let name = match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => Name::new("", None),
             SessionType::LoggedIn { name, .. } => name.snapshot(),
-        }
+        };
+        println!("=== DEBUG: name={name:?} ===");
+        name
     }
 
     /// Get only the name from the `Name` object.
     pub fn name_only(&self) -> Text {
-        match self.session_type().as_ref() {
+        println!("=== DEBUG: name_only() called ===");
+        let name = match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => Text::new("<LoginSession>"),
             SessionType::LoggedIn { name, .. } => name.borrow().name().clone(),
-        }
+        };
+        println!("=== DEBUG: name={name:?} ===");
+        name
     }
 
     /// Return formatted name and username.
     pub fn name_user(&self) -> Text {
+        println!("=== DEBUG: name_user() called ===");
         // TODO: This should be cached instead, like `name_blurb` in `Name`.
         let name = self.name_only();
         let user = self.user();
-        if let Some(user) = user {
+        let name_user = if let Some(user) = user {
             let username = user.username();
             Text::from(format!("{name} ({username})"))
         } else {
             name.clone()
-        }
+        };
+        println!("=== DEBUG: name_user={name_user:?} ===");
+        name_user
     }
 
     /// Set the name.
     pub fn set_name(&self, value: Text) {
+        println!("=== DEBUG: set_name({value:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
             SessionType::LoggedIn { name, .. } => {
                 let blurb = self.blurb();
-                name.set(Name::new(value, blurb));
+//              name.set(Name::new(value, blurb));
+                let new_name = Name::new(value, blurb);
+                println!("=== DEBUG: new_name={new_name:?} ===");
+                name.set(new_name);
             }
         };
     }
 
     /// Check if a blurb is set.
     pub fn has_blurb(&self) -> bool {
-        match self.session_type().as_ref() {
+        println!("=== DEBUG: has_blurb() called ===");
+        let ret = match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => false,
             SessionType::LoggedIn { name, .. } => name.borrow().has_blurb(),
-        }
+        };
+        println!("=== DEBUG: returning {ret:?} ===");
+        ret
     }
 
     /// Get the blurb, if any.
     pub fn blurb(&self) -> Option<Text> {
-        match self.session_type().as_ref() {
+        println!("=== DEBUG: blurb() called ===");
+        let blurb = match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => None,
             SessionType::LoggedIn { name, .. } => name.borrow().blurb().cloned(),
-        }
+        };
+        println!("=== DEBUG: blurb={blurb:?} ===");
+        blurb
     }
 
     /// Set the blurb.
     pub fn set_blurb(&self, value: Option<Text>) {
+        println!("=== DEBUG: set_blurb({value:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-            SessionType::LoggedIn { name, .. } => name.set(Name::new(self.name_only(), value)),
+//          SessionType::LoggedIn { name, .. } => name.set(Name::new(self.name_only(), value)),
+            SessionType::LoggedIn { name, .. } => {
+                let new_name = self.name_only();
+                println!("=== DEBUG: new_name={new_name:?} ===");
+                let new_name = Name::new(new_name, value);
+                println!("=== DEBUG: new_name={new_name:?} ===");
+                name.set(new_name);
+            }
         }
     }
 
     /// Remove the blurb.
     pub fn remove_blurb(&self) {
+        println!("=== DEBUG: remove_blurb() called ===");
         if self.has_blurb() {
             self.set_blurb(None);
         }
@@ -477,9 +511,15 @@ impl Session {
 
     /// Set both name and blurb atomically.
     pub fn set_name_and_blurb(&self, new_name: Text, blurb: Option<Text>) {
+        println!("=== DEBUG: set_name_and_blurb({new_name:?}, {blurb:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-            SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
+            //            SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
+            SessionType::LoggedIn { name, .. } => {
+                let new_name = Name::new(new_name, blurb);
+                println!("=== DEBUG: new_name={new_name:?} ===");
+                name.set(new_name);
+            }
         }
     }
 
@@ -791,7 +831,18 @@ impl Session {
     /// Handle a line of input.
     #[framed]
     pub async fn handle_input(&self, line: Text) -> tokio::io::Result<()> {
+        println!("=== DEBUG: handle_input() starting ===");
         self.pending().await.dequeue().await;
+
+        match self.login_state() {
+            LoginState::PreLogin => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
+            LoginState::AwaitingLogin => println!("=== DEBUG: calling handle_login_input({line:?}) ==="),
+            LoginState::AwaitingPassword => println!("=== DEBUG: calling handle_password_input({line:?}) ==="),
+            LoginState::AwaitingName => println!("=== DEBUG: calling handle_name_input({line:?}) ==="),
+            LoginState::AwaitingBlurb => println!("=== DEBUG: calling handle_blurb_input({line:?}) ==="),
+            LoginState::AwaitingTransferConfirmation => println!("=== DEBUG: calling handle_transfer_input({line:?}) ==="),
+            LoginState::LoggedIn => println!("=== DEBUG: calling process_input({line:?}) ==="),
+        }
 
         match self.login_state() {
             LoginState::PreLogin => self.save_input_line(line).await?,
@@ -803,8 +854,10 @@ impl Session {
             LoginState::LoggedIn => self.process_input(line).await?,
         }
 
+        println!("=== DEBUG: handle_input() calling enqueue_output() ===");
         self.enqueue_output().await?;
 
+        println!("=== DEBUG: handle_input() finished ===");
         Ok(())
     }
 
@@ -845,22 +898,30 @@ impl Session {
 
     #[framed]
     pub async fn handle_password_input(&self, line: Text) -> tokio::io::Result<()> {
+        println!("=== DEBUG: handle_password_input(): line={line:?} ===");
+        println!("=== DEBUG: handle_password_input(): user={user:?} ===", user = self.user());
         if let Some(telnet) = self.telnet() {
             telnet.output("\n").await;
             telnet.set_do_echo(true);
         }
+        println!("=== DEBUG: handle_password_input(): calling update_all() ===");
         (*USER_MANAGER).update_all().await.ok();
 
         let valid = if let Some(user) = self.user() {
+            println!("=== DEBUG: handle_password_input(): user={user:?} ===");
             if let Some(password) = user.password() {
+                println!("=== DEBUG: handle_password_input(): password={password:?} ===");
                 verify_password(&line, &password)
             } else {
+                println!("=== DEBUG: handle_password_input(): password not set ===");
                 false
             }
         } else {
+            println!("=== DEBUG: handle_password_input(): user not set ===");
             false
         };
 
+        println!("=== DEBUG: handle_password_input(): valid={valid:?} ===");
         if !valid {
             self.output("Login incorrect.\n").await;
             let attempts = self.increment_attempts();
@@ -1043,7 +1104,10 @@ impl Session {
 
     #[framed]
     pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
+        println!("=== DEBUG: Session::init_login_sequence() starting ===");
+        println!("=== DEBUG: Switching to AwaitingLogin state ===");
         self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
+        println!("=== DEBUG: Session::init_login_sequence() completed ===");
         Ok(())
     }
 
@@ -1216,6 +1280,7 @@ impl Session {
         for (_, session) in SESSIONS.iter() {
             session.output(message).await;
             if let Err(e) = session.enqueue_output().await {
+                println!("=== DEBUG: Error in enqueue_output() during announce(): {} ===", e);
                 if result.is_ok() {
                     result = Err(e);
                 }
@@ -1249,6 +1314,7 @@ impl Session {
         for (_, session) in SESSIONS.iter() {
             if &session != self {
                 if let Err(e) = session.enqueue(out.clone()).await {
+                    println!("=== DEBUG: Error in enqueue() during enqueue_others(): {} ===", e);
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -3524,6 +3590,7 @@ impl Session {
 
         for session in &who {
             if let Err(e) = session.enqueue(msg.clone()).await {
+                println!("=== DEBUG: Error in enqueue() during send_message(): {} ===", e);
                 if result.is_ok() {
                     result = Err(e);
                 }

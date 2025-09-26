@@ -30,7 +30,9 @@ impl Server {
     /// Create a new `Server` object.
     #[framed]
     pub async fn new(port: u16, debug: bool) -> Result<Self> {
+        println!("=== DEBUG: Server::new() called with port={port}, debug={debug} ===");
         let listener = Arc::new(TcpListener::bind(("0.0.0.0", port)).await?);
+        println!("=== DEBUG: TcpListener bound successfully to 0.0.0.0:{port} ===");
         let (shutdown_tx, _) = broadcast::channel(16);
         let shutdown_handle = None;
         let restarting = false;
@@ -44,6 +46,7 @@ impl Server {
             restarting: AtomicBool::new(restarting),
         };
 
+        println!("=== DEBUG: Server::new() completed successfully ===");
         Ok(Self(Arc::new(inner)))
     }
 
@@ -114,20 +117,26 @@ impl Server {
 
     /// Run the Phoenix server.
     pub async fn run(&self) -> Result<()> {
+        println!("=== DEBUG: Server::run() starting accept loop ===");
         // Accept loop
         loop {
+            println!("=== DEBUG: Waiting for connection on listener.accept() ===");
             match self.listener().accept().await {
                 Ok((stream, addr)) => {
+                    println!("=== DEBUG: New connection accepted from {addr} ===");
                     info!("New connection from {addr}");
 
                     let server = self.clone();
                     tokio::spawn(async move {
+                        println!("=== DEBUG: Spawned task to handle connection from {addr} ===");
                         if let Err(e) = server.handle_connection(stream).await {
+                            println!("=== DEBUG: Connection error from {addr}: {e} ===");
                             error!("Connection error: {e}");
                         }
                     });
                 }
                 Err(e) => {
+                    println!("=== DEBUG: Failed to accept connection: {e} ===");
                     error!("Failed to accept connection: {e}");
                     continue;
                 }
@@ -137,23 +146,32 @@ impl Server {
 
     /// Handle a new TCP connection.
     pub async fn handle_connection(&self, stream: TcpStream) -> Result<()> {
+        println!("=== DEBUG: Server::handle_connection() starting ===");
         // Set TCP options.
         stream.set_nodelay(true)?;
+        println!("=== DEBUG: TCP nodelay set ===");
 
         // Create `Telnet` with associated `LoginSession`.
+        println!("=== DEBUG: Creating Telnet instance ===");
         let telnet = Telnet::new(stream, self.clone());
+        println!("=== DEBUG: Telnet instance created ===");
 
         // Initiate TELNET protocol option negotiations and session login sequence.
+        println!("=== DEBUG: Starting telnet.init_login_sequence() ===");
         telnet.init_login_sequence().await?;
+        println!("=== DEBUG: telnet.init_login_sequence() completed ===");
 
         // Handle network I/O.
+        println!("=== DEBUG: Starting I/O handling loop ===");
         let mut shutdown_rx = self.shutdown_tx().subscribe();
         tokio::select! {
             _ = shutdown_rx.recv() => {
+                println!("=== DEBUG: Received shutdown signal ===");
                 telnet.output("\n\n*** Server is shutting down ***\n").await;
                 telnet.close(true).await?;
             }
             result = telnet.handle_input() => {
+                println!("=== DEBUG: telnet.handle_input() returned: {:?} ===", result);
                 if let Err(e) = result {
                     if e.kind() != std::io::ErrorKind::UnexpectedEof {
                         error!("Telnet error: {e}");
