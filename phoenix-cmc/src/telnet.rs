@@ -19,6 +19,125 @@ use tokio::sync::{Mutex, MutexGuard};
 
 pub const BELL_STR: &str = "\x07";
 
+// Debug helper functions for TELNET protocol
+fn debug_format_bytes(bytes: &[u8], label: &str) {
+    if bytes.is_empty() {
+        return;
+    }
+
+    println!("=== DEBUG: {} ({} bytes) ===", label, bytes.len());
+
+    // Print hex and ASCII in 16-byte lines
+    for (i, chunk) in bytes.chunks(16).enumerate() {
+        let offset = i * 16;
+
+        // Print offset
+        print!("{:04x}: ", offset);
+
+        // Print hex bytes
+        for (j, &byte) in chunk.iter().enumerate() {
+            if j == 8 {
+                print!(" "); // Extra space at halfway point
+            }
+            print!("{:02x} ", byte);
+        }
+
+        // Pad if less than 16 bytes
+        if chunk.len() < 16 {
+            for j in chunk.len()..16 {
+                if j == 8 {
+                    print!(" ");
+                }
+                print!("   ");
+            }
+        }
+
+        print!(" |");
+
+        // Print ASCII representation
+        for &byte in chunk {
+            let ch = if byte >= 32 && byte <= 126 { byte as char } else { '.' };
+            print!("{}", ch);
+        }
+
+        println!("|");
+    }
+
+    // Decode TELNET commands if present
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == TelnetCommand::IAC as u8 && i + 1 < bytes.len() {
+            let cmd = bytes[i + 1];
+            match cmd {
+                x if x == TelnetCommand::Will as u8 && i + 2 < bytes.len() => {
+                    println!("  -> TELNET: IAC WILL {}", telnet_option_name(bytes[i + 2]));
+                    i += 3;
+                }
+                x if x == TelnetCommand::Wont as u8 && i + 2 < bytes.len() => {
+                    println!("  -> TELNET: IAC WONT {}", telnet_option_name(bytes[i + 2]));
+                    i += 3;
+                }
+                x if x == TelnetCommand::Do as u8 && i + 2 < bytes.len() => {
+                    println!("  -> TELNET: IAC DO {}", telnet_option_name(bytes[i + 2]));
+                    i += 3;
+                }
+                x if x == TelnetCommand::Dont as u8 && i + 2 < bytes.len() => {
+                    println!("  -> TELNET: IAC DONT {}", telnet_option_name(bytes[i + 2]));
+                    i += 3;
+                }
+                x if x == TelnetCommand::SubnegotiationBegin as u8 => {
+                    println!("  -> TELNET: IAC SB (subnegotiation begin)");
+                    i += 2;
+                }
+                x if x == TelnetCommand::SubnegotiationEnd as u8 => {
+                    println!("  -> TELNET: IAC SE (subnegotiation end)");
+                    i += 2;
+                }
+                _ => {
+                    println!("  -> TELNET: IAC {} (0x{:02x})", telnet_command_name(cmd), cmd);
+                    i += 2;
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
+    println!("=== END {} ===", label);
+}
+
+fn telnet_command_name(cmd: u8) -> &'static str {
+    match cmd {
+        240 => "SE",
+        241 => "NOP",
+        242 => "DATA_MARK",
+        243 => "BREAK",
+        244 => "IP",
+        245 => "AO",
+        246 => "AYT",
+        247 => "EC",
+        248 => "EL",
+        249 => "GA",
+        250 => "SB",
+        251 => "WILL",
+        252 => "WONT",
+        253 => "DO",
+        254 => "DONT",
+        255 => "IAC",
+        _ => "UNKNOWN",
+    }
+}
+
+fn telnet_option_name(opt: u8) -> &'static str {
+    match opt {
+        0 => "TRANSMIT_BINARY",
+        1 => "ECHO",
+        3 => "SUPPRESS_GO_AHEAD",
+        6 => "TIMING_MARK",
+        31 => "NAWS",
+        _ => "UNKNOWN",
+    }
+}
+
 // Telnet commands
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -1142,6 +1261,7 @@ impl Telnet {
         };
 
         if !cmd_data.is_empty() {
+            debug_format_bytes(&cmd_data, "SENDING TO CLIENT (COMMAND BUFFER)");
             self.stream().await.write_all(&cmd_data).await?;
         }
 
@@ -1156,6 +1276,7 @@ impl Telnet {
         };
 
         if !out_data.is_empty() {
+            debug_format_bytes(&out_data, "SENDING TO CLIENT (OUTPUT BUFFER)");
             self.stream().await.write_all(&out_data).await?;
         }
 
