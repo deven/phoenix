@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: output module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::name::Name;
 use crate::sendlist::Sendlist;
 use crate::telnet::Telnet;

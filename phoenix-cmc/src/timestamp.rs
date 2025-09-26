@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: timestamp module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use chrono::{DateTime, Duration, Local, TimeZone};
 use std::fmt;
 

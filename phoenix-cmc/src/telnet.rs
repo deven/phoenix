@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: telnet module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::atomic::{AtomicNameOption, AtomicSession, AtomicText, AtomicUsizeOption};
 use crate::constants::*;
 use crate::name::Name;

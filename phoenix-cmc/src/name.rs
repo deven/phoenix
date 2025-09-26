@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: name module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::text::Text;
 use std::borrow::Borrow;
 use std::fmt;

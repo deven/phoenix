@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: atomic module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use crate::discussion::{Discussion, DiscussionInner};
 use crate::name::{Name, NameInner};
 use crate::output::{Message, MessageInner};

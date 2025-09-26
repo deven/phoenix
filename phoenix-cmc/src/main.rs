@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC: main program
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 use anyhow::Result;
 use log::info;
 use phoenix_cmc::{server, server::Server, VERSION};

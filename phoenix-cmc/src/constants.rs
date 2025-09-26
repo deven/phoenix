@@ -1,3 +1,12 @@
+// -*- Rust -*-
+//
+// Phoenix CMC library: constants module
+//
+// Copyright 2021-2025 Deven T. Corzine <deven@ties.org>
+//
+// SPDX-License-Identifier: MIT
+//
+
 // Internal character constants
 pub const UNQUOTED_UNDERSCORE: u8 = 128;
 pub const SEPARATOR: u8 = 129;
