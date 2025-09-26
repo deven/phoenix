@@ -514,7 +514,7 @@ impl Session {
         println!("=== DEBUG: set_name_and_blurb({new_name:?}, {blurb:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-            //            SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
+//          SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
             SessionType::LoggedIn { name, .. } => {
                 let new_name = Name::new(new_name, blurb);
                 println!("=== DEBUG: new_name={new_name:?} ===");
