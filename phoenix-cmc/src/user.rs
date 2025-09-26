@@ -238,7 +238,20 @@ pub fn verify_password(input: &str, encrypted: &str) -> bool {
         return result;
     }
 
-    false
+    // Fallback to legacy crypt() verification for backward compatibility
+    verify_crypt_password(input, encrypted)
+}
+
+// Legacy crypt() password verification for backward compatibility
+fn verify_crypt_password(input: &str, encrypted: &str) -> bool {
+    use pwhash::unix;
+
+    // Use pwhash's unix crypt verification
+    // This supports various crypt formats including DES, MD5, SHA-256, SHA-512, etc.
+    println!("=== DEBUG: verify_crypt_password(input={input:?}, encrypted={encrypted:?}) ===");
+    let result = unix::verify(input, encrypted);
+    println!("=== DEBUG: result={result:?} ===");
+    result
 }
 
 // Password hashing for new passwords
