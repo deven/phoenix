@@ -233,12 +233,12 @@ impl Server {
             let mut remaining = seconds;
             while remaining > 0 {
                 match remaining {
-                    300 => Session::announce(&format!("*** Server {action} in 5 minutes ***\n")).await,
-                    180 => Session::announce(&format!("*** Server {action} in 3 minutes ***\n")).await,
-                    120 => Session::announce(&format!("*** Server {action} in 2 minutes ***\n")).await,
-                    60 => Session::announce(&format!("*** Server {action} in 1 minute ***\n")).await,
-                    30 | 10 | 2..=5 => Session::announce(&format!("*** Server {action} in {remaining} seconds ***\n")).await,
-                    1 => Session::announce(&format!("*** Server {action} in 1 second ***\n")).await,
+                    300 => Session::announce(&format!("*** Server {action} in 5 minutes ***\n")).await.unwrap_or(()),
+                    180 => Session::announce(&format!("*** Server {action} in 3 minutes ***\n")).await.unwrap_or(()),
+                    120 => Session::announce(&format!("*** Server {action} in 2 minutes ***\n")).await.unwrap_or(()),
+                    60 => Session::announce(&format!("*** Server {action} in 1 minute ***\n")).await.unwrap_or(()),
+                    30 | 10 | 2..=5 => Session::announce(&format!("*** Server {action} in {remaining} seconds ***\n")).await.unwrap_or(()),
+                    1 => Session::announce(&format!("*** Server {action} in 1 second ***\n")).await.unwrap_or(()),
                     _ => {}
                 }
 
@@ -246,7 +246,7 @@ impl Server {
                 remaining -= 1;
             }
 
-            Session::announce(&format!("*** Server {action} NOW ***\n")).await;
+            Session::announce(&format!("*** Server {action} NOW ***\n")).await.unwrap_or(());
             server.perform_shutdown_or_restart(restart).await;
         });
 

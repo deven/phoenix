@@ -1,6 +1,6 @@
 use crate::atomic::{
     AtomicAwayState, AtomicHashMap, AtomicLoginState, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicSessionType, AtomicTelnetOption, AtomicText,
-    AtomicUserOption, SessionTypeBorrow,
+    AtomicTextOption, AtomicUserOption, SessionTypeBorrow,
 };
 use crate::constants::*;
 use crate::discussion::Discussion;
@@ -8,7 +8,7 @@ use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{message_start, Sendlist};
 use crate::server::Server;
-use crate::telnet::{Telnet, TELNET_ENABLED};
+use crate::telnet::{Telnet, BELL_STR, TELNET_ENABLED};
 use crate::text::Text;
 use crate::timestamp::{system_uptime, Timestamp};
 use crate::user::{verify_password, User, UserManager};
@@ -65,6 +65,8 @@ pub struct SessionInner {
 #[derive(Debug)]
 pub enum SessionType {
     PreLogin {
+        user_entered: AtomicTextOption,
+        name_entered: AtomicTextOption,
         login_state: AtomicLoginState,
         login_timeout: ArcSwapOption<AbortHandle>,
         attempts: AtomicI32,
@@ -191,6 +193,8 @@ impl Session {
             login_time: ArcSwap::new(Arc::new(now.clone())),
             idle_since: ArcSwap::new(Arc::new(now)),
             session_type: AtomicSessionType::new(SessionType::PreLogin {
+                user_entered: AtomicTextOption::new(None),
+                name_entered: AtomicTextOption::new(None),
                 login_state: AtomicLoginState::new(LoginState::PreLogin),
                 login_timeout: ArcSwapOption::new(None),
                 attempts: AtomicI32::new(0),
@@ -208,13 +212,16 @@ impl Session {
             println!("=== DEBUG: No telnet connection to link ===");
         }
 
+        SESSIONS.insert(session.id(), session.clone());
+
         println!("=== DEBUG: Session::new() completed for ID: {} ===", id);
         session
     }
 
     /// Convert session to LoggedIn state.
-    pub fn logged_in(self, name: Name, user: Option<User>) -> Self {
+    pub fn logged_in(&self, name: Name, user: Option<User>) {
         let now = Timestamp::new();
+        let priv_level = user.as_ref().and_then(|user| Some(user.priv_level())).unwrap_or(0);
         self.0.login_time.store(Arc::new(now.clone()));
         self.0.idle_since.store(Arc::new(now));
         self.0.session_type.set(SessionType::LoggedIn {
@@ -225,7 +232,7 @@ impl Session {
             signal_public: AtomicBool::new(true),
             signal_private: AtomicBool::new(true),
             away: AtomicAwayState::default(),
-            priv_level: AtomicI32::new(0),
+            priv_level: AtomicI32::new(priv_level),
             closing: AtomicBool::new(false),
             last_message: AtomicMessageOption::new(None),
             default_sendlist: AtomicSendlistOption::new(None),
@@ -234,8 +241,6 @@ impl Session {
             reply_sendlist: AtomicText::new(Text::default()),
             oops_text: AtomicText::new(Text::from("Oops!  Sorry, that last message was intended for someone else...")),
         });
-
-        self
     }
 
     /// Get the session ID.
@@ -341,6 +346,46 @@ impl Session {
         self.0.session_type.borrow()
     }
 
+    /// Get the login entered.
+    pub fn user_entered(&self) -> Option<Text> {
+        println!("=== DEBUG: user_entered() called ===");
+        let user_entered = match self.session_type().as_ref() {
+            SessionType::PreLogin { user_entered, .. } => user_entered.snapshot(),
+            SessionType::LoggedIn { .. } => None,
+        };
+        println!("=== DEBUG: user_entered={user_entered:?} ===");
+        user_entered
+    }
+
+    /// Set the name entered.
+    pub fn set_user_entered(&self, value: Option<Text>) {
+        println!("=== DEBUG: set_user_entered({value:?}) called ===");
+        match self.session_type().as_ref() {
+            SessionType::PreLogin { user_entered, .. } => user_entered.set(value),
+            SessionType::LoggedIn { .. } => (),
+        };
+    }
+
+    /// Get the name entered.
+    pub fn name_entered(&self) -> Option<Text> {
+        println!("=== DEBUG: name_entered() called ===");
+        let name_entered = match self.session_type().as_ref() {
+            SessionType::PreLogin { name_entered, .. } => name_entered.snapshot(),
+            SessionType::LoggedIn { .. } => None,
+        };
+        println!("=== DEBUG: name_entered={name_entered:?} ===");
+        name_entered
+    }
+
+    /// Set the name entered.
+    pub fn set_name_entered(&self, value: Option<Text>) {
+        println!("=== DEBUG: set_name_entered({value:?}) called ===");
+        match self.session_type().as_ref() {
+            SessionType::PreLogin { name_entered, .. } => name_entered.set(value),
+            SessionType::LoggedIn { .. } => (),
+        };
+    }
+
     /// Get the `LoginState`.
     pub fn login_state(&self) -> LoginState {
         match self.session_type().as_ref() {
@@ -360,10 +405,13 @@ impl Session {
     /// Switch login state and prompt.
     #[framed]
     pub async fn switch_login_state(&self, state: LoginState, prompt: Option<&str>) -> tokio::io::Result<()> {
+        self.enqueue_output().await?;
+
         self.set_login_state(state);
         if let Some(prompt) = prompt {
             if let Some(telnet) = self.telnet() {
                 telnet.output(prompt).await;
+                telnet.flush_output().await.ok();
             }
         }
 
@@ -875,20 +923,37 @@ impl Session {
             return Ok(());
         }
         let user = (*USER_MANAGER).get_user(&line).await;
-        self.set_user(user.clone());
-        if let Some(_user) = &user {
-            if let Some(telnet) = self.telnet() {
-                telnet.set_do_echo(false);
-            }
-            self.switch_login_state(LoginState::AwaitingPassword, Some("password: ")).await;
-        } else {
-            self.output("Invalid login.\n").await;
-            let attempts = self.increment_attempts();
-            if attempts >= MAX_LOGIN_ATTEMPTS {
-                self.close(true).await;
-                return Ok(());
-            }
-            if let Some(telnet) = self.telnet() {
+        self.set_user_entered(Some(line));
+        if let Some(telnet) = self.telnet() {
+            if let Some(user) = user {
+                // Warn if echo can't be turned off.
+                match telnet.echo() {
+                    TELNET_ENABLED => (),
+                    0 => {
+                        telnet.output(BELL_STR).await;
+                        telnet.output("\nSorry, password probably WILL echo.\n\n").await;
+                    }
+                    _ => telnet.output("\nWarning: password may echo.\n\n").await,
+                };
+
+                match user.password() {
+                    Some(_) => {
+                        telnet.set_do_echo(false); // Disable echoing.
+                        self.switch_login_state(LoginState::AwaitingPassword, Some("Password: ")).await?;
+                    }
+                    None => {
+                        // No password required. (guest account)
+                        self.print_reserved_names().await;
+                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+                    }
+                }
+            } else {
+                telnet.output("Invalid login.\n").await;
+                let attempts = self.increment_attempts();
+                if attempts >= MAX_LOGIN_ATTEMPTS {
+                    self.close(true).await?;
+                    return Ok(());
+                }
                 telnet.output("login: ").await;
             }
         }
@@ -907,7 +972,12 @@ impl Session {
         println!("=== DEBUG: handle_password_input(): calling update_all() ===");
         (*USER_MANAGER).update_all().await.ok();
 
-        let valid = if let Some(user) = self.user() {
+        let user = match self.user_entered().as_ref() {
+            Some(user) => (*USER_MANAGER).get_user(user).await,
+            None => None,
+        };
+
+        let valid = if let Some(user) = user {
             println!("=== DEBUG: handle_password_input(): user={user:?} ===");
             if let Some(password) = user.password() {
                 println!("=== DEBUG: handle_password_input(): password={password:?} ===");
@@ -934,23 +1004,6 @@ impl Session {
             return Ok(());
         }
 
-        if let Some(user) = self.user() {
-            if user.reserved().is_empty() {
-                self.output("You don't have any reserved names.\n").await;
-                self.close(true).await;
-                return Ok(());
-            }
-
-            let reserved = user.reserved();
-            if reserved.len() == 1 {
-                let name = reserved[0].clone();
-                if self.check_name_availability(Some(&name), false, false).await? {
-                    self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
-                }
-                return Ok(());
-            }
-        }
-
         self.print_reserved_names().await;
         self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
 
@@ -960,25 +1013,26 @@ impl Session {
     #[framed]
     pub async fn handle_name_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
-        let name = if line.is_empty() {
-            if let Some(user) = self.user() {
-                if let Some(reserved) = user.reserved().front() {
-                    reserved.clone()
-                } else {
-                    if let Some(telnet) = self.telnet() {
-                        telnet.output("Enter name: ").await;
-                    }
-                    return Ok(());
-                }
-            } else {
-                return Ok(());
-            }
-        } else {
-            Text::new(line)
+
+        (*USER_MANAGER).update_all().await.ok();
+
+        let user = match self.user_entered().as_ref() {
+            Some(user) => (*USER_MANAGER).get_user(user).await,
+            None => None,
         };
 
-        if self.check_name_availability(Some(&name), false, false).await? {
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
+        let name = if !line.is_empty() { Some(line.clone()) } else { user.and_then(|user| user.reserved().front().cloned()) };
+
+        let name = name.as_deref();
+
+        match self.check_name_availability(name, false, false).await? {
+            Some(name) => {
+                self.set_name_entered(Some(name.into()));
+                self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
+            }
+            None => {
+                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+            }
         }
 
         Ok(())
@@ -986,72 +1040,53 @@ impl Session {
 
     #[framed]
     pub async fn handle_blurb_input(&self, line: Text) -> tokio::io::Result<()> {
-        let name = if let Some(user) = self.user() {
-            if let Some(reserved) = user.reserved().front() {
-                reserved.clone()
-            } else {
+        (*USER_MANAGER).update_all().await.ok();
+
+        let user = match self.user_entered().as_ref() {
+            Some(user) => (*USER_MANAGER).get_user(user).await,
+            None => None,
+        };
+
+        let name = self.name_entered();
+        let name = self.check_name_availability(name.as_deref(), true, false).await?;
+        let blurb = (!line.is_empty()).then_some(line).or_else(|| user.as_ref().and_then(|u| u.blurb()));
+
+        let name = match name {
+            Some(name) => name,
+            None => {
+                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
                 return Ok(());
             }
-        } else {
-            return Ok(());
         };
 
-        if !self.check_name_availability(Some(&name), true, false).await? {
-            return Ok(());
+        let name = Name::new(name, blurb);
+        println!("=== DEBUG: handle_blurb_input(): name={name:?} ===");
+        self.logged_in(name, user);
+        println!("=== DEBUG: handle_blurb_input(): self.name()={name:?} ===", name = self.name());
+
+        // Send entry notification
+        self.notify_entry().await?;
+
+        // Welcome message and automatic commands
+        self.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
+
+        // Make sure discussion A exists
+        match self.find_sendable("A", false, true, true, true).await {
+            (_, _, None, _) => {
+                let disc = Discussion::new(None, "A", "General Discussion", true).await;
+                DISCUSSIONS.insert(Text::from("A"), disc);
+            }
+            _ => {}
         }
 
-        let blurb_text = if line.is_empty() {
-            if let Some(user) = self.user() {
-                user.blurb().as_ref().map(|b| b.to_string()).unwrap_or_else(|| String::new())
-            } else {
-                String::new()
-            }
-        } else {
-            line.to_string()
-        };
+        // Automatic commands
+        self.do_join("A").await?;
+        self.do_send("A").await?;
+        self.do_who("").await?;
+        self.do_howmany("").await?;
 
-        // Create a full Session to complete the login process
         if let Some(telnet) = self.telnet() {
-            let session = Session::new(self.server().clone(), Some(telnet));
-
-            // Transfer the login state to the session
-            if let Some(user) = self.user() {
-                session.set_user(Some(user.clone()));
-                session.set_priv_level(user.priv_level());
-                user.add_session(session.clone());
-            }
-
-            // Set the name and blurb
-            session.set_name_and_blurb(name.into(), Some(blurb_text.into()));
-
-            // Add to global sessions and remove from inits
-            SESSIONS.insert(session.id(), session.clone());
-            // Note: INITS removal would need the session ID, which we don't have from LoginSession
-
-            // Send entry notification
-            session.notify_entry().await;
-
-            // Welcome message and automatic commands
-            session.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
-
-            // Make sure discussion A exists
-            match session.find_sendable("A", false, true, true, true).await {
-                (_, _, None, _) => {
-                    let disc = Discussion::new(None, "A", "General Discussion", true).await;
-                    DISCUSSIONS.insert(Text::from("A"), disc);
-                }
-                _ => {}
-            }
-
-            // Automatic commands
-            session.do_join("A").await;
-            session.do_send("A").await;
-            session.do_who("").await;
-            session.do_howmany("").await;
-
-            if let Some(telnet) = session.telnet() {
-                telnet.reset_history().await;
-            }
+            telnet.reset_history().await;
         }
 
         Ok(())
@@ -1066,33 +1101,57 @@ impl Session {
             return Ok(());
         }
 
-        let name = if let Some(user) = self.user() {
-            if let Some(reserved) = user.reserved().front() {
-                reserved.clone()
-            } else {
-                return Ok(());
+        let name = self.name_entered();
+        let name = self.check_name_availability(name.as_deref(), true, true).await?;
+        match name {
+            Some(_name) => {
+                self.output("(That session is now gone.)\n").await;
+                self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
             }
-        } else {
-            return Ok(());
-        };
-
-        if self.check_name_availability(Some(&name), true, true).await? {
-            self.output("(That session is now gone.)\n").await;
-            self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
+            None => {
+                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+            }
         }
 
         Ok(())
     }
 
+    /// Print user's reserved names.
     #[framed]
     pub async fn print_reserved_names(&self) {
-        self.output("\nYour reserved names are:\n\n").await;
-        if let Some(user) = self.user() {
-            for (i, name) in user.reserved().iter().enumerate() {
-                self.output(&format!("    {}: {}\n", i + 1, name)).await;
+        if let Some(telnet) = self.telnet() {
+            if let Some(user) = self.user() {
+                let reserved = user.reserved();
+
+                if let Some(default_name) = reserved.front() {
+                    telnet.output(&format!("\nYour default (reserved) name is \"{default_name}\".\n")).await;
+
+                    let remaining: Vec<_> = reserved.iter().skip(1).collect();
+                    let left = remaining.len();
+
+                    if left > 0 {
+                        let mut other = String::new();
+                        other.push_str("\nYou also have \"");
+                        other.push_str(remaining[0].as_str());
+
+                        for name in remaining.iter().skip(1).take(left.saturating_sub(1)) {
+                            other.push_str("\", \"");
+                            other.push_str(name.as_str());
+                        }
+
+                        if left > 1 {
+                            other.push_str("\" and \"");
+                            other.push_str(remaining[left - 1].as_str());
+                        }
+
+                        other.push_str("\" reserved.\n");
+                        telnet.output(&other).await;
+                    }
+                }
             }
+
+            telnet.output("\n").await;
         }
-        self.output("\n").await;
     }
 
     #[framed]
@@ -1112,73 +1171,81 @@ impl Session {
     }
 
     #[framed]
-    pub async fn check_name_availability<'a>(&self, name: Option<&'a str>, double_check: bool, transferring: bool) -> tokio::io::Result<bool> {
+    pub async fn check_name_availability<'a>(&self, name: Option<&'a str>, double_check: bool, transferring: bool) -> tokio::io::Result<Option<&'a str>> {
+        let name = match name {
+            Some(name) => name,
+            None => return Ok(None),
+        };
+
+        let telnet = match self.telnet() {
+            Some(telnet) => telnet,
+            None => return Ok(None),
+        };
+
         if name.eq_ignore_ascii_case("me") {
-            self.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
-            self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-            return Ok(false);
+            telnet.output("The keyword \"me\" is reserved.  Choose another name.\n").await;
+            return Ok(None);
         }
+
+        // Special-case test for discussion A, in case it hasn't actually been created yet.
+        if name.eq_ignore_ascii_case("A") {
+            telnet.output("There is already a discussion named \"A\".  Choose another name.\n").await;
+            return Ok(None);
+        }
+
+        (*USER_MANAGER).update_all().await.ok();
+
+        let user = match self.user_entered().as_ref() {
+            Some(user) => (*USER_MANAGER).get_user(user).await,
+            None => None,
+        };
 
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
-            let my_user = self.user();
-            let found_user_ref = Some(found_user);
-            match (my_user, found_user_ref) {
-                (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
-                    let now = if double_check { " now" } else { "" };
-                    self.output(&format!("\"{reserved}\" is{now} a reserved name.  Choose another.\n")).await;
-                    self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
-                    return Ok(false);
-                }
-                _ => {}
+            if Some(found_user) != user {
+                let now = if double_check { " now" } else { "" };
+                telnet.output(&format!("\"{reserved}\" is{now} a reserved name.  Choose another.\n")).await;
+                return Ok(None);
             }
         }
 
-        // Note: LoginSession doesn't have find_sendable, so we need to check SESSIONS and DISCUSSIONS directly
-        // Check for existing sessions with this name
-        for (_, existing_session) in SESSIONS.iter() {
-            if existing_session.name().name().eq_ignore_ascii_case(name) {
-                let my_user = self.user();
-                let their_user = existing_session.user();
-                match (my_user, their_user) {
-                    (Some(my_user), Some(their_user)) if my_user.username() == their_user.username() && existing_session.priv_level() > 0 => {
-                        if let Some(_their_telnet) = existing_session.telnet() {
-                            if transferring {
-                                self.output("Transferring active session...\n").await;
-                                // TODO: Implement session transfer for LoginSession
-                                return Ok(false);
-                            } else {
-                                let now = if double_check { " now" } else { "" };
-                                self.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
-                                self.switch_login_state(LoginState::AwaitingTransferConfirmation, Some("Transfer active session? [no] ")).await;
-                            }
+        let mut available = None;
+        let (session, _session_matches, discussion, _discussion_matches) = self.find_sendable(name, false, true, true, true).await;
+
+        if let Some(session) = session {
+            match (self.user(), session.user()) {
+                (Some(user), Some(session_user)) if user == session_user && user.priv_level() > 0 => {
+                    if let Some(other_telnet) = session.telnet() {
+                        if transferring {
+                            telnet.output("Transferring active session...\n").await;
+                            session.transfer(telnet).await?;
+                            self.set_telnet(None);
+                            other_telnet.close(true).await?;
                         } else {
-                            self.output("Attaching to detached session...\n").await;
-                            // TODO: Implement session attachment for LoginSession
-                            return Ok(false);
+                            let now = if double_check { " now" } else { "" };
+                            telnet.output(&format!("You are{now} attached elsewhere under that name.\n")).await;
+                            self.switch_login_state(LoginState::AwaitingTransferConfirmation, Some("Transfer active session? [no] ")).await?;
                         }
-                    }
-                    _ => {
-                        let found_name = existing_session.name();
-                        let already = if double_check { "now" } else { "already" };
-                        self.output(&format!("The name \"{found_name}\" is {already} in use.  Choose another.\n")).await;
-                        self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await?;
+                    } else {
+                        telnet.output("Attaching to detached session...\n").await;
+                        session.attach(telnet).await?;
+                        self.set_telnet(None);
                     }
                 }
-                return Ok(false);
+                _ => {
+                    let session_name = session.name();
+                    let already = if double_check { "now" } else { "already" };
+                    telnet.output(&format!("The name \"{session_name}\" is {already} in use.  Choose another.\n")).await;
+                }
             }
+        } else if let Some(disc) = discussion {
+            let already = if double_check { "now" } else { "already" };
+            let disc_name = disc.name();
+            telnet.output(&format!("There is {already} a discussion named \"{disc_name}\".  Choose another name.\n")).await;
+        } else {
+            available = Some(name);
         }
 
-        // Check for discussion name conflicts
-        for (disc_name, _) in DISCUSSIONS.iter() {
-            if disc_name.eq_ignore_ascii_case(name) {
-                let already = if double_check { "now" } else { "already" };
-                self.output(&format!("There is {already} a discussion named \"{disc_name}\".  Choose another name.\n")).await;
-                self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
-                return Ok(false);
-            }
-        }
-
-        Ok(true)
+        Ok(available)
     }
 
     #[framed]
@@ -1277,7 +1344,8 @@ impl Session {
     pub async fn announce(message: &str) -> tokio::io::Result<()> {
         let mut result = Ok(());
 
-        for (_, session) in SESSIONS.iter() {
+        // Send announcement to ALL sessions, including pre-login sessions.
+        for session in SESSIONS.snapshot().values() {
             session.output(message).await;
             if let Err(e) = session.enqueue_output().await {
                 println!("=== DEBUG: Error in enqueue_output() during announce(): {} ===", e);
@@ -1311,8 +1379,8 @@ impl Session {
     pub async fn enqueue_others(&self, out: Output) -> tokio::io::Result<()> {
         let mut result = Ok(());
 
-        for (_, session) in SESSIONS.iter() {
-            if &session != self {
+        for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
+            if session != self {
                 if let Err(e) = session.enqueue(out.clone()).await {
                     println!("=== DEBUG: Error in enqueue() during enqueue_others(): {} ===", e);
                     if result.is_ok() {
@@ -1346,7 +1414,7 @@ impl Session {
                 return (session, session_matches, discussion, discussion_matches);
             }
 
-            for (_, s) in SESSIONS.iter() {
+            for s in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
                 let s_name = s.name();
                 if s_name.eq_ignore_ascii_case(sendlist) {
                     session = Some(s.clone());
@@ -1450,7 +1518,7 @@ impl Session {
     #[framed]
     pub async fn process_input(&self, line: Text) -> tokio::io::Result<()> {
         if line.starts_with("!") {
-            let line = line[1..].trim();
+            let line = &line.trim();
             if self.priv_level() < 50 {
                 self.output("Sorry, all !commands are privileged.\n").await;
                 return Ok(());
@@ -1466,7 +1534,7 @@ impl Session {
                 self.output("Unknown !command.\n").await;
             }
         } else if line.starts_with("/") {
-            let line = line[1..].trim();
+            let line = &line.trim();
             if let Some(args) = match_keyword(line, "/who", 2) {
                 self.do_who(args).await?;
             } else if let Some(args) = match_keyword(line, "/idle", 2) {
@@ -2200,7 +2268,7 @@ impl Session {
         let mut detached = 0;
         let mut total = 0;
 
-        for (_, session) in SESSIONS.iter() {
+        for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
             match session.away() {
                 AwayState::Here => here += 1,
                 AwayState::Away => away += 1,
@@ -3620,8 +3688,7 @@ impl Session {
         let mut msg = String::new();
 
         if args.is_empty() {
-            // Show all sessions
-            for (_, session) in SESSIONS.iter() {
+            for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
                 who.insert(session.clone());
             }
 
@@ -3725,9 +3792,9 @@ impl std::hash::Hash for Session {
 //#[cfg(test)]
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
-    assert_send_sync_static::<LoginState>();
     assert_send_sync_static::<AwayState>();
+    assert_send_sync_static::<LoginState>();
     assert_send_sync_static::<Session>();
-    assert_send_sync_static::<SessionType>();
     assert_send_sync_static::<SessionInner>();
+    assert_send_sync_static::<SessionType>();
 };
