@@ -6,9 +6,10 @@ use arc_swap::ArcSwapOption;
 use async_backtrace::framed;
 use im::Vector;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::time::SystemTime;
 
+pub static USERS: LazyLock<AtomicHashMap<Text, User>> = LazyLock::new(AtomicHashMap::default);
 static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 /// User handle.
@@ -116,26 +117,24 @@ pub struct UserManager(pub Arc<UserManagerInner>);
 
 #[derive(Debug)]
 pub struct UserManagerInner {
-    pub users: AtomicHashMap<Text, User>,
     pub last_update: ArcSwapOption<SystemTime>,
 }
 
 impl UserManager {
     #[framed]
     pub fn new() -> Self {
-        let inner = UserManagerInner { users: AtomicHashMap::empty(), last_update: ArcSwapOption::new(None) };
+        let inner = UserManagerInner { last_update: ArcSwapOption::new(None) };
         Self(Arc::new(inner))
     }
 
     pub async fn get_user(&self, login: &str) -> Option<User> {
         self.update_all().await.ok()?;
-        let users = self.0.users.snapshot();
-        users.iter().find(|(k, _)| k.eq_ignore_ascii_case(login)).map(|(_, v)| v.clone())
+        USERS.iter().find(|(k, _)| k.eq_ignore_ascii_case(login)).map(|(_, v)| v.clone())
     }
 
     pub async fn update(&self, login: impl Into<Text>, pass: Option<String>, names: Option<&str>, defblurb: Option<impl Into<Text>>, p: i32) -> Result<()> {
         let login_str: Text = login.into();
-        let mut users = self.0.users.snapshot();
+        let mut users = USERS.snapshot();
 
         if let Some(existing_user) = users.get(&login_str) {
             // Update existing user's fields atomically
@@ -146,7 +145,7 @@ impl UserManager {
         } else {
             let user = User::new(login_str.clone(), pass, names, defblurb, p).await;
             users.insert(login_str, user);
-            self.0.users.set(users);
+            USERS.set(users);
         }
 
         Ok(())
@@ -210,7 +209,7 @@ impl UserManager {
     pub async fn find_reserved(&self, name: &str) -> Option<(Text, User)> {
         self.update_all().await.ok()?;
 
-        let users = self.0.users.snapshot();
+        let users = USERS.snapshot();
         for (_login, user) in users.iter() {
             if let Some(reserved) = user.find_reserved(name) {
                 return Some((reserved, user.clone()));
