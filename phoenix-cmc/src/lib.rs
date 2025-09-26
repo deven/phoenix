@@ -42,11 +42,16 @@ pub fn getword(input: &str, separator: Option<char>) -> (&str, &str) {
 
 pub fn match_keyword<'a>(input: &'a str, keyword: &str, min: usize) -> Option<&'a str> {
     let (word, rest) = getword(input, None);
-    if word.len() >= min && keyword.starts_with(&word.to_lowercase()) {
-        Some(rest)
-    } else {
-        None
+    let min = if min == 0 { keyword.len() } else { min };
+
+    if word.len() >= min && word.len() <= keyword.len() {
+        let keyword_prefix = &keyword[..word.len()];
+        if word.eq_ignore_ascii_case(keyword_prefix) {
+            return Some(rest);
+        }
     }
+
+    None
 }
 
 pub fn match_name(name: &str, sendlist: &str) -> Option<usize> {
