@@ -22,6 +22,7 @@ use bytes::{Bytes, BytesMut};
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
+//use textwrap::wrap;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::{Mutex, MutexGuard};
@@ -1235,6 +1236,14 @@ impl Telnet {
         // Print timestamp. (XXX make optional?)
         let stamp = time.stamp();
         self.output(&format!(" [{stamp}]\n - ")).await;
+
+        // // Word wrap the message.
+        // let options = textwrap::Options::new(width - 4)
+        //     .subsequent_indent(" - ")
+        //     .break_words(true)
+        //     .word_splitter(textwrap::WordSplitter::NoHyphenation);
+        // let wrapped = wrap(start, &options).join("\n");
+        // self.output(&wrapped).await;
 
         // Word wrap the message.
         let mut remaining = start;
