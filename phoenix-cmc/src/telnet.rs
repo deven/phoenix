@@ -311,11 +311,11 @@ impl TelnetState {
 #[repr(u8)]
 pub enum TelnetSubnegotiationState {
     Idle = 0,
-    NAWSWidthHigh = 1,
-    NAWSWidthLow = 2,
-    NAWSHeightHigh = 3,
-    NAWSHeightLow = 4,
-    NAWSDone = 5,
+    NawsWidthHigh = 1,
+    NawsWidthLow = 2,
+    NawsHeightHigh = 3,
+    NawsHeightLow = 4,
+    NawsDone = 5,
     Unknown = 6,
 }
 
@@ -324,11 +324,11 @@ impl TelnetSubnegotiationState {
     fn from_u8(n: u8) -> Self {
         match n {
             0 => Self::Idle,
-            1 => Self::NAWSWidthHigh,
-            2 => Self::NAWSWidthLow,
-            3 => Self::NAWSHeightHigh,
-            4 => Self::NAWSHeightLow,
-            5 => Self::NAWSDone,
+            1 => Self::NawsWidthHigh,
+            2 => Self::NawsWidthLow,
+            3 => Self::NawsHeightHigh,
+            4 => Self::NawsHeightLow,
+            5 => Self::NawsDone,
             6 => Self::Unknown,
             _ => Self::Idle,
         }
@@ -1686,7 +1686,7 @@ impl Telnet {
                 // Subnegotiation sequence is complete.
                 match self.sb_state() {
                     // NAWS subnegotiation was successful; set the new size.
-                    TelnetSubnegotiationState::NAWSDone => {
+                    TelnetSubnegotiationState::NawsDone => {
                         self.set_new_width(self.naws_width()).await;
                         self.set_new_height(self.naws_height()).await;
                     }
@@ -1715,7 +1715,7 @@ impl Telnet {
             TelnetSubnegotiationState::Idle => match byte {
                 // NAWS subnegotiation started.
                 x if x == TelnetOption::NAWS as u8 => {
-                    sb_state = TelnetSubnegotiationState::NAWSWidthHigh;
+                    sb_state = TelnetSubnegotiationState::NawsWidthHigh;
                 }
 
                 // Unknown option subnegotiation started; ignore it.
@@ -1725,27 +1725,27 @@ impl Telnet {
             },
 
             // Get high byte of terminal width.
-            TelnetSubnegotiationState::NAWSWidthHigh => {
+            TelnetSubnegotiationState::NawsWidthHigh => {
                 self.set_naws_width((byte as usize) * 256);
-                sb_state = TelnetSubnegotiationState::NAWSWidthLow;
+                sb_state = TelnetSubnegotiationState::NawsWidthLow;
             }
 
             // Get low byte of terminal width.
-            TelnetSubnegotiationState::NAWSWidthLow => {
+            TelnetSubnegotiationState::NawsWidthLow => {
                 self.set_naws_width(self.naws_width() + byte as usize);
-                sb_state = TelnetSubnegotiationState::NAWSHeightHigh;
+                sb_state = TelnetSubnegotiationState::NawsHeightHigh;
             }
 
             // Get high byte of terminal height.
-            TelnetSubnegotiationState::NAWSHeightHigh => {
+            TelnetSubnegotiationState::NawsHeightHigh => {
                 self.set_naws_height((byte as usize) * 256);
-                sb_state = TelnetSubnegotiationState::NAWSHeightLow;
+                sb_state = TelnetSubnegotiationState::NawsHeightLow;
             }
 
             // Get low byte of terminal height.
-            TelnetSubnegotiationState::NAWSHeightLow => {
+            TelnetSubnegotiationState::NawsHeightLow => {
                 self.set_naws_height(self.naws_height() + byte as usize);
-                sb_state = TelnetSubnegotiationState::NAWSDone;
+                sb_state = TelnetSubnegotiationState::NawsDone;
             }
 
             // Ignore subnegotiation data in other states.
