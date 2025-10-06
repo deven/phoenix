@@ -796,10 +796,7 @@ impl Add<Text> for String {
     }
 }
 
-#[cfg(feature = "serde")]
 mod serde {
-    use alloc::string::String;
-
     use serde::{
         de::{Deserialize, Deserializer},
         ser::{Serialize, Serializer},
