@@ -180,6 +180,10 @@ pub enum TelnetOption {
     NAWS = 31,
 }
 
+// Telnet options are stored in a single byte each, with bit 0 representing
+// WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
+// is only enabled when both bits are set.
+
 // Telnet option bits
 pub const TELNET_WILL_WONT: u8 = 1;
 pub const TELNET_DO_DONT: u8 = 2;
@@ -189,59 +193,60 @@ pub const TELNET_ENABLED: u8 = TELNET_DO_DONT | TELNET_WILL_WONT;
 #[derive(Debug, Clone)]
 pub struct Telnet(pub Arc<TelnetInner>);
 
+// Data about a particular telnet connection.
 #[derive(Debug)]
 pub struct TelnetInner {
     // Connection
     pub stream: Mutex<TcpStream>,
-    pub closing: AtomicBool,
-    pub close_on_eof: AtomicBool,
+    pub closing: AtomicBool, // connection closing?
+    pub close_on_eof: AtomicBool, // close connection on EOF?
 
     // Session
-    pub session: AtomicSession,
+    pub session: AtomicSession, // link to session object
 
     // Terminal settings
-    pub width: AtomicUsize,
-    pub height: AtomicUsize,
-    pub naws_width: AtomicUsize,
-    pub naws_height: AtomicUsize,
+    pub width: AtomicUsize, // current screen width
+    pub height: AtomicUsize, // current screen height
+    pub naws_width: AtomicUsize, // NAWS negotiated screen width
+    pub naws_height: AtomicUsize, // NAWS negotiated screen height
 
     // Input buffer and editing
-    pub data: Mutex<Vec<u8>>,
-    pub point: AtomicUsize,
-    pub mark: AtomicUsizeOption,
-    pub prompt: AtomicText,
+    pub data: Mutex<Vec<u8>>, // start of input data
+    pub point: AtomicUsize, // current point location
+    pub mark: AtomicUsizeOption, // current mark location
+    pub prompt: AtomicText, // current prompt
 
     // History and kill ring
-    pub history: Mutex<VecDeque<Text>>,
+    pub history: Mutex<VecDeque<Text>>, // history lines
     pub history_position: AtomicUsizeOption,
-    pub kill_ring: Mutex<VecDeque<Text>>,
+    pub kill_ring: Mutex<VecDeque<Text>>, // kill-ring
 
     // Reply tracking
-    pub reply_to: AtomicNameOption,
+    pub reply_to: AtomicNameOption, // sender of last private message
 
     // Output buffers
-    pub output_buffer: Mutex<BytesMut>,
-    pub command_buffer: Mutex<BytesMut>,
+    pub output_buffer: Mutex<BytesMut>, // pending data output
+    pub command_buffer: Mutex<BytesMut>, // pending command output
 
-    // Telnet state
-    pub state: AtomicU8,
+    // Telnet/subnegotiation states
+    pub state: AtomicU8, // input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
 
     // Subnegotiation state
-    pub sb_state: AtomicU8,
+    pub sb_state: AtomicU8, // subnegotiation state
 
-    pub undrawn: AtomicBool,
-    pub do_echo: AtomicBool,
-    pub acknowledge: AtomicBool,
-    pub outstanding: AtomicUsize,
-    pub welcome_sent: AtomicBool,
+    pub undrawn: AtomicBool, // input line undrawn for output?
+    pub do_echo: AtomicBool, // should server be echoing?
+    pub acknowledge: AtomicBool, // use telnet TIMING-MARK option?
+    pub outstanding: AtomicUsize, // outstanding acknowledgement count
+    pub welcome_sent: AtomicBool, // welcome banner sent?
 
     // Telnet options
-    pub echo: AtomicU8,
-    pub lsga: AtomicU8,
-    pub rsga: AtomicU8,
-    pub lbin: AtomicU8,
-    pub rbin: AtomicU8,
-    pub naws: AtomicU8,
+    pub echo: AtomicU8, // ECHO option (local)
+    pub lsga: AtomicU8, // SUPPRESS-GO-AHEAD option (local)
+    pub rsga: AtomicU8, // SUPPRESS-GO-AHEAD option (remote)
+    pub lbin: AtomicU8, // TRANSMIT-BINARY option (local)
+    pub rbin: AtomicU8, // TRANSMIT-BINARY option (remote)
+    pub naws: AtomicU8, // NAWS option (remote)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -336,14 +341,14 @@ impl TelnetSubnegotiationState {
 }
 
 impl Telnet {
-    pub const LOGIN_TIMEOUT_TIME: u64 = 60;
-    pub const BUF_SIZE: usize = 32768;
-    pub const INPUT_SIZE: usize = 1024;
-    pub const DEFAULT_WIDTH: usize = 80;
-    pub const MINIMUM_WIDTH: usize = 10;
-    pub const DEFAULT_HEIGHT: usize = 24;
-    pub const HISTORY_MAX: usize = 200;
-    pub const KILL_RING_MAX: usize = 1;
+    pub const LOGIN_TIMEOUT_TIME: u64 = 60; // login timeout (seconds)
+    pub const BUF_SIZE: usize = 32768; // size of input buffer
+    pub const INPUT_SIZE: usize = 1024; // default size of input line buffer
+    pub const DEFAULT_WIDTH: usize = 80; // XXX Hardcoded default screen width
+    pub const MINIMUM_WIDTH: usize = 10; // XXX Hardcoded minimum screen width
+    pub const DEFAULT_HEIGHT: usize = 24; // XXX Hardcoded default screen height
+    pub const HISTORY_MAX: usize = 200; // XXX Save last 200 input lines.
+    pub const KILL_RING_MAX: usize = 1; // XXX Save last kill.
 
     /// Create a new `Telnet` with its associated `LoginSession`.
     pub fn new(stream: TcpStream, server: Server) -> Self {
@@ -868,16 +873,16 @@ impl Telnet {
 
         for &byte in data_str.as_bytes() {
             match byte {
-                x if x == TelnetCommand::IAC as u8 => {
+                x if x == TelnetCommand::IAC as u8 => { // command escape: double it
                     output.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                 }
-                RETURN => {
+                RETURN => { // carriage return: send "\r\0"
                     output.extend_from_slice(&[RETURN, NULL]);
                 }
-                NEWLINE => {
+                NEWLINE => { // newline: send "\r\n"
                     output.extend_from_slice(&[RETURN, NEWLINE]);
                 }
-                _ => {
+                _ => { // normal character: send it
                     output.extend_from_slice(&[byte]);
                 }
             }
@@ -1141,10 +1146,10 @@ impl Telnet {
                 self.output(&format!("\n -> From {} to everyone:", from.as_str())).await;
             }
             OutputType::PrivateMessage => {
-                // Save name to reply to
+                // Save name to reply to.
                 self.set_reply_to(from.clone());
 
-                // Decide if "private"
+                // Decide if "private".
                 let mut is_private = false;
                 if to.sessions().contains(&session) {
                     is_private = true;
@@ -1157,9 +1162,16 @@ impl Telnet {
                     }
                 }
 
-                // Print message header
+                // Print message header.
                 if is_private {
                     session.set_reply_sendlist(from.name().clone());
+
+                    // Quote reply sendlist if necessary.
+                    let reply_sendlist = session.reply_sendlist();
+                    if reply_sendlist.as_bytes().iter().any(|&b| b == SPACE || b == COMMA || b == COLON || b == SEMICOLON || b == UNDERSCORE) {
+                        let quoted = Text::from(format!("\"{}\"", reply_sendlist.as_str()));
+                        session.set_reply_sendlist(quoted);
+                    }
 
                     if signal_private {
                         self.output(BELL_STR).await;
@@ -1220,44 +1232,41 @@ impl Telnet {
             }
         }
 
-        // Print timestamp
+        // Print timestamp. (XXX make optional?)
         let stamp = time.stamp();
         self.output(&format!(" [{stamp}]\n - ")).await;
 
-        // Word wrap the message
+        // Word wrap the message.
         let mut remaining = start;
-        while !remaining.is_empty() {
-            let mut wrap_point = None;
-            let mut col = 0;
+        let wrap_width = width - 4;
 
-            for (i, ch) in remaining.char_indices() {
-                if ch == ' ' {
+        while !remaining.is_empty() {
+            if remaining.len() <= wrap_width {
+                self.output(remaining).await;
+                break;
+            }
+
+            let mut wrap_point = None;
+            for i in (0..=wrap_width).rev() {
+                if remaining.is_char_boundary(i) && remaining[..i].ends_with(' ') {
                     wrap_point = Some(i);
-                }
-                col += 1;
-                if col >= width - 4 {
                     break;
                 }
             }
 
-            if col < width - 4 {
-                // Rest of message fits on line
-                self.output(remaining).await;
-                break;
-            } else if let Some(wrap) = wrap_point {
-                // Wrap at last space
-                self.output(&remaining[..wrap]).await;
-                remaining = &remaining[wrap + 1..].trim_start();
-            } else {
-                // No space found, break at column limit
-                let end = remaining.char_indices().nth((width - 4).saturating_sub(1)).map(|(i, _)| i).unwrap_or(remaining.len());
-                self.output(&remaining[..end]).await;
-                remaining = &remaining[end..];
-            }
+            let (line, rest) = if let Some(p) = wrap_point {
+                let (l, r) = remaining.split_at(p);
 
-            if !remaining.is_empty() {
-                self.output("\n - ").await;
-            }
+                // Skip a single space at most.
+                (l, r.strip_prefix(' ').unwrap_or(r))
+            } else {
+                // No space found, break at width.
+                remaining.split_at(wrap_width)
+            };
+
+            self.output(line).await;
+            self.output("\n - ").await;
+            remaining = rest;
         }
 
         self.output("\n").await;
