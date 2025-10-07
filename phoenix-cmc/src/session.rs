@@ -924,8 +924,7 @@ impl Session {
     pub async fn handle_login_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
         if let Some(args) = match_keyword(&line, "/bye", 4) {
-            self.do_bye(args).await?;
-            return Ok(());
+            return self.do_bye(args).await;
         }
         if line.is_empty() {
             if let Some(telnet) = self.telnet() {
@@ -962,8 +961,7 @@ impl Session {
                 telnet.output("Invalid login.\n").await;
                 let attempts = self.increment_attempts();
                 if attempts >= MAX_LOGIN_ATTEMPTS {
-                    self.close(true).await?;
-                    return Ok(());
+                    return self.close(true).await;
                 }
                 telnet.output("login: ").await;
             }
@@ -1007,12 +1005,10 @@ impl Session {
             self.output("Login incorrect.\n").await;
             let attempts = self.increment_attempts();
             if attempts >= MAX_LOGIN_ATTEMPTS {
-                self.close(true).await?;
-                return Ok(());
+                return self.close(true).await;
             }
-            self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
             self.set_user(None);
-            return Ok(());
+            return self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await;
         }
 
         self.print_reserved_names().await;
