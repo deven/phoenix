@@ -233,6 +233,12 @@ impl Session {
         let priv_level = user.as_ref().and_then(|user| Some(user.priv_level())).unwrap_or(0);
         self.0.login_time.store(Arc::new(now.clone()));
         self.0.idle_since.store(Arc::new(now));
+
+        // Clear close-on-EOF flag now that login sequence is finished
+        if let Some(telnet) = self.telnet() {
+            telnet.set_close_on_eof(false);
+        }
+
         self.0.session_type.set(SessionType::LoggedIn {
             name: AtomicName::new(name),
             user: AtomicUserOption::new(user),
@@ -512,7 +518,7 @@ impl Session {
             SessionType::PreLogin { .. } => (),
             SessionType::LoggedIn { name, .. } => {
                 let blurb = self.blurb();
-//              name.set(Name::new(value, blurb));
+                // name.set(Name::new(value, blurb));
                 let new_name = Name::new(value, blurb);
                 println!("=== DEBUG: new_name={new_name:?} ===");
                 name.set(new_name);
@@ -547,7 +553,7 @@ impl Session {
         println!("=== DEBUG: set_blurb({value:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-//          SessionType::LoggedIn { name, .. } => name.set(Name::new(self.name_only(), value)),
+            // SessionType::LoggedIn { name, .. } => name.set(Name::new(self.name_only(), value)),
             SessionType::LoggedIn { name, .. } => {
                 let new_name = self.name_only();
                 println!("=== DEBUG: new_name={new_name:?} ===");
@@ -571,7 +577,7 @@ impl Session {
         println!("=== DEBUG: set_name_and_blurb({new_name:?}, {blurb:?}) called ===");
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-//          SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
+            // SessionType::LoggedIn { name, .. } => name.set(Name::new(new_name, blurb)),
             SessionType::LoggedIn { name, .. } => {
                 let new_name = Name::new(new_name, blurb);
                 println!("=== DEBUG: new_name={new_name:?} ===");
@@ -1528,10 +1534,14 @@ impl Session {
     pub async fn process_input(&self, line: Text) -> tokio::io::Result<()> {
         if line.starts_with("!") {
             let line = &line.trim();
+            // XXX Make ! normal for average users? normal if not a valid command?
             if self.priv_level() < 50 {
                 self.output("Sorry, all !commands are privileged.\n").await;
                 return Ok(());
             }
+
+            // XXX add !priv command?
+            // XXX do individual privilege levels for each !command?
 
             if let Some(args) = match_keyword(line, "!restart", 8) {
                 self.do_restart(args).await?;
@@ -1775,6 +1785,7 @@ impl Session {
 
     #[framed]
     pub async fn do_nuke(&self, args: &str) -> tokio::io::Result<()> {
+        // Nuke target session. // XXX Should require confirmation!
         let drain = !args.starts_with('!');
         let args = if drain { args } else { &args[1..] };
 
@@ -2236,7 +2247,7 @@ impl Session {
 
     #[framed]
     pub async fn do_clear(&self, _args: &str) -> tokio::io::Result<()> {
-        self.output("\x1b[H\x1b[J").await;
+        self.output("\x1b[H\x1b[J").await; // XXX ANSI!
 
         Ok(())
     }
@@ -3769,6 +3780,54 @@ impl Session {
         } else {
             self.output(&format!("No discussions matched \"{name}\".\n")).await;
         }
+    }
+
+    /// Initialize default session-level system variables for all users.
+    pub fn init_defaults() {
+        // Implementation will be added when needed
+        // defaults["time_format"] = "verbose";
+    }
+
+    /// Print a set of sessions (comma-separated).
+    pub async fn print_sessions(&self, sessions: &OrdSet<Session>) {
+        if let Some((first, rest)) = sessions.iter().next().map(|first| (first, sessions.iter().skip(1))) {
+            self.output(&first.name().to_string()).await;
+            for session in rest {
+                self.output(", ").await;
+                self.output(&session.name().to_string()).await;
+            }
+        }
+    }
+
+    /// Print a set of discussions (comma-separated).
+    pub async fn print_discussions(&self, discussions: &OrdSet<Discussion>) {
+        if let Some((first, rest)) = discussions.iter().next().map(|first| (first, discussions.iter().skip(1))) {
+            self.output(first.name()).await;
+            for discussion in rest {
+                self.output(", ").await;
+                self.output(discussion.name()).await;
+            }
+        }
+    }
+
+    /// Output an item from a list (helper for comma-separated lists).
+    pub async fn list_item(&self, flag: &mut bool, last: &mut String, str_val: &str) {
+        if *flag {
+            if !last.is_empty() {
+                self.output(", ").await;
+                self.output(last).await;
+            }
+            *last = str_val.to_string();
+        } else {
+            self.output(str_val).await;
+            *flag = true;
+        }
+    }
+
+    /// Check if shutting down and no users are left.
+    pub async fn check_shutdown() {
+        // This will need server shutdown logic when implemented
+        // For now, just a placeholder matching the C++ signature
     }
 }
 

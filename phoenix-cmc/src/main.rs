@@ -19,7 +19,7 @@ const LIBDIR: &str = "phoenix";
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::init(); // XXX Should logfile use non-blocking code instead?
 
     println!("=== DEBUG: Starting main() ===");
 
@@ -80,7 +80,7 @@ pub async fn main() -> Result<()> {
     env::set_current_dir(&libdir)?;
 
     // Create logs subdirectory
-    let logs_dir = PathBuf::from("logs");
+    let logs_dir = PathBuf::from("logs"); // XXX log file
     if !logs_dir.exists() {
         println!("=== DEBUG: Creating logs dir: {:?} ===", logs_dir);
         std::fs::create_dir(&logs_dir)?;
@@ -105,7 +105,7 @@ pub async fn main() -> Result<()> {
         result = server.run() => {
             println!("=== DEBUG: Server.run() returned: {:?} ===", result);
             if let Err(e) = result {
-                log::error!("Server error: {e}");
+                log::error!("Server error: {e}"); // XXX print error message
                 return Err(e);
             }
         }

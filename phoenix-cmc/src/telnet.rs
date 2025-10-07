@@ -218,8 +218,8 @@ pub struct TelnetInner {
     pub prompt: AtomicText, // current prompt
 
     // History and kill ring
-    pub history: Mutex<VecDeque<Text>>, // history lines
-    pub history_position: AtomicUsizeOption,
+    pub history: Mutex<VecDeque<Text>>, // input history lines
+    pub history_position: AtomicUsizeOption, // current input history position
     pub kill_ring: Mutex<VecDeque<Text>>, // kill-ring
 
     // Reply tracking
@@ -402,6 +402,20 @@ impl Telnet {
         self.0.stream.lock().await
     }
 
+    /// Log calling host and port.
+    #[framed]
+    pub async fn log_caller(&self) {
+        let stream = self.stream().await;
+        match stream.peer_addr() {
+            Ok(addr) => {
+                log::info!("Accepted connection from {}", addr); // XXX log message
+            }
+            Err(e) => {
+                log::warn!("Telnet::log_caller(): peer_addr() failed: {}", e); // XXX print error message
+            }
+        }
+    }
+
     /// Get the closing flag.
     pub fn closing(&self) -> bool {
         self.0.closing.load(Ordering::Relaxed)
@@ -576,6 +590,96 @@ impl Telnet {
     /// Set the do-echo flag.
     pub fn set_do_echo(&self, value: bool) {
         self.0.do_echo.store(value, Ordering::Relaxed);
+    }
+
+    /// Check if cursor is at start of input.
+    #[inline]
+    pub fn at_start(&self) -> bool {
+        self.point() == 0
+    }
+
+    /// Check if cursor is at end of input.
+    #[inline]
+    pub async fn at_end(&self) -> bool {
+        self.point() == self.data().await.len()
+    }
+
+    /// Get start position (after prompt).
+    #[inline]
+    pub fn start(&self) -> usize {
+        self.prompt().len()
+    }
+
+    /// Get start line number.
+    #[inline]
+    pub fn start_line(&self) -> usize {
+        self.start() / self.width()
+    }
+
+    /// Get start column number.
+    #[inline]
+    pub fn start_column(&self) -> usize {
+        self.start() % self.width()
+    }
+
+    /// Get cursor position in input buffer.
+    #[inline]
+    pub fn point_pos(&self) -> usize {
+        self.point()
+    }
+
+    /// Get cursor line number.
+    #[inline]
+    pub fn point_line(&self) -> usize {
+        (self.start() + self.point()) / self.width()
+    }
+
+    /// Get cursor column number.
+    #[inline]
+    pub fn point_column(&self) -> usize {
+        (self.start() + self.point()) % self.width()
+    }
+
+    /// Get mark position in input buffer.
+    #[inline]
+    pub fn mark_pos(&self) -> Option<usize> {
+        self.mark()
+    }
+
+    /// Get mark line number.
+    #[inline]
+    pub fn mark_line(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) / self.width())
+    }
+
+    /// Get mark column number.
+    #[inline]
+    pub fn mark_column(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) % self.width())
+    }
+
+    /// Get end position of input.
+    #[inline]
+    pub async fn end_pos(&self) -> usize {
+        self.data().await.len()
+    }
+
+    /// Get end line number.
+    #[inline]
+    pub async fn end_line(&self) -> usize {
+        (self.start() + self.data().await.len()) / self.width()
+    }
+
+    /// Get end column number.
+    #[inline]
+    pub async fn end_column(&self) -> usize {
+        (self.start() + self.data().await.len()) % self.width()
+    }
+
+    /// Check if input buffer is empty.
+    #[inline]
+    pub async fn input_empty(&self) -> bool {
+        self.data().await.is_empty()
     }
 
     /// Get the acknowledge flag.
@@ -874,19 +978,31 @@ impl Telnet {
 
         for &byte in data_str.as_bytes() {
             match byte {
-                x if x == TelnetCommand::IAC as u8 => { // command escape: double it
+                x if x == TelnetCommand::IAC as u8 => {
+                    // command escape: double it
                     output.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::IAC as u8]);
                 }
-                RETURN => { // carriage return: send "\r\0"
+                RETURN => {
+                    // carriage return: send "\r\0"
                     output.extend_from_slice(&[RETURN, NULL]);
                 }
-                NEWLINE => { // newline: send "\r\n"
+                NEWLINE => {
+                    // newline: send "\r\n"
                     output.extend_from_slice(&[RETURN, NEWLINE]);
                 }
-                _ => { // normal character: send it
+                _ => {
+                    // normal character: send it
                     output.extend_from_slice(&[byte]);
                 }
             }
+        }
+    }
+
+    /// Echo output (if echo enabled and not undrawn).
+    #[framed]
+    pub async fn echo_output(&self, data: impl AsRef<str>) {
+        if self.echo() == TELNET_ENABLED && self.do_echo() && !self.undrawn() {
+            self.output(data.as_ref()).await;
         }
     }
 
@@ -1021,6 +1137,7 @@ impl Telnet {
 
     #[framed]
     pub async fn show_prompt(&self, p: &str) {
+        self.session().enqueue_output().await.ok();
         self.set_prompt(p);
         if !self.undrawn() {
             self.output(p).await;
@@ -1034,34 +1151,23 @@ impl Telnet {
         }
         self.set_undrawn(true);
 
-        if self.echo() == TELNET_ENABLED && self.do_echo() {
-            let prompt_len = self.prompt().len();
-
-            if prompt_len == 0 && self.data().await.is_empty() {
+        let lines = if self.echo() == TELNET_ENABLED && self.do_echo() {
+            if self.start() == 0 && self.input_empty().await {
                 return;
             }
-
-            let lines = (prompt_len + self.point()) / self.width();
-
-            // ANSI escape sequences to move cursor and clear
-            if lines > 0 {
-                self.output(&format!("\r\x1b[{lines}A\x1b[J")).await;
-            } else {
-                self.output("\r\x1b[J").await;
-            }
+            self.point_line()
         } else {
-            let prompt_len = self.prompt().len();
-            if prompt_len == 0 {
+            if self.start() == 0 {
                 return;
             }
-            let lines = prompt_len / self.width();
+            self.start_line()
+        };
 
-            // ANSI escape sequences
-            if lines > 0 {
-                self.output(&format!("\r\x1b[{lines}A\x1b[J")).await;
-            } else {
-                self.output("\r\x1b[J").await;
-            }
+        // XXX ANSI!
+        if lines > 0 {
+            self.output(&format!("\r\x1b[{lines}A\x1b[J")).await; // Move cursor up and erase.
+        } else {
+            self.output("\r\x1b[J").await; // Erase line.
         }
     }
 
@@ -1102,31 +1208,28 @@ impl Telnet {
                 }
 
                 // Force line wrap if at end of line
-                let width = self.width();
-                let prompt_len = prompt.len();
-                if (prompt_len + data.len()) % width == 0 {
+                if self.end_column().await == 0 {
                     self.output(" \x08").await;
                 }
 
                 // Move cursor back to point if not at end
-                let point = self.point();
-                if point < data.len() {
-                    let end_line = (prompt_len + data.len()) / width;
-                    let point_line = (prompt_len + point) / width;
-                    let end_col = (prompt_len + data.len()) % width;
-                    let point_col = (prompt_len + point) % width;
+                if !self.at_end().await {
+                    let end_line = self.end_line().await;
+                    let point_line = self.point_line();
+                    let end_col = self.end_column().await;
+                    let point_col = self.point_column();
 
                     let lines = end_line - point_line;
                     let cols = end_col as i32 - point_col as i32;
 
                     if lines > 0 {
-                        self.output(&format!("\x1b[{lines}A")).await;
+                        self.output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
                     }
                     if cols > 0 {
-                        self.output(&format!("\x1b[{cols}D")).await;
+                        self.output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
                     } else if cols < 0 {
                         let cols = -cols;
-                        self.output(&format!("\x1b[{cols}C")).await;
+                        self.output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
                     }
                 }
             }
@@ -1228,7 +1331,7 @@ impl Telnet {
                 self.output(":").await;
             }
             _ => {
-                log::error!("Internal error! Unexpected output type: {output_type:?}");
+                log::error!("Internal error! Unexpected output type: {output_type:?}"); // XXX print error message
                 return;
             }
         }
@@ -1408,7 +1511,7 @@ impl Telnet {
             CONTROL_K => self.kill_line().await,
             CONTROL_L => {
                 self.undraw_input().await;
-                self.output("\x1b[H\x1b[J").await; // Clear screen
+                self.output("\x1b[H\x1b[J").await; // Clear screen // XXX ANSI!
                 self.redraw_input().await;
             }
             CONTROL_N => self.next_line().await,
@@ -1784,7 +1887,7 @@ impl Telnet {
             }
             CONTROL_L => {
                 self.undraw_input().await;
-                self.output("\x1b[H\x1b[J").await; // Clear screen
+                self.output("\x1b[H\x1b[J").await; // Clear screen // XXX ANSI!
                 self.redraw_input().await;
                 self.set_state(TelnetState::Data);
             }
@@ -2068,27 +2171,23 @@ impl Telnet {
     // Input editing functions
     #[framed]
     pub async fn beginning_of_line(&self) {
-        let point = self.point();
-        if point > 0 {
-            let prompt_len = self.prompt().len();
-            let width = self.width();
-
-            let point_line = (prompt_len + point) / width;
-            let start_line = prompt_len / width;
-            let point_col = (prompt_len + point) % width;
-            let start_col = prompt_len % width;
+        if !self.at_start() {
+            let point_line = self.point_line();
+            let start_line = self.start_line();
+            let point_col = self.point_column();
+            let start_col = self.start_column();
 
             let lines = point_line - start_line;
             let cols = point_col as i32 - start_col as i32;
 
             if lines > 0 {
-                self.output(&format!("\x1b[{lines}A")).await;
+                self.output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
             }
             if cols > 0 {
-                self.output(&format!("\x1b[{cols}D")).await;
+                self.output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
             } else if cols < 0 {
                 let cols = -cols;
-                self.output(&format!("\x1b[{cols}C")).await;
+                self.output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
             }
 
             self.set_point(0);
@@ -2100,26 +2199,23 @@ impl Telnet {
         let point = self.point();
         let data_len = self.data().await.len();
 
-        if point < data_len {
-            let prompt_len = self.prompt().len();
-            let width = self.width();
-
-            let end_line = (prompt_len + data_len) / width;
-            let point_line = (prompt_len + point) / width;
-            let end_col = (prompt_len + data_len) % width;
-            let point_col = (prompt_len + point) % width;
+        if !self.at_end().await {
+            let end_line = self.end_line().await;
+            let point_line = self.point_line();
+            let end_col = self.end_column().await;
+            let point_col = self.point_column();
 
             let lines = end_line - point_line;
             let cols = end_col as i32 - point_col as i32;
 
             if lines > 0 {
-                self.output(&format!("\x1b[{lines}B")).await;
+                self.output(&format!("\x1b[{lines}B")).await; // XXX ANSI!
             }
             if cols > 0 {
-                self.output(&format!("\x1b[{cols}C")).await;
+                self.output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
             } else if cols < 0 {
                 let cols = -cols;
-                self.output(&format!("\x1b[{cols}D")).await;
+                self.output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
             }
 
             self.set_point(data_len);
@@ -2133,19 +2229,18 @@ impl Telnet {
 
         if point < data_len {
             point += 1;
+            self.set_point(point);
 
-            let prompt_len = self.prompt().len();
-            let width = self.width();
-            let point_col = (prompt_len + point) % width;
+            let point_col = self.point_column();
 
             if point_col == 0 {
                 self.output("\r\n").await;
             } else {
-                self.output("\x1b[C").await;
+                self.output("\x1b[C").await; // XXX ANSI!
             }
+        } else {
+            self.set_point(point);
         }
-
-        self.set_point(point);
     }
 
     #[framed]
@@ -2153,13 +2248,11 @@ impl Telnet {
         let mut point = self.point();
 
         if point > 0 {
-            let prompt_len = self.prompt().len();
-            let width = self.width();
-            let point_col = (prompt_len + point) % width;
+            let point_col = self.point_column();
 
             if point_col == 0 {
-                let cols = width - 1;
-                self.output(&format!("\x1b[A\x1b[{cols}C")).await;
+                let cols = self.width() - 1;
+                self.output(&format!("\x1b[A\x1b[{cols}C")).await; // XXX ANSI!
             } else {
                 self.output("\x08").await;
             }
@@ -2178,78 +2271,93 @@ impl Telnet {
             let mut data = self.data().await;
             let mut point = self.point();
 
-            if point >= data.len() {
+            if self.at_end().await {
                 // Insert character at point (end), echo if necessary.
                 data.push(ch);
                 point += 1;
+                self.set_point(point);
 
-                let echo = self.echo();
-                let do_echo = self.do_echo();
-                if echo == TELNET_ENABLED && do_echo {
-                    self.output_buffer().await.extend_from_slice(&[ch]);
-
-                    let prompt_len = self.prompt().len();
-                    let width = self.width();
-                    if (prompt_len + point) % width == 0 {
-                        self.output(" \x08").await; // Force line wrapping.
-                    }
+                self.echo_output(&String::from_utf8_lossy(&[ch])).await;
+                if self.point_column() == 0 {
+                    self.echo_output(" \x08").await; // Force line wrapping.
                 }
             } else {
                 // Insert in middle
                 data.insert(point, ch);
+                let mut lines = self.end_line().await - self.point_line();
+                let mut wrap = point - self.point_column();
+
+                self.echo_output("\x1b[@").await; // Insert character // XXX ANSI!
+                while lines > 0 {
+                    // Handle line wrapping.
+                    // Go to the start of the next line and insert a character.
+                    self.echo_output("\r\n\x1b[@").await; // XXX ANSI!
+                    wrap += self.width(); // Find wrapped character.
+                    if wrap < data.len() {
+                        self.echo_output(&String::from_utf8_lossy(&data[wrap..=wrap])).await; // Echo wrapped character.
+                    } else {
+                        self.echo_output(" ").await; // Echo space
+                    }
+                    lines -= 1;
+                }
+
                 point += 1;
+                self.set_point(point);
 
-                let echo = self.echo();
-                let do_echo = self.do_echo();
-                if echo == TELNET_ENABLED && do_echo {
-                    self.output("\x1b[@").await; // Insert character
-                    self.output_buffer().await.extend_from_slice(&[ch]);
-
-                    // Handle line wrapping for inserted character
-                    let prompt_len = self.prompt().len();
-                    let width = self.width();
-                    let end_line = (prompt_len + data.len()) / width;
-                    let point_line = (prompt_len + point) / width;
-
-                    let mut lines = end_line - point_line;
-                    let mut wrap = point - ((prompt_len + point) % width);
-
-                    while lines > 0 {
-                        self.output("\r\n\x1b[@").await;
-                        wrap += width;
-                        if wrap < data.len() {
-                            self.output_buffer().await.extend_from_slice(&data[wrap..=wrap]);
-                        } else {
-                            self.output(" ").await;
-                        }
-                        lines -= 1;
-                    }
-
-                    if end_line > point_line {
-                        let cols = 1 - (((prompt_len + point) % width) as i32);
-                        let lines = end_line - point_line;
-                        self.output(&format!("\x1b[{lines}A")).await;
-                        if cols > 0 {
-                            self.output(&format!("\x1b[{cols}D")).await;
-                        } else if cols < 0 {
-                            let cols = -cols;
-                            self.output(&format!("\x1b[{cols}C")).await;
-                        }
-                    }
-
-                    if (prompt_len + point) % width == 0 {
-                        if point < data.len() {
-                            self.output_buffer().await.extend_from_slice(&data[point..=point]);
-                            self.output("\x08").await;
-                        }
+                if self.end_line().await > self.point_line() {
+                    // Move cursor back to point.
+                    let columns = 1i32 - (self.point_column() as i32);
+                    let lines = self.end_line().await - self.point_line();
+                    // XXX ANSI!
+                    self.echo_output(&format!("\x1b[{lines}A")).await;
+                    if columns > 0 {
+                        self.echo_output(&format!("\x1b[{columns}D")).await;
+                    } else if columns < 0 {
+                        let columns = -columns;
+                        self.echo_output(&format!("\x1b[{columns}C")).await;
                     }
                 }
-            }
 
-            self.set_point(point);
+                // Insert character at point, echo if necessary.
+                self.echo_output(&String::from_utf8_lossy(&[ch])).await;
+                if self.point_column() == 0 {
+                    self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
+                    self.echo_output("\x08").await;
+                }
+            }
         } else {
             self.output(BELL_STR).await;
         }
+    }
+
+    /// Insert string at point.
+    #[framed]
+    pub async fn insert_string(&self, s: &str) {
+        if s.is_empty() {
+            return;
+        }
+
+        let mut data = self.data().await;
+        let mut point = self.point();
+
+        // Insert the string at the current point
+        for (i, ch) in s.as_bytes().iter().enumerate() {
+            data.insert(point + i, *ch);
+        }
+
+        // Update point to after the inserted string
+        point += s.len();
+        self.set_point(point);
+
+        // Update mark if it exists and is affected
+        if let Some(mark) = self.mark() {
+            if mark >= point - s.len() {
+                self.set_mark(Some(mark + s.len()));
+            }
+        }
+
+        // Echo the inserted string
+        self.echo_output(s).await;
     }
 
     #[framed]
@@ -2263,33 +2371,28 @@ impl Telnet {
             let echo = self.echo();
             let do_echo = self.do_echo();
             if echo == TELNET_ENABLED && do_echo {
-                self.output("\x1b[P").await; // Delete character
+                self.output("\x1b[P").await; // Delete character // XXX ANSI!
 
                 // Handle line wrapping
-                let prompt_len = self.prompt().len();
-                let width = self.width();
-                let end_line = (prompt_len + data.len()) / width;
-                let point_line = (prompt_len + point) / width;
-
-                let mut lines = end_line - point_line;
-                let mut wrap = point - ((prompt_len + point) % width);
+                let mut lines = self.end_line().await - self.point_line();
+                let mut wrap = point - self.point_column();
 
                 while lines > 0 {
-                    let cols = width - 1;
+                    let cols = self.width() - 1;
                     self.output(&format!("\r\x1b[{cols}C")).await;
-                    wrap += width;
+                    wrap += self.width();
                     if wrap < data.len() {
                         self.output_buffer().await.extend_from_slice(&data[wrap..=wrap]);
                     } else {
                         self.output(" ").await;
                     }
-                    self.output(" \x08\x1b[P").await;
+                    self.output(" \x08\x1b[P").await; // XXX ANSI!
                     lines -= 1;
                 }
 
-                if end_line > point_line {
-                    let cols = -(((prompt_len + point) % width) as i32);
-                    let lines = end_line - point_line;
+                if self.end_line().await > self.point_line() {
+                    let cols = -(self.point_column() as i32);
+                    let lines = self.end_line().await - self.point_line();
                     self.output(&format!("\x1b[{lines}A")).await;
                     if cols > 0 {
                         self.output(&format!("\x1b[{cols}D")).await;
@@ -2324,11 +2427,7 @@ impl Telnet {
         let point = self.point();
 
         if point < data.len() {
-            let echo = self.echo();
-            let do_echo = self.do_echo();
-            if echo == TELNET_ENABLED && do_echo {
-                self.output("\x1b[J").await; // Clear to end of screen
-            }
+            self.echo_output("\x1b[J").await; // Clear to end of screen
 
             // Save killed text to kill ring
             let killed: Vec<u8> = data.drain(point..).collect();
@@ -2391,9 +2490,7 @@ impl Telnet {
 
         point += 1;
 
-        let prompt_len = self.prompt().len();
-        let width = self.width();
-        if (prompt_len + point) % width == 0 {
+        if self.point_column() == 0 {
             if point < data.len() {
                 self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
@@ -2526,9 +2623,7 @@ impl Telnet {
             point += 1;
         }
 
-        let prompt_len = self.prompt().len();
-        let width = self.width();
-        if (prompt_len + point) % width == 0 {
+        if self.point_column() == 0 {
             if point < data.len() {
                 self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
@@ -2568,9 +2663,7 @@ impl Telnet {
             point += 1;
         }
 
-        let prompt_len = self.prompt().len();
-        let width = self.width();
-        if (prompt_len + point) % width == 0 {
+        if self.point_column() == 0 {
             if point < data.len() {
                 self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
@@ -2623,9 +2716,7 @@ impl Telnet {
             point += 1;
         }
 
-        let prompt_len = self.prompt().len();
-        let width = self.width();
-        if (prompt_len + point) % width == 0 {
+        if self.point_column() == 0 {
             if point < data.len() {
                 self.output_buffer().await.extend_from_slice(&data[point..=point]);
                 self.output("\x08").await;
@@ -2792,9 +2883,7 @@ impl Telnet {
                 if self.point() < data.len() {
                     self.end_of_line().await;
                 }
-                if self.echo() == TELNET_ENABLED && do_echo {
-                    self.output("\n").await;
-                }
+                self.echo_output("\n").await;
             }
 
             // Clear input buffer.
