@@ -19,8 +19,8 @@ use crate::user::{User, UserInner};
 use arc_swap::{ArcSwap, ArcSwapOption, Guard};
 use im::{HashMap, HashSet, OrdMap, OrdSet, Vector};
 use std::hash::Hash;
-use std::sync::atomic::{AtomicBool, AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize, AtomicU16, AtomicU32, AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicI32, AtomicI64, AtomicIsize, AtomicU8, AtomicU16, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
 // AtomicUsizeOption
 #[derive(Debug)]
@@ -305,11 +305,7 @@ impl AtomicBoolOption {
     }
 
     pub fn load(&self, ordering: Ordering) -> Option<bool> {
-        if self.has_value.load(ordering) {
-            Some(self.value.load(ordering))
-        } else {
-            None
-        }
+        if self.has_value.load(ordering) { Some(self.value.load(ordering)) } else { None }
     }
 
     pub fn store(&self, value: Option<bool>, ordering: Ordering) {

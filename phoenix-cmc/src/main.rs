@@ -9,7 +9,7 @@
 
 use anyhow::Result;
 use log::info;
-use phoenix_cmc::{server, server::Server, VERSION};
+use phoenix_cmc::{VERSION, server, server::Server};
 use std::env;
 use std::path::PathBuf;
 use tokio::signal;

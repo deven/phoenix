@@ -96,11 +96,7 @@ impl fmt::Display for Timestamp {
 
 impl From<i64> for Timestamp {
     fn from(timestamp: i64) -> Self {
-        if timestamp == 0 {
-            Self::new()
-        } else {
-            Self::from_unix(timestamp)
-        }
+        if timestamp == 0 { Self::new() } else { Self::from_unix(timestamp) }
     }
 }
 

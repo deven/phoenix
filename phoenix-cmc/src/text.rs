@@ -57,11 +57,7 @@ impl Text {
     pub fn new(s: impl AsRef<str>) -> Self {
         let s = s.as_ref();
 
-        if s.is_empty() {
-            Self::default()
-        } else {
-            Self(UniCase::new(ByteString::from(s.as_ref())))
-        }
+        if s.is_empty() { Self::default() } else { Self(UniCase::new(ByteString::from(s.as_ref()))) }
     }
 
     /// Creates a new `Text` from a `ByteString`.
@@ -232,22 +228,14 @@ impl Text {
     pub fn trim_start(&self) -> Self {
         let s = self.as_str();
         let trimmed = s.trim_start();
-        if trimmed.len() == s.len() {
-            self.clone()
-        } else {
-            self.slice_ref(trimmed)
-        }
+        if trimmed.len() == s.len() { self.clone() } else { self.slice_ref(trimmed) }
     }
 
     /// Trims whitespace from the end, returning a zero-copy slice if possible.
     pub fn trim_end(&self) -> Self {
         let s = self.as_str();
         let trimmed = s.trim_end();
-        if trimmed.len() == s.len() {
-            self.clone()
-        } else {
-            self.slice_ref(trimmed)
-        }
+        if trimmed.len() == s.len() { self.clone() } else { self.slice_ref(trimmed) }
     }
 
     /// Returns a reference to the underlying `ByteString`.
@@ -399,21 +387,13 @@ impl Text {
     /// Removes a prefix from this text, returning a zero-copy slice if successful.
     #[inline]
     pub fn strip_prefix(&self, prefix: &str) -> Option<Self> {
-        if self.starts_with(prefix) {
-            Some(self.slice_from(prefix.len()))
-        } else {
-            None
-        }
+        if self.starts_with(prefix) { Some(self.slice_from(prefix.len())) } else { None }
     }
 
     /// Removes a suffix from this text, returning a zero-copy slice if successful.
     #[inline]
     pub fn strip_suffix(&self, suffix: &str) -> Option<Self> {
-        if self.ends_with(suffix) {
-            Some(self.slice_to(self.len() - suffix.len()))
-        } else {
-            None
-        }
+        if self.ends_with(suffix) { Some(self.slice_to(self.len() - suffix.len())) } else { None }
     }
 
     /// Returns an iterator over character indices and the characters themselves.
@@ -1025,7 +1005,7 @@ mod tests {
         // Test Text vs ByteString equality (Text has case-insensitive PartialEq<str>)
         let text_hello = Text::new("HELLO WORLD");
         assert_eq!(text_hello, **bs2); // Text == str (case-insensitive via deref)
-                                       // Note: as_str() comparison would be case-sensitive, demonstrating preserved casing
+        // Note: as_str() comparison would be case-sensitive, demonstrating preserved casing
         assert_ne!(text_hello.as_str(), &**bs2); // Different cases
         assert_eq!(text_hello, &**bs2); // But equal case-insensitively
     }
@@ -1296,7 +1276,7 @@ mod tests {
         let slice = text.get_text(1..4).unwrap();
         assert_eq!(slice, "ell");
         assert_eq!(slice, "ELL"); // Case-insensitive
-                                  // get_text - invalid range
+        // get_text - invalid range
         assert!(text.get_text(0..10).is_none());
     }
 

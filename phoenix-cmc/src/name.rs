@@ -85,11 +85,7 @@ impl Name {
 
     /// Get the full formatted name with blurb, or "you" if name matches.
     pub fn you(&self, name: &Name) -> &str {
-        if self != name {
-            self.as_str()
-        } else {
-            "you"
-        }
+        if self != name { self.as_str() } else { "you" }
     }
 }
 
