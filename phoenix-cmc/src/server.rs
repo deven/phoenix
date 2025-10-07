@@ -165,6 +165,9 @@ impl Server {
         let telnet = Telnet::new(stream, self.clone());
         println!("=== DEBUG: Telnet instance created ===");
 
+        // Log connection details
+        telnet.log_caller().await;
+
         // Initiate TELNET protocol option negotiations and session login sequence.
         println!("=== DEBUG: Starting telnet.init_login_sequence() ===");
         telnet.init_login_sequence().await?;
