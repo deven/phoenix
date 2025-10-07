@@ -266,8 +266,8 @@ fn verify_crypt_password(input: &str, encrypted: &str) -> bool {
 // Password hashing for new passwords
 pub fn hash_password(password: &str) -> Result<String> {
     use argon2::{
-        password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
         Argon2,
+        password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
     };
 
     let salt = SaltString::generate(&mut OsRng);

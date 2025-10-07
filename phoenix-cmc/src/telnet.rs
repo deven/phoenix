@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+use crate::VERSION;
 use crate::atomic::{AtomicNameOption, AtomicSession, AtomicText, AtomicUsizeOption};
 use crate::constants::*;
 use crate::name::Name;
@@ -16,12 +17,11 @@ use crate::server::Server;
 use crate::session::Session;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
-use crate::VERSION;
 use async_backtrace::framed;
 use bytes::{Bytes, BytesMut};
 use std::collections::VecDeque;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 //use textwrap::wrap;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -199,34 +199,34 @@ pub struct Telnet(pub Arc<TelnetInner>);
 pub struct TelnetInner {
     // Connection
     pub stream: Mutex<TcpStream>,
-    pub closing: AtomicBool, // connection closing?
+    pub closing: AtomicBool,      // connection closing?
     pub close_on_eof: AtomicBool, // close connection on EOF?
 
     // Session
     pub session: AtomicSession, // link to session object
 
     // Terminal settings
-    pub width: AtomicUsize, // current screen width
-    pub height: AtomicUsize, // current screen height
-    pub naws_width: AtomicUsize, // NAWS negotiated screen width
+    pub width: AtomicUsize,       // current screen width
+    pub height: AtomicUsize,      // current screen height
+    pub naws_width: AtomicUsize,  // NAWS negotiated screen width
     pub naws_height: AtomicUsize, // NAWS negotiated screen height
 
     // Input buffer and editing
-    pub data: Mutex<Vec<u8>>, // start of input data
-    pub point: AtomicUsize, // current point location
+    pub data: Mutex<Vec<u8>>,    // start of input data
+    pub point: AtomicUsize,      // current point location
     pub mark: AtomicUsizeOption, // current mark location
-    pub prompt: AtomicText, // current prompt
+    pub prompt: AtomicText,      // current prompt
 
     // History and kill ring
-    pub history: Mutex<VecDeque<Text>>, // input history lines
+    pub history: Mutex<VecDeque<Text>>,      // input history lines
     pub history_position: AtomicUsizeOption, // current input history position
-    pub kill_ring: Mutex<VecDeque<Text>>, // kill-ring
+    pub kill_ring: Mutex<VecDeque<Text>>,    // kill-ring
 
     // Reply tracking
     pub reply_to: AtomicNameOption, // sender of last private message
 
     // Output buffers
-    pub output_buffer: Mutex<BytesMut>, // pending data output
+    pub output_buffer: Mutex<BytesMut>,  // pending data output
     pub command_buffer: Mutex<BytesMut>, // pending command output
 
     // Telnet/subnegotiation states
@@ -235,9 +235,9 @@ pub struct TelnetInner {
     // Subnegotiation state
     pub sb_state: AtomicU8, // subnegotiation state
 
-    pub undrawn: AtomicBool, // input line undrawn for output?
-    pub do_echo: AtomicBool, // should server be echoing?
-    pub acknowledge: AtomicBool, // use telnet TIMING-MARK option?
+    pub undrawn: AtomicBool,      // input line undrawn for output?
+    pub do_echo: AtomicBool,      // should server be echoing?
+    pub acknowledge: AtomicBool,  // use telnet TIMING-MARK option?
     pub outstanding: AtomicUsize, // outstanding acknowledgement count
     pub welcome_sent: AtomicBool, // welcome banner sent?
 
@@ -1389,11 +1389,7 @@ impl Telnet {
         // First flush command buffer
         let cmd_data = {
             let mut buf = self.command_buffer().await;
-            if buf.is_empty() {
-                Bytes::new()
-            } else {
-                buf.split().freeze()
-            }
+            if buf.is_empty() { Bytes::new() } else { buf.split().freeze() }
         };
 
         if !cmd_data.is_empty() {
@@ -1404,11 +1400,7 @@ impl Telnet {
         // Then flush output buffer
         let out_data = {
             let mut buf = self.output_buffer().await;
-            if buf.is_empty() {
-                Bytes::new()
-            } else {
-                buf.split().freeze()
-            }
+            if buf.is_empty() { Bytes::new() } else { buf.split().freeze() }
         };
 
         if !out_data.is_empty() {

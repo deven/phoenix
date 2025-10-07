@@ -15,13 +15,13 @@ use crate::constants::*;
 use crate::discussion::Discussion;
 use crate::name::Name;
 use crate::output::*;
-use crate::sendlist::{message_start, Sendlist};
+use crate::sendlist::{Sendlist, message_start};
 use crate::server::Server;
-use crate::telnet::{Telnet, BELL_STR, TELNET_ENABLED};
+use crate::telnet::{BELL_STR, TELNET_ENABLED, Telnet};
 use crate::text::Text;
-use crate::timestamp::{system_uptime, Timestamp};
-use crate::user::{verify_password, User, UserManager};
-use crate::{getword, match_keyword, match_name, VERSION};
+use crate::timestamp::{Timestamp, system_uptime};
+use crate::user::{User, UserManager, verify_password};
+use crate::{VERSION, getword, match_keyword, match_name};
 use arc_swap::{ArcSwap, ArcSwapOption};
 use async_backtrace::framed;
 use im::OrdSet;
@@ -280,11 +280,7 @@ impl Session {
 
     /// Return a single-character detached indicator.
     pub fn detached_indicator(&self) -> &str {
-        if self.telnet().is_some() {
-            " "
-        } else {
-            "~"
-        }
+        if self.telnet().is_some() { " " } else { "~" }
     }
 
     /// Get the input lines queue.

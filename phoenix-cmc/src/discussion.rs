@@ -17,8 +17,8 @@ use crate::timestamp::Timestamp;
 use crate::{getword, match_keyword};
 use async_backtrace::framed;
 use im::OrdSet;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 static DISCUSSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
