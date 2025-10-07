@@ -1268,6 +1268,9 @@ impl Session {
             self.set_user(None);
         }
 
+        // Check if server should shutdown after this session closes
+        self.server().check_shutdown().await;
+
         Ok(())
     }
 
