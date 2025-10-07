@@ -3764,12 +3764,6 @@ impl Session {
         }
     }
 
-    /// Initialize default session-level system variables for all users.
-    pub fn init_defaults() {
-        // Implementation will be added when needed
-        // defaults["time_format"] = "verbose";
-    }
-
     /// Print a set of sessions (comma-separated).
     pub async fn print_sessions(&self, sessions: &OrdSet<Session>) {
         if let Some((first, rest)) = sessions.iter().next().map(|first| (first, sessions.iter().skip(1))) {
@@ -3804,12 +3798,6 @@ impl Session {
             self.output(str_val).await;
             *flag = true;
         }
-    }
-
-    /// Check if shutting down and no users are left.
-    pub async fn check_shutdown() {
-        // This will need server shutdown logic when implemented
-        // For now, just a placeholder matching the C++ signature
     }
 }
 
