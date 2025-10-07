@@ -263,6 +263,9 @@ impl Server {
         });
 
         self.set_shutdown_handle(Some(handle.abort_handle()));
+
+        // Check immediately in case there are no active sessions.
+        self.check_shutdown().await;
     }
 
     /// Perform a server shutdown or restart.
@@ -284,6 +287,26 @@ impl Server {
         }
 
         std::process::exit(0);
+    }
+
+    /// Check if shutting down and no users are left.
+    pub async fn check_shutdown(&self) {
+        use crate::session::SESSIONS;
+
+        // Only proceed if shutdown is scheduled
+        if self.shutdown_handle().is_none() {
+            return;
+        }
+
+        // Check if any sessions remain
+        if !SESSIONS.is_empty() {
+            return;
+        }
+
+        // All connections closed, proceed with shutdown/restart
+        let restart = self.restarting();
+        log::info!("All connections closed, {} now.", if restart { "restarting" } else { "shutting down" });
+        self.perform_shutdown_or_restart(restart).await;
     }
 }
 
