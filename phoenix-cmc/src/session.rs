@@ -773,6 +773,11 @@ impl Session {
         };
     }
 
+    /// Check if the session has privileged access.
+    pub fn privileged(&self) -> bool {
+        self.priv_level() >= 50
+    }
+
     /// Get the closing flag.
     pub fn closing(&self) -> bool {
         match self.session_type().as_ref() {
@@ -3879,7 +3884,7 @@ impl Session {
                     _ if inactive && !is_active => true,
                     _ if idle && idle_time >= 10 => true,
                     _ if unidle && idle_time < 10 => true,
-                    _ if privileged && session.priv_level() >= 50 => true,
+                    _ if privileged && session.privileged() => true,
                     _ if guests && session.priv_level() == 0 => true,
                     _ if everyone => true,
                     _ => false,
