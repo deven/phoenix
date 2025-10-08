@@ -35,7 +35,7 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
         return;
     }
 
-    println!("=== DEBUG: {} ({} bytes) ===", label, bytes.len());
+    println!("=== DEBUG: {label} ({len} bytes) ===", len = bytes.len());
 
     // Print hex and ASCII in 16-byte lines
     for (i, chunk) in bytes.chunks(16).enumerate() {
@@ -67,7 +67,7 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
         // Print ASCII representation
         for &byte in chunk {
             let ch = if byte >= 32 && byte <= 126 { byte as char } else { '.' };
-            print!("{}", ch);
+            print!("{ch}");
         }
 
         println!("|");
@@ -80,19 +80,19 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
             let cmd = bytes[i + 1];
             match cmd {
                 x if x == TelnetCommand::Will as u8 && i + 2 < bytes.len() => {
-                    println!("  -> TELNET: IAC WILL {}", telnet_option_name(bytes[i + 2]));
+                    println!("  -> TELNET: IAC WILL {option}", option = telnet_option_name(bytes[i + 2]));
                     i += 3;
                 }
                 x if x == TelnetCommand::Wont as u8 && i + 2 < bytes.len() => {
-                    println!("  -> TELNET: IAC WONT {}", telnet_option_name(bytes[i + 2]));
+                    println!("  -> TELNET: IAC WONT {option}", option = telnet_option_name(bytes[i + 2]));
                     i += 3;
                 }
                 x if x == TelnetCommand::Do as u8 && i + 2 < bytes.len() => {
-                    println!("  -> TELNET: IAC DO {}", telnet_option_name(bytes[i + 2]));
+                    println!("  -> TELNET: IAC DO {option}", option = telnet_option_name(bytes[i + 2]));
                     i += 3;
                 }
                 x if x == TelnetCommand::Dont as u8 && i + 2 < bytes.len() => {
-                    println!("  -> TELNET: IAC DONT {}", telnet_option_name(bytes[i + 2]));
+                    println!("  -> TELNET: IAC DONT {option}", option = telnet_option_name(bytes[i + 2]));
                     i += 3;
                 }
                 x if x == TelnetCommand::SubnegotiationBegin as u8 => {
@@ -104,7 +104,7 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
                     i += 2;
                 }
                 _ => {
-                    println!("  -> TELNET: IAC {} (0x{:02x})", telnet_command_name(cmd), cmd);
+                    println!("  -> TELNET: IAC {command} (0x{cmd:02x})", command = telnet_command_name(cmd));
                     i += 2;
                 }
             }
@@ -112,7 +112,7 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
             i += 1;
         }
     }
-    println!("=== END {} ===", label);
+    println!("=== END {label} ===");
 }
 
 fn telnet_command_name(cmd: u8) -> &'static str {
@@ -355,7 +355,7 @@ impl Telnet {
     pub fn new(stream: TcpStream, server: Server) -> Self {
         println!("=== DEBUG: Telnet::new() creating new session ===");
         let session = Session::new(server, None);
-        println!("=== DEBUG: Telnet::new() session created with ID: {} ===", session.id());
+        println!("=== DEBUG: Telnet::new() session created with ID: {id} ===", id = session.id());
         let inner = TelnetInner {
             stream: Mutex::new(stream),
             closing: AtomicBool::new(false),
@@ -408,10 +408,10 @@ impl Telnet {
         let stream = self.stream().await;
         match stream.peer_addr() {
             Ok(addr) => {
-                log::info!("Accepted connection from {}", addr); // XXX log message
+                log::info!("Accepted connection from {addr}"); // XXX log message
             }
             Err(e) => {
-                log::warn!("Telnet::log_caller(): peer_addr() failed: {}", e); // XXX print error message
+                log::warn!("Telnet::log_caller(): peer_addr() failed: {e}"); // XXX print error message
             }
         }
     }
@@ -941,7 +941,7 @@ impl Telnet {
             self.set_do_echo(false);
             if self.acknowledge() {
                 if let Err(e) = self.timing_mark().await {
-                    println!("=== DEBUG: Error in timing_mark() during close(): {} ===", e);
+                    println!("=== DEBUG: Error in timing_mark() during close(): {e} ===");
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -949,7 +949,7 @@ impl Telnet {
             } else {
                 // Flush all pending output
                 if let Err(e) = self.flush_output().await {
-                    println!("=== DEBUG: Error in flush_output() during close(): {} ===", e);
+                    println!("=== DEBUG: Error in flush_output() during close(): {e} ===");
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -959,7 +959,7 @@ impl Telnet {
 
         // Always attempt to close the underlying stream.
         if let Err(e) = self.stream().await.shutdown().await {
-            println!("=== DEBUG: Error shutting down stream: {} ===", e);
+            println!("=== DEBUG: Error shutting down stream: {e} ===");
             if result.is_ok() {
                 result = Err(e);
             }
@@ -972,7 +972,7 @@ impl Telnet {
     #[framed]
     pub async fn output(self: &Self, data: impl AsRef<str>) {
         let data_str = data.as_ref();
-        println!("=== DEBUG: Telnet::output() called with: '{}' ===", data_str);
+        println!("=== DEBUG: Telnet::output() called with: '{data_str}' ===");
         let mut output = self.output_buffer().await;
         println!("=== DEBUG: Got output buffer lock ===");
 
@@ -1247,7 +1247,7 @@ impl Telnet {
                 if signal_public {
                     self.output(BELL_STR).await;
                 }
-                self.output(&format!("\n -> From {} to everyone:", from.as_str())).await;
+                self.output(&format!("\n -> From {from} to everyone:", from = from.as_str())).await;
             }
             OutputType::PrivateMessage => {
                 // Save name to reply to.
@@ -1273,7 +1273,7 @@ impl Telnet {
                     // Quote reply sendlist if necessary.
                     let reply_sendlist = session.reply_sendlist();
                     if reply_sendlist.as_bytes().iter().any(|&b| b == SPACE || b == COMMA || b == COLON || b == SEMICOLON || b == UNDERSCORE) {
-                        let quoted = Text::from(format!("\"{}\"", reply_sendlist.as_str()));
+                        let quoted = Text::from(format!("\"{reply_sendlist}\"", reply_sendlist = reply_sendlist.as_str()));
                         session.set_reply_sendlist(quoted);
                     }
 
@@ -1432,7 +1432,7 @@ impl Telnet {
                         return Ok(());
                     }
                     Ok(n) => {
-                        println!("=== DEBUG: Socket read {} bytes ===", n);
+                        println!("=== DEBUG: Socket read {n} bytes ===");
                         debug_format_bytes(&buffer[..n], "RECEIVED FROM CLIENT");
                         n
                     }
@@ -1441,7 +1441,7 @@ impl Telnet {
                         continue;
                     }
                     Err(e) => {
-                        println!("=== DEBUG: Socket read error: {} ===", e);
+                        println!("=== DEBUG: Socket read error: {e} ===");
                         return Err(e);
                     }
                 }
@@ -1485,7 +1485,7 @@ impl Telnet {
 
     #[framed]
     pub async fn process_data_byte(&self, byte: u8) -> tokio::io::Result<()> {
-        println!("=== DEBUG: process_data_byte(0x{:02x} '{}') ===", byte, if byte >= 32 && byte <= 126 { byte as char } else { '.' });
+        println!("=== DEBUG: process_data_byte(0x{byte:02x} '{ch}') ===", ch = if byte >= 32 && byte <= 126 { byte as char } else { '.' });
         match byte {
             x if x == TelnetCommand::IAC as u8 => self.set_state(TelnetState::IAC),
             CONTROL_A => self.beginning_of_line().await,
