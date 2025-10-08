@@ -3646,20 +3646,21 @@ impl Session {
 
     #[framed]
     pub async fn send_message(&self, sendlist: &Sendlist, text: &str) -> tokio::io::Result<()> {
-        let mut result = Ok(());
+        let mut who = OrdSet::new();
+        let now = Timestamp::new();
+        let count = sendlist.expand(&mut who, Some(self.clone())).await;
 
-        if !sendlist.errors().is_empty() {
-            self.output("\x07\x07").await;
-            self.output(&sendlist.errors().to_string()).await;
-        }
-
-        if sendlist.sessions().is_empty() && sendlist.discussions().is_empty() {
-            self.output("Your message is unchanged.\n").await;
+        // If no recipients, handle errors and return early
+        if count == 0 {
+            if !sendlist.errors().is_empty() {
+                self.output("\x07\x07").await;
+                self.output(&sendlist.errors().to_string()).await;
+            }
+            self.output("(message not sent)\n").await;
             return Ok(());
         }
 
         // Check sender status and warn if necessary
-        let now = Timestamp::new();
         match self.away() {
             AwayState::Gone => {
                 self.output("[Warning: you are listed as \"gone\".]\n").await;
@@ -3675,9 +3676,7 @@ impl Session {
 
         self.reset_idle(10).await;
 
-        let mut who = OrdSet::new();
-        let count = sendlist.expand(&mut who, Some(self.clone())).await;
-
+        // Create and send message
         let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
 
         let msg = Message::new(output_type, self.name(), Arc::new(sendlist.clone()), text);
@@ -3686,90 +3685,99 @@ impl Session {
         }
 
         for session in &who {
-            if let Err(e) = session.enqueue(msg.clone()).await {
-                println!("=== DEBUG: Error in enqueue() during send_message(): {} ===", e);
-                if result.is_ok() {
-                    result = Err(e);
-                }
-            }
+            session.enqueue(msg.clone()).await.ok();
         }
 
         // Output confirmation with recipient status details
-        if !who.is_empty() {
-            self.output("(message sent to ").await;
-            let mut first = true;
-            for session in &who {
-                if first {
-                    first = false;
-                } else {
-                    self.output(", ").await;
-                }
+        self.output("(message sent to ").await;
+        let mut first = true;
+        for session in &who {
+            if first {
+                first = false;
+            } else {
+                self.output(", ").await;
+            }
 
-                let mut flag = false;
-                self.output(&session.name().to_string()).await;
-                self.output(&session.name().column_display()).await;
+            let mut flag = false;
+            self.output(&session.name().to_string()).await;
+            self.output(&session.name().column_display()).await;
 
-                // Check if detached
-                if session.telnet().is_none() {
-                    self.output(if flag { ", " } else { " (" }).await;
-                    flag = true;
-                    self.output("detached").await;
-                }
+            // Check if detached
+            if session.telnet().is_none() {
+                self.output(if flag { ", " } else { " (" }).await;
+                flag = true;
+                self.output("detached").await;
+            }
 
-                // Check away status
-                if session.away() != AwayState::Here {
-                    self.output(if flag { ", " } else { " (" }).await;
-                    flag = true;
-                    match session.away() {
-                        AwayState::Here => {}
-                        AwayState::Away => self.output("\"away\"").await,
-                        AwayState::Busy => self.output("\"busy\"").await,
-                        AwayState::Gone => self.output("\"gone\"").await,
-                    }
-                }
-
-                // Check idle time
-                let idle_minutes = (now.unix() - session.idle_since().unix()) / 60;
-                if idle_minutes > 0 {
-                    self.output(if flag { ", " } else { " (" }).await;
-                    flag = true;
-                    self.output("idle: ").await;
-
-                    let hours = idle_minutes / 60;
-                    let minutes = idle_minutes % 60;
-                    let days = hours / 24;
-                    let hours = hours % 24;
-
-                    if days > 0 {
-                        self.output(&format!("{}d{:02}:{:02}", days, hours, minutes)).await;
-                    } else if hours > 0 {
-                        self.output(&format!("{}:{:02}", hours, minutes)).await;
-                    } else {
-                        let s = if minutes == 1 { "" } else { "s" };
-                        self.output(&format!("{} minute{}", minutes, s)).await;
-                    }
-                }
-
-                if flag {
-                    self.output(")").await;
+            // Check away status
+            if session.away() != AwayState::Here {
+                self.output(if flag { ", " } else { " (" }).await;
+                flag = true;
+                match session.away() {
+                    AwayState::Here => {}
+                    AwayState::Away => self.output("\"away\"").await,
+                    AwayState::Busy => self.output("\"busy\"").await,
+                    AwayState::Gone => self.output("\"gone\"").await,
                 }
             }
-            self.output(")\n").await;
+
+            // Check idle time
+            let idle_minutes = (now.unix() - session.idle_since().unix()) / 60;
+            if idle_minutes > 0 {
+                self.output(if flag { ", " } else { " (" }).await;
+                flag = true;
+                self.output("idle: ").await;
+
+                let hours = idle_minutes / 60;
+                let minutes = idle_minutes % 60;
+                let days = hours / 24;
+                let hours = hours % 24;
+
+                if days > 0 {
+                    self.output(&format!("{days}d{hours:02}:{minutes:02}")).await;
+                } else if hours > 0 {
+                    self.output(&format!("{hours}:{minutes:02}")).await;
+                } else {
+                    let s = if minutes == 1 { "" } else { "s" };
+                    self.output(&format!("{minutes} minute{s}")).await;
+                }
+            }
+
+            if flag {
+                self.output(")").await;
+            }
         }
 
-        for disc in &sendlist.discussions() {
-            disc.set_idle_since(Timestamp::new());
+        // Handle discussions
+        if !sendlist.discussions().is_empty() {
+            if !first {
+                self.output("; ").await;
+            }
+            let disc_count = sendlist.discussions().len();
+            let s = if disc_count == 1 { "" } else { "s" };
+            self.output(&format!("discussion{s} ")).await;
+            self.print_discussions(&sendlist.discussions()).await;
+
+            // Set discussion idle times
+            for disc in &sendlist.discussions() {
+                disc.set_idle_since(now);
+            }
         }
 
-        self.output("(message sent to ").await;
-        self.print_sendlist(sendlist).await;
-        self.output(")").await;
-
-        let idle_minutes = idle_time / 60;
-        if idle_minutes >= 30 {
-            self.output(&format!(" [idle {idle_minutes}]")).await;
+        // Final output with count
+        if count > 1 {
+            self.output(&format!(".) [{count} people]\n")).await;
+        } else if count == 1 && !sendlist.discussions().is_empty() {
+            self.output(".) [1 person]\n").await;
+        } else {
+            self.output(".)\n").await;
         }
-        self.output("\n").await;
+
+        // Show any errors at the end
+        if !sendlist.errors().is_empty() {
+            self.output("\x07\x07").await;
+            self.output(&sendlist.errors().to_string()).await;
+        }
 
         Ok(())
     }
