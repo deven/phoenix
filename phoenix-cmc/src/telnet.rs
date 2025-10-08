@@ -2188,7 +2188,6 @@ impl Telnet {
 
     #[framed]
     pub async fn end_of_line(&self) {
-        let point = self.point();
         let data_len = self.data().await.len();
 
         if !self.at_end().await {

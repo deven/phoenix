@@ -432,7 +432,7 @@ impl Session {
             lines.pop_front()
         };
         if let Some(next_line) = next_line {
-            self.handle_input(next_line).await?;
+            Box::pin(self.handle_input(next_line)).await?;
         }
 
         Ok(())
@@ -1070,7 +1070,7 @@ impl Session {
             _ => {}
         }
 
-        let name = Name::new(name, blurb);
+        let name = Name::new(self.name_entered().unwrap_or_default(), blurb);
         println!("=== DEBUG: handle_blurb_input(): name={name:?} ===");
         self.logged_in(name, user);
         println!("=== DEBUG: handle_blurb_input(): self.name()={name:?} ===", name = self.name());
@@ -1112,7 +1112,7 @@ impl Session {
         }
 
         match self.name_entered() {
-            Some(name) if self.check_name_availability(name.as_deref(), true, true).await? => {
+            Some(name) if self.check_name_availability(&name, true, true).await? => {
                 self.output("(That session is now gone.)\n").await;
                 self.switch_login_state(LoginState::AwaitingBlurb, Some("Enter blurb: ")).await?;
             }
@@ -1213,8 +1213,8 @@ impl Session {
         }
 
         match self.find_sendable(name, false, true, true, true).await {
-            (Some(session), _, _, _) if user.is_some() && user == session.user() && user.priv_level() > 0 => {
-                if let Some(other_telnet) = session.telnet() {
+            (Some(session), _, _, _) if user.is_some() && user == session.user() && user.unwrap().priv_level() > 0 => {
+                if session.telnet().is_some() {
                     if transferring {
                         telnet.output("Transferring active session...\n").await;
                         session.transfer(telnet).await?;
@@ -3707,7 +3707,7 @@ impl Session {
 
                 let mut flag = false;
                 self.output(&session.name().to_string()).await;
-                self.output(&session.name().blurb_display()).await;
+                self.output(&session.name().column_display()).await;
 
                 // Check if detached
                 if session.telnet().is_none() {
@@ -3765,8 +3765,9 @@ impl Session {
         self.print_sendlist(sendlist).await;
         self.output(")").await;
 
-        if idle >= 30 {
-            self.output(&format!(" [idle {idle}]")).await;
+        let idle_minutes = idle_time / 60;
+        if idle_minutes >= 30 {
+            self.output(&format!(" [idle {idle_minutes}]")).await;
         }
         self.output("\n").await;
 
@@ -3787,7 +3788,7 @@ impl Session {
         }
 
         // Parse comma-separated arguments for filter keywords
-        let everyone = args.is_empty();
+        let mut everyone = args.is_empty();
         let mut here = false;
         let mut away = false;
         let mut busy = false;
@@ -3877,7 +3878,7 @@ impl Session {
                 };
 
                 if include {
-                    who.insert(session);
+                    who.insert(session.clone());
                 }
             }
         }
@@ -4035,7 +4036,7 @@ impl Session {
         if *flag {
             if !last.is_empty() {
                 self.output(", ").await;
-                self.output(last).await;
+                self.output(&*last).await;
             }
             *last = str_val.to_string();
         } else {
