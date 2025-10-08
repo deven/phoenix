@@ -3760,7 +3760,7 @@ impl Session {
 
             // Set discussion idle times
             for disc in &sendlist.discussions() {
-                disc.set_idle_since(now);
+                disc.set_idle_since(now.clone());
             }
         }
 
