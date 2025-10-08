@@ -3779,31 +3779,185 @@ impl Session {
         let mut errors = String::new();
         let mut msg = String::new();
 
-        if args.is_empty() {
-            for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
-                who.insert(session.clone());
+        // Check if anyone is signed on at all.
+        let total_sessions = SESSIONS.snapshot().values().filter(|s| s.signed_on()).count();
+        if total_sessions == 0 {
+            self.output("Nobody is signed on.\n").await;
+            return (who, errors, msg);
+        }
+
+        // Parse comma-separated arguments for filter keywords
+        let everyone = args.is_empty();
+        let mut here = false;
+        let mut away = false;
+        let mut busy = false;
+        let mut gone = false;
+        let mut attached = false;
+        let mut detached = false;
+        let mut active = false;
+        let mut inactive = false;
+        let mut idle = false;
+        let mut unidle = false;
+        let mut privileged = false;
+        let mut guests = false;
+        let mut sendlist_args = Vec::new();
+
+        if !args.is_empty() {
+            for arg in args.split(',') {
+                let arg = arg.trim();
+                if arg.is_empty() {
+                    continue;
+                }
+
+                match arg.to_lowercase().as_str() {
+                    "here" => here = true,
+                    "away" => away = true,
+                    "busy" => busy = true,
+                    "gone" => gone = true,
+                    "attached" => attached = true,
+                    "detached" => detached = true,
+                    "active" => active = true,
+                    "inactive" => inactive = true,
+                    "idle" => idle = true,
+                    "unidle" => unidle = true,
+                    "privileged" => privileged = true,
+                    "guests" => guests = true,
+                    "everyone" => everyone = true,
+                    "all" => {
+                        active = true;
+                        attached = true;
+                    }
+                    _ => {
+                        // Not a recognized filter keyword, save for sendlist expansion
+                        sendlist_args.push(arg);
+                    }
+                }
             }
+        }
 
-            let count = who.len();
-            let s = if count == 1 { "" } else { "s" };
-            msg = format!("\n{count} user{s} signed on.\n");
-        } else {
-            let sendlist = Sendlist::new(&self, args, true, true, true).await;
+        let has_filters = here || away || busy || gone || attached || detached || active || inactive || idle || unidle || privileged || guests || everyone;
 
+        // Handle sendlist expansion first (matches go first in the set)
+        if !sendlist_args.is_empty() {
+            let sendlist_arg_str = sendlist_args.join(",");
+            let sendlist = Sendlist::new(&self, &sendlist_arg_str, true, true, true).await;
             let _total = sendlist.expand(&mut who, None).await;
 
             if !sendlist.errors().is_empty() {
                 errors = sendlist.errors().to_string();
             }
+        }
 
-            if who.is_empty() {
-                if errors.is_empty() {
-                    errors = "No one matched your request.\n".to_string();
+        // Add filter matches to the set
+        if has_filters {
+            let now = Timestamp::new();
+            for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
+                let idle_time = (now.unix() - session.idle_since().unix()) / 60;
+                let is_active = match session.away() {
+                    AwayState::Here if session.telnet().is_some() && idle_time < 60 => true,
+                    AwayState::Here if idle_time < 10 => true,
+                    AwayState::Away if session.telnet().is_some() && idle_time < 10 => true,
+                    _ => false,
+                };
+                let include = match session.away() {
+                    AwayState::Here if here => true,
+                    AwayState::Away if away => true,
+                    AwayState::Busy if busy => true,
+                    AwayState::Gone if gone => true,
+                    _ if attached && session.telnet().is_some() => true,
+                    _ if detached && session.telnet().is_none() => true,
+                    _ if active && is_active => true,
+                    _ if inactive && !is_active => true,
+                    _ if idle && idle_time >= 10 => true,
+                    _ if unidle && idle_time < 10 => true,
+                    _ if privileged && session.priv_level() >= 50 => true,
+                    _ if guests && session.priv_level() == 0 => true,
+                    _ if everyone => true,
+                    _ => false,
+                };
+
+                if include {
+                    who.insert(session);
                 }
-            } else {
-                let count = who.len();
-                let s = if count == 1 { "" } else { "s" };
-                msg = format!("\n{count} user{s} matched.\n",);
+            }
+        }
+
+        // Handle no matches case
+        if who.is_empty() {
+            if has_filters {
+                let mut filter_list = Vec::new();
+                if here {
+                    filter_list.push("\"here\"");
+                }
+                if away {
+                    filter_list.push("\"away\"");
+                }
+                if busy {
+                    filter_list.push("\"busy\"");
+                }
+                if gone {
+                    filter_list.push("\"gone\"");
+                }
+                if attached {
+                    filter_list.push("attached");
+                }
+                if detached {
+                    filter_list.push("detached");
+                }
+                if active {
+                    filter_list.push("active");
+                }
+                if inactive {
+                    filter_list.push("inactive");
+                }
+                if idle {
+                    filter_list.push("idle");
+                }
+                if unidle {
+                    filter_list.push("unidle");
+                }
+                if privileged {
+                    filter_list.push("privileged");
+                }
+                if guests {
+                    filter_list.push("a guest");
+                }
+
+                if !filter_list.is_empty() {
+                    let mut output = "Nobody is ".to_string();
+                    if filter_list.len() == 1 {
+                        output.push_str(filter_list[0]);
+                    } else {
+                        for (i, item) in filter_list.iter().enumerate() {
+                            if i == filter_list.len() - 1 {
+                                output.push_str(" or ");
+                                output.push_str(item);
+                            } else if i > 0 {
+                                output.push_str(", ");
+                                output.push_str(item);
+                            } else {
+                                output.push_str(item);
+                            }
+                        }
+                    }
+                    output.push_str(".\n");
+                    self.output(&output).await;
+                }
+            }
+            if !errors.is_empty() {
+                self.output("\x07\x07").await; // Bell characters
+                self.output(&errors).await;
+            }
+            return (who, String::new(), String::new());
+        }
+
+        // Generate message for successful matches with filters
+        if has_filters {
+            let others = total_sessions - who.len();
+            if others == 1 {
+                msg = "(There is 1 other person signed on.)\n".to_string();
+            } else if others > 0 {
+                msg = format!("(There are {others} other people signed on.)\n");
             }
         }
 
