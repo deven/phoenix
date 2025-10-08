@@ -3658,7 +3658,22 @@ impl Session {
             return Ok(());
         }
 
-        let idle = self.reset_idle(30).await;
+        // Check sender status and warn if necessary
+        let now = Timestamp::new();
+        match self.away() {
+            AwayState::Gone => {
+                self.output("[Warning: you are listed as \"gone\".]\n").await;
+            }
+            AwayState::Busy => {
+                if (now.unix() - self.idle_since().unix()) >= 600 {
+                    self.output("\x07").await;
+                    self.output("[Warning: you are still listed as \"busy\".]\n").await;
+                }
+            }
+            _ => {}
+        }
+
+        self.reset_idle(10).await;
 
         let mut who = OrdSet::new();
         let count = sendlist.expand(&mut who, Some(self.clone())).await;
@@ -3677,6 +3692,69 @@ impl Session {
                     result = Err(e);
                 }
             }
+        }
+
+        // Output confirmation with recipient status details
+        if !who.is_empty() {
+            self.output("(message sent to ").await;
+            let mut first = true;
+            for session in &who {
+                if first {
+                    first = false;
+                } else {
+                    self.output(", ").await;
+                }
+
+                let mut flag = false;
+                self.output(&session.name().to_string()).await;
+                self.output(&session.name().blurb_display()).await;
+
+                // Check if detached
+                if session.telnet().is_none() {
+                    self.output(if flag { ", " } else { " (" }).await;
+                    flag = true;
+                    self.output("detached").await;
+                }
+
+                // Check away status
+                if session.away() != AwayState::Here {
+                    self.output(if flag { ", " } else { " (" }).await;
+                    flag = true;
+                    match session.away() {
+                        AwayState::Here => {}
+                        AwayState::Away => self.output("\"away\"").await,
+                        AwayState::Busy => self.output("\"busy\"").await,
+                        AwayState::Gone => self.output("\"gone\"").await,
+                    }
+                }
+
+                // Check idle time
+                let idle_minutes = (now.unix() - session.idle_since().unix()) / 60;
+                if idle_minutes > 0 {
+                    self.output(if flag { ", " } else { " (" }).await;
+                    flag = true;
+                    self.output("idle: ").await;
+
+                    let hours = idle_minutes / 60;
+                    let minutes = idle_minutes % 60;
+                    let days = hours / 24;
+                    let hours = hours % 24;
+
+                    if days > 0 {
+                        self.output(&format!("{}d{:02}:{:02}", days, hours, minutes)).await;
+                    } else if hours > 0 {
+                        self.output(&format!("{}:{:02}", hours, minutes)).await;
+                    } else {
+                        let s = if minutes == 1 { "" } else { "s" };
+                        self.output(&format!("{} minute{}", minutes, s)).await;
+                    }
+                }
+
+                if flag {
+                    self.output(")").await;
+                }
+            }
+            self.output(")\n").await;
         }
 
         for disc in &sendlist.discussions() {
