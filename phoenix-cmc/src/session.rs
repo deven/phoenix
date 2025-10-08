@@ -426,6 +426,15 @@ impl Session {
             }
         }
 
+        // If there are pending input lines, process one to continue the flow
+        let next_line = {
+            let mut lines = self.lines().await;
+            lines.pop_front()
+        };
+        if let Some(next_line) = next_line {
+            self.handle_input(next_line).await?;
+        }
+
         Ok(())
     }
 
