@@ -272,7 +272,7 @@ pub fn hash_password(password: &str) -> Result<String> {
 
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
+    let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|e| anyhow::anyhow!("Password hashing failed: {e}"))?;
     Ok(password_hash.to_string())
 }
 

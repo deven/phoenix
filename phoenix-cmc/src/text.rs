@@ -1442,8 +1442,8 @@ mod tests {
     #[test]
     fn test_display_trait() {
         let text = Text::new("Hello World");
-        assert_eq!(format!("{}", text), "Hello World");
-        assert_eq!(format!("{:>15}", text), "    Hello World");
+        assert_eq!(format!("{text}"), "Hello World");
+        assert_eq!(format!("{text:>15}"), "    Hello World");
     }
 
     #[test]

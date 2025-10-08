@@ -305,7 +305,7 @@ impl Server {
 
         // All connections closed, proceed with shutdown/restart
         let restart = self.restarting();
-        log::info!("All connections closed, {} now.", if restart { "restarting" } else { "shutting down" });
+        log::info!("All connections closed, {verb} now.", verb = if restart { "restarting" } else { "shutting down" });
         self.perform_shutdown_or_restart(restart).await;
     }
 }

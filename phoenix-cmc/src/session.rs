@@ -190,7 +190,7 @@ impl Session {
     /// Create a new session in PreLogin state.
     pub fn new(server: Server, telnet: Option<Telnet>) -> Self {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
-        println!("=== DEBUG: Session::new() creating session with ID: {} ===", id);
+        println!("=== DEBUG: Session::new() creating session with ID: {id} ===");
         let now = Timestamp::new();
         let inner = SessionInner {
             id,
@@ -223,7 +223,7 @@ impl Session {
 
         SESSIONS.insert(session.id(), session.clone());
 
-        println!("=== DEBUG: Session::new() completed for ID: {} ===", id);
+        println!("=== DEBUG: Session::new() completed for ID: {id} ===");
         session
     }
 
@@ -1357,7 +1357,7 @@ impl Session {
         for session in SESSIONS.snapshot().values() {
             session.output(message).await;
             if let Err(e) = session.enqueue_output().await {
-                println!("=== DEBUG: Error in enqueue_output() during announce(): {} ===", e);
+                println!("=== DEBUG: Error in enqueue_output() during announce(): {e} ===");
                 if result.is_ok() {
                     result = Err(e);
                 }
@@ -1391,7 +1391,7 @@ impl Session {
         for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
             if session != self {
                 if let Err(e) = session.enqueue(out.clone()).await {
-                    println!("=== DEBUG: Error in enqueue() during enqueue_others(): {} ===", e);
+                    println!("=== DEBUG: Error in enqueue() during enqueue_others(): {e} ===");
                     if result.is_ok() {
                         result = Err(e);
                     }
@@ -1921,7 +1921,7 @@ impl Session {
 
             // Show continuation of long name if only one user.
             if name.len() > 33 && who.len() == 1 {
-                self.output(&format!(">{}\n", &name.as_str()[32..])).await;
+                self.output(&format!(">{name}\n", name = &name.as_str()[32..])).await;
             }
         }
 
