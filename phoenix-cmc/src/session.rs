@@ -234,7 +234,8 @@ impl Session {
         self.0.login_time.store(Arc::new(now.clone()));
         self.0.idle_since.store(Arc::new(now));
 
-        // Clear close-on-EOF flag now that login sequence is finished
+        // Cancel login timeout and clear close-on-EOF flag now that login sequence is finished
+        self.cancel_login_timeout();
         if let Some(telnet) = self.telnet() {
             telnet.set_close_on_eof(false);
         }
@@ -452,6 +453,35 @@ impl Session {
             SessionType::PreLogin { login_timeout, .. } => login_timeout.store(value.map(Arc::new)),
             SessionType::LoggedIn { .. } => (),
         };
+    }
+
+    /// Cancel the login timeout.
+    pub fn cancel_login_timeout(&self) {
+        if let Some(handle) = self.login_timeout() {
+            handle.abort();
+        }
+        self.set_login_timeout(None);
+    }
+
+    /// Reset the login timeout to the full duration.
+    pub fn reset_login_timeout(&self) {
+        // Cancel existing timeout if any
+        if let Some(handle) = self.login_timeout() {
+            handle.abort();
+        }
+
+        // Start new timeout
+        let session = self.clone();
+        let handle = tokio::spawn(async move {
+            tokio::time::sleep(LOGIN_TIMEOUT).await;
+            if let Some(telnet) = session.telnet() {
+                let _ = telnet.output("Login timeout.\n").await;
+                let _ = session.close(true).await;
+            }
+        })
+        .abort_handle();
+
+        self.set_login_timeout(Some(handle));
     }
 
     /// Get the login attempts count.
@@ -907,6 +937,11 @@ impl Session {
         println!("=== DEBUG: handle_input() starting ===");
         self.pending().await.dequeue().await;
 
+        // Reset login timeout if still in pre-login state
+        if !self.signed_on() {
+            self.reset_login_timeout();
+        }
+
         match self.login_state() {
             LoginState::PreLogin => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
             LoginState::AwaitingLogin => println!("=== DEBUG: calling handle_login_input({line:?}) ==="),
@@ -1177,6 +1212,10 @@ impl Session {
     #[framed]
     pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
         println!("=== DEBUG: Session::init_login_sequence() starting ===");
+
+        // Start login timeout
+        self.reset_login_timeout();
+
         println!("=== DEBUG: Switching to AwaitingLogin state ===");
         self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
         println!("=== DEBUG: Session::init_login_sequence() completed ===");
@@ -1294,8 +1333,9 @@ impl Session {
         self.set_telnet(Some(new_telnet.clone()));
         new_telnet.set_session(self.clone());
 
-        // Clear close-on-EOF flag for the new connection
+        // Clear close-on-EOF flag and cancel login timeout (equivalent to LoginSequenceFinished)
         new_telnet.set_close_on_eof(false);
+        self.cancel_login_timeout();
 
         if let Some(old) = old_telnet {
             let who = self.name_user();
@@ -1317,8 +1357,9 @@ impl Session {
         self.set_telnet(Some(telnet.clone()));
         telnet.set_session(self.clone());
 
-        // Clear close-on-EOF flag for the attached connection
+        // Clear close-on-EOF flag and cancel login timeout for the attached connection
         telnet.set_close_on_eof(false);
+        self.cancel_login_timeout();
 
         let who = self.name_user();
         info!("Attach: {who} on new connection");
