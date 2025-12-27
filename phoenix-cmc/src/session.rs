@@ -1612,7 +1612,7 @@ impl Session {
             } else if let Some(args) = match_keyword(line, "/idle", 2) {
                 self.do_idle(args).await?;
             } else if let Some(args) = match_keyword(line, "/blurb", 3) {
-                self.do_blurb(args, false).await?;
+                self.do_blurb(args).await?;
             } else if let Some(args) = match_keyword(line, "/here", 2) {
                 self.do_here(args).await?;
             } else if let Some(args) = match_keyword(line, "/away", 2) {
@@ -2203,7 +2203,7 @@ impl Session {
     }
 
     #[framed]
-    pub async fn do_blurb(&self, args: &str, entry: bool) -> tokio::io::Result<()> {
+    pub async fn do_blurb(&self, args: &str) -> tokio::io::Result<()> {
         let args = args.trim();
 
         if !args.is_empty() {
@@ -2211,13 +2211,11 @@ impl Session {
             let mut end = args.len();
 
             if args.len() == 3 && args.eq_ignore_ascii_case("off") {
-                if entry || self.blurb().map_or(false, |b| !b.is_empty()) {
+                if self.blurb().map_or(false, |b| !b.is_empty()) {
                     self.reset_idle(10).await;
                     self.remove_blurb();
-                    if !entry {
-                        self.output("Your blurb has been turned off.\n").await;
-                    }
-                } else if !entry {
+                    self.output("Your blurb has been turned off.\n").await;
+                } else {
                     self.output("Your blurb was already turned off.\n").await;
                 }
             } else {
@@ -2230,12 +2228,8 @@ impl Session {
 
                 let blurb = &args[start..end];
                 self.set_blurb(Some(blurb.into()));
-                if !entry {
-                    self.output(&format!("Your blurb has been set to [{blurb}].\n")).await;
-                }
+                self.output(&format!("Your blurb has been set to [{blurb}].\n")).await;
             }
-        } else if entry {
-            self.remove_blurb();
         } else if self.has_blurb() {
             let blurb = self.blurb().unwrap();
             self.output(&format!("Your blurb is currently set to [{blurb}].\n")).await;
@@ -2250,7 +2244,7 @@ impl Session {
     pub async fn do_here(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await?;
+            self.do_blurb(args).await?;
         }
         self.output("You are now \"here\".\n").await;
         self.set_away(AwayState::Here);
@@ -2263,7 +2257,7 @@ impl Session {
     pub async fn do_away(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await?;
+            self.do_blurb(args).await?;
         }
         self.output("You are now \"away\".\n").await;
         self.set_away(AwayState::Away);
@@ -2276,7 +2270,7 @@ impl Session {
     pub async fn do_busy(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await?;
+            self.do_blurb(args).await?;
         }
         self.output("You are now \"busy\".\n").await;
         self.set_away(AwayState::Busy);
@@ -2289,7 +2283,7 @@ impl Session {
     pub async fn do_gone(&self, args: &str) -> tokio::io::Result<()> {
         self.reset_idle(10).await;
         if !args.trim().is_empty() {
-            self.do_blurb(args, false).await?;
+            self.do_blurb(args).await?;
         }
         self.output("You are now \"gone\".\n").await;
         self.set_away(AwayState::Gone);
