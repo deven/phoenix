@@ -1683,13 +1683,13 @@ impl Session {
 
     /// Reset idle time to now.
     #[framed]
-    pub async fn reset_idle(&self, min: usize) -> i64 {
+    pub async fn reset_idle(&self, min: i64) -> i64 {
         let now = Timestamp::new();
         let idle = (now.unix() - self.idle_since().unix()) / 60;
 
-        if min > 0 && idle >= min as i64 {
+        if min > 0 && idle >= min {
             self.output("[You were idle for").await;
-            self.print_time_long(idle as i32).await;
+            self.print_time_long(idle).await;
             self.output(".]\n").await;
         }
 
@@ -1698,7 +1698,7 @@ impl Session {
     }
 
     #[framed]
-    pub async fn print_time_long(&self, minutes: i32) {
+    pub async fn print_time_long(&self, minutes: i64) {
         // Determine time format (0 = verbose, 1 = both, 2 = terse)
         let format = if let Some(fmt) = self.get_sys_var("time_format") {
             match fmt.as_str() {
@@ -3036,17 +3036,17 @@ impl Session {
 
         if current_idle > 0 && current_idle != new_idle {
             self.output("[You were idle for").await;
-            self.print_time_long(current_idle as i32).await;
+            self.print_time_long(current_idle).await;
             self.output(".]\n").await;
         }
 
         if current_idle == new_idle {
             self.output("Your idle time is still").await;
-            self.print_time_long(current_idle as i32).await;
+            self.print_time_long(current_idle).await;
             self.output(".\n").await;
         } else if new_idle > 0 {
             self.output("Your idle time has been set to").await;
-            self.print_time_long(new_idle as i32).await;
+            self.print_time_long(new_idle).await;
             self.output(".\n").await;
         } else {
             self.output("Your idle time has been reset.\n").await;
@@ -3090,7 +3090,7 @@ impl Session {
             } else if let Some(_) = match_keyword(var, "idle", 4) {
                 let now = Timestamp::new();
                 self.output("Your idle time is").await;
-                self.print_time_long(((now.unix() - self.idle_since().unix()) / 60) as i32).await;
+                self.print_time_long((now.unix() - self.idle_since().unix()) / 60).await;
                 self.output(".\n").await;
             } else if let Some(_) = match_keyword(var, "time_format", 11) {
                 self.output("Your time format is ").await;
@@ -3117,17 +3117,17 @@ impl Session {
                 } else {
                     let now = Timestamp::new();
                     // TODO: Replace with actual server start time when available
-                    (now.unix() / 60) as i64
+                    (now.unix() / 60)
                 };
 
                 self.output("This server has been running for").await;
-                self.print_time_long(uptime as i32).await;
+                self.print_time_long(uptime).await;
                 self.output(".\n").await;
 
                 if let Some(system_up) = system_uptime().await {
                     let system_minutes = system_up / 60;
                     self.output("(This machine has been running for").await;
-                    self.print_time_long(system_minutes as i32).await;
+                    self.print_time_long(system_minutes).await;
                     self.output(".)\n").await;
                 }
             } else if let Some(_) = match_keyword(var, "version", 7) {
