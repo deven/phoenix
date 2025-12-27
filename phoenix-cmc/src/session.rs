@@ -1462,6 +1462,10 @@ impl Session {
         let mut discussion = None;
         let mut discussion_matches = OrdSet::new();
 
+        let mut count = 0;
+        let mut session_lead = None;
+        let mut discussion_lead = None;
+
         if do_sessions {
             if sendlist.eq_ignore_ascii_case("me") {
                 session = Some(self.clone());
@@ -1477,7 +1481,8 @@ impl Session {
                 } else if !exact {
                     if let Some(pos) = match_name(&s_name, sendlist) {
                         if pos == 1 {
-                            session = Some(s.clone());
+                            count += 1;
+                            session_lead = Some(s.clone());
                         }
                         session_matches.insert(s.clone());
                     }
@@ -1500,7 +1505,8 @@ impl Session {
                 } else if !exact {
                     if let Some(pos) = match_name(&d_name, sendlist) {
                         if pos == 1 {
-                            discussion = Some(d.clone());
+                            count += 1;
+                            discussion_lead = Some(d.clone());
                         }
                         discussion_matches.insert(d.clone());
                     }
@@ -1510,6 +1516,13 @@ impl Session {
 
         // If we found an exact match, return it
         if session.is_some() || discussion.is_some() {
+            return (session, session_matches, discussion, discussion_matches);
+        }
+
+        // If we found exactly one lead match, use it
+        if count == 1 {
+            session = session_lead;
+            discussion = discussion_lead;
             return (session, session_matches, discussion, discussion_matches);
         }
 
