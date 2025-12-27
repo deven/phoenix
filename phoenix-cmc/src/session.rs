@@ -33,8 +33,9 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio::task::AbortHandle;
 
-pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
-pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
+pub const LOGIN_TIMEOUT: Duration  = Duration::from_secs(300);
+pub const MAX_LOGIN_ATTEMPTS: i32  = 3;
+pub const REPORT_IDLE_DEFAULT: i64 = 10;
 
 pub static SESSIONS: LazyLock<AtomicHashMap<usize, Session>> = LazyLock::new(AtomicHashMap::default);
 pub static DISCUSSIONS: LazyLock<AtomicHashMap<Text, Discussion>> = LazyLock::new(AtomicHashMap::default);
@@ -2212,7 +2213,7 @@ impl Session {
 
             if args.len() == 3 && args.eq_ignore_ascii_case("off") {
                 if self.blurb().map_or(false, |b| !b.is_empty()) {
-                    self.reset_idle(10).await;
+                    self.reset_idle(REPORT_IDLE_DEFAULT).await;
                     self.remove_blurb();
                     self.output("Your blurb has been turned off.\n").await;
                 } else {
@@ -2224,7 +2225,7 @@ impl Session {
                     end = args.len() - 1;
                 }
 
-                self.reset_idle(10).await;
+                self.reset_idle(REPORT_IDLE_DEFAULT).await;
 
                 let blurb = &args[start..end];
                 self.set_blurb(Some(blurb.into()));
@@ -2242,7 +2243,7 @@ impl Session {
 
     #[framed]
     pub async fn do_here(&self, args: &str) -> tokio::io::Result<()> {
-        self.reset_idle(10).await;
+        self.reset_idle(REPORT_IDLE_DEFAULT).await;
         if !args.trim().is_empty() {
             self.do_blurb(args).await?;
         }
@@ -2255,7 +2256,7 @@ impl Session {
 
     #[framed]
     pub async fn do_away(&self, args: &str) -> tokio::io::Result<()> {
-        self.reset_idle(10).await;
+        self.reset_idle(REPORT_IDLE_DEFAULT).await;
         if !args.trim().is_empty() {
             self.do_blurb(args).await?;
         }
@@ -2268,7 +2269,7 @@ impl Session {
 
     #[framed]
     pub async fn do_busy(&self, args: &str) -> tokio::io::Result<()> {
-        self.reset_idle(10).await;
+        self.reset_idle(REPORT_IDLE_DEFAULT).await;
         if !args.trim().is_empty() {
             self.do_blurb(args).await?;
         }
@@ -2281,7 +2282,7 @@ impl Session {
 
     #[framed]
     pub async fn do_gone(&self, args: &str) -> tokio::io::Result<()> {
-        self.reset_idle(10).await;
+        self.reset_idle(REPORT_IDLE_DEFAULT).await;
         if !args.trim().is_empty() {
             self.do_blurb(args).await?;
         }
@@ -2312,7 +2313,7 @@ impl Session {
     #[framed]
     pub async fn do_detach(&self, _args: &str) -> tokio::io::Result<()> {
         if self.priv_level() > 0 {
-            self.reset_idle(10).await;
+            self.reset_idle(REPORT_IDLE_DEFAULT).await;
             self.output("You have been detached.\n").await;
             self.enqueue_output().await?;
             if let Some(telnet) = self.telnet() {
@@ -3727,7 +3728,7 @@ impl Session {
             _ => {}
         }
 
-        self.reset_idle(10).await;
+        self.reset_idle(REPORT_IDLE_DEFAULT).await;
 
         // Create and send message
         let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
