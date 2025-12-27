@@ -4034,13 +4034,22 @@ impl Session {
 
     #[framed]
     pub async fn session_matches(&self, name: &str, matches: &OrdSet<Session>) {
+        // Convert UnquotedUnderscore characters to regular underscores for display
+        let display_name = name.chars().map(|c| {
+            if c as u8 == UNQUOTED_UNDERSCORE {
+                '_'
+            } else {
+                c
+            }
+        }).collect::<String>();
+
         if !matches.is_empty() {
             let count = matches.len();
 
             for (i, session) in matches.iter().enumerate() {
                 match i {
-                    0 if count == 1 => self.output(&format!("\"{name}\" matches one name: ")).await,
-                    0 => self.output(&format!("\"{name}\" matches {count} names: ")).await,
+                    0 if count == 1 => self.output(&format!("\"{display_name}\" matches one name: ")).await,
+                    0 => self.output(&format!("\"{display_name}\" matches {count} names: ")).await,
                     _ if i == count - 1 => self.output(" and ").await,
                     _ => self.output(", ").await,
                 };
@@ -4050,19 +4059,28 @@ impl Session {
 
             self.output(".\n").await;
         } else {
-            self.output(&format!("No names matched \"{name}\".\n")).await;
+            self.output(&format!("No names matched \"{display_name}\".\n")).await;
         }
     }
 
     #[framed]
     pub async fn discussion_matches(&self, name: &str, matches: &OrdSet<Discussion>) {
+        // Convert UnquotedUnderscore characters to regular underscores for display
+        let display_name = name.chars().map(|c| {
+            if c as u8 == UNQUOTED_UNDERSCORE {
+                '_'
+            } else {
+                c
+            }
+        }).collect::<String>();
+
         if !matches.is_empty() {
             let count = matches.len();
 
             for (i, disc) in matches.iter().enumerate() {
                 match i {
-                    0 if count == 1 => self.output(&format!("\"{name}\" matches one discussion: ")).await,
-                    0 => self.output(&format!("\"{name}\" matches {count} discussions: ")).await,
+                    0 if count == 1 => self.output(&format!("\"{display_name}\" matches one discussion: ")).await,
+                    0 => self.output(&format!("\"{display_name}\" matches {count} discussions: ")).await,
                     _ if i == count - 1 => self.output(" and ").await,
                     _ => self.output(", ").await,
                 };
@@ -4072,7 +4090,7 @@ impl Session {
 
             self.output(".\n").await;
         } else {
-            self.output(&format!("No discussions matched \"{name}\".\n")).await;
+            self.output(&format!("No discussions matched \"{display_name}\".\n")).await;
         }
     }
 
