@@ -10,6 +10,7 @@
 use crate::session::Session;
 use crate::telnet::Telnet;
 use crate::text::Text;
+use crate::timestamp::{system_uptime, Timestamp};
 use anyhow::Result;
 use arc_swap::{ArcSwap, ArcSwapOption};
 use async_backtrace::framed;
@@ -33,6 +34,8 @@ pub struct ServerInner {
     pub shutdown_tx: ArcSwap<broadcast::Sender<()>>,
     pub shutdown_handle: ArcSwapOption<AbortHandle>,
     pub restarting: AtomicBool,
+    pub server_start_time: i64,
+    pub server_start_uptime: Option<i64>,
 }
 
 impl Server {
@@ -53,6 +56,8 @@ impl Server {
             shutdown_tx: ArcSwap::new(Arc::new(shutdown_tx)),
             shutdown_handle: ArcSwapOption::new(shutdown_handle),
             restarting: AtomicBool::new(restarting),
+            server_start_time: Timestamp::new().unix(),
+            server_start_uptime: system_uptime().await,
         };
 
         println!("=== DEBUG: Server::new() completed successfully ===");
@@ -122,6 +127,16 @@ impl Server {
     /// Set the restarting flag.
     pub fn set_restarting(&self, value: bool) {
         self.0.restarting.store(value, Ordering::Relaxed);
+    }
+
+    /// Get the server start time.
+    pub fn server_start_time(&self) -> i64 {
+        self.0.server_start_time
+    }
+
+    /// Get the system uptime when server started.
+    pub fn server_start_uptime(&self) -> Option<i64> {
+        self.0.server_start_uptime
     }
 
     /// Run the Phoenix server.

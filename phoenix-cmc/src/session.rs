@@ -3112,23 +3112,21 @@ impl Session {
                     }
                 }
             } else if let Some(_) = match_keyword(var, "uptime", 6) {
-                let uptime = if let Some(system_up) = system_uptime().await {
-                    // TODO: Replace with actual server start uptime when available
-                    system_up / 60
+                let system = system_uptime().await;
+                let uptime = if let (Some(system), Some(server_start_uptime)) = (system, self.server().server_start_uptime()) {
+                    (system - server_start_uptime) / 60
                 } else {
-                    let now = Timestamp::new();
-                    // TODO: Replace with actual server start time when available
-                    (now.unix() / 60)
+                    (Timestamp::new().unix() - self.server().server_start_time()) / 60
                 };
 
                 self.output("This server has been running for").await;
                 self.print_time_long(uptime).await;
                 self.output(".\n").await;
 
-                if let Some(system_up) = system_uptime().await {
-                    let system_minutes = system_up / 60;
+                if let Some(system) = system {
+                    let minutes = system / 60;
                     self.output("(This machine has been running for").await;
-                    self.print_time_long(system_minutes).await;
+                    self.print_time_long(minutes).await;
                     self.output(".)\n").await;
                 }
             } else if let Some(_) = match_keyword(var, "version", 7) {
