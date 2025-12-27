@@ -3946,63 +3946,31 @@ impl Session {
         // Handle no matches case
         if who.is_empty() {
             if has_filters {
-                let mut filter_list = Vec::new();
-                if here {
-                    filter_list.push("\"here\"");
-                }
-                if away {
-                    filter_list.push("\"away\"");
-                }
-                if busy {
-                    filter_list.push("\"busy\"");
-                }
-                if gone {
-                    filter_list.push("\"gone\"");
-                }
-                if attached {
-                    filter_list.push("attached");
-                }
-                if detached {
-                    filter_list.push("detached");
-                }
-                if active {
-                    filter_list.push("active");
-                }
-                if inactive {
-                    filter_list.push("inactive");
-                }
-                if idle {
-                    filter_list.push("idle");
-                }
-                if unidle {
-                    filter_list.push("unidle");
-                }
-                if privileged {
-                    filter_list.push("privileged");
-                }
-                if guests {
-                    filter_list.push("a guest");
-                }
+                let filter_list: Vec<_> = [
+                    (here, "\"here\""),
+                    (away, "\"away\""),
+                    (busy, "\"busy\""),
+                    (gone, "\"gone\""),
+                    (attached, "attached"),
+                    (detached, "detached"),
+                    (active, "active"),
+                    (inactive, "inactive"),
+                    (idle, "idle"),
+                    (unidle, "unidle"),
+                    (privileged, "privileged"),
+                    (guests, "a guest"),
+                ]
+                .into_iter()
+                .filter_map(|(flag, label)| flag.then_some(label))
+                .collect();
 
                 if !filter_list.is_empty() {
-                    let mut output = "Nobody is ".to_string();
-                    if filter_list.len() == 1 {
-                        output.push_str(filter_list[0]);
-                    } else {
-                        for (i, item) in filter_list.iter().enumerate() {
-                            if i == filter_list.len() - 1 {
-                                output.push_str(" or ");
-                                output.push_str(item);
-                            } else if i > 0 {
-                                output.push_str(", ");
-                                output.push_str(item);
-                            } else {
-                                output.push_str(item);
-                            }
-                        }
-                    }
-                    output.push_str(".\n");
-                    self.output(&output).await;
+                    let joined = match filter_list.as_slice() {
+                        [single] => single.to_string(),
+                        [all @ .., last] => format!("{} or {}", all.join(", "), last),
+                        [] => unreachable!(),
+                    };
+                    self.output(&format!("Nobody is {}.\n", joined)).await;
                 }
             }
             if !errors.is_empty() {
