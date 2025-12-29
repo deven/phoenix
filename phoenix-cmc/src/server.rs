@@ -10,7 +10,7 @@
 use crate::session::Session;
 use crate::telnet::Telnet;
 use crate::text::Text;
-use crate::timestamp::{system_uptime, Timestamp};
+use crate::timestamp::{Timestamp, system_uptime};
 use anyhow::Result;
 use arc_swap::{ArcSwap, ArcSwapOption};
 use async_backtrace::framed;
