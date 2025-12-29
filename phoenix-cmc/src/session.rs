@@ -2848,7 +2848,7 @@ impl Session {
             let my_user = self.user();
             let found_user_ref = Some(found_user);
             match (my_user, found_user_ref) {
-                (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => {
+                (Some(my_user), Some(found_user)) if my_user.username() != found_user.username() => {
                     self.output(&format!("\"{reserved}\" is a reserved name.  (name unchanged)\n")).await;
                     return Ok(());
                 }
@@ -2860,10 +2860,12 @@ impl Session {
             (Some(found_session), _, _, _) if &found_session != self => {
                 let found_name = found_session.name();
                 self.output(&format!("The name \"{found_name}\" is already in use.  (name unchanged)\n")).await;
+                return Ok(());
             }
             (_, _, Some(found_discussion), _) => {
                 let found_name = found_discussion.name();
                 self.output(&format!("There is already a discussion named \"{found_name}\".  (name unchanged)\n")).await;
+                return Ok(());
             }
             _ => {}
         }
