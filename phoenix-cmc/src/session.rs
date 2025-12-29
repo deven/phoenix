@@ -2383,10 +2383,25 @@ impl Session {
 
         let discussions = if args.is_empty() { DISCUSSIONS.iter().map(|r| r.1.clone()).collect() } else { sendlist.discussions() };
 
-        self.output("\n Name            Users  Idle  Title\n").await;
-        self.output(" ----            -----  ----  -----\n").await;
-
         let now = Timestamp::new();
+        let mut extend = 0;
+
+        // Scan discussions for long idle times to calculate dynamic column width.
+        for disc in &discussions {
+            let days = (now.unix() - disc.idle_since().unix()) / 86400;
+            if days == 0 {
+                continue;
+            }
+            let width = days.to_string().len();
+            if width > extend {
+                extend = width;
+            }
+        }
+
+        // Output header with dynamic spacing.
+        let spaces = " ".repeat(extend);
+        self.output(&format!("\n Name            Users{spaces}  Idle  Title\n")).await;
+        self.output(&format!(" ----            -----{spaces}  ----  -----\n")).await;
 
         for disc in &discussions {
             let disc_name = disc.name();
@@ -2407,14 +2422,17 @@ impl Session {
                 let hours = hours % 24;
 
                 if days > 0 {
-                    self.output(&format!(" {days}d{hours:02}:{minutes:02}  ")).await;
+                    self.output(&format!("{days:>extend$}d{hours:02}:{minutes:02}  ")).await;
                 } else if hours > 0 {
-                    self.output(&format!("    {hours}:{minutes:02}  ")).await;
+                    let width = extend + 3;
+                    self.output(&format!("{hours:>width$}:{minutes:02}  ")).await;
                 } else {
-                    self.output(&format!("      {minutes:>2}  ")).await;
+                    let width = extend + 6;
+                    self.output(&format!("{minutes:>width$}  ")).await;
                 }
             } else {
-                self.output("         ").await;
+                let width = extend + 8;
+                self.output(&format!("{:width$}", "")).await;
             }
 
             if disc.is_permitted(&self.name()) {
