@@ -33,8 +33,8 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio::task::AbortHandle;
 
-pub const LOGIN_TIMEOUT: Duration  = Duration::from_secs(300);
-pub const MAX_LOGIN_ATTEMPTS: i32  = 3;
+pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
+pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 pub const REPORT_IDLE_DEFAULT: i64 = 10;
 
 pub static SESSIONS: LazyLock<AtomicHashMap<usize, Session>> = LazyLock::new(AtomicHashMap::default);
@@ -4145,13 +4145,7 @@ impl Session {
     #[framed]
     pub async fn session_matches(&self, name: &str, matches: &OrdSet<Session>) {
         // Convert UnquotedUnderscore characters to regular underscores for display
-        let display_name = name.chars().map(|c| {
-            if c as u8 == UNQUOTED_UNDERSCORE {
-                '_'
-            } else {
-                c
-            }
-        }).collect::<String>();
+        let display_name = name.chars().map(|c| if c as u8 == UNQUOTED_UNDERSCORE { '_' } else { c }).collect::<String>();
 
         if !matches.is_empty() {
             let count = matches.len();
@@ -4176,13 +4170,7 @@ impl Session {
     #[framed]
     pub async fn discussion_matches(&self, name: &str, matches: &OrdSet<Discussion>) {
         // Convert UnquotedUnderscore characters to regular underscores for display
-        let display_name = name.chars().map(|c| {
-            if c as u8 == UNQUOTED_UNDERSCORE {
-                '_'
-            } else {
-                c
-            }
-        }).collect::<String>();
+        let display_name = name.chars().map(|c| if c as u8 == UNQUOTED_UNDERSCORE { '_' } else { c }).collect::<String>();
 
         if !matches.is_empty() {
             let count = matches.len();
