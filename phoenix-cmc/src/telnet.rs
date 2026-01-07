@@ -2312,27 +2312,80 @@ impl Telnet {
             return;
         }
 
+        let s_bytes = s.as_bytes();
+        let slen = s_bytes.len();
         let mut data = self.data().await;
-        let mut point = self.point();
+        let original_point = self.point();
 
-        // Insert the string at the current point
-        for (i, ch) in s.as_bytes().iter().enumerate() {
-            data.insert(point + i, *ch);
+        // Check if we need to grow the buffer (Vec handles this automatically)
+        let original_len = data.len();
+
+        // Resize the buffer to accommodate the new string
+        data.resize(original_len + slen, 0);
+
+        // Move existing data after point to make room for the new string
+        let copy_start = original_point + slen;
+        let copy_end = original_len + slen;
+        for i in (copy_start..copy_end).rev() {
+            data[i] = data[i - slen];
         }
 
-        // Update point to after the inserted string
-        point += s.len();
-        self.set_point(point);
+        // Insert the new string at point
+        for (i, &byte) in s_bytes.iter().enumerate() {
+            data[original_point + i] = byte;
+        }
 
         // Update mark if it exists and is affected
         if let Some(mark) = self.mark() {
-            if mark >= point - s.len() {
-                self.set_mark(Some(mark + s.len()));
+            if mark >= original_point {
+                self.set_mark(Some(mark + slen));
             }
         }
 
-        // Echo the inserted string
-        self.echo_output(s).await;
+        // Update point to after the inserted string
+        self.set_point(original_point + slen);
+
+        // Drop the data lock before calling other async methods
+        drop(data);
+
+        // XXX This kludge simply redraws the rest of the line!
+        let remaining_data = {
+            let data = self.data().await;
+            let start = original_point;
+            let end = data.len();
+            String::from_utf8_lossy(&data[start..end]).into_owned()
+        };
+
+        if !remaining_data.is_empty() {
+            self.echo_output(&remaining_data).await;
+        }
+
+        // Force line wrap if at end of line
+        if self.end_column().await == 0 {
+            self.echo_output(" \x08").await;
+        }
+
+        // Move cursor back to point if not at end
+        if !self.at_end().await {
+            let end_line = self.end_line().await;
+            let point_line = self.point_line();
+            let end_col = self.end_column().await;
+            let point_col = self.point_column();
+
+            let lines = end_line as i32 - point_line as i32;
+            let columns = end_col as i32 - point_col as i32;
+
+            // XXX ANSI!
+            if lines > 0 {
+                self.echo_output(&format!("\x1b[{lines}A")).await;
+            }
+            if columns > 0 {
+                self.echo_output(&format!("\x1b[{columns}D")).await;
+            } else if columns < 0 {
+                let columns = -columns;
+                self.echo_output(&format!("\x1b[{columns}C")).await;
+            }
+        }
     }
 
     #[framed]
