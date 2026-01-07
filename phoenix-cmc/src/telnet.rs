@@ -2157,13 +2157,13 @@ impl Telnet {
             let cols = point_col as i32 - start_col as i32;
 
             if lines > 0 {
-                self.output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
             }
             if cols > 0 {
-                self.output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
             } else if cols < 0 {
                 let cols = -cols;
-                self.output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
             }
 
             self.set_point(0);
@@ -2174,7 +2174,7 @@ impl Telnet {
     pub async fn end_of_line(&self) {
         let data_len = self.data().await.len();
 
-        if !self.at_end().await {
+        if data_len > 0 && self.point() != data_len {
             let end_line = self.end_line().await;
             let point_line = self.point_line();
             let end_col = self.end_column().await;
@@ -2184,13 +2184,13 @@ impl Telnet {
             let cols = end_col as i32 - point_col as i32;
 
             if lines > 0 {
-                self.output(&format!("\x1b[{lines}B")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{lines}B")).await; // XXX ANSI!
             }
             if cols > 0 {
-                self.output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
             } else if cols < 0 {
                 let cols = -cols;
-                self.output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
             }
 
             self.set_point(data_len);
