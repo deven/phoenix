@@ -33,7 +33,7 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio::task::AbortHandle;
 
-pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
+pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(60);
 pub const MAX_LOGIN_ATTEMPTS: i32 = 3;
 pub const REPORT_IDLE_DEFAULT: i64 = 10;
 
