@@ -2481,11 +2481,7 @@ impl Telnet {
     pub async fn yank(&self) {
         let kill_ring = self.kill_ring().await;
         if let Some(text) = kill_ring.back() {
-            let text = text.clone();
-
-            for ch in text.bytes() {
-                self.insert_char(ch).await;
-            }
+            self.insert_string(text.as_str()).await;
         } else {
             self.output(BELL_STR).await;
         }
