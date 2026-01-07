@@ -2380,46 +2380,40 @@ impl Telnet {
         let mut data = self.data().await;
         let point = self.point();
 
-        if point < data.len() {
-            data.remove(point);
+        if !data.is_empty() && !self.at_end().await {
+            self.echo_output("\x1b[P").await; // Delete character // XXX ANSI!
 
-            let echo = self.echo();
-            let do_echo = self.do_echo();
-            if echo == TELNET_ENABLED && do_echo {
-                self.output("\x1b[P").await; // Delete character // XXX ANSI!
-
-                // Handle line wrapping
+            // Make room for the new character if necessary.
+            if !self.at_end().await {
                 let mut lines = self.end_line().await - self.point_line();
                 let mut wrap = point - self.point_column();
 
                 while lines > 0 {
+                    // Go to the end of the current line.
                     let cols = self.width() - 1;
-                    self.output(&format!("\r\x1b[{cols}C")).await;
-                    wrap += self.width();
-                    if wrap < data.len() {
-                        self.output_buffer().await.extend_from_slice(&data[wrap..=wrap]);
-                    } else {
-                        self.output(" ").await;
-                    }
-                    self.output(" \x08\x1b[P").await; // XXX ANSI!
+                    self.echo_output(&format!("\r\x1b[{cols}C")).await; // XXX ANSI!
+                    wrap += self.width(); // Find wrapped character.
+                    let ch = if wrap < data.len() { data[wrap] } else { b' ' };
+                    self.echo_output(&String::from_utf8_lossy(&[ch])).await; // Echo wrapped character.
+                    // Force line wrap and delete a character.
+                    self.echo_output(" \x08\x1b[P").await; // XXX ANSI!
                     lines -= 1;
                 }
 
-                if self.end_line().await > self.point_line() {
-                    let cols = -(self.point_column() as i32);
+                if self.end_line().await > self.point_line() { // Move cursor back to point.
+                    let columns = -(self.point_column() as i32);
                     let lines = self.end_line().await - self.point_line();
-                    self.output(&format!("\x1b[{lines}A")).await;
-                    if cols > 0 {
-                        self.output(&format!("\x1b[{cols}D")).await;
-                    } else if cols < 0 {
-                        let cols = -cols;
-                        self.output(&format!("\x1b[{cols}C")).await;
+                    self.echo_output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
+                    if columns > 0 {
+                        self.echo_output(&format!("\x1b[{columns}D")).await;
+                    } else if columns < 0 {
+                        self.echo_output(&format!("\x1b[{columns}C")).await;
                     }
                 }
             }
-        }
 
-        self.set_point(point);
+            data.remove(point);
+        }
     }
 
     #[framed]
