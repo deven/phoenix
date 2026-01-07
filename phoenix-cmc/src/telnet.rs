@@ -2769,72 +2769,56 @@ impl Telnet {
 
     #[framed]
     pub async fn previous_line(&self) {
-        let mut history_pos = self.history_position();
-        let history = self.history().await;
-
-        if history.is_empty() {
-            self.output(BELL_STR).await;
-            return;
-        }
-
         self.erase_line().await;
 
-        match history_pos {
-            None => {
-                history_pos = Some(history.len() - 1);
-                if let Some(line) = history.get(history.len() - 1) {
-                    let line = line.clone();
+        let history = self.history().await;
+        let mut history_pos = self.history_position();
 
-                    for ch in line.bytes() {
-                        self.insert_char(ch).await;
-                    }
-                }
-            }
-            Some(pos) if pos > 0 => {
-                history_pos = Some(pos - 1);
-                if let Some(line) = history.get(pos - 1) {
-                    let line = line.clone();
-
-                    for ch in line.bytes() {
-                        self.insert_char(ch).await;
-                    }
-                }
-            }
+        // Move to previous history entry
+        let new_pos = match history_pos {
+            None if !history.is_empty() => Some(history.len() - 1),
+            Some(pos) if pos > 0 => Some(pos - 1),
             _ => {
                 self.output(BELL_STR).await;
+                return;
+            }
+        };
+
+        // Insert the history line if available
+        if let Some(pos) = new_pos {
+            if let Some(line) = history.get(pos) {
+                self.insert_string(line.as_str()).await;
             }
         }
 
-        self.set_history_position(history_pos);
+        self.set_history_position(new_pos);
     }
 
     #[framed]
     pub async fn next_line(&self) {
-        let mut history_pos = self.history_position();
-        let history = self.history().await;
-
         self.erase_line().await;
 
-        match history_pos {
-            Some(pos) if pos < history.len() - 1 => {
-                history_pos = Some(pos + 1);
-                if let Some(line) = history.get(pos + 1) {
-                    let line = line.clone();
+        let history = self.history().await;
+        let mut history_pos = self.history_position();
 
-                    for ch in line.bytes() {
-                        self.insert_char(ch).await;
-                    }
-                }
-            }
-            Some(_) => {
-                history_pos = None;
-            }
+        // Move to next history entry (or clear if at end)
+        let new_pos = match history_pos {
+            Some(pos) if pos < history.len() - 1 => Some(pos + 1),
+            Some(_) => None, // Move beyond last entry (clear line)
             None => {
                 self.output(BELL_STR).await;
+                return;
+            }
+        };
+
+        // Insert the history line if available
+        if let Some(pos) = new_pos {
+            if let Some(line) = history.get(pos) {
+                self.insert_string(line.as_str()).await;
             }
         }
 
-        self.set_history_position(history_pos);
+        self.set_history_position(new_pos);
     }
 
     #[framed]
