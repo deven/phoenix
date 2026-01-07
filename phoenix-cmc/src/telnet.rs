@@ -2242,15 +2242,13 @@ impl Telnet {
     #[framed]
     pub async fn insert_char(&self, ch: u8) {
         if (ch >= SPACE && ch < DELETE) || (ch >= NBSP && ch <= Y_UMLAUT_LOWER) {
-            // Make room for the new character if necessary.
             let mut data = self.data().await;
-            let mut point = self.point();
+            let point = self.point();
 
-            if self.at_end().await {
+            if point == data.len() {
                 // Insert character at point (end), echo if necessary.
                 data.push(ch);
-                point += 1;
-                self.set_point(point);
+                self.set_point(point + 1);
 
                 self.echo_output(&String::from_utf8_lossy(&[ch])).await;
                 if self.point_column() == 0 {
@@ -2259,32 +2257,30 @@ impl Telnet {
             } else {
                 // Insert in middle
                 data.insert(point, ch);
-                let mut lines = self.end_line().await - self.point_line();
+                let lines = self.end_line().await - self.point_line();
                 let mut wrap = point - self.point_column();
 
                 self.echo_output("\x1b[@").await; // Insert character // XXX ANSI!
-                while lines > 0 {
+
+                for _ in 0..lines {
                     // Handle line wrapping.
-                    // Go to the start of the next line and insert a character.
                     self.echo_output("\r\n\x1b[@").await; // XXX ANSI!
                     wrap += self.width(); // Find wrapped character.
                     if wrap < data.len() {
-                        self.echo_output(&String::from_utf8_lossy(&data[wrap..=wrap])).await; // Echo wrapped character.
+                        self.echo_output(&String::from_utf8_lossy(&[data[wrap]])).await;
                     } else {
-                        self.echo_output(" ").await; // Echo space
+                        self.echo_output(" ").await;
                     }
-                    lines -= 1;
                 }
 
-                point += 1;
-                self.set_point(point);
+                self.set_point(point + 1);
 
                 if self.end_line().await > self.point_line() {
                     // Move cursor back to point.
                     let columns = 1i32 - (self.point_column() as i32);
-                    let lines = self.end_line().await - self.point_line();
+                    let line_diff = self.end_line().await - self.point_line();
                     // XXX ANSI!
-                    self.echo_output(&format!("\x1b[{lines}A")).await;
+                    self.echo_output(&format!("\x1b[{line_diff}A")).await;
                     if columns > 0 {
                         self.echo_output(&format!("\x1b[{columns}D")).await;
                     } else if columns < 0 {
@@ -2293,10 +2289,15 @@ impl Telnet {
                     }
                 }
 
-                // Insert character at point, echo if necessary.
+                // Echo the inserted character.
                 self.echo_output(&String::from_utf8_lossy(&[ch])).await;
                 if self.point_column() == 0 {
-                    self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
+                    // Force line wrapping - echo character after insertion point
+                    if point + 1 < data.len() {
+                        self.echo_output(&String::from_utf8_lossy(&[data[point + 1]])).await;
+                    } else {
+                        self.echo_output(" ").await;
+                    }
                     self.echo_output("\x08").await;
                 }
             }
@@ -2886,7 +2887,7 @@ impl Telnet {
                 session.output(&line.as_str()).await;
                 session.output("\n").await;
             } else {
-                if self.point() < data.len() {
+                if !self.at_end().await {
                     self.end_of_line().await;
                 }
                 self.echo_output("\n").await;
