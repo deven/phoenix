@@ -245,43 +245,34 @@ impl Sendlist {
 pub fn message_start(line: &str) -> (&str, String, String, bool) {
     let mut sendlist = String::new();
     let mut last_explicit_sendlist = String::new();
-    let mut _is_explicit = false;
+    let mut is_explicit = false;
 
-    // Attempt to detect smileys that shouldn't be sendlists
+    // Attempt to detect smileys that shouldn't be sendlists...
     if !line.chars().next().map_or(false, |c| c.is_alphabetic() || c.is_whitespace()) {
-        // Only compare initial non-whitespace characters
+        // Only compare initial non-whitespace characters.
         let end = line.find(char::is_whitespace).unwrap_or(line.len());
         let initial = &line[..end];
 
-        // Just special-case a few smileys
+        // Just special-case a few smileys...
         let smileys = [":-)", ":-(", ":-P", ";-)", ":_)", ":_(", ":)", ":(", ":P", ";)"];
         if smileys.contains(&initial) {
             return (line, "default".to_string(), last_explicit_sendlist, false);
         }
     }
 
-    // Check for explicit sendlist
-    let mut escaped = false;
-    let mut in_quotes = false;
+    // Doesn't appear to be a smiley, check for explicit sendlist.
     let mut chars = line.char_indices();
-
     while let Some((i, ch)) = chars.next() {
-        if escaped {
-            sendlist.push(ch);
-            escaped = false;
-            continue;
-        }
-
         match ch {
-            ' ' | '\t' if !in_quotes => {
-                if sendlist.is_empty() {
-                    return (&line[1..], "default".to_string(), last_explicit_sendlist, false);
+            ' ' | '\t' => {
+                return if sendlist.is_empty() {
+                    (&line[1..], "default".to_string(), last_explicit_sendlist, false)
                 } else {
-                    return (&line[i..], "default".to_string(), last_explicit_sendlist, false);
-                }
+                    (&line[i..], "default".to_string(), last_explicit_sendlist, false)
+                };
             }
-            ':' | ';' if !in_quotes => {
-                _is_explicit = true;
+            ':' | ';' => {
+                is_explicit = true;
                 last_explicit_sendlist = sendlist.clone();
                 let mut rest = &line[i + 1..];
                 if rest.starts_with(' ') {
@@ -297,12 +288,31 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
                 }
             }
             '"' => {
-                in_quotes = !in_quotes;
+                // Process characters inside quotes with proper escape handling
+                loop {
+                    match chars.next() {
+                        Some((_, '"')) => {
+                            break;
+                        }
+                        Some((_, '\\')) => {
+                            if let Some((_, escaped_ch)) = chars.next() {
+                                sendlist.push(escaped_ch);
+                            }
+                        }
+                        Some((_, ch)) => {
+                            sendlist.push(ch);
+                        }
+                        None => {
+                            // End of line while in quotes
+                            break;
+                        }
+                    }
+                }
             }
-            '_' if !in_quotes => {
+            '_' => {
                 sendlist.push(UNQUOTED_UNDERSCORE as char);
             }
-            ',' if !in_quotes => {
+            ',' => {
                 sendlist.push(SEPARATOR as char);
             }
             _ => {
@@ -311,11 +321,11 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
         }
     }
 
-    // If we got here, use default sendlist and possibly strip leading space
+    // If we got here, use default sendlist and possibly strip leading space.
     if line.starts_with(' ') {
-        (&line[1..], "default".to_string(), last_explicit_sendlist, false)
+        (&line[1..], "default".to_string(), last_explicit_sendlist, is_explicit)
     } else {
-        (line, "default".to_string(), last_explicit_sendlist, false)
+        (line, "default".to_string(), last_explicit_sendlist, is_explicit)
     }
 }
 
