@@ -497,6 +497,30 @@ impl Telnet {
         self.0.data.lock().await
     }
 
+    /// Get end position of input.
+    #[inline]
+    pub async fn end(&self) -> usize {
+        self.data().await.len()
+    }
+
+    /// Get end line number.
+    #[inline]
+    pub async fn end_line(&self) -> usize {
+        (self.start() + self.data().await.len()) / self.width()
+    }
+
+    /// Get end column number.
+    #[inline]
+    pub async fn end_column(&self) -> usize {
+        (self.start() + self.data().await.len()) % self.width()
+    }
+
+    /// Check if input buffer is empty.
+    #[inline]
+    pub async fn input_empty(&self) -> bool {
+        self.data().await.is_empty()
+    }
+
     /// Get the point location.
     pub fn point(&self) -> usize {
         self.0.point.load(Ordering::Relaxed)
@@ -505,6 +529,30 @@ impl Telnet {
     /// Set the point location.
     pub fn set_point(&self, value: usize) {
         self.0.point.store(value, Ordering::Relaxed);
+    }
+
+    /// Get cursor line number.
+    #[inline]
+    pub fn point_line(&self) -> usize {
+        (self.start() + self.point()) / self.width()
+    }
+
+    /// Get cursor column number.
+    #[inline]
+    pub fn point_column(&self) -> usize {
+        (self.start() + self.point()) % self.width()
+    }
+
+    /// Check if cursor is at start of input.
+    #[inline]
+    pub fn at_start(&self) -> bool {
+        self.point() == 0
+    }
+
+    /// Check if cursor is at end of input.
+    #[inline]
+    pub async fn at_end(&self) -> bool {
+        self.point() == self.data().await.len()
     }
 
     /// Get the mark location, if any.
@@ -517,6 +565,18 @@ impl Telnet {
         self.0.mark.store(value, Ordering::Relaxed);
     }
 
+    /// Get mark line number.
+    #[inline]
+    pub fn mark_line(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) / self.width())
+    }
+
+    /// Get mark column number.
+    #[inline]
+    pub fn mark_column(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) % self.width())
+    }
+
     /// Get the prompt.
     pub fn prompt(&self) -> Text {
         self.0.prompt.snapshot()
@@ -525,6 +585,24 @@ impl Telnet {
     /// Set the prompt.
     pub fn set_prompt(&self, value: impl Into<Text>) {
         self.0.prompt.set(value.into())
+    }
+
+    /// Get start position (after prompt).
+    #[inline]
+    pub fn start(&self) -> usize {
+        self.prompt().len()
+    }
+
+    /// Get start line number.
+    #[inline]
+    pub fn start_line(&self) -> usize {
+        self.start() / self.width()
+    }
+
+    /// Get start column number.
+    #[inline]
+    pub fn start_column(&self) -> usize {
+        self.start() % self.width()
     }
 
     /// Get the input history.
@@ -589,96 +667,6 @@ impl Telnet {
     /// Set the do-echo flag.
     pub fn set_do_echo(&self, value: bool) {
         self.0.do_echo.store(value, Ordering::Relaxed);
-    }
-
-    /// Check if cursor is at start of input.
-    #[inline]
-    pub fn at_start(&self) -> bool {
-        self.point() == 0
-    }
-
-    /// Check if cursor is at end of input.
-    #[inline]
-    pub async fn at_end(&self) -> bool {
-        self.point() == self.data().await.len()
-    }
-
-    /// Get start position (after prompt).
-    #[inline]
-    pub fn start(&self) -> usize {
-        self.prompt().len()
-    }
-
-    /// Get start line number.
-    #[inline]
-    pub fn start_line(&self) -> usize {
-        self.start() / self.width()
-    }
-
-    /// Get start column number.
-    #[inline]
-    pub fn start_column(&self) -> usize {
-        self.start() % self.width()
-    }
-
-    /// Get cursor position in input buffer.
-    #[inline]
-    pub fn point_pos(&self) -> usize {
-        self.point()
-    }
-
-    /// Get cursor line number.
-    #[inline]
-    pub fn point_line(&self) -> usize {
-        (self.start() + self.point()) / self.width()
-    }
-
-    /// Get cursor column number.
-    #[inline]
-    pub fn point_column(&self) -> usize {
-        (self.start() + self.point()) % self.width()
-    }
-
-    /// Get mark position in input buffer.
-    #[inline]
-    pub fn mark_pos(&self) -> Option<usize> {
-        self.mark()
-    }
-
-    /// Get mark line number.
-    #[inline]
-    pub fn mark_line(&self) -> Option<usize> {
-        self.mark().map(|mark| (self.start() + mark) / self.width())
-    }
-
-    /// Get mark column number.
-    #[inline]
-    pub fn mark_column(&self) -> Option<usize> {
-        self.mark().map(|mark| (self.start() + mark) % self.width())
-    }
-
-    /// Get end position of input.
-    #[inline]
-    pub async fn end_pos(&self) -> usize {
-        self.data().await.len()
-    }
-
-    /// Get end line number.
-    #[inline]
-    pub async fn end_line(&self) -> usize {
-        (self.start() + self.data().await.len()) / self.width()
-    }
-
-    /// Get end column number.
-    #[inline]
-    pub async fn end_column(&self) -> usize {
-        (self.start() + self.data().await.len()) % self.width()
-    }
-
-    /// Check if input buffer is empty.
-    #[inline]
-    pub async fn input_empty(&self) -> bool {
-        self.data().await.is_empty()
     }
 
     /// Get the acknowledge flag.
