@@ -3227,7 +3227,8 @@ impl Session {
             || match_keyword(args, "/idle", 2).is_some()
             || match_keyword(args, "idle", 4).is_some()
         {
-            self.output(r#"  The /who and /idle commands are used to list users on Phoenix.  Both /who
+            self.output(
+                r#"  The /who and /idle commands are used to list users on Phoenix.  Both /who
   and /idle take identical arguments, but the output differs.  /who will give
   more information, while /idle will give a more compact presentation.
 
@@ -3251,10 +3252,12 @@ impl Session {
   Match strings and multiple categorical keywords can be piled together as
   desired.  When only a single person is printed by /who, long blurbs are
   printed in full.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/blurb", 3).is_some() || match_keyword(args, "blurb", 5).is_some() {
-            self.output(r#"  The /blurb command allows you to set a descriptive "blurb".  It is usually
+            self.output(
+                r#"  The /blurb command allows you to set a descriptive "blurb".  It is usually
   printed along with your name in most messages and notifications.  There is
   no set limit to blurb length, but out of courtesy, try to keep it short.
   Under 30 characters is a good size.  Long blurbs are normally truncated in
@@ -3275,10 +3278,12 @@ impl Session {
   for the /blurb command, since /busy abbreviates to /b.
 
   See also: /here, /away, /busy, /gone.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/here", 2).is_some() || match_keyword(args, "here", 4).is_some() {
-            self.output(r#"  The /here command accepts /blurb arguments to set the blurb, and then sets
+            self.output(
+                r#"  The /here command accepts /blurb arguments to set the blurb, and then sets
   your away status to "here".  Even if you are already "here", others will
   still be notified that you are now "here".
 
@@ -3298,10 +3303,12 @@ impl Session {
   The /here command may be abbreviated to /h.
 
   See also: /blurb, /away, /busy, /gone.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/away", 2).is_some() || match_keyword(args, "away", 4).is_some() {
-            self.output(r#"  The /away command accepts /blurb arguments to set the blurb, and then sets
+            self.output(
+                r#"  The /away command accepts /blurb arguments to set the blurb, and then sets
   your away status to "away".  Even if you are already "away", others will
   still be notified you are now "away".
 
@@ -3323,10 +3330,12 @@ impl Session {
   The /away command may be abbreviated to /a.
 
   See also: /blurb, /here, /busy, /gone.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/busy", 2).is_some() || match_keyword(args, "busy", 4).is_some() {
-            self.output(r#"  The /busy command accepts /blurb arguments to set the blurb, and then sets
+            self.output(
+                r#"  The /busy command accepts /blurb arguments to set the blurb, and then sets
   your away status to "busy".  Even if you are already "busy", others will
   still be notified you are now "busy".
 
@@ -3348,10 +3357,12 @@ impl Session {
   The /busy command may be abbreviated to /b.
 
   See also: /blurb, /here, /away, /gone.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/gone", 2).is_some() || match_keyword(args, "gone", 4).is_some() {
-            self.output(r#"  The /gone command accepts /blurb arguments to set the blurb, and then sets
+            self.output(
+                r#"  The /gone command accepts /blurb arguments to set the blurb, and then sets
   your away status to "gone".  Even if you are already "gone", others will
   still be notified you are now "gone".
 
@@ -3373,85 +3384,115 @@ impl Session {
   The /gone command may be abbreviated to /g.
 
   See also: /blurb, /here, /away, /busy.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/help", 2).is_some() || match_keyword(args, "help", 4).is_some() {
-            self.output(r#"  The /help command is used to request helpful information about commands or
+            self.output(
+                r#"  The /help command is used to request helpful information about commands or
   concepts.  For example, for help on the /gone command, you can type either
   "/help gone" or "/help /gone".  If the slash form for command help is
   used, the command name may be abbreviated in the same way as the actual
   command.  Since the minimum abbreviation for /gone is /g, "/help /g" is
   sufficient, although "/help g" is not.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/send", 2).is_some() || match_keyword(args, "send", 4).is_some() {
-            self.output(r#"  The /send command is used to redirect your "default sendlist".  Simply type
+            self.output(
+                r#"  The /send command is used to redirect your "default sendlist".  Simply type
   "/send <sendlist>" and <sendlist> becomes the new destination for any
   message which does not contain an explicit sendlist, including recognized
   smileys.  (See "/help smileys".)  "/send off" will turn off your default
   sendlist completely.  "/send" alone will display your current default
   sendlist without changing it.  /send may be abbreviated to /s.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/bye", 4).is_some() || match_keyword(args, "bye", 3).is_some() {
-            self.output(r#"  The /bye command is used to leave Phoenix completely.  If you sign off, you
+            self.output(
+                r#"  The /bye command is used to leave Phoenix completely.  If you sign off, you
   will be disconnected from the system and unable to receive messages at all.
   You may wish to consider using the /detach command instead.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/what", 3).is_some() || match_keyword(args, "what", 4).is_some() {
-            self.output(r#"  The /what command is used to list currently existing discussions.
-"#)
+            self.output(
+                r#"  The /what command is used to list currently existing discussions.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/join", 2).is_some() || match_keyword(args, "join", 4).is_some() {
-            self.output(r#"  The /join command is used to join one or more discussions.
-"#)
+            self.output(
+                r#"  The /join command is used to join one or more discussions.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/quit", 2).is_some() || match_keyword(args, "quit", 4).is_some() {
-            self.output(r#"  The /quit command is used to quit one or more discussions.
-"#)
+            self.output(
+                r#"  The /quit command is used to quit one or more discussions.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/create", 3).is_some() || match_keyword(args, "create", 6).is_some() {
-            self.output(r#"  The /create command is used to create a new discussion.
-"#)
+            self.output(
+                r#"  The /create command is used to create a new discussion.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/destroy", 4).is_some() || match_keyword(args, "destroy", 7).is_some() {
-            self.output(r#"  The /destroy command is used to destroy one or more discussions.
-"#)
+            self.output(
+                r#"  The /destroy command is used to destroy one or more discussions.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/permit", 4).is_some() || match_keyword(args, "permit", 6).is_some() {
-            self.output(r#"  The /permit command is used to permit one or more members to a discussion.
-"#)
+            self.output(
+                r#"  The /permit command is used to permit one or more members to a discussion.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/depermit", 4).is_some() || match_keyword(args, "depermit", 8).is_some() {
-            self.output(r#"  The /depermit command is used to depermit one or more members from a
+            self.output(
+                r#"  The /depermit command is used to depermit one or more members from a
   discussion.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/appoint", 4).is_some() || match_keyword(args, "appoint", 7).is_some() {
-            self.output(r#"  The /appoint command is used to appoint one or more moderators to a
+            self.output(
+                r#"  The /appoint command is used to appoint one or more moderators to a
   discussion.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/unappoint", 10).is_some() || match_keyword(args, "unappoint", 9).is_some() {
-            self.output(r#"  The /unappoint command is used to unappoint one or more moderators from a
+            self.output(
+                r#"  The /unappoint command is used to unappoint one or more moderators from a
   discussion.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/rename", 7).is_some() || match_keyword(args, "rename", 6).is_some() {
-            self.output(r#"  The /rename command is used to change your name in the system.  There are
+            self.output(
+                r#"  The /rename command is used to change your name in the system.  There are
   currently some bugs with this, so use of /rename is presently discouraged
   until those bugs are fixed.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/clear", 3).is_some() || match_keyword(args, "clear", 5).is_some() {
-            self.output(r#"  The /clear command simply clears the terminal screen.
+            self.output(
+                r#"  The /clear command simply clears the terminal screen.
 
   Alternatively, type Escape then Control-L to clear the screen.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/unidle", 7).is_some() || match_keyword(args, "unidle", 6).is_some() {
-            self.output(r#"  The /unidle command simply resets your idle time as if you sent a message.
+            self.output(
+                r#"  The /unidle command simply resets your idle time as if you sent a message.
 
   Alternatively, send a line consisting of a single space only.  There is a
   slight difference in that <space><return> is silent if idle under one minute,
@@ -3460,10 +3501,12 @@ impl Session {
 
   In general, when you become unidle, you will receive a report of the previous
   idle time if it exceeded the normal threshold of ten minutes.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/detach", 4).is_some() || match_keyword(args, "detach", 6).is_some() {
-            self.output(r#"  The /detach command is used to disconnect from Phoenix without signing off.
+            self.output(
+                r#"  The /detach command is used to disconnect from Phoenix without signing off.
   You can still receive messages while detached, to be reviewed later.  When
   the /detach command is used, others are notified that you intentionally
   detached.  If any other event causes you to become detached (e.g. network
@@ -3476,32 +3519,42 @@ impl Session {
   instead locally.  When you reattach, the same output will be reviewed again.
   Output is only discarded when it has crossed the network (acknowledgements
   are used) and the user has entered an input line.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/howmany", 3).is_some() || match_keyword(args, "howmany", 7).is_some() || match_keyword(args, "how", 3).is_some() {
-            self.output(r#"  The /howmany command shows how many users are "here", "away", "busy"
+            self.output(
+                r#"  The /howmany command shows how many users are "here", "away", "busy"
   and "gone", how many users are attached and detached, total number of
   users signed on, and how many discussions are active.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/why", 4).is_some() || match_keyword(args, "why", 3).is_some() {
-            self.output(r#"  The /why command is pretty self-explanatory. (try it!)
-"#)
+            self.output(
+                r#"  The /why command is pretty self-explanatory. (try it!)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/date", 3).is_some() || match_keyword(args, "date", 4).is_some() {
-            self.output(r#"  The /date command prints the current date and time like the date(1) command.
-"#)
+            self.output(
+                r#"  The /date command prints the current date and time like the date(1) command.
+"#,
+            )
             .await;
         } else if match_keyword(args, "/signal", 3).is_some() || match_keyword(args, "signal", 6).is_some() {
-            self.output(r#"  The /signal command is used to control whether or not to ring the terminal
+            self.output(
+                r#"  The /signal command is used to control whether or not to ring the terminal
   bell when incoming messages arrive.  There are separate controls for public
   and private messages.  The default is on for both.
 
   Syntax: /signal [public|private] [on|off]
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "smileys", 6).is_some() {
-            self.output(r#"  The following are recognized smileys:
+            self.output(
+                r#"  The following are recognized smileys:
 
      :-)   :-(   :-P   ;-)   :_)   :_(   :)   :(   :P   ;)
 
@@ -3525,17 +3578,21 @@ impl Session {
   Since this technique makes a single space alone on a line effectively the
   same as a blank line, this special case was used instead to reset idle time
   without actually sending any message.  (See "/help unidle".)
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/set", 4).is_some() || match_keyword(args, "set", 3).is_some() {
             let set_args = if args.starts_with('/') { args.strip_prefix("/set").unwrap_or("").trim() } else { args.strip_prefix("set").unwrap_or("").trim() };
 
             if match_keyword(set_args, "uptime", 6).is_some() {
-                self.output(r#"  Server uptime is a readonly system variable and cannot be set.
-"#)
+                self.output(
+                    r#"  Server uptime is a readonly system variable and cannot be set.
+"#,
+                )
                 .await;
             } else if match_keyword(set_args, "idle", 4).is_some() {
-                self.output(r#"  The "/set idle" command is used to set an arbitrary idle time.  Arguments
+                self.output(
+                    r#"  The "/set idle" command is used to set an arbitrary idle time.  Arguments
   are a time specification in the format used by /who. (<d>d<hh>:<mm>)  You
   may not make yourself idle longer than you've been signed on.  Use of this
   command is actually discouraged.  In fact, it exists solely to discourage
@@ -3544,19 +3601,23 @@ impl Session {
   been done, if only because of the time needed to build up a high idle time.
   This command is intended to take all the fun out of this game by eliminating
   the challenge of accumulating a high idle time, to discourage such misuse.
-"#)
+"#,
+                )
                 .await;
             } else if match_keyword(set_args, "time_format", 11).is_some() {
-                self.output(r#"  The "/set time_format" command will set the current format used to display
+                self.output(
+                    r#"  The "/set time_format" command will set the current format used to display
   times in a verbose context.
 
   Valid options are: terse, verbose, both, default.
-"#)
+"#,
+                )
                 .await;
             } else if !set_args.is_empty() {
                 self.output(&format!("No help available for \"/set {set_args}\".\n")).await;
             } else {
-                self.output(r#"  The /set command is used to set both system variables and user variables.
+                self.output(
+                    r#"  The /set command is used to set both system variables and user variables.
   System variables are specified with predefined keywords, and user variables
   must be prefixed with a dollar sign.  (e.g. "idle" is a system variable
   with a predefined purpose, and "$idle" is a user variable with no such
@@ -3565,7 +3626,8 @@ impl Session {
   Known system variables:
 
      uptime   idle     time_format
-"#)
+"#,
+                )
                 .await;
             }
         } else if match_keyword(args, "/display", 2).is_some() || match_keyword(args, "display", 7).is_some() {
@@ -3573,25 +3635,32 @@ impl Session {
                 if args.starts_with('/') { args.strip_prefix("/display").unwrap_or("").trim() } else { args.strip_prefix("display").unwrap_or("").trim() };
 
             if match_keyword(display_args, "uptime", 6).is_some() {
-                self.output(r#"  The "/display uptime" command will display how long the server has been
+                self.output(
+                    r#"  The "/display uptime" command will display how long the server has been
   running, and may also display how long the machine has been running.
-"#)
+"#,
+                )
                 .await;
             } else if match_keyword(display_args, "idle", 4).is_some() {
-                self.output(r#"  The "/display idle" command will display your idle time.
-"#)
+                self.output(
+                    r#"  The "/display idle" command will display your idle time.
+"#,
+                )
                 .await;
             } else if match_keyword(display_args, "time_format", 11).is_some() {
-                self.output(r#"  The "/display time_format" command will display the current format used to
+                self.output(
+                    r#"  The "/display time_format" command will display the current format used to
   display times in a verbose context.
 
   Valid options are: terse, verbose, both, default.
-"#)
+"#,
+                )
                 .await;
             } else if !display_args.is_empty() {
                 self.output(&format!("No help available for \"/display {display_args}\".\n")).await;
             } else {
-                self.output(r#"  The /display command is used to display both system variables and user
+                self.output(
+                    r#"  The /display command is used to display both system variables and user
   variables.  System variables are specified with predefined keywords, and
   user variables must be prefixed with a dollar sign.  (e.g. "idle" is a
   system variable with a predefined purpose, and "$idle" is a user variable
@@ -3600,25 +3669,31 @@ impl Session {
   Known system variables:
 
      uptime   idle     time_format
-"#)
+"#,
+                )
                 .await;
             }
         } else if match_keyword(args, "/also", 3).is_some() || match_keyword(args, "also", 4).is_some() {
-            self.output(r#"  The /also command is used to send a copy of the last message to another
+            self.output(
+                r#"  The /also command is used to send a copy of the last message to another
   sendlist.
-"#)
+"#,
+            )
             .await;
         } else if match_keyword(args, "/oops", 3).is_some() || match_keyword(args, "oops", 4).is_some() {
-            self.output(r#"  The /oops command is used to send an "oops" message to the (unintended)
+            self.output(
+                r#"  The /oops command is used to send an "oops" message to the (unintended)
   recipient of the last message, and to resend the last message to another
   sendlist.  The "/oops text <message>" form can be used to change the
   text of the "oops" message.
-"#)
+"#,
+            )
             .await;
         } else if !args.is_empty() {
             self.output(&format!("No help available for \"{args}\".\n")).await;
         } else {
-            self.output(r#"  Known commands:
+            self.output(
+                r#"  Known commands:
 
      /who     /blurb    /create    /permit     /clear     /howmany
      /what    /here     /destroy   /depermit   /unidle    /detach
@@ -3627,7 +3702,8 @@ impl Session {
      /help    /gone     /send      /rename     /signal
 
   Type "/help <command>" for more information about a particular command.
-"#)
+"#,
+            )
             .await;
         }
 
