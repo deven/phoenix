@@ -235,11 +235,8 @@ impl Session {
         self.0.login_time.store(Arc::new(now.clone()));
         self.0.idle_since.store(Arc::new(now));
 
-        // Cancel login timeout and clear close-on-EOF flag now that login sequence is finished
-        self.cancel_login_timeout();
-        if let Some(telnet) = self.telnet() {
-            telnet.set_close_on_eof(false);
-        }
+        // Login sequence is finished.
+        self.login_sequence_finished();
 
         self.0.session_type.set(SessionType::LoggedIn {
             name: AtomicName::new(name),
@@ -483,6 +480,15 @@ impl Session {
         .abort_handle();
 
         self.set_login_timeout(Some(handle));
+    }
+
+    /// Login sequence is finished.
+    pub fn login_sequence_finished(&self) {
+        // Cancel login timeout and clear close-on-EOF flag
+        self.cancel_login_timeout();
+        if let Some(telnet) = self.telnet() {
+            telnet.set_close_on_eof(false);
+        }
     }
 
     /// Get the login attempts count.
@@ -1334,9 +1340,8 @@ impl Session {
         self.set_telnet(Some(new_telnet.clone()));
         new_telnet.set_session(self.clone());
 
-        // Clear close-on-EOF flag and cancel login timeout (equivalent to LoginSequenceFinished)
-        new_telnet.set_close_on_eof(false);
-        self.cancel_login_timeout();
+        // Login sequence is finished.
+        self.login_sequence_finished();
 
         if let Some(old) = old_telnet {
             let who = self.name_user();
@@ -1358,9 +1363,8 @@ impl Session {
         self.set_telnet(Some(telnet.clone()));
         telnet.set_session(self.clone());
 
-        // Clear close-on-EOF flag and cancel login timeout for the attached connection
-        telnet.set_close_on_eof(false);
-        self.cancel_login_timeout();
+        // Login sequence is finished.
+        self.login_sequence_finished();
 
         let who = self.name_user();
         info!("Attach: {who} on new connection");
