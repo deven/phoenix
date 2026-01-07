@@ -946,6 +946,15 @@ impl Telnet {
             }
         }
 
+        // Detach associated session
+        let session = self.session();
+        if let Err(e) = session.detach(self, self.closing()).await {
+            println!("=== DEBUG: Error in session.detach() during close(): {e} ===");
+            if result.is_ok() {
+                result = Err(e);
+            }
+        }
+
         // Always attempt to close the underlying stream.
         if let Err(e) = self.stream().await.shutdown().await {
             println!("=== DEBUG: Error shutting down stream: {e} ===");
@@ -955,6 +964,16 @@ impl Telnet {
         }
 
         result
+    }
+
+    /// Final cleanup when connection is fully closed.
+    #[framed]
+    pub async fn closed(&self) -> tokio::io::Result<()> {
+        // Detach associated session if still attached.
+        let session = self.session();
+        session.detach(self, self.closing()).await?;
+
+        Ok(())
     }
 
     /// Add bytes to output buffer.
