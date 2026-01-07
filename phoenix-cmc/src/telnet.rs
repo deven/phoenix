@@ -2424,7 +2424,7 @@ impl Telnet {
 
     #[framed]
     pub async fn erase_char(&self) {
-        if self.point() > 0 {
+        if !self.at_start() {
             self.backward_char().await;
             self.delete_char().await;
         }
