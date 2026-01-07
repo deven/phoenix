@@ -1148,7 +1148,7 @@ impl Telnet {
         self.set_undrawn(true);
 
         let lines = if self.echo() == TELNET_ENABLED && self.do_echo() {
-            if self.start() == 0 && self.input_empty().await {
+            if self.start() == 0 && self.end().await == 0 {
                 return;
             }
             self.point_line()
