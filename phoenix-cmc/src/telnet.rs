@@ -841,19 +841,14 @@ impl Telnet {
         self.will_echo().await?; // Send IAC WILL ECHO option sequence.
         self.do_naws().await?; // Send IAC DO NAWS option sequence.
 
-        // Send welcome banner.
-        self.output("\nWelcome to Phoenix! (").await;
-        self.output(VERSION).await;
-        self.output(")\n\n").await;
-
         // Flush all telnet options and welcome banner to client
-        println!("=== DEBUG: Flushing telnet options and welcome banner ===");
+        println!("=== DEBUG: Flushing telnet options ===");
         self.flush_output().await?;
 
         Ok(())
     }
 
-    /// Send welcome message.
+    /// Send welcome banner.
     #[framed]
     pub async fn welcome(&self) {
         if !self.welcome_sent() {
