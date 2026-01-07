@@ -423,7 +423,7 @@ impl Session {
         self.set_login_state(state);
         if let Some(prompt) = prompt {
             if let Some(telnet) = self.telnet() {
-                telnet.output(prompt).await;
+                telnet.show_prompt(prompt).await;
                 telnet.flush_output().await.ok();
             }
         }

@@ -919,7 +919,7 @@ impl Telnet {
         // }
 
         // Send login prompt.
-        self.output("login: ").await;
+        self.show_prompt("login: ").await;
     }
 
     #[framed]
