@@ -2538,54 +2538,42 @@ impl Telnet {
 
     #[framed]
     pub async fn delete_word(&self) {
-        let data = self.data().await;
-        let point = self.point();
-
-        // Count characters to delete
-        let mut end = point;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while end < data.len() && !data[end].is_ascii_alphabetic() {
-            end += 1;
+        while point < data.len() && !data[point].is_ascii_alphabetic() {
+            self.delete_char().await;
+            data = self.data().await;
+            point = self.point();
         }
 
         // Skip alpha characters
-        while end < data.len() && data[end].is_ascii_alphabetic() {
-            end += 1;
-        }
-
-        // Delete the characters
-        for _ in point..end {
+        while point < data.len() && data[point].is_ascii_alphabetic() {
             self.delete_char().await;
+            data = self.data().await;
+            point = self.point();
         }
-
-        self.set_point(point);
     }
 
     #[framed]
     pub async fn erase_word(&self) {
-        let data = self.data().await;
-        let point = self.point();
-
-        // Count characters to erase
-        let mut start = point;
+        let mut data = self.data().await;
+        let mut point = self.point();
 
         // Skip non-alpha characters
-        while start > 0 && !data[start - 1].is_ascii_alphabetic() {
-            start -= 1;
+        while point > 0 && !data[point - 1].is_ascii_alphabetic() {
+            self.erase_char().await;
+            data = self.data().await;
+            point = self.point();
         }
 
         // Skip alpha characters
-        while start > 0 && data[start - 1].is_ascii_alphabetic() {
-            start -= 1;
-        }
-
-        // Erase the characters
-        for _ in start..point {
+        while point > 0 && data[point - 1].is_ascii_alphabetic() {
             self.erase_char().await;
+            data = self.data().await;
+            point = self.point();
         }
-
-        self.set_point(point);
     }
 
     #[framed]
