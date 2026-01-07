@@ -2516,8 +2516,6 @@ impl Telnet {
             self.forward_char().await;
             point = self.point();
         }
-
-        self.set_point(point);
     }
 
     #[framed]
@@ -2536,8 +2534,6 @@ impl Telnet {
             self.backward_char().await;
             point = self.point();
         }
-
-        self.set_point(point);
     }
 
     #[framed]
