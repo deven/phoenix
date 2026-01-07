@@ -3664,18 +3664,9 @@ impl Session {
             Sendlist::new(&self, &sendlist_str, false, true, true).await
         };
 
-        self.set_last_sendlist(Some(sendlist.clone()));
-
-        if msg_start.is_empty() {
-            let sendlist_typed = sendlist.typed();
-            if sendlist_str == "default" {
-                self.output("\x07\x07There is no message after \"default\". (message not sent)\n").await;
-            } else if is_explicit {
-                self.output(&format!("\x07\x07There is no message after \"{sendlist_typed}:\". (message not sent)\n")).await;
-            } else {
-                self.output(&format!("\x07\x07There is no message after \"{sendlist_typed};\". (message not sent)\n")).await;
-            }
-            return Ok(());
+        // Save last sendlist if explicit
+        if is_explicit {
+            self.set_last_sendlist(Some(sendlist.clone()));
         }
 
         self.send_message(&sendlist, msg_start).await?;
