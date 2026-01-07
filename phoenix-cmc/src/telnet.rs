@@ -2589,28 +2589,21 @@ impl Telnet {
         }
 
         // Upcase alpha characters
-        let echo = self.echo();
-        let do_echo = self.do_echo();
-
         while point < data.len() && data[point].is_ascii_alphabetic() {
             if data[point].is_ascii_lowercase() {
                 data[point] = data[point].to_ascii_uppercase();
             }
-
-            if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-            }
-
+            self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
             point += 1;
         }
 
-        if self.point_column() == 0 {
-            if point < data.len() {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-                self.output("\x08").await;
+        if self.point_column() == 0 { // Force line wrapping.
+            if self.at_end().await {
+                self.echo_output(" ").await;
             } else {
-                self.output(" \x08").await;
+                self.echo_output(&String::from_utf8_lossy(&[data[point + 1]])).await;
             }
+            self.echo_output("\x08").await;
         }
 
         self.set_point(point);
@@ -2629,28 +2622,21 @@ impl Telnet {
         }
 
         // Downcase alpha characters
-        let echo = self.echo();
-        let do_echo = self.do_echo();
-
         while point < data.len() && data[point].is_ascii_alphabetic() {
             if data[point].is_ascii_uppercase() {
                 data[point] = data[point].to_ascii_lowercase();
             }
-
-            if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-            }
-
+            self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
             point += 1;
         }
 
-        if self.point_column() == 0 {
-            if point < data.len() {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-                self.output("\x08").await;
+        if self.point_column() == 0 { // Force line wrapping.
+            if self.at_end().await {
+                self.echo_output(" ").await;
             } else {
-                self.output(" \x08").await;
+                self.echo_output(&String::from_utf8_lossy(&[data[point + 1]])).await;
             }
+            self.echo_output("\x08").await;
         }
 
         self.set_point(point);
@@ -2669,18 +2655,11 @@ impl Telnet {
         }
 
         // Capitalize first character
-        let echo = self.echo();
-        let do_echo = self.do_echo();
-
         if point < data.len() && data[point].is_ascii_alphabetic() {
             if data[point].is_ascii_lowercase() {
                 data[point] = data[point].to_ascii_uppercase();
             }
-
-            if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-            }
-
+            self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
             point += 1;
         }
 
@@ -2689,21 +2668,17 @@ impl Telnet {
             if data[point].is_ascii_uppercase() {
                 data[point] = data[point].to_ascii_lowercase();
             }
-
-            if echo == TELNET_ENABLED && do_echo {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-            }
-
+            self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
             point += 1;
         }
 
-        if self.point_column() == 0 {
-            if point < data.len() {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-                self.output("\x08").await;
+        if self.point_column() == 0 { // Force line wrapping.
+            if self.at_end().await {
+                self.echo_output(" ").await;
             } else {
-                self.output(" \x08").await;
+                self.echo_output(&String::from_utf8_lossy(&[data[point + 1]])).await;
             }
+            self.echo_output("\x08").await;
         }
 
         self.set_point(point);
