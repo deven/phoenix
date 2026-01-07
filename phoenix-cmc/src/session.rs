@@ -3680,17 +3680,17 @@ impl Session {
         let now = Timestamp::new();
         let count = sendlist.expand(&mut who, Some(self.clone())).await;
 
-        // If no recipients, handle errors and return early
+        // If no recipients, handle errors and return early.
         if count == 0 {
             if !sendlist.errors().is_empty() {
                 self.output("\x07\x07").await;
-                self.output(&sendlist.errors().to_string()).await;
+                self.output(&sendlist.errors()).await;
             }
             self.output("(message not sent)\n").await;
             return Ok(());
         }
 
-        // Check sender status and warn if necessary
+        // Check sender status and warn if necessary.
         match self.away() {
             AwayState::Gone => {
                 self.output("[Warning: you are listed as \"gone\".]\n").await;
@@ -3706,19 +3706,7 @@ impl Session {
 
         self.reset_idle(REPORT_IDLE_DEFAULT).await;
 
-        // Create and send message
-        let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
-
-        let msg = Message::new(output_type, self.name(), Arc::new(sendlist.clone()), text);
-        if let Output::Message(message) = &msg {
-            self.set_last_message(Some(message.clone()));
-        }
-
-        for session in &who {
-            session.enqueue(msg.clone()).await.ok();
-        }
-
-        // Output confirmation with recipient status details
+        // Output confirmation with recipient status details.
         self.output("(message sent to ").await;
         let mut first = true;
         for session in &who {
@@ -3729,17 +3717,16 @@ impl Session {
             }
 
             let mut flag = false;
-            self.output(&session.name().to_string()).await;
-            self.output(&session.name().column_display()).await;
+            self.output(session.name().as_str()).await;
 
-            // Check if detached
+            // Check if detached.
             if session.telnet().is_none() {
                 self.output(if flag { ", " } else { " (" }).await;
                 flag = true;
                 self.output("detached").await;
             }
 
-            // Check away status
+            // Check away status.
             if session.away() != AwayState::Here {
                 self.output(if flag { ", " } else { " (" }).await;
                 flag = true;
@@ -3751,7 +3738,7 @@ impl Session {
                 }
             }
 
-            // Check idle time
+            // Check idle time.
             let idle_minutes = (now.unix() - session.idle_since().unix()) / 60;
             if idle_minutes > 0 {
                 self.output(if flag { ", " } else { " (" }).await;
@@ -3778,7 +3765,7 @@ impl Session {
             }
         }
 
-        // Handle discussions
+        // Handle discussions.
         if !sendlist.discussions().is_empty() {
             if !first {
                 self.output("; ").await;
@@ -3794,7 +3781,7 @@ impl Session {
             }
         }
 
-        // Final output with count
+        // Final output with count.
         if count > 1 {
             self.output(&format!(".) [{count} people]\n")).await;
         } else if count == 1 && !sendlist.discussions().is_empty() {
@@ -3803,10 +3790,22 @@ impl Session {
             self.output(".)\n").await;
         }
 
-        // Show any errors at the end
+        // Show any errors at the end.
         if !sendlist.errors().is_empty() {
             self.output("\x07\x07").await;
-            self.output(&sendlist.errors().to_string()).await;
+            self.output(&sendlist.errors()).await;
+        }
+
+        // Create and store message.
+        let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
+        let msg = Message::new(output_type, self.name(), Arc::new(sendlist.clone()), text);
+        if let Output::Message(message) = &msg {
+            self.set_last_message(Some(message.clone()));
+        }
+
+        // Send message to recipients.
+        for session in &who {
+            session.enqueue(msg.clone()).await.ok();
         }
 
         Ok(())
