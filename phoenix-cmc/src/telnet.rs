@@ -342,7 +342,6 @@ impl TelnetSubnegotiationState {
 }
 
 impl Telnet {
-    pub const LOGIN_TIMEOUT_TIME: u64 = 60; // login timeout (seconds)
     pub const BUF_SIZE: usize = 32768; // size of input buffer
     pub const INPUT_SIZE: usize = 1024; // default size of input line buffer
     pub const DEFAULT_WIDTH: usize = 80; // XXX Hardcoded default screen width
@@ -2812,8 +2811,8 @@ impl Telnet {
         self.check_options(true).await;
 
         // Reset login timeout.
-        if session.login_timeout().is_some() {
-            session.set_login_timeout(None);
+        if !session.signed_on() {
+            session.reset_login_timeout();
         }
 
         // Get the input line.
