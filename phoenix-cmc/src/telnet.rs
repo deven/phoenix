@@ -860,11 +860,6 @@ impl Telnet {
     }
 
     // Check if initial option negotiations are finished.
-    pub fn options_finished(&self) -> bool {
-        // Options are finished when they are not in their negotiation states
-        !(self.lbin() == TELNET_WILL_WONT || self.rbin() == TELNET_DO_DONT || self.echo() == TELNET_WILL_WONT)
-    }
-
     #[framed]
     pub async fn check_options(&self, force: bool) {
         if force {
@@ -1599,9 +1594,7 @@ impl Telnet {
                     }
                 }
                 self.set_rbin(rbin);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // SUPPRESS-GO-AHEAD option
@@ -1628,9 +1621,7 @@ impl Telnet {
                     }
                 }
                 self.set_rsga(rsga);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // NAWS option
@@ -1652,9 +1643,7 @@ impl Telnet {
                     }
                 }
                 self.set_naws(naws);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // TIMING-MARK option
@@ -1709,9 +1698,7 @@ impl Telnet {
                     }
                 }
                 self.set_lbin(lbin);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // ECHO option
@@ -1733,9 +1720,7 @@ impl Telnet {
                     }
                 }
                 self.set_echo(echo);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // SUPPRESS-GO-AHEAD option
@@ -1762,9 +1747,7 @@ impl Telnet {
                     }
                 }
                 self.set_lsga(lsga);
-                if !self.options_finished() {
-                    self.check_options(false).await;
-                }
+                self.check_options(false).await;
             }
 
             // Don't know this option, refuse it.
@@ -2826,9 +2809,7 @@ impl Telnet {
         let do_echo = self.do_echo();
 
         // Check if initial options negotiations have finished.
-        if !self.options_finished() {
-            self.check_options(true).await;
-        }
+        self.check_options(true).await;
 
         // Reset login timeout.
         if session.login_timeout().is_some() {
