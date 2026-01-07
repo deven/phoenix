@@ -2199,43 +2199,29 @@ impl Telnet {
 
     #[framed]
     pub async fn forward_char(&self) {
-        let mut point = self.point();
-        let data_len = self.data().await.len();
+        if !self.at_end().await {
+            self.set_point(self.point() + 1);
 
-        if point < data_len {
-            point += 1;
-            self.set_point(point);
-
-            let point_col = self.point_column();
-
-            if point_col == 0 {
-                self.output("\r\n").await;
+            if self.point_column() == 0 {
+                self.echo_output("\r\n").await;
             } else {
-                self.output("\x1b[C").await; // XXX ANSI!
+                self.echo_output("\x1b[C").await; // XXX ANSI!
             }
-        } else {
-            self.set_point(point);
         }
     }
 
     #[framed]
     pub async fn backward_char(&self) {
-        let mut point = self.point();
-
-        if point > 0 {
-            let point_col = self.point_column();
-
-            if point_col == 0 {
+        if !self.at_start() {
+            if self.point_column() == 0 {
                 let cols = self.width() - 1;
-                self.output(&format!("\x1b[A\x1b[{cols}C")).await; // XXX ANSI!
+                self.echo_output(&format!("\x1b[A\x1b[{cols}C")).await; // XXX ANSI!
             } else {
-                self.output("\x08").await;
+                self.echo_output("\x08").await;
             }
 
-            point -= 1;
+            self.set_point(self.point() - 1);
         }
-
-        self.set_point(point);
     }
 
     /// Insert character at point.
