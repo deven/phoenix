@@ -2471,40 +2471,32 @@ impl Telnet {
     #[framed]
     pub async fn transpose_chars(&self) {
         let mut data = self.data().await;
-        let mut point = self.point();
+        let point = self.point();
 
         if point == 0 || data.len() < 2 {
-            self.output(BELL_STR).await;
-            return;
-        }
+            self.echo_output(BELL_STR).await;
+        } else {
+            if self.at_end().await {
+                self.backward_char().await;
+            }
 
-        if point >= data.len() {
-            self.backward_char().await;
-            point = self.point();
-        }
+            data.swap(point - 1, point);
 
-        let point_val = point;
-        data.swap(point_val - 1, point_val);
+            self.echo_output("\x08").await;
+            self.echo_output(&String::from_utf8_lossy(&[data[point - 1]])).await;
+            self.echo_output(&String::from_utf8_lossy(&[data[point]])).await;
 
-        let echo = self.echo();
-        let do_echo = self.do_echo();
-        if echo == TELNET_ENABLED && do_echo {
-            self.output("\x08").await;
-            self.output_buffer().await.extend_from_slice(&data[point_val - 1..=point_val]);
-        }
+            self.set_point(point + 1);
 
-        point += 1;
-
-        if self.point_column() == 0 {
-            if point < data.len() {
-                self.output_buffer().await.extend_from_slice(&data[point..=point]);
-                self.output("\x08").await;
-            } else {
-                self.output(" \x08").await;
+            if self.point_column() == 0 { // Force line wrapping.
+                if self.at_end().await {
+                    self.echo_output(" ").await;
+                } else {
+                    self.echo_output(&String::from_utf8_lossy(&[data[point + 1]])).await;
+                }
+                self.echo_output("\x08").await;
             }
         }
-
-        self.set_point(point);
     }
 
     /// Move point forward one word.
