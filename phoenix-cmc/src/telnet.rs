@@ -2819,11 +2819,11 @@ impl Telnet {
 
     #[framed]
     pub async fn do_semicolon(&self) {
-        if self.point() == 0 {
+        if self.at_start() {
             let session = self.session();
             let last = session.last_explicit();
-            for ch in last.bytes() {
-                self.insert_char(ch).await;
+            if !last.is_empty() {
+                self.insert_string(last.as_str()).await;
             }
         }
         self.insert_char(SEMICOLON).await;
@@ -2831,11 +2831,11 @@ impl Telnet {
 
     #[framed]
     pub async fn do_colon(&self) {
-        if self.point() == 0 {
+        if self.at_start() {
             let session = self.session();
             let reply = session.reply_sendlist();
-            for ch in reply.bytes() {
-                self.insert_char(ch).await;
+            if !reply.is_empty() {
+                self.insert_string(reply.as_str()).await;
             }
         }
         self.insert_char(COLON).await;
