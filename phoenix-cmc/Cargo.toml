@@ -33,6 +33,9 @@ thiserror       = "2.0.16"
 tokio           = { version = "1.47.1", features = ["full"] }
 unicase         = "2.8.1"
 
+[dev-dependencies]
+static_assertions = "1.1.0"
+
 [profile.release]
 lto           = true
 codegen-units = 1
