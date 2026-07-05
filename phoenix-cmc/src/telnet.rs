@@ -909,14 +909,18 @@ impl Telnet {
         self.show_prompt("login: ").await;
     }
 
+    /// Close the TELNET connection.
     #[framed]
-    pub async fn close(self: &Self, drain: bool) -> tokio::io::Result<()> {
-        self.set_closing(true);
+    pub async fn close(&self, drain: bool) -> tokio::io::Result<()> {
+        self.set_closing(true); // Closing intentionally.
+
         let mut result = Ok(());
 
         if drain {
+            // Drain connection, then close.
             self.set_do_echo(false);
             if self.acknowledge() {
+                // Send final acknowledgement.
                 if let Err(e) = self.timing_mark().await {
                     println!("=== DEBUG: Error in timing_mark() during close(): {e} ===");
                     if result.is_ok() {
@@ -924,7 +928,7 @@ impl Telnet {
                     }
                 }
             } else {
-                // Flush all pending output
+                // Flush all pending output.
                 if let Err(e) = self.flush_output().await {
                     println!("=== DEBUG: Error in flush_output() during close(): {e} ===");
                     if result.is_ok() {
@@ -932,14 +936,14 @@ impl Telnet {
                     }
                 }
             }
-        }
 
-        // Detach associated session
-        let session = self.session();
-        if let Err(e) = session.detach(self, self.closing()).await {
-            println!("=== DEBUG: Error in session.detach() during close(): {e} ===");
-            if result.is_ok() {
-                result = Err(e);
+            // Detach associated session.
+            let session = self.session();
+            if let Err(e) = session.detach(self, self.closing()).await {
+                println!("=== DEBUG: Error in session.detach() during close(): {e} ===");
+                if result.is_ok() {
+                    result = Err(e);
+                }
             }
         }
 
