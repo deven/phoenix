@@ -2400,7 +2400,8 @@ impl Telnet {
                     lines -= 1;
                 }
 
-                if self.end_line().await > self.point_line() { // Move cursor back to point.
+                if self.end_line().await > self.point_line() {
+                    // Move cursor back to point.
                     let columns = -(self.point_column() as i32);
                     let lines = self.end_line().await - self.point_line();
                     self.echo_output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
@@ -2488,7 +2489,8 @@ impl Telnet {
 
             self.set_point(point + 1);
 
-            if self.point_column() == 0 { // Force line wrapping.
+            if self.point_column() == 0 {
+                // Force line wrapping.
                 if self.at_end().await {
                     self.echo_output(" ").await;
                 } else {
@@ -2597,7 +2599,8 @@ impl Telnet {
             point += 1;
         }
 
-        if self.point_column() == 0 { // Force line wrapping.
+        if self.point_column() == 0 {
+            // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
@@ -2630,7 +2633,8 @@ impl Telnet {
             point += 1;
         }
 
-        if self.point_column() == 0 { // Force line wrapping.
+        if self.point_column() == 0 {
+            // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
@@ -2672,7 +2676,8 @@ impl Telnet {
             point += 1;
         }
 
-        if self.point_column() == 0 { // Force line wrapping.
+        if self.point_column() == 0 {
+            // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
