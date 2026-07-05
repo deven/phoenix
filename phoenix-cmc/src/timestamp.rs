@@ -132,7 +132,7 @@ impl PartialEq for Timestamp {
 
 impl PartialOrd for Timestamp {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.unix().partial_cmp(&other.unix())
+        Some(self.cmp(other))
     }
 }
 

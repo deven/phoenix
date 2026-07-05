@@ -1781,16 +1781,12 @@ impl Telnet {
             // Received IAC during subnegotiation sequence, check for SE.
             if byte == TelnetCommand::SubnegotiationEnd as u8 {
                 // Subnegotiation sequence is complete.
-                match self.sb_state() {
+                if self.sb_state() == TelnetSubnegotiationState::NawsDone {
                     // NAWS subnegotiation was successful; set the new size.
-                    TelnetSubnegotiationState::NawsDone => {
-                        self.set_new_width(self.naws_width()).await;
-                        self.set_new_height(self.naws_height()).await;
-                    }
-
-                    // Subnegotiation was unsuccessful; do nothing.
-                    _ => (),
+                    self.set_new_width(self.naws_width()).await;
+                    self.set_new_height(self.naws_height()).await;
                 }
+                // If subnegotiation was unsuccessful, do nothing.
                 self.set_state(TelnetState::Data);
                 self.set_sb_state(TelnetSubnegotiationState::Idle);
                 return Ok(());
@@ -2442,7 +2438,7 @@ impl Telnet {
             // Save killed text to kill ring
             let killed: Vec<u8> = data.drain(point..).collect();
             if !killed.is_empty() {
-                let killed_str = Text::new(&String::from_utf8_lossy(&killed));
+                let killed_str = Text::new(String::from_utf8_lossy(&killed));
                 let mut kill_ring = self.kill_ring().await;
                 if kill_ring.len() >= Self::KILL_RING_MAX {
                     kill_ring.pop_front();

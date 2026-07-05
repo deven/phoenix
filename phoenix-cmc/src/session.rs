@@ -2702,10 +2702,7 @@ impl Session {
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
             let my_user = self.user();
             let found_user_ref = Some(found_user);
-            let is_same_user = match (my_user, found_user_ref) {
-                (Some(my_user), Some(found_user)) if my_user.username() == found_user.username() => true,
-                _ => false,
-            };
+            let is_same_user = matches!((my_user, found_user_ref), (Some(my_user), Some(found_user)) if my_user.username() == found_user.username());
 
             let a = if is_same_user { "your" } else { "a" };
             self.output(&format!("\"{reserved}\" is {a} reserved name. (not created)\n")).await;
