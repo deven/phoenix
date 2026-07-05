@@ -1308,7 +1308,7 @@ impl Session {
             self.notify_exit().await?;
         }
 
-        // Quit all discussions silently
+        // Quit all discussions silently.
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|(key, _)| key.clone()).collect();
         for key in &disc_keys {
             if let Some(disc) = DISCUSSIONS.get(key) {
@@ -1316,19 +1316,24 @@ impl Session {
             }
         }
 
-        // Close telnet connection if attached
+        // Close telnet connection if attached.
         if let Some(telnet) = self.telnet() {
-            telnet.close(drain).await?;
+            self.set_telnet(None);
+            // Box::pin: Session::close and Telnet::close are mutually recursive, as in
+            // the C++ original -- which clears `telnet` before calling Telnet::Close()
+            // so the recursion terminates at runtime.  Rust async additionally requires
+            // heap indirection here so the recursive future has a finite size.
+            Box::pin(telnet.close(drain)).await?;
         }
         self.set_telnet(None);
 
-        // Disassociate from user
+        // Disassociate from user.
         if let Some(user) = self.user() {
             user.remove_session(self);
             self.set_user(None);
         }
 
-        // Check if server should shutdown after this session closes
+        // Check if server should shutdown after this session closes.
         self.server().check_shutdown().await;
 
         Ok(())
