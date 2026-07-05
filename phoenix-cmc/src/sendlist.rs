@@ -322,8 +322,8 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
     }
 
     // If we got here, use default sendlist and possibly strip leading space.
-    if line.starts_with(' ') {
-        (&line[1..], "default".to_string(), last_explicit_sendlist, is_explicit)
+    if let Some(stripped) = line.strip_prefix(' ') {
+        (stripped, "default".to_string(), last_explicit_sendlist, is_explicit)
     } else {
         (line, "default".to_string(), last_explicit_sendlist, is_explicit)
     }
