@@ -11,7 +11,7 @@ use crate::VERSION;
 use crate::atomic::{AtomicNameOption, AtomicSession, AtomicText, AtomicUsizeOption};
 use crate::constants::*;
 use crate::name::Name;
-use crate::output::OutputType;
+use crate::output::MessageType;
 use crate::sendlist::Sendlist;
 use crate::server::Server;
 use crate::session::Session;
@@ -1237,19 +1237,19 @@ impl Telnet {
     }
 
     #[framed]
-    pub async fn print_message(&self, output_type: OutputType, time: Timestamp, from: &Name, to: &Arc<Sendlist>, start: &str) {
+    pub async fn print_message(&self, message_type: MessageType, time: Timestamp, from: &Name, to: &Arc<Sendlist>, start: &str) {
         let session = self.session();
         let signal_public = session.signal_public();
         let signal_private = session.signal_private();
         let width = self.width();
-        match output_type {
-            OutputType::PublicMessage => {
+        match message_type {
+            MessageType::Public => {
                 if signal_public {
                     self.output(BELL_STR).await;
                 }
                 self.output(&format!("\n -> From {from} to everyone:", from = from.as_str())).await;
             }
-            OutputType::PrivateMessage => {
+            MessageType::Private => {
                 // Save name to reply to.
                 self.set_reply_to(from.clone());
 
@@ -1329,10 +1329,6 @@ impl Telnet {
                     }
                 }
                 self.output(":").await;
-            }
-            _ => {
-                log::error!("Internal error! Unexpected output type: {output_type:?}"); // XXX print error message
-                return;
             }
         }
 

@@ -279,7 +279,8 @@ impl Discussion {
 
     /// Enqueue an `Output` to all members of the discussion except the sender.
     #[framed]
-    pub async fn enqueue_others(&self, out: Output, sender: &Session) -> tokio::io::Result<()> {
+    pub async fn enqueue_others(&self, out: impl Into<Arc<Output>>, sender: &Session) -> tokio::io::Result<()> {
+        let out: Arc<Output> = out.into();
         let mut result = Ok(());
 
         let members = self.0.members.borrow();
@@ -567,7 +568,7 @@ impl Discussion {
                     moderators.insert(name.clone());
                     self.0.moderators.set(moderators);
 
-                    self.enqueue_others(Output::AppointNotify(AppointNotify::new(disc.clone(), session_name.clone(), name.clone())), &session).await?;
+                    self.enqueue_others(AppointNotify::new(disc.clone(), session_name.clone(), name.clone()), &session).await?;
                     session.output(&format!("You have appointed {name} as a moderator of discussion {disc}.\n")).await;
                 }
             } else {
@@ -608,7 +609,7 @@ impl Discussion {
                     moderators.remove(&name);
                     self.0.moderators.set(moderators);
 
-                    self.enqueue_others(Output::UnappointNotify(UnappointNotify::new(disc.clone(), session_name.clone(), name.clone())), &session).await?;
+                    self.enqueue_others(UnappointNotify::new(disc.clone(), session_name.clone(), name.clone()), &session).await?;
                     session.output(&format!("You have unappointed {name} as a moderator of discussion {disc}.\n")).await;
                 }
             } else {

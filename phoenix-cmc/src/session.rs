@@ -306,7 +306,7 @@ impl Session {
         let mut output_buffer = self.output_buffer().await;
         if !output_buffer.is_empty() {
             let text_output = TextOutput::new(output_buffer.clone());
-            self.pending().await.enqueue(self.telnet().as_ref(), text_output).await?;
+            self.pending().await.enqueue(self.telnet().as_ref(), text_output.into()).await?;
             output_buffer.clear();
         }
 
@@ -1429,7 +1429,8 @@ impl Session {
     }
 
     #[framed]
-    pub async fn enqueue(&self, out: Output) -> tokio::io::Result<()> {
+    pub async fn enqueue(&self, out: impl Into<Arc<Output>>) -> tokio::io::Result<()> {
+        let out = out.into();
         self.enqueue_output().await?;
         if let Some(telnet) = self.telnet() {
             self.pending().await.enqueue(Some(&telnet), out).await?;
@@ -1441,7 +1442,8 @@ impl Session {
     }
 
     #[framed]
-    pub async fn enqueue_others(&self, out: Output) -> tokio::io::Result<()> {
+    pub async fn enqueue_others(&self, out: impl Into<Arc<Output>>) -> tokio::io::Result<()> {
+        let out: Arc<Output> = out.into();
         let mut result = Ok(());
 
         for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
@@ -3882,13 +3884,12 @@ impl Session {
         }
 
         // Create and store message.
-        let output_type = if count > 1 || !sendlist.discussions().is_empty() { OutputType::PublicMessage } else { OutputType::PrivateMessage };
-        let msg = Message::new(output_type, self.name(), Arc::new(sendlist.clone()), text);
-        if let Output::Message(message) = &msg {
-            self.set_last_message(Some(message.clone()));
-        }
+        let message_type = if count > 1 || !sendlist.discussions().is_empty() { MessageType::Public } else { MessageType::Private };
+        let message = Message::new(message_type, self.name(), Arc::new(sendlist.clone()), text);
+        self.set_last_message(Some(message.clone()));
 
         // Send message to recipients.
+        let msg: Arc<Output> = message.into();
         for session in &who {
             session.enqueue(msg.clone()).await.ok();
         }
