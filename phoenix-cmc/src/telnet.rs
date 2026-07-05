@@ -2704,7 +2704,7 @@ impl Telnet {
         self.erase_line().await;
 
         let history = self.history().await;
-        let mut history_pos = self.history_position();
+        let history_pos = self.history_position();
 
         // Move to previous history entry
         let new_pos = match history_pos {
@@ -2731,7 +2731,7 @@ impl Telnet {
         self.erase_line().await;
 
         let history = self.history().await;
-        let mut history_pos = self.history_position();
+        let history_pos = self.history_position();
 
         // Move to next history entry (or clear if at end)
         let new_pos = match history_pos {
