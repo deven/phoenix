@@ -128,7 +128,7 @@ impl Discussion {
 
     /// Check if the specified name is the creator of the discussion.
     pub fn is_creator(&self, name: &Name) -> bool {
-        self.0.creator.borrow().as_ref().map_or(false, |creator| creator == name)
+        self.0.creator.borrow().as_ref().is_some_and(|creator| creator == name)
     }
 
     /// Check if the specified session is in the members list for the discussion.
@@ -306,7 +306,7 @@ impl Discussion {
 
         if self.is_creator(&session_name) || self.is_moderator(&session_name) {
             Session::remove_discussion(disc.clone()).await;
-            self.enqueue_others(DestroyNotify::new(disc.clone(), session_name), &session).await?;
+            self.enqueue_others(DestroyNotify::new(disc.clone(), session_name), session).await?;
             session.output(&format!("You have destroyed discussion {disc}.\n")).await;
         } else {
             session.output(&format!("You are not a moderator of discussion {disc}.\n")).await;
@@ -325,7 +325,7 @@ impl Discussion {
             session.output(&format!("You are already a member of discussion {disc}.\n")).await;
         } else {
             if self.is_permitted(&session_name) {
-                self.enqueue_others(JoinNotify::new(disc.clone(), session_name), &session).await?;
+                self.enqueue_others(JoinNotify::new(disc.clone(), session_name), session).await?;
 
                 let mut members = self.0.members.snapshot();
                 members.insert(session.clone());
@@ -350,7 +350,7 @@ impl Discussion {
             self.0.members.set(members);
 
             if session.signed_on() {
-                self.enqueue_others(QuitNotify::new(disc.clone(), session.name()), &session).await?;
+                self.enqueue_others(QuitNotify::new(disc.clone(), session.name()), session).await?;
                 session.output(&format!("You are no longer a member of discussion {disc}.\n")).await;
             }
         } else {
@@ -376,12 +376,12 @@ impl Discussion {
             let (user, rest) = getword(remaining, Some(COMMA as char));
             remaining = rest;
 
-            if let Some(_) = match_keyword(user, "others", 6) {
+            if match_keyword(user, "others", 6).is_some() {
                 if self.is_public() {
                     session.output(&format!("Discussion {disc} is already public.\n")).await;
                 } else {
                     self.set_public(true);
-                    self.enqueue_others(PublicNotify::new(disc.clone(), session_name.clone()), &session).await?;
+                    self.enqueue_others(PublicNotify::new(disc.clone(), session_name.clone()), session).await?;
                     session.output(&format!("You have made discussion {disc} public.\n")).await;
                 }
             } else {
@@ -395,7 +395,7 @@ impl Discussion {
                             let denied = self.0.denied.snapshot();
                             let denied = denied.without(&name);
                             self.0.denied.set(denied);
-                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), true), &session).await?;
+                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), true), session).await?;
                             session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
                         } else if self.is_allowed(&name) {
                             session.output(&format!("{name} is already explicitly permitted to public discussion {disc}.\n")).await;
@@ -403,7 +403,7 @@ impl Discussion {
                             let mut allowed = self.0.allowed.snapshot();
                             allowed.insert(name.clone());
                             self.0.allowed.set(allowed);
-                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), false), &session).await?;
+                            self.enqueue_others(PermitNotify::new(disc.clone(), true, name.clone(), false), session).await?;
                             session.output(&format!("You have explicitly permitted {name} to public discussion {disc}.\n")).await;
                         }
                     } else {
@@ -414,7 +414,7 @@ impl Discussion {
                             let mut allowed = self.0.allowed.snapshot();
                             allowed.insert(name.clone());
                             self.0.allowed.set(allowed);
-                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), true), &session).await?;
+                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), true), session).await?;
                             session.output(&format!("You have repermitted {name} to discussion {disc}.\n")).await;
                         } else if self.is_allowed(&name) {
                             session.output(&format!("{name} is already permitted to discussion {disc}.\n")).await;
@@ -422,7 +422,7 @@ impl Discussion {
                             let mut allowed = self.0.allowed.snapshot();
                             allowed.insert(name.clone());
                             self.0.allowed.set(allowed);
-                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), false), &session).await?;
+                            self.enqueue_others(PermitNotify::new(disc.clone(), false, name.clone(), false), session).await?;
                             session.output(&format!("You have permitted {name} to discussion {disc}.\n")).await;
                         }
                     }
@@ -451,7 +451,7 @@ impl Discussion {
             let (user, rest) = getword(remaining, Some(COMMA as char));
             remaining = rest;
 
-            if let Some(_) = match_keyword(user, "others", 6) {
+            if match_keyword(user, "others", 6).is_some() {
                 if self.is_public() {
                     self.set_public(false);
 
@@ -471,7 +471,7 @@ impl Discussion {
                     }
                     self.0.allowed.set(allowed);
 
-                    self.enqueue_others(PrivateNotify::new(disc.clone(), session_name.clone()), &session).await?;
+                    self.enqueue_others(PrivateNotify::new(disc.clone(), session_name.clone()), session).await?;
                     session.output(&format!("You have made discussion {disc} private.\n")).await;
                 } else {
                     session.output(&format!("Discussion {disc} is already private.\n")).await;
@@ -498,10 +498,10 @@ impl Discussion {
                                 let mut members = self.0.members.snapshot();
                                 members.remove(&s);
                                 self.0.members.set(members);
-                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, Some(name.clone())), &session).await?;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, Some(name.clone())), session).await?;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, None), &session).await?;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), true, name.clone(), true, None), session).await?;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         }
@@ -515,10 +515,10 @@ impl Discussion {
                                 let mut members = self.0.members.snapshot();
                                 members.remove(&s);
                                 self.0.members.set(members);
-                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, Some(name.clone())), &session).await?;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, Some(name.clone())), session).await?;
                                 session.output(&format!("You have depermitted and removed {name} from discussion {disc}.\n")).await;
                             } else {
-                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, None), &session).await?;
+                                self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), false, None), session).await?;
                                 session.output(&format!("You have depermitted {name} from discussion {disc}.\n")).await;
                             }
                         } else if self.is_denied(&name) {
@@ -527,7 +527,7 @@ impl Discussion {
                             let mut denied = self.0.denied.snapshot();
                             denied.insert(name.clone());
                             self.0.denied.set(denied);
-                            self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), true, None), &session).await?;
+                            self.enqueue_others(DepermitNotify::new(disc.clone(), false, name.clone(), true, None), session).await?;
                             session.output(&format!("You have explicitly depermitted {name} from discussion {disc}.\n")).await;
                         }
                     }
@@ -568,7 +568,7 @@ impl Discussion {
                     moderators.insert(name.clone());
                     self.0.moderators.set(moderators);
 
-                    self.enqueue_others(AppointNotify::new(disc.clone(), session_name.clone(), name.clone()), &session).await?;
+                    self.enqueue_others(AppointNotify::new(disc.clone(), session_name.clone(), name.clone()), session).await?;
                     session.output(&format!("You have appointed {name} as a moderator of discussion {disc}.\n")).await;
                 }
             } else {
@@ -609,7 +609,7 @@ impl Discussion {
                     moderators.remove(&name);
                     self.0.moderators.set(moderators);
 
-                    self.enqueue_others(UnappointNotify::new(disc.clone(), session_name.clone(), name.clone()), &session).await?;
+                    self.enqueue_others(UnappointNotify::new(disc.clone(), session_name.clone(), name.clone()), session).await?;
                     session.output(&format!("You have unappointed {name} as a moderator of discussion {disc}.\n")).await;
                 }
             } else {

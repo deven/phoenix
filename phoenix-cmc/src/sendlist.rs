@@ -163,7 +163,7 @@ impl Sendlist {
                             _ => errors += ", ",
                         };
 
-                        errors += &s.name().to_string();
+                        errors += s.name().as_ref();
                     }
 
                     errors += if discussions > 0 { "; and " } else { ".\n" };
@@ -182,7 +182,7 @@ impl Sendlist {
                             _ => errors += ", ",
                         };
 
-                        errors += &d.name().to_string();
+                        errors += d.name().as_ref();
                     }
 
                     errors += ".\n";
@@ -248,7 +248,7 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
     let mut is_explicit = false; // Assume implicit sendlist.
 
     // Attempt to detect smileys that shouldn't be sendlists...
-    if !line.chars().next().map_or(false, |c| c.is_alphabetic() || c.is_whitespace()) {
+    if !line.chars().next().is_some_and(|c| c.is_alphabetic() || c.is_whitespace()) {
         // Only compare initial non-whitespace characters.
         let end = line.find(char::is_whitespace).unwrap_or(line.len());
         let initial = &line[..end];

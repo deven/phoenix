@@ -327,10 +327,7 @@ impl Server {
 
 /// Check if the specified TCP port number is busy.
 pub async fn is_port_busy(port: u16) -> bool {
-    match TcpListener::bind(("0.0.0.0", port)).await {
-        Ok(_) => false, // Port is free
-        Err(_) => true, // Port is busy
-    }
+    TcpListener::bind(("0.0.0.0", port)).await.is_err()
 }
 
 //#[cfg(test)]

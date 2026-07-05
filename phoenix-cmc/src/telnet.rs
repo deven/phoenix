@@ -66,7 +66,7 @@ fn debug_format_bytes(bytes: &[u8], label: &str) {
 
         // Print ASCII representation
         for &byte in chunk {
-            let ch = if byte >= 32 && byte <= 126 { byte as char } else { '.' };
+            let ch = if (32..=126).contains(&byte) { byte as char } else { '.' };
             print!("{ch}");
         }
 
@@ -970,7 +970,7 @@ impl Telnet {
 
     /// Add bytes to output buffer.
     #[framed]
-    pub async fn output(self: &Self, data: impl AsRef<str>) {
+    pub async fn output(&self, data: impl AsRef<str>) {
         let data_str = data.as_ref();
         println!("=== DEBUG: Telnet::output() called with: '{data_str}' ===");
         let mut output = self.output_buffer().await;
@@ -1481,7 +1481,7 @@ impl Telnet {
 
     #[framed]
     pub async fn process_data_byte(&self, byte: u8) -> tokio::io::Result<()> {
-        println!("=== DEBUG: process_data_byte(0x{byte:02x} '{ch}') ===", ch = if byte >= 32 && byte <= 126 { byte as char } else { '.' });
+        println!("=== DEBUG: process_data_byte(0x{byte:02x} '{ch}') ===", ch = if (32..=126).contains(&byte) { byte as char } else { '.' });
         match byte {
             x if x == TelnetCommand::IAC as u8 => self.set_state(TelnetState::IAC),
             CONTROL_A => self.beginning_of_line().await,
@@ -2227,7 +2227,7 @@ impl Telnet {
     /// Insert character at point.
     #[framed]
     pub async fn insert_char(&self, ch: u8) {
-        if (ch >= SPACE && ch < DELETE) || (ch >= NBSP && ch <= Y_UMLAUT_LOWER) {
+        if (SPACE..DELETE).contains(&ch) || (NBSP..=Y_UMLAUT_LOWER).contains(&ch) {
             let mut data = self.data().await;
             let point = self.point();
 
@@ -2442,7 +2442,7 @@ impl Telnet {
             // Save killed text to kill ring
             let killed: Vec<u8> = data.drain(point..).collect();
             if !killed.is_empty() {
-                let killed_str = Text::new(String::from_utf8_lossy(&killed).to_string());
+                let killed_str = Text::new(&String::from_utf8_lossy(&killed));
                 let mut kill_ring = self.kill_ring().await;
                 if kill_ring.len() >= Self::KILL_RING_MAX {
                     kill_ring.pop_front();
