@@ -88,7 +88,7 @@ pub fn match_name(name: &str, sendlist: &str) -> Option<usize> {
                 continue;
             }
 
-            if n.to_ascii_lowercase() != s.to_ascii_lowercase() {
+            if !n.eq_ignore_ascii_case(&s) {
                 break;
             }
 

@@ -57,7 +57,7 @@ impl Text {
     pub fn new(s: impl AsRef<str>) -> Self {
         let s = s.as_ref();
 
-        if s.is_empty() { Self::default() } else { Self(UniCase::new(ByteString::from(s.as_ref()))) }
+        if s.is_empty() { Self::default() } else { Self(UniCase::new(ByteString::from(s))) }
     }
 
     /// Creates a new `Text` from a `ByteString`.
@@ -241,7 +241,7 @@ impl Text {
     /// Returns a reference to the underlying `ByteString`.
     #[inline]
     pub fn as_bytestring(&self) -> &ByteString {
-        &*self.0
+        &self.0
     }
 
     /// Extracts the underlying `ByteString`, consuming the `Text`.
@@ -521,7 +521,7 @@ impl<'a> PartialEq<&'a str> for Text {
 }
 
 // &str == Text
-impl<'a> PartialEq<Text> for &'a str {
+impl PartialEq<Text> for &str {
     #[inline]
     fn eq(&self, other: &Text) -> bool {
         UniCase::new(*self) == other.0
