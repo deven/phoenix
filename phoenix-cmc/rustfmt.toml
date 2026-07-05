@@ -1,12 +1,5 @@
-max_width                       = 160
-#fn_call_width                  = 96
-#attr_fn_like_width             = 112
-#struct_lit_width               = 29
-#struct_variant_width           = 56
-#array_width                    = 96
-#chain_width                    = 96
-#single_line_if_else_max_width  = 80
-#single_line_let_else_max_width = 80
-#tab_spaces                     = 4
-use_small_heuristics            = "Max"
-newline_style                   = "Unix"
+max_width            = 160
+edition              = "2024"
+style_edition        = "2024"
+newline_style        = "Unix"
+use_small_heuristics = "Max"
