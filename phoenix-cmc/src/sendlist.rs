@@ -241,11 +241,11 @@ impl Sendlist {
     }
 }
 
-// Helper function to parse message start and extract sendlist
+// Find the start of message text following possible explicit sendlist.
 pub fn message_start(line: &str) -> (&str, String, String, bool) {
     let mut sendlist = String::new();
     let mut last_explicit_sendlist = String::new();
-    let mut is_explicit = false;
+    let mut is_explicit = false; // Assume implicit sendlist.
 
     // Attempt to detect smileys that shouldn't be sendlists...
     if !line.chars().next().map_or(false, |c| c.is_alphabetic() || c.is_whitespace()) {
@@ -256,7 +256,7 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
         // Just special-case a few smileys...
         let smileys = [":-)", ":-(", ":-P", ";-)", ":_)", ":_(", ":)", ":(", ":P", ";)"];
         if smileys.contains(&initial) {
-            return (line, "default".to_string(), last_explicit_sendlist, false);
+            return (line, "default".to_string(), last_explicit_sendlist, is_explicit);
         }
     }
 
@@ -266,9 +266,9 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
         match ch {
             ' ' | '\t' => {
                 return if sendlist.is_empty() {
-                    (&line[1..], "default".to_string(), last_explicit_sendlist, false)
+                    (&line[1..], "default".to_string(), last_explicit_sendlist, is_explicit)
                 } else {
-                    (&line[i..], "default".to_string(), last_explicit_sendlist, false)
+                    (&line[i..], "default".to_string(), last_explicit_sendlist, is_explicit)
                 };
             }
             ':' | ';' => {
@@ -278,13 +278,13 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
                 if rest.starts_with(' ') {
                     rest = &rest[1..];
                 }
-                return (rest, sendlist, last_explicit_sendlist, true);
+                return (rest, sendlist, last_explicit_sendlist, is_explicit);
             }
             '\\' => {
                 if let Some((_, next_ch)) = chars.next() {
                     sendlist.push(next_ch);
                 } else {
-                    return (line, "default".to_string(), last_explicit_sendlist, false);
+                    return (line, "default".to_string(), last_explicit_sendlist, is_explicit);
                 }
             }
             '"' => {
