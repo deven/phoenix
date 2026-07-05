@@ -647,7 +647,6 @@ impl std::hash::Hash for Discussion {
     }
 }
 
-//#[cfg(test)]
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Discussion>();

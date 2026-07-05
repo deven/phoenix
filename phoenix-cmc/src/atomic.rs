@@ -725,6 +725,69 @@ impl PartialEq for AtomicText {
 
 atomic_shared!(SessionType, AtomicSessionType, SessionTypeBorrow);
 
+const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
+const _: () = {
+    assert_send_sync_static::<AtomicAwayState>();
+    assert_send_sync_static::<AtomicBoolOption>();
+    assert_send_sync_static::<AtomicDiscussion>();
+    assert_send_sync_static::<AtomicDiscussionOption>();
+    assert_send_sync_static::<AtomicHashMap<u8, u16>>();
+    assert_send_sync_static::<AtomicHashSet<u8>>();
+    assert_send_sync_static::<AtomicI16Option>();
+    assert_send_sync_static::<AtomicI32Option>();
+    assert_send_sync_static::<AtomicI64Option>();
+    assert_send_sync_static::<AtomicI8Option>();
+    assert_send_sync_static::<AtomicIsizeOption>();
+    assert_send_sync_static::<AtomicLoginState>();
+    assert_send_sync_static::<AtomicMessage>();
+    assert_send_sync_static::<AtomicMessageOption>();
+    assert_send_sync_static::<AtomicName>();
+    assert_send_sync_static::<AtomicNameOption>();
+    assert_send_sync_static::<AtomicOrdMap<u8, u16>>();
+    assert_send_sync_static::<AtomicOrdSet<u8>>();
+    assert_send_sync_static::<AtomicSendlist>();
+    assert_send_sync_static::<AtomicSendlistOption>();
+    assert_send_sync_static::<AtomicSession>();
+    assert_send_sync_static::<AtomicSessionOption>();
+    assert_send_sync_static::<AtomicSessionType>();
+    assert_send_sync_static::<AtomicTelnet>();
+    assert_send_sync_static::<AtomicTelnetOption>();
+    assert_send_sync_static::<AtomicText>();
+    assert_send_sync_static::<AtomicTextOption>();
+    assert_send_sync_static::<AtomicTimestamp>();
+    assert_send_sync_static::<AtomicU16Option>();
+    assert_send_sync_static::<AtomicU32Option>();
+    assert_send_sync_static::<AtomicU64Option>();
+    assert_send_sync_static::<AtomicU8Option>();
+    assert_send_sync_static::<AtomicUser>();
+    assert_send_sync_static::<AtomicUserOption>();
+    assert_send_sync_static::<AtomicUsizeOption>();
+    assert_send_sync_static::<AtomicVector<u8>>();
+    assert_send_sync_static::<DiscussionBorrow>();
+    assert_send_sync_static::<HashMapBorrow<u8, u16>>();
+    assert_send_sync_static::<HashSetBorrow<u8>>();
+    assert_send_sync_static::<MessageBorrow>();
+    assert_send_sync_static::<NameBorrow>();
+    assert_send_sync_static::<OptionDiscussionBorrow>();
+    assert_send_sync_static::<OptionMessageBorrow>();
+    assert_send_sync_static::<OptionNameBorrow>();
+    assert_send_sync_static::<OptionSendlistBorrow>();
+    assert_send_sync_static::<OptionSessionBorrow>();
+    assert_send_sync_static::<OptionTelnetBorrow>();
+    assert_send_sync_static::<OptionTextBorrow>();
+    assert_send_sync_static::<OptionUserBorrow>();
+    assert_send_sync_static::<OrdMapBorrow<u8, u16>>();
+    assert_send_sync_static::<OrdSetBorrow<u8>>();
+    assert_send_sync_static::<SendlistBorrow>();
+    assert_send_sync_static::<SessionBorrow>();
+    assert_send_sync_static::<SessionTypeBorrow>();
+    assert_send_sync_static::<TelnetBorrow>();
+    assert_send_sync_static::<TextBorrow>();
+    assert_send_sync_static::<TimestampBorrow>();
+    assert_send_sync_static::<UserBorrow>();
+    assert_send_sync_static::<VectorBorrow<u8>>();
+};
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -814,67 +877,3 @@ mod tests {
         assert_eq!(map.len(), (THREADS * PER_THREAD) as usize);
     }
 }
-
-//#[cfg(test)]
-const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
-const _: () = {
-    assert_send_sync_static::<AtomicAwayState>();
-    assert_send_sync_static::<AtomicBoolOption>();
-    assert_send_sync_static::<AtomicDiscussion>();
-    assert_send_sync_static::<AtomicDiscussionOption>();
-    assert_send_sync_static::<AtomicHashMap<u8, u16>>();
-    assert_send_sync_static::<AtomicHashSet<u8>>();
-    assert_send_sync_static::<AtomicI16Option>();
-    assert_send_sync_static::<AtomicI32Option>();
-    assert_send_sync_static::<AtomicI64Option>();
-    assert_send_sync_static::<AtomicI8Option>();
-    assert_send_sync_static::<AtomicIsizeOption>();
-    assert_send_sync_static::<AtomicLoginState>();
-    assert_send_sync_static::<AtomicMessage>();
-    assert_send_sync_static::<AtomicMessageOption>();
-    assert_send_sync_static::<AtomicName>();
-    assert_send_sync_static::<AtomicNameOption>();
-    assert_send_sync_static::<AtomicOrdMap<u8, u16>>();
-    assert_send_sync_static::<AtomicOrdSet<u8>>();
-    assert_send_sync_static::<AtomicSendlist>();
-    assert_send_sync_static::<AtomicSendlistOption>();
-    assert_send_sync_static::<AtomicSession>();
-    assert_send_sync_static::<AtomicSessionOption>();
-    assert_send_sync_static::<AtomicSessionType>();
-    assert_send_sync_static::<AtomicTelnet>();
-    assert_send_sync_static::<AtomicTelnetOption>();
-    assert_send_sync_static::<AtomicText>();
-    assert_send_sync_static::<AtomicTextOption>();
-    assert_send_sync_static::<AtomicTimestamp>();
-    assert_send_sync_static::<AtomicU16Option>();
-    assert_send_sync_static::<AtomicU32Option>();
-    assert_send_sync_static::<AtomicU64Option>();
-    assert_send_sync_static::<AtomicU8Option>();
-    assert_send_sync_static::<AtomicUser>();
-    assert_send_sync_static::<AtomicUserOption>();
-    assert_send_sync_static::<AtomicUsizeOption>();
-    assert_send_sync_static::<AtomicVector<u8>>();
-    assert_send_sync_static::<DiscussionBorrow>();
-    assert_send_sync_static::<HashMapBorrow<u8, u16>>();
-    assert_send_sync_static::<HashSetBorrow<u8>>();
-    assert_send_sync_static::<MessageBorrow>();
-    assert_send_sync_static::<NameBorrow>();
-    assert_send_sync_static::<OptionDiscussionBorrow>();
-    assert_send_sync_static::<OptionMessageBorrow>();
-    assert_send_sync_static::<OptionNameBorrow>();
-    assert_send_sync_static::<OptionSendlistBorrow>();
-    assert_send_sync_static::<OptionSessionBorrow>();
-    assert_send_sync_static::<OptionTelnetBorrow>();
-    assert_send_sync_static::<OptionTextBorrow>();
-    assert_send_sync_static::<OptionUserBorrow>();
-    assert_send_sync_static::<OrdMapBorrow<u8, u16>>();
-    assert_send_sync_static::<OrdSetBorrow<u8>>();
-    assert_send_sync_static::<SendlistBorrow>();
-    assert_send_sync_static::<SessionBorrow>();
-    assert_send_sync_static::<SessionTypeBorrow>();
-    assert_send_sync_static::<TelnetBorrow>();
-    assert_send_sync_static::<TextBorrow>();
-    assert_send_sync_static::<TimestampBorrow>();
-    assert_send_sync_static::<UserBorrow>();
-    assert_send_sync_static::<VectorBorrow<u8>>();
-};

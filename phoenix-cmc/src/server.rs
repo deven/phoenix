@@ -330,7 +330,6 @@ pub async fn is_port_busy(port: u16) -> bool {
     TcpListener::bind(("0.0.0.0", port)).await.is_err()
 }
 
-//#[cfg(test)]
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     assert_send_sync_static::<Server>();
