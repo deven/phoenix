@@ -2,7 +2,7 @@
 //
 // Phoenix CMC library: sendlist module
 //
-// Copyright 1992-2025 Deven T. Corzine <deven@ties.org>
+// Copyright 1992-2026 Deven T. Corzine <deven@ties.org>
 //
 // SPDX-License-Identifier: MIT
 //
