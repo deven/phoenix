@@ -329,7 +329,6 @@ pub fn message_start(line: &str) -> (&str, String, String, bool) {
     }
 }
 
-//#[cfg(test)]
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
 const _: () = {
     //assert_send_sync_static::<Sendable>();
