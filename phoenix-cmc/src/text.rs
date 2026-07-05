@@ -1482,9 +1482,9 @@ mod tests {
         let num: i32 = text.parse().unwrap();
         assert_eq!(num, 42);
 
-        let text = Text::new("3.14");
+        let text = Text::new("3.45");
         let float: f32 = text.parse().unwrap();
-        assert!((float - 3.14).abs() < f32::EPSILON);
+        assert!((float - 3.45).abs() < f32::EPSILON);
 
         // Test failed parsing
         let text = Text::new("not a number");
