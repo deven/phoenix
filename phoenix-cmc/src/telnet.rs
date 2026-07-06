@@ -251,6 +251,16 @@ pub struct TelnetInner {
     pub lbin: AtomicU8, // TRANSMIT-BINARY option (local)
     pub rbin: AtomicU8, // TRANSMIT-BINARY option (remote)
     pub naws: AtomicU8, // NAWS option (remote)
+
+    // One-shot option callbacks: run check_options() when the option's initial
+    // negotiation reply arrives, then disarm -- the analog of the C++ pattern
+    // (this->*X_callback)(); X_callback = NULL;
+    pub echo_callback: AtomicBool,
+    pub lsga_callback: AtomicBool,
+    pub rsga_callback: AtomicBool,
+    pub lbin_callback: AtomicBool,
+    pub rbin_callback: AtomicBool,
+    pub naws_callback: AtomicBool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -392,6 +402,12 @@ impl Telnet {
             lbin: AtomicU8::new(0),
             rbin: AtomicU8::new(0),
             naws: AtomicU8::new(0),
+            echo_callback: AtomicBool::new(false),
+            lsga_callback: AtomicBool::new(false),
+            rsga_callback: AtomicBool::new(false),
+            lbin_callback: AtomicBool::new(false),
+            rbin_callback: AtomicBool::new(false),
+            naws_callback: AtomicBool::new(false),
         };
 
         let telnet = Telnet(Arc::new(inner));
@@ -818,11 +834,20 @@ impl Telnet {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
 
-        // Start initial options negotiations.
+        // Start initial options negotiations, arming each option's one-shot
+        // callback (~ C++ set_X(&Telnet::Welcome, on)).  NAWS is requested but
+        // deliberately gets NO callback (~ C++ set_NAWS(NULL, on)): its reply
+        // routinely arrives after the required options resolve, and must not
+        // re-trigger the completion check.
+        self.0.lsga_callback.store(true, Ordering::Relaxed);
         self.will_lsga().await?; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
+        self.0.rsga_callback.store(true, Ordering::Relaxed);
         self.do_rsga().await?; // Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
+        self.0.lbin_callback.store(true, Ordering::Relaxed);
         self.will_lbin().await?; // Send IAC WILL TRANSMIT-BINARY option sequence. (local)
+        self.0.rbin_callback.store(true, Ordering::Relaxed);
         self.do_rbin().await?; // Send IAC DO TRANSMIT-BINARY option sequence. (remote)
+        self.0.echo_callback.store(true, Ordering::Relaxed);
         self.will_echo().await?; // Send IAC WILL ECHO option sequence.
         self.do_naws().await?; // Send IAC DO NAWS option sequence.
 
@@ -1677,7 +1702,10 @@ impl Telnet {
                     }
                 }
                 self.set_rbin(rbin);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.rbin_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // SUPPRESS-GO-AHEAD option
@@ -1704,7 +1732,10 @@ impl Telnet {
                     }
                 }
                 self.set_rsga(rsga);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.rsga_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // NAWS option
@@ -1726,7 +1757,10 @@ impl Telnet {
                     }
                 }
                 self.set_naws(naws);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.naws_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // TIMING-MARK option
@@ -1781,7 +1815,10 @@ impl Telnet {
                     }
                 }
                 self.set_lbin(lbin);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.lbin_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // ECHO option
@@ -1803,7 +1840,10 @@ impl Telnet {
                     }
                 }
                 self.set_echo(echo);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.echo_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // SUPPRESS-GO-AHEAD option
@@ -1830,7 +1870,10 @@ impl Telnet {
                     }
                 }
                 self.set_lsga(lsga);
-                self.check_options(false).await;
+                // Invoke this option's one-shot callback, if still armed.
+                if self.0.lsga_callback.swap(false, Ordering::Relaxed) {
+                    self.check_options(false).await;
+                }
             }
 
             // Don't know this option, refuse it.
@@ -2857,8 +2900,23 @@ impl Telnet {
         let session = self.session();
         let do_echo = self.do_echo();
 
-        // Check if initial options negotiations have finished.
-        self.check_options(true).await;
+        // Check if initial option negotiations are still pending: if no option
+        // reply has ever arrived, assume a raw TCP connection (~ the C++ test
+        // that every X_callback is still armed).
+        if self.0.echo_callback.load(Ordering::Relaxed)
+            && self.0.lsga_callback.load(Ordering::Relaxed)
+            && self.0.rsga_callback.load(Ordering::Relaxed)
+            && self.0.lbin_callback.load(Ordering::Relaxed)
+            && self.0.rbin_callback.load(Ordering::Relaxed)
+        {
+            self.0.echo_callback.store(false, Ordering::Relaxed);
+            self.0.lsga_callback.store(false, Ordering::Relaxed);
+            self.0.rsga_callback.store(false, Ordering::Relaxed);
+            self.0.lbin_callback.store(false, Ordering::Relaxed);
+            self.0.rbin_callback.store(false, Ordering::Relaxed);
+            self.0.naws_callback.store(false, Ordering::Relaxed);
+            self.check_options(true).await;
+        }
 
         // Reset login timeout.
         if !session.signed_on() {
