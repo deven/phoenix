@@ -18,14 +18,15 @@ use crate::session::Session;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use async_backtrace::framed;
-use bytes::{Bytes, BytesMut};
+use bytes::{Buf, BytesMut};
 use std::collections::VecDeque;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 //use textwrap::wrap;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::{Mutex, MutexGuard, Notify, broadcast};
 
 pub const BELL_STR: &str = "\x07";
 
@@ -198,9 +199,11 @@ pub struct Telnet(pub Arc<TelnetInner>);
 #[derive(Debug)]
 pub struct TelnetInner {
     // Connection
-    pub stream: Mutex<TcpStream>,
-    pub closing: AtomicBool,      // connection closing?
-    pub close_on_eof: AtomicBool, // close connection on EOF?
+    pub peer: Option<SocketAddr>,   // peer address, captured at accept
+    pub write_interest: AtomicBool, // pending output? (~ C++ FDTable::WriteSelect bit)
+    pub doorbell: Notify,           // wake the connection event loop
+    pub closing: AtomicBool,        // connection closing?
+    pub close_on_eof: AtomicBool,   // close connection on EOF?
 
     // Session
     pub session: AtomicSession, // link to session object
@@ -351,12 +354,14 @@ impl Telnet {
     pub const KILL_RING_MAX: usize = 1; // XXX Save last kill.
 
     /// Create a new `Telnet` with its associated `LoginSession`.
-    pub fn new(stream: TcpStream, server: Server) -> Self {
+    pub fn new(stream: &TcpStream, server: Server) -> Self {
         println!("=== DEBUG: Telnet::new() creating new session ===");
         let session = Session::new(server, None);
         println!("=== DEBUG: Telnet::new() session created with ID: {id} ===", id = session.id());
         let inner = TelnetInner {
-            stream: Mutex::new(stream),
+            peer: stream.peer_addr().ok(),
+            write_interest: AtomicBool::new(false),
+            doorbell: Notify::new(),
             closing: AtomicBool::new(false),
             close_on_eof: AtomicBool::new(true),
             session: AtomicSession::new(session),
@@ -395,22 +400,15 @@ impl Telnet {
         telnet
     }
 
-    /// Get the TCP stream.
-    #[framed]
-    pub async fn stream(&self) -> MutexGuard<'_, TcpStream> {
-        self.0.stream.lock().await
-    }
-
     /// Log calling host and port.
     #[framed]
     pub async fn log_caller(&self) {
-        let stream = self.stream().await;
-        match stream.peer_addr() {
-            Ok(addr) => {
+        match self.0.peer {
+            Some(addr) => {
                 log::info!("Accepted connection from {addr}"); // XXX log message
             }
-            Err(e) => {
-                log::warn!("Telnet::log_caller(): peer_addr() failed: {e}"); // XXX print error message
+            None => {
+                log::warn!("Telnet::log_caller(): peer address unavailable"); // XXX print error message
             }
         }
     }
@@ -947,13 +945,15 @@ impl Telnet {
             }
         }
 
-        // Always attempt to close the underlying stream.
-        if let Err(e) = self.stream().await.shutdown().await {
-            println!("=== DEBUG: Error shutting down stream: {e} ===");
-            if result.is_ok() {
-                result = Err(e);
-            }
+        // Discard pending output unless draining (the C++ non-drain close dropped it).
+        if !drain {
+            self.command_buffer().await.clear();
+            self.output_buffer().await.clear();
         }
+
+        // The connection event loop owns the stream: wake it to drain any pending
+        // output and shut the connection down (~ fdtable.Close(fd) -> Closed()).
+        self.0.doorbell.notify_one();
 
         result
     }
@@ -996,6 +996,12 @@ impl Telnet {
                 }
             }
         }
+        drop(output);
+
+        // Arm the event loop's writable branch and wake it, as queuing output
+        // armed the writefds bit before the C++ loop's next select() pass.
+        self.0.write_interest.store(true, Ordering::Release);
+        self.0.doorbell.notify_one();
     }
 
     /// Echo output (if echo enabled and not undrawn).
@@ -1380,76 +1386,147 @@ impl Telnet {
         self.output("\n").await;
     }
 
+    /// Request an output flush.  The connection event loop's writable branch
+    /// (output_ready) performs the actual writes; this arms and wakes it, as
+    /// queued output armed the writefds bit before the C++ loop's next select().
     #[framed]
     pub async fn flush_output(&self) -> tokio::io::Result<()> {
-        // First flush command buffer
-        let cmd_data = {
-            let mut buf = self.command_buffer().await;
-            if buf.is_empty() { Bytes::new() } else { buf.split().freeze() }
+        self.0.write_interest.store(true, Ordering::Release);
+        self.0.doorbell.notify_one();
+
+        Ok(())
+    }
+
+    /// Any output pending in either buffer?
+    #[framed]
+    async fn has_pending_output(&self) -> bool {
+        !self.command_buffer().await.is_empty() || !self.output_buffer().await.is_empty()
+    }
+
+    /// Get the write-interest flag (event loop writable-branch guard).
+    pub fn write_interest(&self) -> bool {
+        self.0.write_interest.load(Ordering::Acquire)
+    }
+
+    /// Ready to read from TELNET connection.  Returns Ok(true) on EOF.
+    #[framed]
+    pub async fn input_ready(&self, stream: &TcpStream, buffer: &mut [u8]) -> tokio::io::Result<bool> {
+        let n = match stream.try_read(buffer) {
+            Ok(0) => {
+                println!("=== DEBUG: Socket read returned EOF ===");
+                return Ok(true);
+            }
+            Ok(n) => {
+                println!("=== DEBUG: Socket read {n} bytes ===");
+                debug_format_bytes(&buffer[..n], "RECEIVED FROM CLIENT");
+                n
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                // Readiness can be spurious; nothing to read after all (C++ EWOULDBLOCK).
+                return Ok(false);
+            }
+            Err(e) => {
+                println!("=== DEBUG: Socket read error: {e} ===");
+                return Err(e);
+            }
         };
 
-        if !cmd_data.is_empty() {
-            debug_format_bytes(&cmd_data, "SENDING TO CLIENT (COMMAND BUFFER)");
-            self.stream().await.write_all(&cmd_data).await?;
+        // Process input bytes
+        for &byte in &buffer[..n] {
+            self.process_byte(byte).await?;
         }
 
-        // Then flush output buffer
-        let out_data = {
-            let mut buf = self.output_buffer().await;
-            if buf.is_empty() { Bytes::new() } else { buf.split().freeze() }
-        };
+        Ok(false)
+    }
 
-        if !out_data.is_empty() {
-            debug_format_bytes(&out_data, "SENDING TO CLIENT (OUTPUT BUFFER)");
-            self.stream().await.write_all(&out_data).await?;
+    /// Ready to write to TELNET connection.  Drains the command buffer, then the
+    /// output buffer; a partial write retains the remainder for the next writable
+    /// pass, as in the C++ OutputReady().
+    #[framed]
+    pub async fn output_ready(&self, stream: &TcpStream) -> tokio::io::Result<()> {
+        // First drain command buffer
+        loop {
+            let mut buf = self.command_buffer().await;
+            if buf.is_empty() {
+                break;
+            }
+            match stream.try_write(&buf[..]) {
+                Ok(n) => {
+                    debug_format_bytes(&buf[..n], "SENDING TO CLIENT (COMMAND BUFFER)");
+                    buf.advance(n);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => return Ok(()), // stay armed
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Then drain output buffer
+        loop {
+            let mut buf = self.output_buffer().await;
+            if buf.is_empty() {
+                break;
+            }
+            match stream.try_write(&buf[..]) {
+                Ok(n) => {
+                    debug_format_bytes(&buf[..n], "SENDING TO CLIENT (OUTPUT BUFFER)");
+                    buf.advance(n);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => return Ok(()), // stay armed
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Disarm, then re-check: an appender may have armed between the emptiness
+        // check and the store; if so, re-arm (the appender's doorbell wakes the loop).
+        self.0.write_interest.store(false, Ordering::Release);
+        if self.has_pending_output().await {
+            self.0.write_interest.store(true, Ordering::Release);
         }
 
         Ok(())
     }
 
     #[framed]
-    pub async fn handle_input(&self) -> tokio::io::Result<()> {
+    pub async fn handle_input(&self, mut stream: TcpStream, mut shutdown_rx: broadcast::Receiver<()>) -> tokio::io::Result<()> {
         println!("=== DEBUG: Telnet::handle_input() starting ===");
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
+        // Connection event loop: multiplex read/write readiness on the single
+        // owned stream, dispatching to input_ready()/output_ready() as the C++
+        // select() loop dispatched to InputReady()/OutputReady() per ready fd.
+        // (The Tokio runtime plays the role of the outer select() over all fds;
+        // this loop is the per-fd slice of it.)
         loop {
-            if self.closing() {
+            if self.closing() && !self.has_pending_output().await {
+                // Pending output drained (or discarded): finish closing the connection.
                 println!("=== DEBUG: Telnet is closing, exiting handle_input() ===");
+                stream.shutdown().await.ok();
                 return Ok(());
             }
 
-            // Read from socket
-            println!("=== DEBUG: About to read from socket ===");
-            let n = {
-                let mut stream = self.stream().await;
-                match stream.read(&mut buffer).await {
-                    Ok(0) => {
-                        println!("=== DEBUG: Socket read returned EOF ===");
+            tokio::select! {
+                result = stream.readable() => {
+                    result?;
+                    if self.input_ready(&stream, &mut buffer).await? {
+                        println!("=== DEBUG: Socket read returned EOF, exiting handle_input() ===");
                         return Ok(());
                     }
-                    Ok(n) => {
-                        println!("=== DEBUG: Socket read {n} bytes ===");
-                        debug_format_bytes(&buffer[..n], "RECEIVED FROM CLIENT");
-                        n
-                    }
-                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                        println!("=== DEBUG: Socket read would block, continuing ===");
-                        continue;
-                    }
-                    Err(e) => {
-                        println!("=== DEBUG: Socket read error: {e} ===");
-                        return Err(e);
-                    }
                 }
-            };
-
-            // Process input bytes
-            for &byte in &buffer[..n] {
-                self.process_byte(byte).await?;
+                result = stream.writable(), if self.write_interest() => {
+                    result?;
+                    self.output_ready(&stream).await?;
+                }
+                _ = self.0.doorbell.notified() => {
+                    // Output was queued or closing was requested; loop to re-evaluate.
+                }
+                result = shutdown_rx.recv(), if !self.closing() => {
+                    println!("=== DEBUG: Received shutdown signal ===");
+                    if result.is_ok() {
+                        self.output("\n\n*** Server is shutting down ***\n").await;
+                    }
+                    self.close(true).await?;
+                }
             }
-
-            // Flush any pending output
-            self.flush_output().await?;
         }
     }
 
