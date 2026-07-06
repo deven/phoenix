@@ -75,19 +75,16 @@ impl User {
                 }
             }
         }
+        // Wholesale replacement computed from external input, not read-modify-write; set() is correct here.
         self.0.reserved.set(reserved);
     }
 
     pub fn add_session(&self, session: Session) {
-        let mut sessions = self.0.sessions.snapshot();
-        sessions.insert(session);
-        self.0.sessions.set(sessions);
+        self.0.sessions.insert(session);
     }
 
     pub fn remove_session(&self, session: &Session) {
-        let mut sessions = self.0.sessions.snapshot();
-        sessions.remove(session);
-        self.0.sessions.set(sessions);
+        self.0.sessions.remove(session);
     }
 
     pub fn password(&self) -> Option<Text> {
@@ -127,25 +124,26 @@ pub struct UserManager(pub Arc<UserManagerInner>);
 #[derive(Debug)]
 pub struct UserManagerInner {
     pub last_update: ArcSwapOption<SystemTime>,
+    pub update_lock: tokio::sync::Mutex<()>,
 }
 
 impl UserManager {
     #[framed]
     pub fn new() -> Self {
-        let inner = UserManagerInner { last_update: ArcSwapOption::new(None) };
+        let inner = UserManagerInner { last_update: ArcSwapOption::new(None), update_lock: tokio::sync::Mutex::new(()) };
         Self(Arc::new(inner))
     }
 
     pub async fn get_user(&self, login: &str) -> Option<User> {
         self.update_all().await.ok()?;
-        USERS.iter().find(|(k, _)| k.eq_ignore_ascii_case(login)).map(|(_, v)| v.clone())
+        // Text hashes and compares case-insensitively (UniCase), so this lookup folds case.
+        USERS.get(&Text::from(login))
     }
 
     pub async fn update(&self, login: impl Into<Text>, pass: Option<String>, names: Option<&str>, defblurb: Option<impl Into<Text>>, p: i32) -> Result<()> {
         let login_str: Text = login.into();
-        let mut users = USERS.snapshot();
 
-        if let Some(existing_user) = users.get(&login_str) {
+        if let Some(existing_user) = USERS.get(&login_str) {
             // Update existing user's fields atomically
             existing_user.0.password.set(pass.map(Text::new));
             existing_user.set_reserved(names);
@@ -153,8 +151,7 @@ impl UserManager {
             existing_user.0.priv_level.store(p, Ordering::Relaxed);
         } else {
             let user = User::new(login_str.clone(), pass, names, defblurb, p).await;
-            users.insert(login_str, user);
-            USERS.set(users);
+            USERS.insert(login_str, user);
         }
 
         Ok(())
@@ -164,6 +161,10 @@ impl UserManager {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
         use std::path::Path;
+
+        // Serialize passwd reloads: without this, concurrent get_user() calls can
+        // both observe a stale mtime, both parse, and race duplicate User inserts.
+        let _reload_guard = self.0.update_lock.lock().await;
 
         let passwd_path = Path::new("passwd");
         if !passwd_path.exists() {

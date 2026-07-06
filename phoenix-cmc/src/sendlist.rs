@@ -72,16 +72,12 @@ impl Sendlist {
 
     /// Add a session.
     pub fn add_session(&self, session: Session) {
-        let mut sessions = self.0.sessions.snapshot();
-        sessions.insert(session);
-        self.0.sessions.set(sessions);
+        self.0.sessions.insert(session);
     }
 
     /// Remove a session.
     pub fn remove_session(&self, session: &Session) {
-        let mut sessions = self.0.sessions.snapshot();
-        sessions.remove(session);
-        self.0.sessions.set(sessions);
+        self.0.sessions.remove(session);
     }
 
     /// Set the discussions.
@@ -91,16 +87,12 @@ impl Sendlist {
 
     /// Add a discussion.
     pub fn add_discussion(&self, discussion: Discussion) {
-        let mut discussions = self.0.discussions.snapshot();
-        discussions.insert(discussion);
-        self.0.discussions.set(discussions);
+        self.0.discussions.insert(discussion);
     }
 
     /// Remove a discussion.
     pub fn remove_discussion(&self, discussion: &Discussion) {
-        let mut discussions = self.0.discussions.snapshot();
-        discussions.remove(discussion);
-        self.0.discussions.set(discussions);
+        self.0.discussions.remove(discussion);
     }
 
     pub async fn new(sender: &Session, typed: &str, multi: bool, do_sessions: bool, do_discussions: bool) -> Self {
