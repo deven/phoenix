@@ -177,7 +177,7 @@ impl Server {
 
         // Create `Telnet` with associated `LoginSession`.
         println!("=== DEBUG: Creating Telnet instance ===");
-        let telnet = Telnet::new(stream, self.clone());
+        let telnet = Telnet::new(&stream, self.clone());
         println!("=== DEBUG: Telnet instance created ===");
 
         // Log connection details
@@ -190,30 +190,22 @@ impl Server {
 
         // Handle network I/O.
         println!("=== DEBUG: Starting I/O handling loop ===");
-        let mut shutdown_rx = self.shutdown_tx().subscribe();
-        tokio::select! {
-            _ = shutdown_rx.recv() => {
-                println!("=== DEBUG: Received shutdown signal ===");
-                telnet.output("\n\n*** Server is shutting down ***\n").await;
-                telnet.close(true).await?;
+        let shutdown_rx = self.shutdown_tx().subscribe();
+        let result = telnet.handle_input(stream, shutdown_rx).await;
+        println!("=== DEBUG: telnet.handle_input() returned: {result:?} ===");
+        if let Err(e) = result {
+            if e.kind() != std::io::ErrorKind::UnexpectedEof {
+                error!("Telnet error: {e}");
             }
-            result = telnet.handle_input() => {
-                println!("=== DEBUG: telnet.handle_input() returned: {:?} ===", result);
-                if let Err(e) = result {
-                    if e.kind() != std::io::ErrorKind::UnexpectedEof {
-                        error!("Telnet error: {e}");
-                    }
-                }
+        }
 
-                // Detach or close session
-                let session = telnet.session();
-                {
-                    if session.signed_on() {
-                        session.detach(&telnet, false).await?;
-                    } else {
-                        session.close(false).await?;
-                    }
-                }
+        // Detach or close session
+        let session = telnet.session();
+        {
+            if session.signed_on() {
+                session.detach(&telnet, false).await?;
+            } else {
+                session.close(false).await?;
             }
         }
 
