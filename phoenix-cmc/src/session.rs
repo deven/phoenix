@@ -1213,6 +1213,12 @@ impl Session {
         Ok(())
     }
 
+    /// Initialize input function to Login.
+    #[framed]
+    pub async fn init_input_function(&self) -> tokio::io::Result<()> {
+        self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await
+    }
+
     #[framed]
     pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
         println!("=== DEBUG: Session::init_login_sequence() starting ===");
@@ -1220,8 +1226,9 @@ impl Session {
         // Start login timeout
         self.reset_login_timeout();
 
-        println!("=== DEBUG: Switching to AwaitingLogin state ===");
-        self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await?;
+        // The session stays in PreLogin (~ C++ InputFunc == NULL): input lines
+        // are saved and replayed when init_input_function() runs after the
+        // initial option negotiations resolve.
         println!("=== DEBUG: Session::init_login_sequence() completed ===");
         Ok(())
     }
