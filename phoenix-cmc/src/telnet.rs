@@ -851,6 +851,9 @@ impl Telnet {
         self.will_echo().await?; // Send IAC WILL ECHO option sequence.
         self.do_naws().await?; // Send IAC DO NAWS option sequence.
 
+        // Send welcome banner.
+        self.welcome().await;
+
         // Flush all telnet options and welcome banner to client
         println!("=== DEBUG: Flushing telnet options ===");
         self.flush_output().await?;
@@ -880,12 +883,10 @@ impl Telnet {
             self.set_rbin(TELNET_ENABLED);
             self.set_echo(0);
             self.set_naws(0);
-            self.set_welcome_sent(true);
             self.output(
                 "You don't appear to be running a telnet client.  Assuming raw TCP connection.\n(Use C-x C-e to toggle remote echo if you need it.)\n\n",
             )
             .await;
-            self.welcome().await;
         } else {
             // Make sure we're done with required initial option negotiations.
             // Intentionally use == with bitfield mask to test both bits at once.
@@ -928,8 +929,9 @@ impl Telnet {
         //     self.output("*** This server is about to shut down! ***\n\n").await;
         // }
 
-        // Send login prompt.
-        self.show_prompt("login: ").await;
+        // Initialize user input processing function, send login prompt.
+        let session = self.session();
+        session.init_input_function().await.ok();
     }
 
     /// Close the TELNET connection.
