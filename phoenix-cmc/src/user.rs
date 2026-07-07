@@ -7,16 +7,14 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::atomic::{AtomicHashMap, AtomicOrdSet, AtomicText, AtomicTextOption, AtomicVector};
+use crate::atomic::{AtomicHashMap, AtomicOrdSet, AtomicSystemTimeOption, AtomicText, AtomicTextOption, AtomicVector};
 use crate::session::Session;
 use crate::text::Text;
 use anyhow::Result;
-use arc_swap::ArcSwapOption;
 use async_backtrace::framed;
 use im::Vector;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
-use std::time::SystemTime;
 
 pub static USERS: LazyLock<AtomicHashMap<Text, User>> = LazyLock::new(AtomicHashMap::default);
 static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
@@ -123,14 +121,14 @@ pub struct UserManager(pub Arc<UserManagerInner>);
 
 #[derive(Debug)]
 pub struct UserManagerInner {
-    pub last_update: ArcSwapOption<SystemTime>,
+    pub last_update: AtomicSystemTimeOption,
     pub update_lock: tokio::sync::Mutex<()>,
 }
 
 impl UserManager {
     #[framed]
     pub fn new() -> Self {
-        let inner = UserManagerInner { last_update: ArcSwapOption::new(None), update_lock: tokio::sync::Mutex::new(()) };
+        let inner = UserManagerInner { last_update: AtomicSystemTimeOption::new(None), update_lock: tokio::sync::Mutex::new(()) };
         Self(Arc::new(inner))
     }
 
@@ -178,12 +176,9 @@ impl UserManager {
         let metadata = std::fs::metadata(passwd_path)?;
         let modified = metadata.modified()?;
 
-        {
-            let last = self.0.last_update.load();
-            if let Some(last_time) = last.as_ref() {
-                if **last_time == modified {
-                    return Ok(());
-                }
+        if let Some(last_time) = self.0.last_update.snapshot() {
+            if last_time == modified {
+                return Ok(());
             }
         }
 
@@ -212,7 +207,7 @@ impl UserManager {
             self.update("guest", None, None, None::<&str>, 0).await?;
         }
 
-        self.0.last_update.store(Some(Arc::new(modified)));
+        self.0.last_update.set(Some(modified));
         Ok(())
     }
 
