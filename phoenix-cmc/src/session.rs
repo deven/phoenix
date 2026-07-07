@@ -8,8 +8,8 @@
 //
 
 use crate::atomic::{
-    AtomicAwayState, AtomicHashMap, AtomicLoginState, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicSessionType, AtomicTelnetOption, AtomicText,
-    AtomicTextOption, AtomicUserOption, SessionTypeBorrow,
+    AtomicAbortHandleOption, AtomicAwayState, AtomicHashMap, AtomicLoginState, AtomicMessageOption, AtomicName, AtomicSendlistOption, AtomicSessionType,
+    AtomicTelnetOption, AtomicText, AtomicTextOption, AtomicTimestamp, AtomicUserOption, SessionTypeBorrow,
 };
 use crate::constants::*;
 use crate::discussion::Discussion;
@@ -22,11 +22,10 @@ use crate::text::Text;
 use crate::timestamp::{Timestamp, system_uptime};
 use crate::user::{User, UserManager, verify_password};
 use crate::{VERSION, getword, match_keyword, match_name};
-use arc_swap::{ArcSwap, ArcSwapOption};
 use async_backtrace::framed;
-use im::OrdSet;
+use im::{HashMap, OrdSet};
 use log::info;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
@@ -65,8 +64,8 @@ pub struct SessionInner {
     pub pending: Mutex<OutputStream>,
 
     // Login and idle timestamps.
-    pub login_time: ArcSwap<Timestamp>,
-    pub idle_since: ArcSwap<Timestamp>,
+    pub login_time: AtomicTimestamp,
+    pub idle_since: AtomicTimestamp,
 
     // Session type enum with type-specific fields.
     pub session_type: AtomicSessionType,
@@ -78,7 +77,7 @@ pub enum SessionType {
         user_entered: AtomicTextOption,
         name_entered: AtomicTextOption,
         login_state: AtomicLoginState,
-        login_timeout: ArcSwapOption<AbortHandle>,
+        login_timeout: AtomicAbortHandleOption,
         attempts: AtomicI32,
     },
     LoggedIn {
@@ -89,8 +88,8 @@ pub enum SessionType {
         user: AtomicUserOption,
 
         // User preferences and variables.
-        user_vars: ArcSwap<HashMap<Text, Text>>,
-        sys_vars: ArcSwap<HashMap<Text, Text>>,
+        user_vars: AtomicHashMap<Text, Text>,
+        sys_vars: AtomicHashMap<Text, Text>,
         signal_public: AtomicBool,
         signal_private: AtomicBool,
 
@@ -200,13 +199,13 @@ impl Session {
             lines: Mutex::new(VecDeque::new()),
             output_buffer: Mutex::new(String::new()),
             pending: Mutex::new(OutputStream::new()),
-            login_time: ArcSwap::new(Arc::new(now.clone())),
-            idle_since: ArcSwap::new(Arc::new(now)),
+            login_time: AtomicTimestamp::new(now.clone()),
+            idle_since: AtomicTimestamp::new(now),
             session_type: AtomicSessionType::new(SessionType::PreLogin {
                 user_entered: AtomicTextOption::new(None),
                 name_entered: AtomicTextOption::new(None),
                 login_state: AtomicLoginState::new(LoginState::PreLogin),
-                login_timeout: ArcSwapOption::new(None),
+                login_timeout: AtomicAbortHandleOption::new(None),
                 attempts: AtomicI32::new(0),
             }),
         };
@@ -232,8 +231,8 @@ impl Session {
     pub fn logged_in(&self, name: Name, user: Option<User>) {
         let now = Timestamp::new();
         let priv_level = user.as_ref().map(|user| user.priv_level()).unwrap_or(0);
-        self.0.login_time.store(Arc::new(now.clone()));
-        self.0.idle_since.store(Arc::new(now));
+        self.0.login_time.set(now.clone());
+        self.0.idle_since.set(now);
 
         // Login sequence is finished.
         self.login_sequence_finished();
@@ -241,8 +240,8 @@ impl Session {
         self.0.session_type.set(SessionType::LoggedIn {
             name: AtomicName::new(name),
             user: AtomicUserOption::new(user),
-            user_vars: ArcSwap::new(Arc::new(HashMap::new())),
-            sys_vars: ArcSwap::new(Arc::new(HashMap::new())),
+            user_vars: AtomicHashMap::empty(),
+            sys_vars: AtomicHashMap::empty(),
             signal_public: AtomicBool::new(true),
             signal_private: AtomicBool::new(true),
             away: AtomicAwayState::default(),
@@ -332,23 +331,23 @@ impl Session {
     }
 
     /// Get the login time.
-    pub fn login_time(&self) -> Arc<Timestamp> {
-        self.0.login_time.load_full()
+    pub fn login_time(&self) -> Timestamp {
+        self.0.login_time.snapshot()
     }
 
     /// Set the login time.
     pub fn set_login_time(&self, value: Timestamp) {
-        self.0.login_time.store(Arc::new(value));
+        self.0.login_time.set(value);
     }
 
     /// Get the idle-since timestamp.
-    pub fn idle_since(&self) -> Arc<Timestamp> {
-        self.0.idle_since.load_full()
+    pub fn idle_since(&self) -> Timestamp {
+        self.0.idle_since.snapshot()
     }
 
     /// Set the idle-since timestamp.
     pub fn set_idle_since(&self, value: Timestamp) {
-        self.0.idle_since.store(Arc::new(value));
+        self.0.idle_since.set(value);
     }
 
     /// Get the session type.
@@ -440,7 +439,7 @@ impl Session {
     /// Get the login timeout Tokio task `AbortHandle`, if any.
     pub fn login_timeout(&self) -> Option<AbortHandle> {
         match self.session_type().as_ref() {
-            SessionType::PreLogin { login_timeout, .. } => login_timeout.load_full().map(|arc| (*arc).clone()),
+            SessionType::PreLogin { login_timeout, .. } => login_timeout.snapshot(),
             SessionType::LoggedIn { .. } => None,
         }
     }
@@ -448,7 +447,7 @@ impl Session {
     /// Set the login timeout Tokio task `AbortHandle`, if any.
     pub fn set_login_timeout(&self, value: Option<AbortHandle>) {
         match self.session_type().as_ref() {
-            SessionType::PreLogin { login_timeout, .. } => login_timeout.store(value.map(Arc::new)),
+            SessionType::PreLogin { login_timeout, .. } => login_timeout.set(value),
             SessionType::LoggedIn { .. } => (),
         };
     }
@@ -649,8 +648,8 @@ impl Session {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => None,
             SessionType::LoggedIn { user_vars, .. } => {
-                let vars = user_vars.load();
-                vars.get(key.as_ref()).cloned()
+                // Query by Text so the lookup folds case exactly as the map's keys hash.
+                user_vars.get(&Text::from(key.as_ref()))
             }
         }
     }
@@ -660,10 +659,7 @@ impl Session {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
             SessionType::LoggedIn { user_vars, .. } => {
-                let vars = user_vars.load();
-                let mut new_vars = (**vars).clone();
-                new_vars.insert(key.into(), value.into());
-                user_vars.store(Arc::new(new_vars));
+                user_vars.insert(key.into(), value.into());
             }
         };
     }
@@ -672,14 +668,7 @@ impl Session {
     pub fn remove_user_var(&self, key: impl AsRef<str>) -> Option<Text> {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => None,
-            SessionType::LoggedIn { user_vars, .. } => {
-                let vars = user_vars.load();
-                let mut new_vars = (**vars).clone();
-                let result = new_vars.remove(key.as_ref());
-                user_vars.store(Arc::new(new_vars));
-
-                result
-            }
+            SessionType::LoggedIn { user_vars, .. } => user_vars.remove(&Text::from(key.as_ref())),
         }
     }
 
@@ -687,7 +676,7 @@ impl Session {
     pub fn clear_user_vars(&self) {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-            SessionType::LoggedIn { user_vars, .. } => user_vars.store(Arc::new(HashMap::new())),
+            SessionType::LoggedIn { user_vars, .. } => user_vars.set(HashMap::new()),
         };
     }
 
@@ -696,8 +685,8 @@ impl Session {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => None,
             SessionType::LoggedIn { sys_vars, .. } => {
-                let vars = sys_vars.load();
-                vars.get(key.as_ref()).cloned()
+                // Query by Text so the lookup folds case exactly as the map's keys hash.
+                sys_vars.get(&Text::from(key.as_ref()))
             }
         }
     }
@@ -707,10 +696,7 @@ impl Session {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
             SessionType::LoggedIn { sys_vars, .. } => {
-                let vars = sys_vars.load();
-                let mut new_vars = (**vars).clone();
-                new_vars.insert(key.into(), value.into());
-                sys_vars.store(Arc::new(new_vars));
+                sys_vars.insert(key.into(), value.into());
             }
         };
     }
@@ -719,14 +705,7 @@ impl Session {
     pub fn remove_sys_var(&self, key: impl AsRef<str>) -> Option<Text> {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => None,
-            SessionType::LoggedIn { sys_vars, .. } => {
-                let vars = sys_vars.load();
-                let mut new_vars = (**vars).clone();
-                let result = new_vars.remove(key.as_ref());
-                sys_vars.store(Arc::new(new_vars));
-
-                result
-            }
+            SessionType::LoggedIn { sys_vars, .. } => sys_vars.remove(&Text::from(key.as_ref())),
         }
     }
 
@@ -734,7 +713,7 @@ impl Session {
     pub fn clear_sys_vars(&self) {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => (),
-            SessionType::LoggedIn { sys_vars, .. } => sys_vars.store(Arc::new(HashMap::new())),
+            SessionType::LoggedIn { sys_vars, .. } => sys_vars.set(HashMap::new()),
         };
     }
 
@@ -3051,7 +3030,7 @@ impl Session {
         let new_idle_since = Timestamp::from_unix(now.unix() - total_minutes * 60);
 
         // Check permissions
-        if new_idle_since < *self.login_time() && self.priv_level() < 50 {
+        if new_idle_since < self.login_time() && self.priv_level() < 50 {
             self.output("Sorry, you can't be idle longer than you've been signed on.\n").await;
             return Ok(());
         }
@@ -3059,7 +3038,7 @@ impl Session {
         // Set the new idle time
         self.set_idle_since(new_idle_since);
         if self.idle_since().unix() < self.login_time().unix() {
-            self.set_login_time(self.idle_since().as_ref().clone());
+            self.set_login_time(self.idle_since());
         }
 
         // Output results
@@ -4053,136 +4032,136 @@ impl Session {
         (who, errors, msg)
     }
 
-/*
-    #[framed]
-    pub async fn get_who_set(&self, args: &str) -> (OrdSet<Session>, String, String) {
-        let mut who = OrdSet::new();
-        let mut errors = String::new();
+    /*
+        #[framed]
+        pub async fn get_who_set(&self, args: &str) -> (OrdSet<Session>, String, String) {
+            let mut who = OrdSet::new();
+            let mut errors = String::new();
 
-        // Check if anyone is signed on at all.
-        let total_sessions = SESSIONS.snapshot().values().filter(|s| s.signed_on()).count();
-        if total_sessions == 0 {
-            self.output("Nobody is signed on.\n").await;
-            return (who, errors, String::new());
-        }
-
-        // Parse filters
-        let mut everyone = args.is_empty();
-        let (mut here, mut away, mut busy, mut gone) = (false, false, false, false);
-        let (mut attached, mut detached, mut active, mut inactive) = (false, false, false, false);
-        let (mut idle, mut unidle, mut privileged, mut guests) = (false, false, false, false);
-        let mut sendlist_args = Vec::new();
-
-        // Parse comma-separated arguments for filter keywords
-        let mut everyone = args.is_empty();
-        let mut here = false;
-        let mut away = false;
-        let mut busy = false;
-        let mut gone = false;
-        let mut attached = false;
-        let mut detached = false;
-        let mut active = false;
-        let mut inactive = false;
-        let mut idle = false;
-        let mut unidle = false;
-        let mut privileged = false;
-        let mut guests = false;
-
-        for arg in args.split(',').map(str::trim).filter(|a| !a.is_empty()) {
-            match arg.to_lowercase().as_str() {
-                "here" => here = true,
-                "away" => away = true,
-                "busy" => busy = true,
-                "gone" => gone = true,
-                "attached" => attached = true,
-                "detached" => detached = true,
-                "active" => active = true,
-                "inactive" => inactive = true,
-                "idle" => idle = true,
-                "unidle" => unidle = true,
-                "privileged" => privileged = true,
-                "guests" => guests = true,
-                "everyone" => everyone = true,
-                "all" => { active = true; attached = true; }
-                _ => sendlist_args.push(arg),
+            // Check if anyone is signed on at all.
+            let total_sessions = SESSIONS.snapshot().values().filter(|s| s.signed_on()).count();
+            if total_sessions == 0 {
+                self.output("Nobody is signed on.\n").await;
+                return (who, errors, String::new());
             }
-        }
 
-        let filters = [
-            (here, "\"here\""), (away, "\"away\""), (busy, "\"busy\""), (gone, "\"gone\""),
-            (attached, "attached"), (detached, "detached"), (active, "active"), (inactive, "inactive"),
-            (idle, "idle"), (unidle, "unidle"), (privileged, "privileged"), (guests, "a guest"),
-        ];
-        let has_filters = everyone || filters.iter().any(|(f, _)| *f);
+            // Parse filters
+            let mut everyone = args.is_empty();
+            let (mut here, mut away, mut busy, mut gone) = (false, false, false, false);
+            let (mut attached, mut detached, mut active, mut inactive) = (false, false, false, false);
+            let (mut idle, mut unidle, mut privileged, mut guests) = (false, false, false, false);
+            let mut sendlist_args = Vec::new();
 
-        // Handle sendlist expansion
-        if !sendlist_args.is_empty() {
-            let sendlist = Sendlist::new(&self, &sendlist_args.join(","), true, true, true).await;
-            sendlist.expand(&mut who, None).await;
-            if !sendlist.errors().is_empty() {
-                errors = sendlist.errors().to_string();
-            }
-        }
+            // Parse comma-separated arguments for filter keywords
+            let mut everyone = args.is_empty();
+            let mut here = false;
+            let mut away = false;
+            let mut busy = false;
+            let mut gone = false;
+            let mut attached = false;
+            let mut detached = false;
+            let mut active = false;
+            let mut inactive = false;
+            let mut idle = false;
+            let mut unidle = false;
+            let mut privileged = false;
+            let mut guests = false;
 
-        // Add filter matches
-        if has_filters {
-            let now = Timestamp::new();
-            for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
-                let idle_time = (now.unix() - session.idle_since().unix()) / 60;
-                let is_active = matches!(
-                    (session.away(), session.telnet().is_some(), idle_time),
-                    (AwayState::Here, true, t) if t < 60,
-                    | (AwayState::Here, _, t) if t < 10,
-                    | (AwayState::Away, true, t) if t < 10,
-                );
-                let include = everyone
-                    || (here && session.away() == AwayState::Here)
-                    || (away && session.away() == AwayState::Away)
-                    || (busy && session.away() == AwayState::Busy)
-                    || (gone && session.away() == AwayState::Gone)
-                    || (attached && session.telnet().is_some())
-                    || (detached && session.telnet().is_none())
-                    || (active && is_active)
-                    || (inactive && !is_active)
-                    || (idle && idle_time >= 10)
-                    || (unidle && idle_time < 10)
-                    || (privileged && session.privileged())
-                    || (guests && session.priv_level() == 0);
-
-                if include {
-                    who.insert(session.clone());
+            for arg in args.split(',').map(str::trim).filter(|a| !a.is_empty()) {
+                match arg.to_lowercase().as_str() {
+                    "here" => here = true,
+                    "away" => away = true,
+                    "busy" => busy = true,
+                    "gone" => gone = true,
+                    "attached" => attached = true,
+                    "detached" => detached = true,
+                    "active" => active = true,
+                    "inactive" => inactive = true,
+                    "idle" => idle = true,
+                    "unidle" => unidle = true,
+                    "privileged" => privileged = true,
+                    "guests" => guests = true,
+                    "everyone" => everyone = true,
+                    "all" => { active = true; attached = true; }
+                    _ => sendlist_args.push(arg),
                 }
             }
-        }
 
-        // Handle no matches
-        if who.is_empty() {
-            let labels: Vec<_> = filters.iter().filter_map(|(f, l)| f.then_some(*l)).collect();
-            if !labels.is_empty() {
-                let joined = match labels.as_slice() {
-                    [single] => single.to_string(),
-                    [all @ .., last] => format!("{} or {}", all.join(", "), last),
-                    [] => unreachable!(),
-                };
-                self.output(&format!("Nobody is {}.\n", joined)).await;
+            let filters = [
+                (here, "\"here\""), (away, "\"away\""), (busy, "\"busy\""), (gone, "\"gone\""),
+                (attached, "attached"), (detached, "detached"), (active, "active"), (inactive, "inactive"),
+                (idle, "idle"), (unidle, "unidle"), (privileged, "privileged"), (guests, "a guest"),
+            ];
+            let has_filters = everyone || filters.iter().any(|(f, _)| *f);
+
+            // Handle sendlist expansion
+            if !sendlist_args.is_empty() {
+                let sendlist = Sendlist::new(&self, &sendlist_args.join(","), true, true, true).await;
+                sendlist.expand(&mut who, None).await;
+                if !sendlist.errors().is_empty() {
+                    errors = sendlist.errors().to_string();
+                }
             }
-            if !errors.is_empty() {
-                self.output("\x07\x07").await;
-                self.output(&errors).await;
+
+            // Add filter matches
+            if has_filters {
+                let now = Timestamp::new();
+                for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
+                    let idle_time = (now.unix() - session.idle_since().unix()) / 60;
+                    let is_active = matches!(
+                        (session.away(), session.telnet().is_some(), idle_time),
+                        (AwayState::Here, true, t) if t < 60,
+                        | (AwayState::Here, _, t) if t < 10,
+                        | (AwayState::Away, true, t) if t < 10,
+                    );
+                    let include = everyone
+                        || (here && session.away() == AwayState::Here)
+                        || (away && session.away() == AwayState::Away)
+                        || (busy && session.away() == AwayState::Busy)
+                        || (gone && session.away() == AwayState::Gone)
+                        || (attached && session.telnet().is_some())
+                        || (detached && session.telnet().is_none())
+                        || (active && is_active)
+                        || (inactive && !is_active)
+                        || (idle && idle_time >= 10)
+                        || (unidle && idle_time < 10)
+                        || (privileged && session.privileged())
+                        || (guests && session.priv_level() == 0);
+
+                    if include {
+                        who.insert(session.clone());
+                    }
+                }
             }
-            return (who, String::new(), String::new());
+
+            // Handle no matches
+            if who.is_empty() {
+                let labels: Vec<_> = filters.iter().filter_map(|(f, l)| f.then_some(*l)).collect();
+                if !labels.is_empty() {
+                    let joined = match labels.as_slice() {
+                        [single] => single.to_string(),
+                        [all @ .., last] => format!("{} or {}", all.join(", "), last),
+                        [] => unreachable!(),
+                    };
+                    self.output(&format!("Nobody is {}.\n", joined)).await;
+                }
+                if !errors.is_empty() {
+                    self.output("\x07\x07").await;
+                    self.output(&errors).await;
+                }
+                return (who, String::new(), String::new());
+            }
+
+            // Generate message for successful matches
+            let msg = match total_sessions - who.len() {
+                1 if has_filters => "(There is 1 other person signed on.)\n".to_string(),
+                n if has_filters && n > 0 => format!("(There are {n} other people signed on.)\n"),
+                _ => String::new(),
+            };
+
+            (who, errors, msg)
         }
-
-        // Generate message for successful matches
-        let msg = match total_sessions - who.len() {
-            1 if has_filters => "(There is 1 other person signed on.)\n".to_string(),
-            n if has_filters && n > 0 => format!("(There are {n} other people signed on.)\n"),
-            _ => String::new(),
-        };
-
-        (who, errors, msg)
-    }
-*/
+    */
 
     #[framed]
     pub async fn session_matches(&self, name: &str, matches: &OrdSet<Session>) {

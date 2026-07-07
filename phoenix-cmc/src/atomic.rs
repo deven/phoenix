@@ -47,6 +47,8 @@ use im::{HashMap, HashSet, OrdMap, OrdSet, Vector};
 use std::hash::Hash;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI8, AtomicI16, AtomicI32, AtomicI64, AtomicIsize, AtomicU8, AtomicU16, AtomicU32, AtomicU64, AtomicUsize, Ordering};
+use std::time::SystemTime;
+use tokio::task::AbortHandle;
 
 // ---------------------------------------------------------------------------
 // Macros
@@ -491,6 +493,11 @@ macro_rules! atomic_value {
                 self.0.store(value.map(Arc::new))
             }
 
+            /// Atomically replace the value, returning the previous one.
+            pub fn swap(&self, value: Option<$value>) -> Option<$value> {
+                self.0.swap(value.map(Arc::new)).map(|arc| arc.as_ref().clone())
+            }
+
             pub fn is_some(&self) -> bool {
                 self.0.load().is_some()
             }
@@ -712,6 +719,8 @@ impl AtomicTelnetOption {
 atomic_value!(@required Text, AtomicText, TextBorrow);
 atomic_value!(@option Text, AtomicTextOption, OptionTextBorrow);
 atomic_value!(@required Timestamp, AtomicTimestamp, TimestampBorrow);
+atomic_value!(@option SystemTime, AtomicSystemTimeOption, OptionSystemTimeBorrow);
+atomic_value!(@option AbortHandle, AtomicAbortHandleOption, OptionAbortHandleBorrow);
 
 impl PartialEq for AtomicText {
     fn eq(&self, other: &Self) -> bool {
@@ -750,6 +759,10 @@ const _: () = {
     assert_send_sync_static::<AtomicSession>();
     assert_send_sync_static::<AtomicSessionOption>();
     assert_send_sync_static::<AtomicSessionType>();
+    assert_send_sync_static::<AtomicSystemTimeOption>();
+    assert_send_sync_static::<AtomicAbortHandleOption>();
+    assert_send_sync_static::<OptionSystemTimeBorrow>();
+    assert_send_sync_static::<OptionAbortHandleBorrow>();
     assert_send_sync_static::<AtomicTelnet>();
     assert_send_sync_static::<AtomicTelnetOption>();
     assert_send_sync_static::<AtomicText>();

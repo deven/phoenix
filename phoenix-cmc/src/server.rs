@@ -7,12 +7,12 @@
 // SPDX-License-Identifier: MIT
 //
 
+use crate::atomic::AtomicAbortHandleOption;
 use crate::session::Session;
 use crate::telnet::Telnet;
 use crate::text::Text;
 use crate::timestamp::{Timestamp, system_uptime};
 use anyhow::Result;
-use arc_swap::{ArcSwap, ArcSwapOption};
 use async_backtrace::framed;
 use log::{error, info};
 use std::sync::Arc;
@@ -28,11 +28,11 @@ pub struct Server(pub Arc<ServerInner>);
 
 #[derive(Debug)]
 pub struct ServerInner {
-    pub listener: ArcSwap<TcpListener>,
+    pub listener: TcpListener,
     pub port: AtomicU16,
     pub debug: AtomicBool,
-    pub shutdown_tx: ArcSwap<broadcast::Sender<()>>,
-    pub shutdown_handle: ArcSwapOption<AbortHandle>,
+    pub shutdown_tx: broadcast::Sender<()>,
+    pub shutdown_handle: AtomicAbortHandleOption,
     pub restarting: AtomicBool,
     pub server_start_time: i64,
     pub server_start_uptime: Option<i64>,
@@ -43,18 +43,18 @@ impl Server {
     #[framed]
     pub async fn new(port: u16, debug: bool) -> Result<Self> {
         println!("=== DEBUG: Server::new() called with port={port}, debug={debug} ===");
-        let listener = Arc::new(TcpListener::bind(("0.0.0.0", port)).await?);
+        let listener = TcpListener::bind(("0.0.0.0", port)).await?;
         println!("=== DEBUG: TcpListener bound successfully to 0.0.0.0:{port} ===");
         let (shutdown_tx, _) = broadcast::channel(16);
         let shutdown_handle = None;
         let restarting = false;
 
         let inner = ServerInner {
-            listener: ArcSwap::new(listener),
+            listener,
             port: AtomicU16::new(port),
             debug: AtomicBool::new(debug),
-            shutdown_tx: ArcSwap::new(Arc::new(shutdown_tx)),
-            shutdown_handle: ArcSwapOption::new(shutdown_handle),
+            shutdown_tx,
+            shutdown_handle: AtomicAbortHandleOption::new(shutdown_handle),
             restarting: AtomicBool::new(restarting),
             server_start_time: Timestamp::new().unix(),
             server_start_uptime: system_uptime().await,
@@ -65,13 +65,8 @@ impl Server {
     }
 
     /// Get the `TcpListener` object.
-    pub fn listener(&self) -> Arc<TcpListener> {
-        self.0.listener.load_full()
-    }
-
-    /// Set the `TcpListener` object.
-    pub fn set_listener(&self, value: TcpListener) {
-        self.0.listener.store(Arc::new(value));
+    pub fn listener(&self) -> &TcpListener {
+        &self.0.listener
     }
 
     /// Get the TCP listening port number.
@@ -96,27 +91,22 @@ impl Server {
 
     /// Get the shutdown `broadcast::Sender`.
     pub fn shutdown_tx(&self) -> broadcast::Sender<()> {
-        (*self.0.shutdown_tx.load_full()).clone()
-    }
-
-    /// Set the shutdown `broadcast::Sender`.
-    pub fn set_shutdown_tx(&self, value: broadcast::Sender<()>) {
-        self.0.shutdown_tx.store(Arc::new(value));
+        self.0.shutdown_tx.clone()
     }
 
     /// Get the shutdown `AbortHandle`, if any.
     pub fn shutdown_handle(&self) -> Option<AbortHandle> {
-        self.0.shutdown_handle.load_full().map(|arc| (*arc).clone())
+        self.0.shutdown_handle.snapshot()
     }
 
     /// Set the shutdown `AbortHandle`.
     pub fn set_shutdown_handle(&self, value: Option<AbortHandle>) {
-        self.0.shutdown_handle.store(value.map(Arc::new));
+        self.0.shutdown_handle.set(value);
     }
 
     /// Take the shutdown `AbortHandle`, if any.
     pub fn take_shutdown_handle(&self) -> Option<AbortHandle> {
-        self.0.shutdown_handle.swap(None).map(|arc| Arc::try_unwrap(arc).unwrap_or_else(|arc| (*arc).clone()))
+        self.0.shutdown_handle.swap(None)
     }
 
     /// Get the restarting flag.
