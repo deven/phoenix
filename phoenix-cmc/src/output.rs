@@ -9,21 +9,17 @@
 
 //! Output objects and output stream.
 //!
-//! This module corresponds to the C++ `output.h`/`output.cc` (output objects)
-//! and the `OutputStream` portion of `outstr.h`/`outstr.cc`.  The C++ class
-//! hierarchy maps onto Rust as follows:
+//! This module corresponds to the C++ `output.h`/`output.cc` (output objects) and the `OutputStream` portion of
+//! `outstr.h`/`outstr.cc`.  The C++ class hierarchy maps onto Rust as follows:
 //!
 //! - `OutputObj` base-class fields    -> `Output` struct fields (`time`)
-//! - `OutputObj` subclass hierarchy   -> `OutputKind` enum (declaration order
-//!   matches `output.h`)
+//! - `OutputObj` subclass hierarchy   -> `OutputKind` enum (declaration order matches `output.h`)
 //! - virtual `output()` dispatch      -> exhaustive `match` in `Output::output()`
-//! - `Pointer<OutputObj>` refcounting -> `Arc<Output>` (one object shared by
-//!   every recipient's `OutputStream`, as in the C++)
-//! - pointer-comparing `Unenqueue()`  -> `Arc::ptr_eq()` (identity, not value,
-//!   equality)
-//! - `Type` field                     -> deleted; the enum discriminant is the
-//!   type, checked exhaustively by the compiler.  The one place `Type` was
-//!   data rather than reflection (public vs. private messages) is now the
+//! - `Pointer<OutputObj>` refcounting -> `Arc<Output>` (one object shared by every recipient's `OutputStream`, as in
+//!   the C++)
+//! - pointer-comparing `Unenqueue()`  -> `Arc::ptr_eq()` (identity, not value, equality)
+//! - `Type` field                     -> deleted; the enum discriminant is the type, checked exhaustively by the
+//!   compiler.  The one place `Type` was data rather than reflection (public vs. private messages) is now the
 //!   `MessageType` field on `Message`.
 //! - `Class` field                    -> derived by `Output::class()`.
 
@@ -50,8 +46,8 @@ pub enum OutputClass {
     NotificationClass,
 }
 
-/// An output object: the common fields of the C++ `OutputObj` base class,
-/// wrapping the variant-specific data in `OutputKind`.
+/// An output object: the common fields of the C++ `OutputObj` base class, wrapping the variant-specific data in
+/// `OutputKind`.
 #[derive(Debug)]
 pub struct Output {
     pub time: Timestamp,
@@ -95,10 +91,17 @@ impl Output {
         }
     }
 
-    /// Render this output to a TELNET connection (C++ virtual `output()`).
-    /// The dispatch passes `time` explicitly because the C++ subclasses read
-    /// it from the base class through inheritance.
+    /// Render this output to a TELNET connection (C++ virtual `output()`).  The dispatch passes `time` explicitly
+    /// because the C++ subclasses read it from the base class through inheritance.
     pub async fn output(&self, telnet: &Telnet) {
+        // Undraw any active input line before output of any sort is sent.  The C++ called UndrawInput() at each
+        // output-producing site (SendNext, out-of-band prints); the single dispatch funnel makes it one site.  The
+        // synchronous flag check skips the async call (and its framed bookkeeping) on mid-batch repeats; it cannot race
+        // the flag, which is only ever mutated on this connection's task.
+        if !telnet.undrawn() {
+            telnet.undraw_input().await;
+        }
+
         match &self.kind {
             OutputKind::Text(obj) => obj.output(&self.time, telnet).await,
             OutputKind::Message(obj) => obj.output(&self.time, telnet).await,
@@ -126,9 +129,8 @@ impl Output {
     }
 }
 
-/// Generate `From` conversions wrapping a variant struct into `Output` (and
-/// into `Arc<Output>` for direct enqueueing).  Conversion is the moment the
-/// C++ `OutputObj` base constructor ran, so the timestamp is stamped here.
+/// Generate `From` conversions wrapping a variant struct into `Output` (and into `Arc<Output>` for direct enqueueing).
+/// Conversion is the moment the C++ `OutputObj` base constructor ran, so the timestamp is stamped here.
 macro_rules! output_from {
     ($variant:ident) => {
         output_from!($variant => $variant);
@@ -654,9 +656,8 @@ impl RenameNotify {
     }
 }
 
-// Output stream for queuing output objects.  Queued outputs are shared via
-// `Arc` (the C++ shared one heap object among all recipients' streams via
-// `Pointer<OutputObj>` reference counting).
+// Output stream for queuing output objects.  Queued outputs are shared via `Arc` (the C++ shared one heap object among
+// all recipients' streams via `Pointer<OutputObj>` reference counting).
 #[derive(Debug)]
 pub struct OutputStream {
     pub queue: tokio::sync::Mutex<Vec<Arc<Output>>>,

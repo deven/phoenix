@@ -9,29 +9,24 @@
 
 //! Lock-free atomic storage wrappers.
 //!
-//! This module provides the atomic building blocks used for all shared state in
-//! Phoenix.  Reads are wait-free (`arc_swap` pointer loads); writes swap in a
-//! complete replacement value.  Three design rules govern these types:
+//! This module provides the atomic building blocks used for all shared state in Phoenix.  Reads are wait-free
+//! (`arc_swap` pointer loads); writes swap in a complete replacement value.  Three design rules govern these types:
 //!
-//! 1. **Sentinel rule:** `Option` variants of the integer atomics encode `None`
-//!    as the maximum value of the underlying type, keeping every operation a
-//!    single-word atomic.  Consequently `Some(MAX)` is unrepresentable; this is
-//!    enforced by `debug_assert!` in debug builds.  (`AtomicBoolOption` encodes
-//!    `Option<bool>` in a single `AtomicU8` for the same single-word property.)
+//! 1. **Sentinel rule:** `Option` variants of the integer atomics encode `None` as the maximum value of the underlying
+//!    type, keeping every operation a single-word atomic.  Consequently `Some(MAX)` is unrepresentable; this is
+//!    enforced by `debug_assert!` in debug builds.  (`AtomicBoolOption` encodes `Option<bool>` in a single `AtomicU8`
+//!    for the same single-word property.)
 //!
-//! 2. **Swap-unit rule:** each atomic field is individually linearizable, but
-//!    there are no cross-field invariants; a reader may observe field A's new
-//!    value alongside field B's old value.  Fields whose values must change
-//!    together MUST be bundled into one struct behind a single swap unit (as
-//!    `Name` bundles name + blurb, and `SessionType` swaps whole variants).
+//! 2. **Swap-unit rule:** each atomic field is individually linearizable, but there are no cross-field invariants; a
+//!    reader may observe field A's new value alongside field B's old value.  Fields whose values must change together
+//!    MUST be bundled into one struct behind a single swap unit (as `Name` bundles name + blurb, and `SessionType`
+//!    swaps whole variants).
 //!
-//! 3. **RCU rule:** all read-modify-write operations on the collection wrappers
-//!    (insert, remove, etc.) go through `arc_swap`'s compare-and-swap retry loop
-//!    (`rcu`), never load-modify-store, so concurrent updates are never lost.
-//!    The `im` collections make the retried modify step cheap via structural
-//!    sharing.  Whole-value `set()` remains available for wholesale replacement,
-//!    but callers composing a new value from the old one should use `rcu()` or
-//!    the provided operations instead.
+//! 3. **RCU rule:** all read-modify-write operations on the collection wrappers (insert, remove, etc.) go through
+//!    `arc_swap`'s compare-and-swap retry loop (`rcu`), never load-modify-store, so concurrent updates are never lost.
+//!    The `im` collections make the retried modify step cheap via structural sharing.  Whole-value `set()` remains
+//!    available for wholesale replacement, but callers composing a new value from the old one should use `rcu()` or the
+//!    provided operations instead.
 
 use crate::discussion::{Discussion, DiscussionInner};
 use crate::name::{Name, NameInner};
@@ -54,13 +49,11 @@ use tokio::task::AbortHandle;
 // Macros
 // ---------------------------------------------------------------------------
 //
-// Type names are passed to these macros explicitly (rather than synthesized by
-// identifier concatenation) so that a grep for any generated type name finds
-// its defining invocation.
+// Type names are passed to these macros explicitly (rather than synthesized by identifier concatenation) so that a grep
+// for any generated type name finds its defining invocation.
 
-/// Generate a sentinel-based `Option` wrapper around a standard atomic integer
-/// type.  `None` is encoded as the maximum value of the integer type (see the
-/// sentinel rule in the module documentation), so every operation remains a
+/// Generate a sentinel-based `Option` wrapper around a standard atomic integer type.  `None` is encoded as the maximum
+/// value of the integer type (see the sentinel rule in the module documentation), so every operation remains a
 /// single-word atomic with no additional state.
 macro_rules! atomic_sentinel {
     ($atomic:ident, $base:ident, $int:ident) => {
@@ -116,8 +109,8 @@ macro_rules! atomic_sentinel {
     };
 }
 
-/// Generate an atomic wrapper for a `#[repr(u8)]` state enum, stored in an
-/// `AtomicU8` via the enum's `From<u8>`/`Into<u8>` conversions.
+/// Generate an atomic wrapper for a `#[repr(u8)]` state enum, stored in an `AtomicU8` via the enum's
+/// `From<u8>`/`Into<u8>` conversions.
 macro_rules! atomic_enum {
     ($atomic:ident, $enum:ident) => {
         #[doc = concat!("Lock-free atomic `", stringify!($enum), "` storage in a single `AtomicU8`.")]
@@ -146,12 +139,11 @@ macro_rules! atomic_enum {
     };
 }
 
-/// Generate a lock-free wrapper around an `im` persistent collection, plus its
-/// guard-backed borrow type.  Read-modify-write operations follow the RCU rule
-/// (see module documentation); `set()` performs wholesale replacement.
+/// Generate a lock-free wrapper around an `im` persistent collection, plus its guard-backed borrow type.
+/// Read-modify-write operations follow the RCU rule (see module documentation); `set()` performs wholesale replacement.
 ///
-/// The `@core` arm generates the wrapper itself; the `@set_ops` and `@map_ops`
-/// arms add element-level operations for set-like and map-like collections.
+/// The `@core` arm generates the wrapper itself; the `@set_ops` and `@map_ops` arms add element-level operations for
+/// set-like and map-like collections.
 macro_rules! atomic_collection {
     (@core $atomic:ident, $borrow:ident, $coll:ident<$($g:ident),+>, [$($bounds:tt)+]) => {
         #[doc = concat!("Lock-free atomic `", stringify!($coll), "` storage using arc_swap.")]
@@ -191,9 +183,8 @@ macro_rules! atomic_collection {
                 self.0.store(Arc::new(value))
             }
 
-            /// Atomically replace the collection with a modified copy of itself,
-            /// retrying on concurrent modification (RCU).  Returns the previous
-            /// value.  The closure may be called more than once.
+            /// Atomically replace the collection with a modified copy of itself, retrying on concurrent modification
+            /// (RCU).  Returns the previous value.  The closure may be called more than once.
             pub fn rcu<F>(&self, mut f: F) -> Arc<$coll<$($g),+>>
             where
                 F: FnMut(&$coll<$($g),+>) -> $coll<$($g),+>,
@@ -293,10 +284,9 @@ macro_rules! atomic_collection {
     };
 }
 
-/// Generate the atomic wrapper quartet for a handle type following the
-/// `Handle(Arc<Inner>)` pattern: required and optional atomics, each with a
-/// guard-backed borrow type.  Storage is `ArcSwap<Inner>`, sharing the handle's
-/// own `Arc` (a `set()` is a pointer swap; a `snapshot()` is a refcount bump).
+/// Generate the atomic wrapper quartet for a handle type following the `Handle(Arc<Inner>)` pattern: required and
+/// optional atomics, each with a guard-backed borrow type.  Storage is `ArcSwap<Inner>`, sharing the handle's own `Arc`
+/// (a `set()` is a pointer swap; a `snapshot()` is a refcount bump).
 macro_rules! atomic_handle {
     ($handle:ident, $inner:ident, $atomic:ident, $borrow:ident, $atomic_opt:ident, $borrow_opt:ident) => {
         #[doc = concat!("Lock-free atomic required `", stringify!($handle), "` storage using arc_swap.")]
@@ -407,10 +397,9 @@ macro_rules! atomic_handle {
     };
 }
 
-/// Generate atomic wrappers for a plain `Clone` value type (not a handle).
-/// Storage is `ArcSwap<T>`; a `snapshot()` clones the value itself.  The
-/// `@required` arm generates the required wrapper and borrow; the `@option`
-/// arm generates the optional twin.
+/// Generate atomic wrappers for a plain `Clone` value type (not a handle).  Storage is `ArcSwap<T>`; a `snapshot()`
+/// clones the value itself.  The `@required` arm generates the required wrapper and borrow; the `@option` arm generates
+/// the optional twin.
 macro_rules! atomic_value {
     (@required $value:ident, $atomic:ident, $borrow:ident) => {
         #[doc = concat!("Lock-free atomic required `", stringify!($value), "` storage using arc_swap.")]
@@ -527,9 +516,8 @@ macro_rules! atomic_value {
     };
 }
 
-/// Generate an atomic wrapper for a shared (non-`Clone`) type stored behind an
-/// `Arc`; `snapshot()` returns the `Arc` itself.  Used for `SessionType`, whose
-/// whole-variant swap is the canonical example of the swap-unit rule.
+/// Generate an atomic wrapper for a shared (non-`Clone`) type stored behind an `Arc`; `snapshot()` returns the `Arc`
+/// itself.  Used for `SessionType`, whose whole-variant swap is the canonical example of the swap-unit rule.
 macro_rules! atomic_shared {
     ($value:ident, $atomic:ident, $borrow:ident) => {
         #[doc = concat!("Lock-free atomic required `", stringify!($value), "` storage using arc_swap.")]
@@ -590,9 +578,8 @@ atomic_sentinel!(AtomicI8Option, AtomicI8, i8);
 
 /// Lock-free atomic `Option<bool>` storage in a single `AtomicU8`.
 ///
-/// A `bool` has no spare bit pattern to serve as a sentinel, so `Option<bool>`
-/// is encoded in one `AtomicU8` instead: 0 = `Some(false)`, 1 = `Some(true)`,
-/// 2 = `None`.  This keeps every operation a single-word atomic (the earlier
+/// A `bool` has no spare bit pattern to serve as a sentinel, so `Option<bool>` is encoded in one `AtomicU8` instead:
+/// 0 = `Some(false)`, 1 = `Some(true)`, 2 = `None`.  This keeps every operation a single-word atomic (the earlier
 /// paired-`AtomicBool` representation allowed torn reads between the two words).
 #[derive(Debug)]
 #[repr(transparent)]
@@ -865,9 +852,8 @@ mod tests {
 
     #[test]
     fn test_atomic_hashmap_concurrent_inserts_are_not_lost() {
-        // Regression test for the RCU rule: concurrent read-modify-write
-        // operations must never lose updates.  (The earlier load-modify-store
-        // implementation fails this test.)
+        // Regression test for the RCU rule: concurrent read-modify-write operations must never lose updates.  (The
+        // earlier load-modify-store implementation fails this test.)
         let map: Arc<AtomicHashMap<u32, u32>> = Arc::new(AtomicHashMap::empty());
         const THREADS: u32 = 8;
         const PER_THREAD: u32 = 500;

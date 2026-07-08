@@ -182,9 +182,8 @@ pub enum TelnetOption {
     NAWS = 31,
 }
 
-// Telnet options are stored in a single byte each, with bit 0 representing
-// WILL or WON'T state and bit 1 representing DO or DON'T state.  The option
-// is only enabled when both bits are set.
+// Telnet options are stored in a single byte each, with bit 0 representing WILL or WON'T state and bit 1 representing
+// DO or DON'T state.  The option is only enabled when both bits are set.
 
 // Telnet option bits
 pub const TELNET_WILL_WONT: u8 = 1;
@@ -252,9 +251,8 @@ pub struct TelnetInner {
     pub rbin: AtomicU8, // TRANSMIT-BINARY option (remote)
     pub naws: AtomicU8, // NAWS option (remote)
 
-    // One-shot option callbacks: run check_options() when the option's initial
-    // negotiation reply arrives, then disarm -- the analog of the C++ pattern
-    // (this->*X_callback)(); X_callback = NULL;
+    // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
+    // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
     pub echo_callback: AtomicBool,
     pub lsga_callback: AtomicBool,
     pub rsga_callback: AtomicBool,
@@ -834,10 +832,9 @@ impl Telnet {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]).await?;
 
-        // Start initial options negotiations, arming each option's one-shot
-        // callback (~ C++ set_X(&Telnet::Welcome, on)).  NAWS is requested but
-        // deliberately gets NO callback (~ C++ set_NAWS(NULL, on)): its reply
-        // routinely arrives after the required options resolve, and must not
+        // Start initial options negotiations, arming each option's one-shot callback
+        // (~ C++ set_X(&Telnet::Welcome, on)).  NAWS is requested but deliberately gets NO callback
+        // (~ C++ set_NAWS(NULL, on)): its reply routinely arrives after the required options resolve, and must not
         // re-trigger the completion check.
         self.0.lsga_callback.store(true, Ordering::Relaxed);
         self.will_lsga().await?; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
@@ -888,8 +885,8 @@ impl Telnet {
             )
             .await;
         } else {
-            // Make sure we're done with required initial option negotiations.
-            // Intentionally use == with bitfield mask to test both bits at once.
+            // Make sure we're done with required initial option negotiations.  Intentionally use == with bitfield mask
+            // to test both bits at once.
             if self.lbin() == TELNET_WILL_WONT || self.rbin() == TELNET_DO_DONT || self.echo() == TELNET_WILL_WONT {
                 return;
             }
@@ -978,8 +975,8 @@ impl Telnet {
             self.output_buffer().await.clear();
         }
 
-        // The connection event loop owns the stream: wake it to drain any pending
-        // output and shut the connection down (~ fdtable.Close(fd) -> Closed()).
+        // The connection event loop owns the stream: wake it to drain any pending output and shut the connection down
+        // (~ fdtable.Close(fd) -> Closed()).
         self.0.doorbell.notify_one();
 
         result
@@ -1025,8 +1022,8 @@ impl Telnet {
         }
         drop(output);
 
-        // Arm the event loop's writable branch and wake it, as queuing output
-        // armed the writefds bit before the C++ loop's next select() pass.
+        // Arm the event loop's writable branch and wake it, as queuing output armed the writefds bit before the C++
+        // loop's next select() pass.
         self.0.write_interest.store(true, Ordering::Release);
         self.0.doorbell.notify_one();
     }
@@ -1413,9 +1410,8 @@ impl Telnet {
         self.output("\n").await;
     }
 
-    /// Request an output flush.  The connection event loop's writable branch
-    /// (output_ready) performs the actual writes; this arms and wakes it, as
-    /// queued output armed the writefds bit before the C++ loop's next select().
+    /// Request an output flush.  The connection event loop's writable branch (output_ready) performs the actual writes;
+    /// this arms and wakes it, as queued output armed the writefds bit before the C++ loop's next select().
     #[framed]
     pub async fn flush_output(&self) -> tokio::io::Result<()> {
         self.0.write_interest.store(true, Ordering::Release);
@@ -1466,9 +1462,8 @@ impl Telnet {
         Ok(false)
     }
 
-    /// Ready to write to TELNET connection.  Drains the command buffer, then the
-    /// output buffer; a partial write retains the remainder for the next writable
-    /// pass, as in the C++ OutputReady().
+    /// Ready to write to TELNET connection.  Drains the command buffer, then the output buffer; a partial write retains
+    /// the remainder for the next writable pass, as in the C++ OutputReady().
     #[framed]
     pub async fn output_ready(&self, stream: &TcpStream) -> tokio::io::Result<()> {
         // First drain command buffer
@@ -1503,8 +1498,8 @@ impl Telnet {
             }
         }
 
-        // Disarm, then re-check: an appender may have armed between the emptiness
-        // check and the store; if so, re-arm (the appender's doorbell wakes the loop).
+        // Disarm, then re-check: an appender may have armed between the emptiness check and the store; if so, re-arm
+        // (the appender's doorbell wakes the loop).
         self.0.write_interest.store(false, Ordering::Release);
         if self.has_pending_output().await {
             self.0.write_interest.store(true, Ordering::Release);
@@ -1514,15 +1509,18 @@ impl Telnet {
     }
 
     #[framed]
-    pub async fn handle_input(&self, mut stream: TcpStream, mut shutdown_rx: broadcast::Receiver<()>) -> tokio::io::Result<()> {
+    pub async fn handle_input(
+        &self,
+        mut stream: TcpStream,
+        mut telnet_rx: mpsc::UnboundedReceiver<TelnetMsg>,
+        mut shutdown_rx: broadcast::Receiver<()>,
+    ) -> tokio::io::Result<()> {
         println!("=== DEBUG: Telnet::handle_input() starting ===");
         let mut buffer = vec![0u8; Self::BUF_SIZE];
 
-        // Connection event loop: multiplex read/write readiness on the single
-        // owned stream, dispatching to input_ready()/output_ready() as the C++
-        // select() loop dispatched to InputReady()/OutputReady() per ready fd.
-        // (The Tokio runtime plays the role of the outer select() over all fds;
-        // this loop is the per-fd slice of it.)
+        // Connection event loop: multiplex read/write readiness on the single owned stream, dispatching to
+        // input_ready()/output_ready() as the C++ select() loop dispatched to InputReady()/OutputReady() per ready fd.
+        // (The Tokio runtime plays the role of the outer select() over all fds; this loop is the per-fd slice of it.)
         loop {
             if self.closing() && !self.has_pending_output().await {
                 // Pending output drained (or discarded): finish closing the connection.
@@ -2902,9 +2900,8 @@ impl Telnet {
         let session = self.session();
         let do_echo = self.do_echo();
 
-        // Check if initial option negotiations are still pending: if no option
-        // reply has ever arrived, assume a raw TCP connection (~ the C++ test
-        // that every X_callback is still armed).
+        // Check if initial option negotiations are still pending: if no option reply has ever arrived, assume a raw TCP
+        // connection (~ the C++ test that every X_callback is still armed).
         if self.0.echo_callback.load(Ordering::Relaxed)
             && self.0.lsga_callback.load(Ordering::Relaxed)
             && self.0.rsga_callback.load(Ordering::Relaxed)

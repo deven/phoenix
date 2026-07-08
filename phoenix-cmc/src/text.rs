@@ -26,9 +26,8 @@ use unicase::UniCase;
 
 /// A case-insensitive, reference-counted string type with zero-copy slicing.
 ///
-/// `Text` provides efficient string sharing with case-insensitive comparison
-/// and hashing, backed by `ByteString` for zero-copy slicing operations.
-/// Perfect for user names, channel names, and other human-facing text in chat systems.
+/// `Text` provides efficient string sharing with case-insensitive comparison and hashing, backed by `ByteString` for
+/// zero-copy slicing operations.  Perfect for user names, channel names, and other human-facing text in chat systems.
 ///
 /// # Examples
 /// ```
@@ -80,8 +79,7 @@ impl Text {
 
     /// Creates a new `Text` from a `&'static str`.
     ///
-    /// This is more efficient than `new()` for string literals since
-    /// it avoids copying the string data.
+    /// This is more efficient than `new()` for string literals since it avoids copying the string data.
     #[inline]
     pub fn from_static(src: &'static str) -> Self {
         Self(UniCase::new(ByteString::from_static(src)))
@@ -119,8 +117,8 @@ impl Text {
 
     /// Creates a zero-copy slice of this `Text`.
     ///
-    /// This is the key advantage of using `ByteString` - creating slices
-    /// is extremely efficient and shares the same underlying buffer.
+    /// This is the key advantage of using `ByteString` - creating slices is extremely efficient and shares the same
+    /// underlying buffer.
     pub fn slice(&self, range: Range<usize>) -> Self {
         let s = self.as_str();
         let substring = &s[range]; // This handles UTF-8 boundaries
@@ -129,8 +127,8 @@ impl Text {
 
     /// Creates a zero-copy slice from an existing substring reference.
     ///
-    /// This is useful when you already have a `&str` that's a substring of this `Text`.
-    /// The substring must be derived from this `Text` for this to work.
+    /// This is useful when you already have a `&str` that's a substring of this `Text`.  The substring must be derived
+    /// from this `Text` for this to work.
     ///
     /// # Panics
     /// Panics if `subset` is not actually a substring of this `Text`.
@@ -168,8 +166,7 @@ impl Text {
 
     /// Concatenates two `Text` values into a new `Text`.
     ///
-    /// Note: This requires allocation since the underlying `ByteString`
-    /// doesn't support zero-copy concatenation.
+    /// Note: This requires allocation since the underlying `ByteString` doesn't support zero-copy concatenation.
     pub fn concat(left: &Text, right: &Text) -> Self {
         let mut s = String::with_capacity(left.len() + right.len());
         s.push_str(left.as_str());
@@ -264,8 +261,7 @@ impl Text {
 
     /// Case-sensitive equality check.
     ///
-    /// Use this when you need exact matching instead of the default
-    /// case-insensitive comparison.
+    /// Use this when you need exact matching instead of the default case-insensitive comparison.
     #[inline]
     pub fn eq_exact(&self, other: &str) -> bool {
         self.as_str() == other

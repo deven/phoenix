@@ -160,8 +160,8 @@ impl UserManager {
         use std::io::{BufRead, BufReader};
         use std::path::Path;
 
-        // Serialize passwd reloads: without this, concurrent get_user() calls can
-        // both observe a stale mtime, both parse, and race duplicate User inserts.
+        // Serialize passwd reloads: without this, concurrent get_user() calls can both observe a stale mtime, both
+        // parse, and race duplicate User inserts.
         let _reload_guard = self.0.update_lock.lock().await;
 
         let passwd_path = Path::new("passwd");
@@ -251,8 +251,8 @@ pub fn verify_password(input: &str, encrypted: &str) -> bool {
 fn verify_crypt_password(input: &str, encrypted: &str) -> bool {
     use pwhash::unix;
 
-    // Use pwhash's unix crypt verification
-    // This supports various crypt formats including DES, MD5, SHA-256, SHA-512, etc.
+    // Use pwhash's unix crypt verification.  This supports various crypt formats including DES, MD5, SHA-256, SHA-512,
+    // etc.
     println!("=== DEBUG: verify_crypt_password(input={input:?}, encrypted={encrypted:?}) ===");
     let result = unix::verify(input, encrypted);
     println!("=== DEBUG: result={result:?} ===");
