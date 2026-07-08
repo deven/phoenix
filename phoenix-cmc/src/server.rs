@@ -167,7 +167,7 @@ impl Server {
 
         // Create `Telnet` with associated `LoginSession`.
         println!("=== DEBUG: Creating Telnet instance ===");
-        let telnet = Telnet::new(&stream, self.clone());
+        let (telnet, telnet_rx) = Telnet::new(&stream, self.clone());
         println!("=== DEBUG: Telnet instance created ===");
 
         // Log connection details
@@ -181,7 +181,7 @@ impl Server {
         // Handle network I/O.
         println!("=== DEBUG: Starting I/O handling loop ===");
         let shutdown_rx = self.shutdown_tx().subscribe();
-        let result = telnet.handle_input(stream, shutdown_rx).await;
+        let result = telnet.handle_input(stream, telnet_rx, shutdown_rx).await;
         println!("=== DEBUG: telnet.handle_input() returned: {result:?} ===");
         if let Err(e) = result {
             if e.kind() != std::io::ErrorKind::UnexpectedEof {

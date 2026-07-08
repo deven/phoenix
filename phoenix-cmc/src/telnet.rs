@@ -26,7 +26,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 //use textwrap::wrap;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::sync::{Mutex, MutexGuard, Notify, broadcast};
+use tokio::sync::{Mutex, MutexGuard, Notify, broadcast, mpsc};
 
 pub const BELL_STR: &str = "\x07";
 
@@ -195,14 +195,23 @@ pub const TELNET_ENABLED: u8 = TELNET_DO_DONT | TELNET_WILL_WONT;
 pub struct Telnet(pub Arc<TelnetInner>);
 
 // Data about a particular telnet connection.
+/// Messages to the telnet actor (the connection event loop).
+#[derive(Debug)]
+pub enum TelnetMsg {
+    /// Render and transmit one output object, then send a timing mark (~ the rendering half of the C++
+    /// OutputStream::SendNext()).
+    Deliver(std::sync::Arc<crate::output::Output>),
+}
+
 #[derive(Debug)]
 pub struct TelnetInner {
     // Connection
-    pub peer: Option<SocketAddr>,   // peer address, captured at accept
-    pub write_interest: AtomicBool, // pending output? (~ C++ FDTable::WriteSelect bit)
-    pub doorbell: Notify,           // wake the connection event loop
-    pub closing: AtomicBool,        // connection closing?
-    pub close_on_eof: AtomicBool,   // close connection on EOF?
+    pub peer: Option<SocketAddr>,             // peer address, captured at accept
+    pub write_interest: AtomicBool,           // pending output? (~ C++ FDTable::WriteSelect bit)
+    pub doorbell: Notify,                     // wake the connection event loop
+    pub tx: mpsc::UnboundedSender<TelnetMsg>, // channel to the connection event loop
+    pub closing: AtomicBool,                  // connection closing?
+    pub close_on_eof: AtomicBool,             // close connection on EOF?
 
     // Session
     pub session: AtomicSession, // link to session object
@@ -362,14 +371,16 @@ impl Telnet {
     pub const KILL_RING_MAX: usize = 1; // XXX Save last kill.
 
     /// Create a new `Telnet` with its associated `LoginSession`.
-    pub fn new(stream: &TcpStream, server: Server) -> Self {
+    pub fn new(stream: &TcpStream, server: Server) -> (Self, mpsc::UnboundedReceiver<TelnetMsg>) {
         println!("=== DEBUG: Telnet::new() creating new session ===");
         let session = Session::new(server, None);
+        let (tx, rx) = mpsc::unbounded_channel();
         println!("=== DEBUG: Telnet::new() session created with ID: {id} ===", id = session.id());
         let inner = TelnetInner {
             peer: stream.peer_addr().ok(),
             write_interest: AtomicBool::new(false),
             doorbell: Notify::new(),
+            tx,
             closing: AtomicBool::new(false),
             close_on_eof: AtomicBool::new(true),
             session: AtomicSession::new(session),
@@ -411,7 +422,7 @@ impl Telnet {
         let telnet = Telnet(Arc::new(inner));
         telnet.session().set_telnet(Some(telnet.clone()));
 
-        telnet
+        (telnet, rx)
     }
 
     /// Log calling host and port.
@@ -1431,6 +1442,12 @@ impl Telnet {
         self.0.write_interest.load(Ordering::Acquire)
     }
 
+    /// Send a message to this connection's event loop (a silent no-op if the connection is gone, like a message to a
+    /// closed connection).
+    pub fn deliver(&self, msg: TelnetMsg) {
+        let _ = self.0.tx.send(msg);
+    }
+
     /// Ready to read from TELNET connection.  Returns Ok(true) on EOF.
     #[framed]
     pub async fn input_ready(&self, stream: &TcpStream, buffer: &mut [u8]) -> tokio::io::Result<bool> {
@@ -1541,6 +1558,32 @@ impl Telnet {
                     result?;
                     self.output_ready(&stream).await?;
                 }
+                msg = telnet_rx.recv() => {
+                    // Drain every message already waiting before redrawing: the input line stays undrawn across
+                    // consecutive queued outputs, and is redrawn once at the quiet point (the C++ SendNext loop redrew
+                    // only at queue exhaustion).
+                    let mut msg = msg;
+                    let mut delivered = false;
+                    loop {
+                        match msg {
+                            Some(TelnetMsg::Deliver(out)) => {
+                                // Render on the connection's own task (~ the body of the C++ OutputStream::SendNext());
+                                // output() itself undraws any active input line first.
+                                out.output(self).await;
+                                self.timing_mark().await?;
+                                delivered = true;
+                            }
+                            None => break,
+                        }
+                        match telnet_rx.try_recv() {
+                            Ok(m) => msg = Some(m),
+                            Err(_) => break,
+                        }
+                    }
+                    if delivered {
+                        self.redraw_input().await;
+                    }
+                },
                 _ = self.0.doorbell.notified() => {
                     // Output was queued or closing was requested; loop to re-evaluate.
                 }
@@ -2942,9 +2985,7 @@ impl Telnet {
 
             // Flush any pending output to connection.
             if !self.acknowledge() {
-                while session.output_next(self).await? {
-                    session.acknowledge_output().await;
-                }
+                session.flush_pending().await;
             }
 
             // Echo newline and clear input.
