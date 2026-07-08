@@ -1205,9 +1205,8 @@ impl Session {
         // Start login timeout
         self.reset_login_timeout();
 
-        // The session stays in PreLogin (~ C++ InputFunc == NULL): input lines
-        // are saved and replayed when init_input_function() runs after the
-        // initial option negotiations resolve.
+        // The session stays in PreLogin (~ C++ InputFunc == NULL): input lines are saved and replayed when
+        // init_input_function() runs after the initial option negotiations resolve.
         println!("=== DEBUG: Session::init_login_sequence() completed ===");
         Ok(())
     }
@@ -1302,10 +1301,9 @@ impl Session {
         // Close telnet connection if attached.
         if let Some(telnet) = self.telnet() {
             self.set_telnet(None);
-            // Box::pin: Session::close and Telnet::close are mutually recursive, as in
-            // the C++ original -- which clears `telnet` before calling Telnet::Close()
-            // so the recursion terminates at runtime.  Rust async additionally requires
-            // heap indirection here so the recursive future has a finite size.
+            // Box::pin: Session::close and Telnet::close are mutually recursive, as in the C++ original -- which clears
+            // `telnet` before calling Telnet::Close() so the recursion terminates at runtime.  Rust async additionally
+            // requires heap indirection here so the recursive future has a finite size.
             Box::pin(telnet.close(drain)).await?;
         }
         self.set_telnet(None);
@@ -1588,7 +1586,6 @@ impl Session {
 
             // XXX add !priv command?
             // XXX do individual privilege levels for each !command?
-
             if let Some(args) = match_keyword(line, "!restart", 8) {
                 self.do_restart(args).await?;
             } else if let Some(args) = match_keyword(line, "!down", 5) {
