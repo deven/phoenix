@@ -17,7 +17,7 @@ use crate::name::Name;
 use crate::output::*;
 use crate::sendlist::{Sendlist, message_start};
 use crate::server::Server;
-use crate::telnet::{BELL_STR, TELNET_ENABLED, Telnet};
+use crate::telnet::{BELL_STR, TELNET_ENABLED, Telnet, TelnetMsg};
 use crate::text::Text;
 use crate::timestamp::{Timestamp, system_uptime};
 use crate::user::{User, UserManager, verify_password};
@@ -30,6 +30,7 @@ use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use tokio::sync::Mutex;
+use tokio::sync::mpsc;
 use tokio::task::AbortHandle;
 
 pub const LOGIN_TIMEOUT: Duration = Duration::from_secs(60);
@@ -47,6 +48,80 @@ pub static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new)
 #[derive(Debug, Clone)]
 pub struct Session(pub Arc<SessionInner>);
 
+/// Messages to the session actor.
+#[derive(Debug)]
+pub enum SessionMsg {
+    /// Queue an output for delivery.
+    Enqueue(Arc<Output>),
+    /// The client acknowledged one output (TIMING-MARK reply).
+    Acknowledged,
+    /// Release the acknowledged prefix of the pending queue (~ Pending.Dequeue()).
+    Dequeue,
+    /// Stream all unsent output, marking it acknowledged (non-TELNET pacing: the C++ accept_input flushed with
+    /// OutputNext()/AcknowledgeOutput() pairs).
+    Flush,
+    /// (Re)attached to a telnet connection: reset counters, replay retained output (~ OutputStream::Attach()).
+    Attach(Telnet),
+}
+
+/// Private session state, owned by the session actor task.
+#[derive(Debug)]
+pub struct SessionObj {
+    session: Session,
+    rx: mpsc::UnboundedReceiver<SessionMsg>,
+    pending: OutputStream,
+}
+
+impl SessionObj {
+    /// Stream every unsent output to the attached connection (~ C++ Enqueue's `while (SendNext(telnet));`), then
+    /// request a redraw.  Acknowledgments never gate sending; they bound the replay set.
+    fn send_all(&mut self, telnet: &Telnet) {
+        while self.pending.sent < self.pending.queue.len() {
+            telnet.deliver(TelnetMsg::Deliver(Arc::clone(&self.pending.queue[self.pending.sent])));
+            self.pending.sent += 1;
+        }
+    }
+
+    /// The session actor: sole owner of the pending output queue.
+    #[framed]
+    pub async fn run(mut self) {
+        while let Some(msg) = self.rx.recv().await {
+            match msg {
+                SessionMsg::Enqueue(out) => {
+                    self.pending.queue.push(out);
+                    if let Some(telnet) = self.session.telnet() {
+                        if telnet.acknowledge() {
+                            self.send_all(&telnet);
+                        } else if !telnet.write_interest() && self.pending.sent < self.pending.queue.len() {
+                            // Non-TELNET pacing: send one output when the buffer is idle
+                            // (~ C++ `if (!telnet->Output.head) SendNext(telnet);`).
+                            telnet.deliver(TelnetMsg::Deliver(Arc::clone(&self.pending.queue[self.pending.sent])));
+                            self.pending.sent += 1;
+                        }
+                    }
+                }
+                SessionMsg::Acknowledged => self.pending.acknowledge(),
+                SessionMsg::Dequeue => self.pending.dequeue(),
+                SessionMsg::Flush => {
+                    if let Some(telnet) = self.session.telnet() {
+                        self.send_all(&telnet);
+                    }
+                    // No timing marks are coming: consider everything acknowledged.
+                    self.pending.acknowledged = self.pending.sent;
+                }
+                SessionMsg::Attach(telnet) => {
+                    // Review detached output (~ C++ OutputStream::Attach()).
+                    self.pending.sent = 0;
+                    self.pending.acknowledged = 0;
+                    if telnet.acknowledge() {
+                        self.send_all(&telnet);
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct SessionInner {
     // Immutable fields
@@ -61,7 +136,7 @@ pub struct SessionInner {
 
     // Output buffering.
     pub output_buffer: Mutex<String>,
-    pub pending: Mutex<OutputStream>,
+    pub tx: mpsc::UnboundedSender<SessionMsg>,
 
     // Login and idle timestamps.
     pub login_time: AtomicTimestamp,
@@ -192,13 +267,14 @@ impl Session {
         let id = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
         println!("=== DEBUG: Session::new() creating session with ID: {id} ===");
         let now = Timestamp::new();
+        let (tx, rx) = mpsc::unbounded_channel();
         let inner = SessionInner {
             id,
             server,
             telnet: AtomicTelnetOption::new(telnet.clone()),
             lines: Mutex::new(VecDeque::new()),
             output_buffer: Mutex::new(String::new()),
-            pending: Mutex::new(OutputStream::new()),
+            tx,
             login_time: AtomicTimestamp::new(now.clone()),
             idle_since: AtomicTimestamp::new(now),
             session_type: AtomicSessionType::new(SessionType::PreLogin {
@@ -212,6 +288,9 @@ impl Session {
 
         let session = Self(Arc::new(inner));
         println!("=== DEBUG: Session::new() created session wrapper ===");
+
+        // Spawn the session actor: sole owner of the pending output queue.
+        tokio::spawn(SessionObj { session: session.clone(), rx, pending: OutputStream::new() }.run());
 
         // Set telnet session.
         if let Some(telnet) = telnet {
@@ -305,29 +384,23 @@ impl Session {
         let mut output_buffer = self.output_buffer().await;
         if !output_buffer.is_empty() {
             let text_output = TextOutput::new(output_buffer.clone());
-            self.pending().await.enqueue(self.telnet().as_ref(), text_output.into()).await?;
+            let _ = self.0.tx.send(SessionMsg::Enqueue(text_output.into()));
             output_buffer.clear();
         }
 
         Ok(())
     }
 
-    /// Get the `OutputStream`.
-    #[framed]
-    pub async fn pending(&self) -> tokio::sync::MutexGuard<'_, OutputStream> {
-        self.0.pending.lock().await
-    }
-
-    /// Send the next output in the output stream.
-    #[framed]
-    pub async fn output_next(&self, telnet: &Telnet) -> tokio::io::Result<bool> {
-        self.pending().await.send_next(telnet).await
-    }
-
     /// Acknowledge output.
     #[framed]
     pub async fn acknowledge_output(&self) {
-        self.pending().await.acknowledge().await;
+        let _ = self.0.tx.send(SessionMsg::Acknowledged);
+    }
+
+    /// Flush all pending output (non-TELNET pacing path).
+    #[framed]
+    pub async fn flush_pending(&self) {
+        let _ = self.0.tx.send(SessionMsg::Flush);
     }
 
     /// Get the login time.
@@ -921,7 +994,7 @@ impl Session {
     #[framed]
     pub async fn handle_input(&self, line: Text) -> tokio::io::Result<()> {
         println!("=== DEBUG: handle_input() starting ===");
-        self.pending().await.dequeue().await;
+        let _ = self.0.tx.send(SessionMsg::Dequeue);
 
         // Reset login timeout if still in pre-login state
         if !self.signed_on() {
@@ -1337,7 +1410,7 @@ impl Session {
         }
 
         self.enqueue_others(TransferNotify::new(self.name())).await?;
-        self.pending().await.attach(&new_telnet).await?;
+        let _ = self.0.tx.send(SessionMsg::Attach(new_telnet.clone()));
         self.output("*** End of reviewed output. ***\n").await;
         self.enqueue_output().await?;
 
@@ -1356,7 +1429,7 @@ impl Session {
         info!("Attach: {who} on new connection");
 
         self.enqueue_others(AttachNotify::new(self.name())).await?;
-        self.pending().await.attach(&telnet).await?;
+        let _ = self.0.tx.send(SessionMsg::Attach(telnet.clone()));
         self.output("*** End of reviewed output. ***\n").await;
         self.enqueue_output().await?;
 
@@ -1413,11 +1486,7 @@ impl Session {
     pub async fn enqueue(&self, out: impl Into<Arc<Output>>) -> tokio::io::Result<()> {
         let out = out.into();
         self.enqueue_output().await?;
-        if let Some(telnet) = self.telnet() {
-            self.pending().await.enqueue(Some(&telnet), out).await?;
-        } else {
-            self.pending().await.enqueue(None, out).await?;
-        }
+        let _ = self.0.tx.send(SessionMsg::Enqueue(out));
 
         Ok(())
     }

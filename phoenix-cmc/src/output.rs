@@ -658,93 +658,42 @@ impl RenameNotify {
 
 // Output stream for queuing output objects.  Queued outputs are shared via `Arc` (the C++ shared one heap object among
 // all recipients' streams via `Pointer<OutputObj>` reference counting).
-#[derive(Debug)]
+/// Pending-output queue (~ `OutputStream` in `outstr.h`/`outstr.cc`).  Owned as plain state by the session actor;
+/// entries are retained until acknowledged and dequeued, bounding the replay set for reattachment.  The C++ SendNext()
+/// splits across the actors: the queue walk lives in `SessionObj::send_all`, the rendering in the telnet actor's
+/// Deliver arm.
+#[derive(Debug, Default)]
 pub struct OutputStream {
-    pub queue: tokio::sync::Mutex<Vec<Arc<Output>>>,
-    pub acknowledged: std::sync::atomic::AtomicUsize,
-    pub sent: std::sync::atomic::AtomicUsize,
+    pub queue: Vec<Arc<Output>>,
+    pub acknowledged: usize, // count of acknowledged objects in queue
+    pub sent: usize,         // count of sent objects in queue
 }
 
 impl OutputStream {
     pub fn new() -> Self {
-        Self { queue: tokio::sync::Mutex::new(Vec::new()), acknowledged: std::sync::atomic::AtomicUsize::new(0), sent: std::sync::atomic::AtomicUsize::new(0) }
+        Self { queue: Vec::new(), acknowledged: 0, sent: 0 }
     }
 
-    pub async fn acknowledge(&self) {
-        let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
-        let ack = self.acknowledged.load(std::sync::atomic::Ordering::Relaxed);
-        if ack < sent {
-            self.acknowledged.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    /// Acknowledge a block of output.
+    pub fn acknowledge(&mut self) {
+        if self.acknowledged < self.sent {
+            self.acknowledged += 1;
         }
     }
 
-    pub async fn attach(&self, telnet: &Telnet) -> tokio::io::Result<()> {
-        self.sent.store(0, std::sync::atomic::Ordering::Relaxed);
-        self.acknowledged.store(0, std::sync::atomic::Ordering::Relaxed);
-
-        if telnet.acknowledge() {
-            while self.send_next(telnet).await? {}
-        }
-
-        Ok(())
+    /// Release the acknowledged prefix of the queue.
+    pub fn dequeue(&mut self) {
+        let n = self.acknowledged.min(self.queue.len());
+        self.queue.drain(..n);
+        self.acknowledged -= n;
+        self.sent -= n;
     }
 
-    pub async fn enqueue(&self, telnet: Option<&Telnet>, out: Arc<Output>) -> tokio::io::Result<()> {
-        self.queue.lock().await.push(out);
-
-        if let Some(telnet) = telnet {
-            if telnet.acknowledge() {
-                while self.send_next(telnet).await? {}
-            } else if self.queue.lock().await.len() == 1 {
-                self.send_next(telnet).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Remove a specific queued output by identity, not value (the C++
-    /// `Unenqueue()` compared `OutputObj` pointers).
-    pub async fn unenqueue(&self, out: &Arc<Output>) {
-        let mut queue = self.queue.lock().await;
-        queue.retain(|item| !Arc::ptr_eq(item, out));
-    }
-
-    pub async fn dequeue(&self) {
-        let ack = self.acknowledged.load(std::sync::atomic::Ordering::Relaxed);
-        if ack > 0 {
-            let mut queue = self.queue.lock().await;
-            let to_remove = ack.min(queue.len());
-            queue.drain(..to_remove);
-            self.acknowledged.fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
-            self.sent.fetch_sub(to_remove, std::sync::atomic::Ordering::Relaxed);
-        }
-    }
-
-    pub async fn send_next(&self, telnet: &Telnet) -> tokio::io::Result<bool> {
-        let queue = self.queue.lock().await;
-        let sent = self.sent.load(std::sync::atomic::Ordering::Relaxed);
-
-        let result = if sent >= queue.len() {
-            telnet.redraw_input().await;
-            false
-        } else {
-            let out = Arc::clone(&queue[sent]);
-
-            telnet.undraw_input().await;
-            out.output(telnet).await;
-            telnet.timing_mark().await?;
-            self.sent.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            true
-        };
-
-        Ok(result)
-    }
-}
-
-impl Default for OutputStream {
-    fn default() -> Self {
-        Self::new()
+    /// Remove a specific queued output by identity, not value (the C++ `Unenqueue()` compared `OutputObj` pointers).
+    pub fn unenqueue(&mut self, out: &Arc<Output>) {
+        self.queue.retain(|item| !Arc::ptr_eq(item, out));
+        self.sent = self.sent.min(self.queue.len());
+        self.acknowledged = self.acknowledged.min(self.sent);
     }
 }
 
