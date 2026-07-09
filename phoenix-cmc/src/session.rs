@@ -2886,9 +2886,9 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.destroy(self).await?,
+                (Some(discussion), _) => discussion.send_destroy(self.clone()),
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.destroy(self).await?,
+                    (Some(discussion), _) => discussion.send_destroy(self.clone()),
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
@@ -2906,9 +2906,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.permit(self, rest).await?,
+            (Some(discussion), _) => discussion.send_permit(self.clone(), Text::from(rest)),
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.permit(self, rest).await?,
+                (Some(discussion), _) => discussion.send_permit(self.clone(), Text::from(rest)),
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2925,9 +2925,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.depermit(self, rest).await?,
+            (Some(discussion), _) => discussion.send_depermit(self.clone(), Text::from(rest)),
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.depermit(self, rest).await?,
+                (Some(discussion), _) => discussion.send_depermit(self.clone(), Text::from(rest)),
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2944,9 +2944,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.appoint(self, rest).await?,
+            (Some(discussion), _) => discussion.send_appoint(self.clone(), Text::from(rest)),
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.appoint(self, rest).await?,
+                (Some(discussion), _) => discussion.send_appoint(self.clone(), Text::from(rest)),
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
@@ -2963,9 +2963,9 @@ impl Session {
         }
 
         match self.find_discussion(name, false).await {
-            (Some(discussion), _) => discussion.unappoint(self, rest).await?,
+            (Some(discussion), _) => discussion.send_unappoint(self.clone(), Text::from(rest)),
             _ => match self.find_discussion(name, true).await {
-                (Some(discussion), _) => discussion.unappoint(self, rest).await?,
+                (Some(discussion), _) => discussion.send_unappoint(self.clone(), Text::from(rest)),
                 (_, matches) => self.discussion_matches(name, &matches).await,
             },
         }
