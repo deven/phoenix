@@ -135,6 +135,9 @@ impl DiscussionObj {
     }
 }
 
+/// Discussion shared state.  SINGLE WRITER: every mutation happens on the discussion actor (stage 2a-3); other tasks
+/// only read.  The RCU element operations on the sets below are correct but superfluous under one writer and retire
+/// with the stage 3 cleanup.
 #[derive(Debug)]
 pub struct DiscussionInner {
     pub tx: mpsc::UnboundedSender<DiscussionMsg>,

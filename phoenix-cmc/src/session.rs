@@ -63,6 +63,9 @@ pub enum SessionMsg {
     InputLine(Text),
     /// The connection event loop has exited (~ Telnet::Closed()): detach if signed on, close otherwise.
     Closed(Telnet),
+    /// The connection is detaching (drain-path close): run the detach on the session actor.  This message breaks the
+    /// Session::close/Telnet::close compile-time recursion.
+    Detached { telnet: Telnet, intentional: bool },
     /// The account-lookup outcome (first login handshake).
     UserLookup(Option<User>),
     /// The name-claim outcome (second login handshake).
@@ -134,6 +137,11 @@ impl SessionObj {
                     self.pending.dequeue();
                     if let Err(e) = self.session.handle_input(line).await {
                         error!("handle_input: {e}");
+                    }
+                }
+                SessionMsg::Detached { telnet, intentional } => {
+                    if let Err(e) = self.session.detach(&telnet, intentional).await {
+                        error!("detach: {e}");
                     }
                 }
                 SessionMsg::UserLookup(user) => {
@@ -1460,10 +1468,10 @@ impl Session {
         // Close telnet connection if attached.
         if let Some(telnet) = self.telnet() {
             self.set_telnet(None);
-            // Box::pin: Session::close and Telnet::close are mutually recursive, as in the C++ original -- which clears
-            // `telnet` before calling Telnet::Close() so the recursion terminates at runtime.  Rust async additionally
-            // requires heap indirection here so the recursive future has a finite size.
-            Box::pin(telnet.close(drain)).await?;
+            // The C++ Session::Close and Telnet::Close were mutually recursive (terminating at runtime via the cleared
+            // telnet pointer); the drain-path detach is a message now, so the call graph is acyclic and the recursive
+            // future's Box::pin is gone.
+            telnet.close(drain).await?;
         }
         self.set_telnet(None);
 
