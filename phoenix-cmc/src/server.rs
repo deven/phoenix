@@ -20,7 +20,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, mpsc};
 use tokio::task::AbortHandle;
 use tokio::time::Duration;
 
@@ -44,7 +44,7 @@ pub enum ServerMsg {
 #[derive(Debug)]
 pub struct ServerObj {
     pub server: Server,
-    pub rx: tokio::sync::mpsc::UnboundedReceiver<ServerMsg>,
+    pub rx: mpsc::UnboundedReceiver<ServerMsg>,
     /// Names claimed by signed-on (or completing) sessions; Text folds case.
     pub names: HashSet<Text>,
 }
@@ -53,7 +53,7 @@ pub struct ServerObj {
 #[derive(Debug)]
 pub struct ServerInner {
     pub listener: TcpListener,
-    pub tx: tokio::sync::mpsc::UnboundedSender<ServerMsg>,
+    pub tx: mpsc::UnboundedSender<ServerMsg>,
     pub port: AtomicU16,
     pub debug: AtomicBool,
     pub shutdown_tx: broadcast::Sender<()>,
@@ -74,7 +74,7 @@ impl Server {
         let shutdown_handle = None;
         let restarting = false;
 
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
         let inner = ServerInner {
             listener,
             tx,

@@ -11,7 +11,7 @@ use crate::VERSION;
 use crate::atomic::AtomicSession;
 use crate::constants::*;
 use crate::name::Name;
-use crate::output::MessageType;
+use crate::output::{MessageType, Output};
 use crate::sendlist::Sendlist;
 use crate::server::Server;
 use crate::session::{Session, SessionMsg};
@@ -20,6 +20,7 @@ use crate::timestamp::Timestamp;
 use async_backtrace::framed;
 use bytes::{Buf, BytesMut};
 use std::collections::VecDeque;
+use std::mem;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
@@ -200,7 +201,7 @@ pub struct Telnet(pub Arc<TelnetInner>);
 pub enum TelnetMsg {
     /// Render and transmit one output object, then send a timing mark (~ the rendering half of the C++
     /// OutputStream::SendNext()).
-    Deliver(std::sync::Arc<crate::output::Output>),
+    Deliver(Arc<Output>),
     /// Append text to the connection's output (the cross-task emitters: prompts, command replies; ~ the C++ out-of-band
     /// print sites, which undraw first because they bypass the queue).
     Output(Text),
@@ -2358,7 +2359,7 @@ impl TelnetObj {
                 }
                 self.set_lbin(lbin);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.lbin_callback) {
+                if mem::take(&mut self.lbin_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2383,7 +2384,7 @@ impl TelnetObj {
                 }
                 self.telnet.set_echo(echo);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.echo_callback) {
+                if mem::take(&mut self.echo_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2413,7 +2414,7 @@ impl TelnetObj {
                 }
                 self.set_lsga(lsga);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.lsga_callback) {
+                if mem::take(&mut self.lsga_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2642,7 +2643,7 @@ impl TelnetObj {
                 }
                 self.set_rbin(rbin);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.rbin_callback) {
+                if mem::take(&mut self.rbin_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2672,7 +2673,7 @@ impl TelnetObj {
                 }
                 self.set_rsga(rsga);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.rsga_callback) {
+                if mem::take(&mut self.rsga_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2697,7 +2698,7 @@ impl TelnetObj {
                 }
                 self.set_naws(naws);
                 // Invoke this option's one-shot callback, if still armed.
-                if std::mem::take(&mut self.naws_callback) {
+                if mem::take(&mut self.naws_callback) {
                     self.check_options(false).await;
                 }
             }
