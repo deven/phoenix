@@ -26,6 +26,7 @@ use async_backtrace::framed;
 use im::{HashMap, OrdSet};
 use log::{error, info};
 use std::collections::VecDeque;
+use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
@@ -183,7 +184,6 @@ impl SessionObj {
 }
 
 /// Public session state, readable by any task.
-#[derive(Debug)]
 pub struct SessionInner {
     // Immutable fields
     pub id: usize,
@@ -261,6 +261,43 @@ pub enum LoginState {
     /// Awaiting the server registry's name-claim outcome (the second login handshake; the C++ single thread made the
     /// claim implicit).
     AwaitingEntry = 8,
+}
+
+// Custom Debug impl for SessionInner.  The derived Debug causes infinite recursion (and a stack overflow) because
+// SessionInner.telnet → TelnetInner → TelnetInner.session → SessionInner → ...
+//
+// This impl prints every field normally except the back-reference, which gets a one-line summary.  All other types —
+// handles, atomic wrappers, option wrappers — keep #[derive(Debug)] and inherit the cycle break.
+
+impl fmt::Debug for SessionInner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Print the telnet field as a one-line summary (peer address) instead
+        // of expanding TelnetInner, which would recurse back into SessionInner.
+        struct TelnetSummary<'a>(&'a AtomicTelnetOption);
+        impl fmt::Debug for TelnetSummary<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self.0.borrow().as_ref() {
+                    Some(inner) => match inner.peer {
+                        Some(addr) => write!(f, "Telnet({addr})"),
+                        None => write!(f, "Telnet(<no peer>)"),
+                    },
+                    None => write!(f, "None"),
+                }
+            }
+        }
+
+        f.debug_struct("SessionInner")
+            .field("id", &self.id)
+            .field("server", &self.server)
+            .field("telnet", &TelnetSummary(&self.telnet))
+            .field("lines", &self.lines)
+            .field("output_buffer", &self.output_buffer)
+            .field("tx", &self.tx)
+            .field("login_time", &self.login_time)
+            .field("idle_since", &self.idle_since)
+            .field("session_type", &self.session_type)
+            .finish()
+    }
 }
 
 impl Default for LoginState {
