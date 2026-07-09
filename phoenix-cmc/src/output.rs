@@ -82,6 +82,15 @@ pub enum OutputKind {
 }
 
 impl Output {
+    /// Could this output reach `recipient` by more than one delivery path?  Only messages travel multiple paths;
+    /// everything else is false.
+    pub fn multi_path(&self, recipient: &crate::session::Session) -> bool {
+        match &self.kind {
+            OutputKind::Message(message) => message.multi_path(recipient),
+            _ => false,
+        }
+    }
+
     /// Get the output classification (C++ `OutputObj::Class`).
     pub fn class(&self) -> OutputClass {
         match &self.kind {
@@ -229,6 +238,11 @@ impl Message {
 
     pub fn text(&self) -> &Text {
         &self.0.text
+    }
+
+    /// Could this message reach `recipient` by more than one delivery path?
+    pub fn multi_path(&self, recipient: &crate::session::Session) -> bool {
+        self.to().multi_path(recipient)
     }
 
     pub fn to(&self) -> &Sendlist {
