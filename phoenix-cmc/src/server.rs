@@ -49,6 +49,7 @@ pub struct ServerObj {
     pub names: HashSet<Text>,
 }
 
+/// Public server state, readable by any task.
 #[derive(Debug)]
 pub struct ServerInner {
     pub listener: TcpListener,
@@ -157,7 +158,6 @@ impl Server {
         self.0.server_start_uptime
     }
 
-    /// Run the Phoenix server.
     /// Claim a name to complete a login (second login handshake); the outcome arrives as SessionMsg::EnterResult.
     pub fn enter(&self, session: Session, name: Name) {
         let _ = self.0.tx.send(ServerMsg::Enter { session, name });
@@ -177,7 +177,7 @@ impl Server {
 
         // Create `Telnet` with associated `LoginSession`.
         println!("=== DEBUG: Creating Telnet instance ===");
-        let (telnet, telnet_rx) = Telnet::new(&stream, self.clone());
+        let (telnet, obj) = Telnet::new(stream, self.clone());
         println!("=== DEBUG: Telnet instance created ===");
 
         // Log connection details
@@ -185,13 +185,12 @@ impl Server {
 
         // Initiate TELNET protocol option negotiations and session login sequence.
         println!("=== DEBUG: Starting telnet.init_login_sequence() ===");
-        telnet.init_login_sequence().await?;
         println!("=== DEBUG: telnet.init_login_sequence() completed ===");
 
         // Handle network I/O.
         println!("=== DEBUG: Starting I/O handling loop ===");
         let shutdown_rx = self.shutdown_tx().subscribe();
-        let result = telnet.handle_input(stream, telnet_rx, shutdown_rx).await;
+        let result = obj.run(shutdown_rx).await;
         println!("=== DEBUG: telnet.handle_input() returned: {result:?} ===");
         if let Err(e) = result {
             if e.kind() != std::io::ErrorKind::UnexpectedEof {
@@ -316,8 +315,8 @@ pub async fn is_port_busy(port: u16) -> bool {
 }
 
 impl ServerObj {
-    /// The server actor: the accept loop and the name-claim registry share one sequential context (~ the C++ main loop
-    /// serializing accepts and session bookkeeping).
+    /// Run the Phoenix server.  The server actor: the accept loop and the name-claim registry share one sequential
+    /// context (~ the C++ main loop serializing accepts and session bookkeeping).
     #[framed]
     pub async fn run(mut self) -> Result<()> {
         println!("=== DEBUG: Server::run() starting accept loop ===");
