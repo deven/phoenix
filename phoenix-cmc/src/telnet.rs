@@ -21,6 +21,7 @@ use async_backtrace::framed;
 use bytes::{Buf, BytesMut};
 use log::{error, info, warn};
 use std::collections::VecDeque;
+use std::fmt;
 use std::mem;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -216,7 +217,6 @@ pub enum TelnetMsg {
     Close { drain: bool },
 }
 
-#[derive(Debug)]
 pub struct TelnetInner {
     // Connection.
     pub peer: Option<SocketAddr>,   // peer address, captured at accept
@@ -342,6 +342,39 @@ impl TelnetSubnegotiationState {
             6 => Self::Unknown,
             _ => Self::Idle,
         }
+    }
+}
+
+// Custom Debug impl for TelnetInner.  The derived Debug causes infinite recursion (and a stack overflow) because
+// TelnetInner.session → SessionInner → SessionInner.telnet → TelnetInner → ...
+//
+// This impl prints every field normally except the back-reference, which gets a one-line summary.  All other types —
+// handles, atomic wrappers, option wrappers — keep #[derive(Debug)] and inherit the cycle break.
+
+impl fmt::Debug for TelnetInner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Print the session field as a one-line summary (session ID) instead
+        // of expanding SessionInner, which would recurse back into TelnetInner.
+        struct SessionSummary<'a>(&'a AtomicSession);
+        impl fmt::Debug for SessionSummary<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Session(#{})", self.0.borrow().as_ref().id)
+            }
+        }
+
+        f.debug_struct("TelnetInner")
+            .field("peer", &self.peer)
+            .field("write_interest", &self.write_interest)
+            .field("tx", &self.tx)
+            .field("closing", &self.closing)
+            .field("close_on_eof", &self.close_on_eof)
+            .field("session", &SessionSummary(&self.session))
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .field("do_echo", &self.do_echo)
+            .field("acknowledge", &self.acknowledge)
+            .field("echo", &self.echo)
+            .finish()
     }
 }
 
