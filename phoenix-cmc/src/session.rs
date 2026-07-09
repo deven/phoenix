@@ -24,7 +24,7 @@ use crate::user::{User, UserManager, verify_password};
 use crate::{VERSION, getword, match_keyword, match_name};
 use async_backtrace::framed;
 use im::{HashMap, OrdSet};
-use log::info;
+use log::{error, info};
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
@@ -55,8 +55,11 @@ pub enum SessionMsg {
     Enqueue(Arc<Output>),
     /// The client acknowledged one output (TIMING-MARK reply).
     Acknowledged,
-    /// Release the acknowledged prefix of the pending queue (~ Pending.Dequeue()).
-    Dequeue,
+    /// A line of input from the connection, processed on the session actor (~ Session::Input); the acknowledged output
+    /// prefix is released first.
+    InputLine(Text),
+    /// The connection event loop has exited (~ Telnet::Closed()): detach if signed on, close otherwise.
+    Closed(Telnet),
     /// Stream all unsent output, marking it acknowledged (non-TELNET pacing: the C++ accept_input flushed with
     /// OutputNext()/AcknowledgeOutput() pairs).
     Flush,
@@ -101,7 +104,21 @@ impl SessionObj {
                     }
                 }
                 SessionMsg::Acknowledged => self.pending.acknowledge(),
-                SessionMsg::Dequeue => self.pending.dequeue(),
+                SessionMsg::InputLine(line) => {
+                    // ~ Session::Input: release acknowledged output, then process the line -- commands run on this
+                    // actor's sequential context.
+                    self.pending.dequeue();
+                    if let Err(e) = self.session.handle_input(line).await {
+                        error!("handle_input: {e}");
+                    }
+                }
+                SessionMsg::Closed(telnet) => {
+                    // ~ Telnet::Closed(): the connection is gone.
+                    let result = if self.session.signed_on() { self.session.detach(&telnet, false).await } else { self.session.close(false).await };
+                    if let Err(e) = result {
+                        error!("connection teardown: {e}");
+                    }
+                }
                 SessionMsg::Flush => {
                     if let Some(telnet) = self.session.telnet() {
                         self.send_all(&telnet);
@@ -401,6 +418,11 @@ impl Session {
     #[framed]
     pub async fn flush_pending(&self) {
         let _ = self.0.tx.send(SessionMsg::Flush);
+    }
+
+    /// Queue a line of input for the session actor (~ the Session::Input dispatch point).
+    pub fn input_line(&self, line: Text) {
+        let _ = self.0.tx.send(SessionMsg::InputLine(line));
     }
 
     /// Get the login time.
@@ -994,7 +1016,6 @@ impl Session {
     #[framed]
     pub async fn handle_input(&self, line: Text) -> tokio::io::Result<()> {
         println!("=== DEBUG: handle_input() starting ===");
-        let _ = self.0.tx.send(SessionMsg::Dequeue);
 
         // Reset login timeout if still in pre-login state
         if !self.signed_on() {
