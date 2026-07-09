@@ -7,14 +7,15 @@
 // SPDX-License-Identifier: MIT
 //
 
-use crate::atomic::{AtomicHashMap, AtomicOrdSet, AtomicSystemTimeOption, AtomicText, AtomicTextOption, AtomicVector};
-use crate::session::Session;
+use crate::atomic::{AtomicHashMap, AtomicOrdSet, AtomicText, AtomicTextOption, AtomicVector};
+use crate::session::{Session, SessionMsg};
 use crate::text::Text;
 use anyhow::Result;
 use async_backtrace::framed;
 use im::Vector;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
+use tokio::sync::mpsc;
 
 pub static USERS: LazyLock<AtomicHashMap<Text, User>> = LazyLock::new(AtomicHashMap::default);
 static USER_COUNTER: AtomicUsize = AtomicUsize::new(1);
@@ -115,30 +116,35 @@ impl User {
     }
 }
 
+/// Messages to the user manager actor.
+#[derive(Debug)]
+pub enum UserMsg {
+    /// Look up an account: reload the passwd file if stale, then find the user; the outcome returns to the requester as
+    /// SessionMsg::UserLookup.
+    Lookup { login: Text, requester: Session },
+    /// Reload the passwd file if stale.
+    Reload,
+}
+
 /// UserManager handle.
 #[derive(Debug, Clone)]
 pub struct UserManager(pub Arc<UserManagerInner>);
 
 #[derive(Debug)]
 pub struct UserManagerInner {
-    pub last_update: AtomicSystemTimeOption,
-    pub update_lock: tokio::sync::Mutex<()>,
+    pub tx: mpsc::UnboundedSender<UserMsg>,
 }
 
-impl UserManager {
-    #[framed]
-    pub fn new() -> Self {
-        let inner = UserManagerInner { last_update: AtomicSystemTimeOption::new(None), update_lock: tokio::sync::Mutex::new(()) };
-        Self(Arc::new(inner))
-    }
+/// Private user-manager state, owned by the user manager actor task: the mailbox is the serializer for passwd reloads
+/// (the reload mutex retires), and the future in-server account administration lands here as messages.
+#[derive(Debug)]
+pub struct UserManagerObj {
+    rx: mpsc::UnboundedReceiver<UserMsg>,
+    last_update: Option<std::time::SystemTime>,
+}
 
-    pub async fn get_user(&self, login: &str) -> Option<User> {
-        self.update_all().await.ok()?;
-        // Text hashes and compares case-insensitively (UniCase), so this lookup folds case.
-        USERS.get(&Text::from(login))
-    }
-
-    pub async fn update(&self, login: impl Into<Text>, pass: Option<String>, names: Option<&str>, defblurb: Option<impl Into<Text>>, p: i32) -> Result<()> {
+impl UserManagerObj {
+    pub async fn update(&mut self, login: impl Into<Text>, pass: Option<String>, names: Option<&str>, defblurb: Option<impl Into<Text>>, p: i32) -> Result<()> {
         let login_str: Text = login.into();
 
         if let Some(existing_user) = USERS.get(&login_str) {
@@ -155,15 +161,12 @@ impl UserManager {
         Ok(())
     }
 
-    pub async fn update_all(&self) -> Result<()> {
+    pub async fn update_all(&mut self) -> Result<()> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
         use std::path::Path;
 
-        // Serialize passwd reloads: without this, concurrent get_user() calls can both observe a stale mtime, both
-        // parse, and race duplicate User inserts.
-        let _reload_guard = self.0.update_lock.lock().await;
-
+        // Reloads are serialized by the user manager actor's mailbox.
         let passwd_path = Path::new("passwd");
         if !passwd_path.exists() {
             #[cfg(feature = "guest-access")]
@@ -176,7 +179,7 @@ impl UserManager {
         let metadata = std::fs::metadata(passwd_path)?;
         let modified = metadata.modified()?;
 
-        if let Some(last_time) = self.0.last_update.snapshot() {
+        if let Some(last_time) = self.last_update {
             if last_time == modified {
                 return Ok(());
             }
@@ -207,12 +210,54 @@ impl UserManager {
             self.update("guest", None, None, None::<&str>, 0).await?;
         }
 
-        self.0.last_update.set(Some(modified));
+        self.last_update = Some(modified);
         Ok(())
     }
 
+    /// The user manager actor.
+    #[framed]
+    pub async fn run(mut self) {
+        while let Some(msg) = self.rx.recv().await {
+            match msg {
+                UserMsg::Lookup { login, requester } => {
+                    if let Err(e) = self.update_all().await {
+                        log::error!("passwd reload: {e}");
+                    }
+
+                    // Text hashes and compares case-insensitively (UniCase), so this lookup folds case.
+                    let user = USERS.get(&Text::from(login.as_ref()));
+                    let _ = requester.0.tx.send(SessionMsg::UserLookup(user));
+                }
+                UserMsg::Reload => {
+                    if let Err(e) = self.update_all().await {
+                        log::error!("passwd reload: {e}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl UserManager {
+    #[framed]
+    pub fn new() -> Self {
+        let (tx, rx) = mpsc::unbounded_channel();
+        tokio::spawn(UserManagerObj { rx, last_update: None }.run());
+        Self(Arc::new(UserManagerInner { tx }))
+    }
+
+    /// Request an account lookup; the outcome arrives at the requester's session actor as SessionMsg::UserLookup.
+    pub fn lookup(&self, login: Text, requester: Session) {
+        let _ = self.0.tx.send(UserMsg::Lookup { login, requester });
+    }
+
+    /// Request a passwd reload if the file has changed.
+    pub fn reload(&self) {
+        let _ = self.0.tx.send(UserMsg::Reload);
+    }
+
     pub async fn find_reserved(&self, name: &str) -> Option<(Text, User)> {
-        self.update_all().await.ok()?;
+        // Read-model scan; freshness comes from the reload each Lookup performs.
 
         let users = USERS.snapshot();
         for (_login, user) in users.iter() {
