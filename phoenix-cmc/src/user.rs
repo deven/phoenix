@@ -13,6 +13,7 @@ use crate::text::Text;
 use anyhow::Result;
 use async_backtrace::framed;
 use im::Vector;
+use log::error;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::SystemTime;
@@ -222,7 +223,7 @@ impl UserManagerObj {
             match msg {
                 UserMsg::Lookup { login, requester } => {
                     if let Err(e) = self.update_all().await {
-                        log::error!("passwd reload: {e}");
+                        error!("passwd reload: {e}");
                     }
 
                     // Text hashes and compares case-insensitively (UniCase), so this lookup folds case.
@@ -231,7 +232,7 @@ impl UserManagerObj {
                 }
                 UserMsg::Reload => {
                     if let Err(e) = self.update_all().await {
-                        log::error!("passwd reload: {e}");
+                        error!("passwd reload: {e}");
                     }
                 }
             }

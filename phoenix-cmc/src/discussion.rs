@@ -17,6 +17,7 @@ use crate::timestamp::Timestamp;
 use crate::{getword, match_keyword};
 use async_backtrace::framed;
 use im::OrdSet;
+use log::error;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use tokio::sync::mpsc;
@@ -78,37 +79,37 @@ impl DiscussionObj {
             match msg {
                 DiscussionMsg::Join(session) => {
                     if let Err(e) = self.discussion.join(&session).await {
-                        log::error!("discussion join: {e}");
+                        error!("discussion join: {e}");
                     }
                 }
                 DiscussionMsg::Quit(session) => {
                     if let Err(e) = self.discussion.quit(&session).await {
-                        log::error!("discussion quit: {e}");
+                        error!("discussion quit: {e}");
                     }
                 }
                 DiscussionMsg::Permit { session, args } => {
                     if let Err(e) = self.discussion.permit(&session, args.as_str()).await {
-                        log::error!("discussion permit: {e}");
+                        error!("discussion permit: {e}");
                     }
                 }
                 DiscussionMsg::Depermit { session, args } => {
                     if let Err(e) = self.discussion.depermit(&session, args.as_str()).await {
-                        log::error!("discussion depermit: {e}");
+                        error!("discussion depermit: {e}");
                     }
                 }
                 DiscussionMsg::Appoint { session, args } => {
                     if let Err(e) = self.discussion.appoint(&session, args.as_str()).await {
-                        log::error!("discussion appoint: {e}");
+                        error!("discussion appoint: {e}");
                     }
                 }
                 DiscussionMsg::Unappoint { session, args } => {
                     if let Err(e) = self.discussion.unappoint(&session, args.as_str()).await {
-                        log::error!("discussion unappoint: {e}");
+                        error!("discussion unappoint: {e}");
                     }
                 }
                 DiscussionMsg::Destroy(session) => {
                     if let Err(e) = self.discussion.destroy(&session).await {
-                        log::error!("discussion destroy: {e}");
+                        error!("discussion destroy: {e}");
                     }
                     // A successful destroy removed the discussion from the registry: the actor exits, and later sends
                     // fail silently (messages to a destroyed discussion are no-ops).
@@ -127,7 +128,7 @@ impl DiscussionObj {
                         }
                     };
                     if let Err(e) = result {
-                        log::error!("discussion deliver: {e}");
+                        error!("discussion deliver: {e}");
                     }
                 }
             }
