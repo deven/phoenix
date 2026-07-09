@@ -38,7 +38,29 @@ pub enum DiscussionMsg {
     /// Remove a member (~ Discussion::Quit).
     Quit(Session),
     /// Fan an output out to the members, excluding the sender if given.
-    Deliver { out: Arc<Output>, sender: Option<Session> },
+    Deliver {
+        out: Arc<Output>,
+        sender: Option<Session>,
+    },
+    /// Moderation commands (~ the discussion.cc bodies), serialized with membership and delivery: the permit/depermit
+    /// interleaving that could violate allowed/denied disjointness cannot occur.
+    Permit {
+        session: Session,
+        args: Text,
+    },
+    Depermit {
+        session: Session,
+        args: Text,
+    },
+    Appoint {
+        session: Session,
+        args: Text,
+    },
+    Unappoint {
+        session: Session,
+        args: Text,
+    },
+    Destroy(Session),
 }
 
 /// Private discussion state, owned by the discussion actor task.
@@ -62,6 +84,36 @@ impl DiscussionObj {
                 DiscussionMsg::Quit(session) => {
                     if let Err(e) = self.discussion.quit(&session).await {
                         log::error!("discussion quit: {e}");
+                    }
+                }
+                DiscussionMsg::Permit { session, args } => {
+                    if let Err(e) = self.discussion.permit(&session, args.as_str()).await {
+                        log::error!("discussion permit: {e}");
+                    }
+                }
+                DiscussionMsg::Depermit { session, args } => {
+                    if let Err(e) = self.discussion.depermit(&session, args.as_str()).await {
+                        log::error!("discussion depermit: {e}");
+                    }
+                }
+                DiscussionMsg::Appoint { session, args } => {
+                    if let Err(e) = self.discussion.appoint(&session, args.as_str()).await {
+                        log::error!("discussion appoint: {e}");
+                    }
+                }
+                DiscussionMsg::Unappoint { session, args } => {
+                    if let Err(e) = self.discussion.unappoint(&session, args.as_str()).await {
+                        log::error!("discussion unappoint: {e}");
+                    }
+                }
+                DiscussionMsg::Destroy(session) => {
+                    if let Err(e) = self.discussion.destroy(&session).await {
+                        log::error!("discussion destroy: {e}");
+                    }
+                    // A successful destroy removed the discussion from the registry: the actor exits, and later sends
+                    // fail silently (messages to a destroyed discussion are no-ops).
+                    if crate::session::DISCUSSIONS.get(&self.discussion.name()).is_none() {
+                        return;
                     }
                 }
                 DiscussionMsg::Deliver { out, sender } => {
@@ -151,6 +203,27 @@ impl Discussion {
     /// Ask the discussion actor to remove a member (ordered with deliveries).
     pub fn send_quit(&self, session: Session) {
         let _ = self.0.tx.send(DiscussionMsg::Quit(session));
+    }
+
+    /// Ask the discussion actor to run a moderation command (ordered with membership and delivery).
+    pub fn send_permit(&self, session: Session, args: Text) {
+        let _ = self.0.tx.send(DiscussionMsg::Permit { session, args });
+    }
+
+    pub fn send_depermit(&self, session: Session, args: Text) {
+        let _ = self.0.tx.send(DiscussionMsg::Depermit { session, args });
+    }
+
+    pub fn send_appoint(&self, session: Session, args: Text) {
+        let _ = self.0.tx.send(DiscussionMsg::Appoint { session, args });
+    }
+
+    pub fn send_unappoint(&self, session: Session, args: Text) {
+        let _ = self.0.tx.send(DiscussionMsg::Unappoint { session, args });
+    }
+
+    pub fn send_destroy(&self, session: Session) {
+        let _ = self.0.tx.send(DiscussionMsg::Destroy(session));
     }
 
     /// Deliver an output to the members through the discussion actor, excluding the sender if given.
