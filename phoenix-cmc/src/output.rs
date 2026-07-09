@@ -19,13 +19,14 @@
 //!   the C++)
 //! - pointer-comparing `Unenqueue()`  -> `Arc::ptr_eq()` (identity, not value, equality)
 //! - `Type` field                     -> deleted; the enum discriminant is the type, checked exhaustively by the
-//!   compiler.  The one place `Type` was data rather than reflection (public vs. private messages) is now the
-//!   `MessageType` field on `Message`.
+//!   compiler.  The one place `Type` was data rather than reflection (public vs.
+//!   private messages) is now the `MessageType` field on `Message`.
 //! - `Class` field                    -> derived by `Output::class()`.
 
 use crate::name::Name;
 use crate::sendlist::Sendlist;
-use crate::telnet::Telnet;
+use crate::session::Session;
+use crate::telnet::TelnetObj;
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use std::sync::Arc;
@@ -84,7 +85,7 @@ pub enum OutputKind {
 impl Output {
     /// Could this output reach `recipient` by more than one delivery path?  Only messages travel multiple paths;
     /// everything else is false.
-    pub fn multi_path(&self, recipient: &crate::session::Session) -> bool {
+    pub fn multi_path(&self, recipient: &Session) -> bool {
         match &self.kind {
             OutputKind::Message(message) => message.multi_path(recipient),
             _ => false,
@@ -102,7 +103,7 @@ impl Output {
 
     /// Render this output to a TELNET connection (C++ virtual `output()`).  The dispatch passes `time` explicitly
     /// because the C++ subclasses read it from the base class through inheritance.
-    pub async fn output(&self, telnet: &Telnet) {
+    pub async fn output(&self, telnet: &mut TelnetObj) {
         // Undraw any active input line before output of any sort is sent.  The C++ called UndrawInput() at each
         // output-producing site (SendNext, out-of-band prints); the single dispatch funnel makes it one site.  The
         // synchronous flag check skips the async call (and its framed bookkeeping) on mid-batch repeats; it cannot race
@@ -204,7 +205,7 @@ impl TextOutput {
         Self { text: text.into() }
     }
 
-    pub async fn output(&self, _time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, _time: &Timestamp, telnet: &mut TelnetObj) {
         telnet.output(&self.text).await;
     }
 }
@@ -241,7 +242,7 @@ impl Message {
     }
 
     /// Could this message reach `recipient` by more than one delivery path?
-    pub fn multi_path(&self, recipient: &crate::session::Session) -> bool {
+    pub fn multi_path(&self, recipient: &Session) -> bool {
         self.to().multi_path(recipient)
     }
 
@@ -249,7 +250,7 @@ impl Message {
         &self.0.to
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         telnet.print_message(self.0.message_type, time.clone(), &self.0.from, &self.0.to, &self.0.text).await;
     }
 }
@@ -264,7 +265,7 @@ impl EntryNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} has entered Phoenix! [{stamp}] ***\n")).await;
@@ -281,7 +282,7 @@ impl ExitNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} has left Phoenix! [{stamp}] ***\n")).await;
@@ -298,7 +299,7 @@ impl TransferNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} has transferred to new connection. [{stamp}] ***\n")).await;
@@ -315,7 +316,7 @@ impl AttachNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} is now attached. [{stamp}] ***\n")).await;
@@ -333,7 +334,7 @@ impl DetachNotify {
         Self { name: who, intentional: i }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         let intentionally = if self.intentional { "intentionally" } else { "accidentally" };
@@ -351,7 +352,7 @@ impl HereNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} is now here. [{stamp}] ***\n")).await;
@@ -368,7 +369,7 @@ impl AwayNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} is now away. [{stamp}] ***\n")).await;
@@ -385,7 +386,7 @@ impl BusyNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} is now busy. [{stamp}] ***\n")).await;
@@ -402,7 +403,7 @@ impl GoneNotify {
         Self { name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let stamp = &time.stamp();
         telnet.output(&format!("*** {name} is now gone. [{stamp}] ***\n")).await;
@@ -422,7 +423,7 @@ impl CreateNotify {
         Self { discussion_name: disc_name, discussion_title: disc_title, is_public, creator }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let creator = &self.creator;
         let disc = &self.discussion_name;
         let title = &self.discussion_title;
@@ -446,7 +447,7 @@ impl DestroyNotify {
         Self { discussion_name: disc_name, name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -465,7 +466,7 @@ impl JoinNotify {
         Self { discussion_name: disc_name, name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -484,7 +485,7 @@ impl QuitNotify {
         Self { discussion_name: disc_name, name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -503,7 +504,7 @@ impl PublicNotify {
         Self { discussion_name: disc_name, name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -522,7 +523,7 @@ impl PrivateNotify {
         Self { discussion_name: disc_name, name: who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -543,7 +544,7 @@ impl PermitNotify {
         Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let name = &self.name;
         let disc = &self.discussion_name;
         let stamp = &time.stamp();
@@ -575,7 +576,7 @@ impl DepermitNotify {
         Self { discussion_name: disc_name, is_public: public, name: who, is_explicit: flag, removed: removed_who }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let session_name = telnet.session_name();
         let name = &self.name;
         let disc = &self.discussion_name;
@@ -617,7 +618,7 @@ impl AppointNotify {
         Self { discussion_name: disc_name, appointer: who1, appointee: who2 }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let session_name = telnet.session_name();
         let appointer = &self.appointer;
         let appointee = self.appointee.you(&session_name);
@@ -640,7 +641,7 @@ impl UnappointNotify {
         Self { discussion_name: disc_name, unappointer: who1, unappointee: who2 }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let session_name = telnet.session_name();
         let unappointer = &self.unappointer;
         let unappointee = self.unappointee.you(&session_name);
@@ -662,7 +663,7 @@ impl RenameNotify {
         Self { oldname: oldstr.into(), newname: newstr.into() }
     }
 
-    pub async fn output(&self, time: &Timestamp, telnet: &Telnet) {
+    pub async fn output(&self, time: &Timestamp, telnet: &mut TelnetObj) {
         let oldname = &self.oldname;
         let newname = &self.newname;
         let stamp = &time.stamp();

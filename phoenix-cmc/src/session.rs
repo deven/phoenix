@@ -181,6 +181,7 @@ impl SessionObj {
     }
 }
 
+/// Public session state, readable by any task.
 #[derive(Debug)]
 pub struct SessionInner {
     // Immutable fields
@@ -205,6 +206,7 @@ pub struct SessionInner {
     pub session_type: AtomicSessionType,
 }
 
+/// Public type-specific session state, readable by any task.
 #[derive(Debug)]
 pub enum SessionType {
     PreLogin {
@@ -567,7 +569,7 @@ impl Session {
             }
         }
 
-        // If there are pending input lines, process one to continue the flow
+        // If there are pending input lines, process one to continue the flow.
         let next_line = {
             let mut lines = self.lines().await;
             lines.pop_front()
@@ -605,12 +607,12 @@ impl Session {
 
     /// Reset the login timeout to the full duration.
     pub fn reset_login_timeout(&self) {
-        // Cancel existing timeout if any
+        // Cancel existing timeout if any.
         if let Some(handle) = self.login_timeout() {
             handle.abort();
         }
 
-        // Start new timeout
+        // Start new timeout.
         let session = self.clone();
         let handle = tokio::spawn(async move {
             tokio::time::sleep(LOGIN_TIMEOUT).await;
@@ -626,7 +628,7 @@ impl Session {
 
     /// Login sequence is finished.
     pub fn login_sequence_finished(&self) {
-        // Cancel login timeout and clear close-on-EOF flag
+        // Cancel login timeout and clear close-on-EOF flag.
         self.cancel_login_timeout();
         if let Some(telnet) = self.telnet() {
             telnet.set_close_on_eof(false);
@@ -1032,7 +1034,7 @@ impl Session {
             SessionType::LoggedIn { reply_sendlist, .. } => {
                 let sendlist: Text = sendlist.into();
 
-                // Quote if necessary
+                // Quote the reply sendlist if necessary.
                 let sendlist = if sendlist.chars().any(|c| c == ' ' || c == ',' || c == ':' || c == ';' || c == '_') {
                     Text::from(format!("\"{sendlist}\""))
                 } else {
@@ -1065,7 +1067,7 @@ impl Session {
     pub async fn handle_input(&self, line: Text) -> tokio::io::Result<()> {
         println!("=== DEBUG: handle_input() starting ===");
 
-        // Reset login timeout if still in pre-login state
+        // Reset login timeout if still in pre-login state.
         if !self.signed_on() {
             self.reset_login_timeout();
         }
@@ -1114,6 +1116,7 @@ impl Session {
             return Ok(());
         }
         self.set_user_entered(Some(line.clone()));
+
         // First login handshake: the user manager reloads the passwd file if stale and replies with
         // SessionMsg::UserLookup (~ the synchronous C++ FindUser call, split across the actor boundary).
         self.set_login_state(LoginState::AwaitingLookup);
@@ -1271,19 +1274,19 @@ impl Session {
         self.logged_in(name, user);
         println!("=== DEBUG: handle_blurb_input(): self.name()={name:?} ===", name = self.name());
 
-        // Send entry notification
+        // Send entry notification.
         self.notify_entry().await?;
 
-        // Welcome message and automatic commands
+        // Welcome message and automatic commands.
         self.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
 
-        // Make sure discussion A exists
+        // Make sure discussion A exists.
         if let (_, _, None, _) = self.find_sendable("A", false, true, true, true).await {
             let disc = Discussion::new(None, "A", "General Discussion", true).await;
             DISCUSSIONS.insert(Text::from("A"), disc);
         }
 
-        // Automatic commands
+        // Automatic commands.
         self.do_join("A").await?;
         self.do_send("A").await?;
         self.do_who("").await?;
@@ -1368,11 +1371,12 @@ impl Session {
         self.switch_login_state(LoginState::AwaitingLogin, Some("login: ")).await
     }
 
+    /// Initialize login sequence.
     #[framed]
     pub async fn init_login_sequence(&self) -> tokio::io::Result<()> {
         println!("=== DEBUG: Session::init_login_sequence() starting ===");
 
-        // Start login timeout
+        // Start login timeout.
         self.reset_login_timeout();
 
         // The session stays in PreLogin (~ C++ InputFunc == NULL): input lines are saved and replayed when
@@ -1668,19 +1672,19 @@ impl Session {
             }
         }
 
-        // If we found an exact match, return it
+        // If we found an exact match, return it.
         if session.is_some() || discussion.is_some() {
             return (session, session_matches, discussion, discussion_matches);
         }
 
-        // If we found exactly one lead match, use it
+        // If we found exactly one lead match, use it.
         if count == 1 {
             session = session_lead;
             discussion = discussion_lead;
             return (session, session_matches, discussion, discussion_matches);
         }
 
-        // If we have exactly one match total, use it
+        // If we have exactly one match total, use it.
         if session_matches.len() + discussion_matches.len() == 1 {
             if session_matches.len() == 1 {
                 session = session_matches.iter().next().cloned();
@@ -1852,7 +1856,7 @@ impl Session {
 
     #[framed]
     pub async fn print_time_long(&self, minutes: i64) {
-        // Determine time format (0 = verbose, 1 = both, 2 = terse)
+        // Determine time format. (0 = verbose, 1 = both, 2 = terse)
         let format = if let Some(fmt) = self.get_sys_var("time_format") {
             match fmt.as_str() {
                 "verbose" => 0,
@@ -1869,13 +1873,13 @@ impl Session {
             }
         };
 
-        // Calculate time components
+        // Calculate time components.
         let hours = minutes / 60;
         let days = hours / 24;
         let minutes = minutes % 60;
         let hours = hours % 24;
 
-        // Print verbose format if format <= 1
+        // Print verbose format if format <= 1.
         if format <= 1 {
             if days > 0 || hours > 0 || minutes > 0 {
                 if minutes == 0 {
@@ -1906,7 +1910,7 @@ impl Session {
             }
         }
 
-        // Print separator and/or terse format if format >= 1
+        // Print separator and/or terse format if format >= 1.
         if format >= 1 {
             self.output(" ").await;
         }
@@ -1931,11 +1935,11 @@ impl Session {
         let name = self.name();
 
         if args == "!" {
-            // Immediate restart
+            // Immediate restart.
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await?;
             self.server().schedule_restart(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
-            // Cancel restart
+            // Cancel restart.
             match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
@@ -1948,7 +1952,7 @@ impl Session {
                 None => self.output("The server was not about to shut down or restart.\n").await,
             }
         } else {
-            // Delayed restart
+            // Delayed restart.
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has restarted Phoenix! ***\n")).await?;
             self.server().schedule_restart(who.clone(), seconds).await;
@@ -1963,11 +1967,11 @@ impl Session {
         let name = self.name();
 
         if args == "!" {
-            // Immediate shutdown
+            // Immediate shutdown.
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await?;
             self.server().schedule_shutdown(who, 0).await;
         } else if match_keyword(args, "cancel", 6).is_some() {
-            // Cancel shutdown
+            // Cancel shutdown.
             match self.server().cancel_shutdown().await {
                 Some(true) => {
                     info!("Restart cancelled by {who}.");
@@ -1980,7 +1984,7 @@ impl Session {
                 None => self.output("The server was not about to shut down or restart.\n").await,
             }
         } else {
-            // Delayed shutdown
+            // Delayed shutdown.
             let seconds = args.parse::<u64>().unwrap_or(30);
             Self::announce(&format!("*** {name} has shut down Phoenix! ***\n")).await?;
             self.server().schedule_shutdown(who.clone(), seconds).await;
@@ -2011,9 +2015,8 @@ impl Session {
                 if let Some(telnet) = target.telnet() {
                     target.set_telnet(None);
                     info!("{who} has been nuked by {by_who}");
-                    telnet.undraw_input().await;
+                    // The Output arm undraws before out-of-band prints (~ C++ session.cc:944).
                     telnet.output(&format!("\x07\x07\x07*** You have been nuked by {by_name}. ***\n")).await;
-                    telnet.redraw_input().await;
                     telnet.close(drain).await?;
                 } else {
                     info!("{who}, detached, has been nuked by {by_who}");
@@ -2694,15 +2697,15 @@ impl Session {
             return Ok(());
         }
 
-        // Parse the sendlist
+        // Parse the sendlist.
         let mut slist = String::new();
         for ch in args.chars() {
             match ch {
                 '\\' => {
-                    // Handle escape
+                    // Handle escape.
                 }
                 '"' => {
-                    // Handle quoted section
+                    // Handle quoted section.
                 }
                 '_' => slist.push(UNQUOTED_UNDERSCORE as char),
                 ',' => slist.push(SEPARATOR as char),
@@ -3109,7 +3112,7 @@ impl Session {
         let mut days = 0i64;
         let mut hours = 0i64;
 
-        // Parse first number
+        // Parse first number.
         let mut num = 0i64;
         while let Some(&ch) = chars.peek() {
             if ch.is_ascii_digit() {
@@ -3120,17 +3123,17 @@ impl Session {
             }
         }
 
-        // Skip whitespace
+        // Skip whitespace.
         while chars.peek() == Some(&' ') {
             chars.next();
         }
 
-        // Check for 'd' or 'D' (days)
+        // Check for 'd' or 'D' (days).
         if chars.peek() == Some(&'d') || chars.peek() == Some(&'D') {
             days = num;
             chars.next();
 
-            // Skip whitespace and parse next number
+            // Skip whitespace and parse next number.
             while chars.peek() == Some(&' ') {
                 chars.next();
             }
@@ -3145,18 +3148,18 @@ impl Session {
                 }
             }
 
-            // Skip whitespace
+            // Skip whitespace.
             while chars.peek() == Some(&' ') {
                 chars.next();
             }
         }
 
-        // Check for ':' (hours)
+        // Check for ':' (hours).
         if chars.peek() == Some(&':') {
             hours = num;
             chars.next();
 
-            // Skip whitespace and parse minutes
+            // Skip whitespace and parse minutes.
             while chars.peek() == Some(&' ') {
                 chars.next();
             }
@@ -3174,34 +3177,34 @@ impl Session {
 
         let minutes = num;
 
-        // Skip trailing whitespace
+        // Skip trailing whitespace.
         while chars.peek() == Some(&' ') {
             chars.next();
         }
 
-        // If there are remaining characters, it's a syntax error
+        // If there are remaining characters, it's a syntax error.
         if chars.peek().is_some() {
             self.output("Syntax error in time specification.  Format: <d>d<hh>:<mm>\n").await;
             return Ok(());
         }
 
-        // Calculate new idle_since timestamp
+        // Calculate new idle_since timestamp.
         let total_minutes = days * 24 * 60 + hours * 60 + minutes;
         let new_idle_since = Timestamp::from_unix(now.unix() - total_minutes * 60);
 
-        // Check permissions
+        // Check permissions.
         if new_idle_since < self.login_time() && self.priv_level() < 50 {
             self.output("Sorry, you can't be idle longer than you've been signed on.\n").await;
             return Ok(());
         }
 
-        // Set the new idle time
+        // Set the new idle time.
         self.set_idle_since(new_idle_since);
         if self.idle_since().unix() < self.login_time().unix() {
             self.set_login_time(self.idle_since());
         }
 
-        // Output results
+        // Output results.
         let new_idle = (now.unix() - self.idle_since().unix()) / 60;
 
         if current_idle > 0 && current_idle != new_idle {
@@ -3889,7 +3892,7 @@ impl Session {
             Sendlist::new(self, &sendlist_str, false, true, true).await
         };
 
-        // Save last sendlist if explicit
+        // Save last sendlist if explicit.
         if is_explicit {
             self.set_last_sendlist(Some(sendlist.clone()));
         }
@@ -3998,7 +4001,7 @@ impl Session {
             self.output(&format!("discussion{s} ")).await;
             self.print_discussions(&sendlist.discussions()).await;
 
-            // Set discussion idle times
+            // Set discussion idle times.
             for disc in &sendlist.discussions() {
                 disc.set_idle_since(now.clone());
             }
@@ -4051,7 +4054,7 @@ impl Session {
             return (who, errors, msg);
         }
 
-        // Parse comma-separated arguments for filter keywords
+        // Parse comma-separated arguments for filter keywords.
         let mut everyone = args.is_empty();
         let mut here = false;
         let mut away = false;
@@ -4093,7 +4096,7 @@ impl Session {
                         attached = true;
                     }
                     _ => {
-                        // Not a recognized filter keyword, save for sendlist expansion
+                        // Not a recognized filter keyword, save for sendlist expansion.
                         sendlist_args.push(arg);
                     }
                 }
@@ -4102,7 +4105,7 @@ impl Session {
 
         let has_filters = here || away || busy || gone || attached || detached || active || inactive || idle || unidle || privileged || guests || everyone;
 
-        // Handle sendlist expansion first (matches go first in the set)
+        // Handle sendlist expansion first (matches go first in the set).
         if !sendlist_args.is_empty() {
             let sendlist_arg_str = sendlist_args.join(",");
             let sendlist = Sendlist::new(self, &sendlist_arg_str, true, true, true).await;
@@ -4113,7 +4116,7 @@ impl Session {
             }
         }
 
-        // Add filter matches to the set
+        // Add filter matches to the set.
         if has_filters {
             let now = Timestamp::new();
             for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
@@ -4147,7 +4150,7 @@ impl Session {
             }
         }
 
-        // Handle no matches case
+        // Handle no matches case.
         if who.is_empty() {
             if has_filters {
                 let filter_list: Vec<_> = [
@@ -4178,13 +4181,13 @@ impl Session {
                 }
             }
             if !errors.is_empty() {
-                self.output("\x07\x07").await; // Bell characters
+                self.output("\x07\x07").await; // Bell characters.
                 self.output(&errors).await;
             }
             return (who, String::new(), String::new());
         }
 
-        // Generate message for successful matches with filters
+        // Generate message for successful matches with filters.
         if has_filters {
             let others = total_sessions - who.len();
             if others == 1 {
@@ -4210,14 +4213,14 @@ impl Session {
                 return (who, errors, String::new());
             }
 
-            // Parse filters
+            // Parse filters.
             let mut everyone = args.is_empty();
             let (mut here, mut away, mut busy, mut gone) = (false, false, false, false);
             let (mut attached, mut detached, mut active, mut inactive) = (false, false, false, false);
             let (mut idle, mut unidle, mut privileged, mut guests) = (false, false, false, false);
             let mut sendlist_args = Vec::new();
 
-            // Parse comma-separated arguments for filter keywords
+            // Parse comma-separated arguments for filter keywords.
             let mut everyone = args.is_empty();
             let mut here = false;
             let mut away = false;
@@ -4259,7 +4262,7 @@ impl Session {
             ];
             let has_filters = everyone || filters.iter().any(|(f, _)| *f);
 
-            // Handle sendlist expansion
+            // Handle sendlist expansion.
             if !sendlist_args.is_empty() {
                 let sendlist = Sendlist::new(&self, &sendlist_args.join(","), true, true, true).await;
                 sendlist.expand(&mut who, None).await;
@@ -4268,7 +4271,7 @@ impl Session {
                 }
             }
 
-            // Add filter matches
+            // Add filter matches.
             if has_filters {
                 let now = Timestamp::new();
                 for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
@@ -4299,7 +4302,7 @@ impl Session {
                 }
             }
 
-            // Handle no matches
+            // Handle no matches.
             if who.is_empty() {
                 let labels: Vec<_> = filters.iter().filter_map(|(f, l)| f.then_some(*l)).collect();
                 if !labels.is_empty() {
@@ -4317,7 +4320,7 @@ impl Session {
                 return (who, String::new(), String::new());
             }
 
-            // Generate message for successful matches
+            // Generate message for successful matches.
             let msg = match total_sessions - who.len() {
                 1 if has_filters => "(There is 1 other person signed on.)\n".to_string(),
                 n if has_filters && n > 0 => format!("(There are {n} other people signed on.)\n"),
@@ -4330,7 +4333,7 @@ impl Session {
 
     #[framed]
     pub async fn session_matches(&self, name: &str, matches: &OrdSet<Session>) {
-        // Convert UnquotedUnderscore characters to regular underscores for display
+        // Convert UnquotedUnderscore characters to regular underscores for display.
         let display_name = name.chars().map(|c| if c as u8 == UNQUOTED_UNDERSCORE { '_' } else { c }).collect::<String>();
 
         if !matches.is_empty() {
@@ -4355,7 +4358,7 @@ impl Session {
 
     #[framed]
     pub async fn discussion_matches(&self, name: &str, matches: &OrdSet<Discussion>) {
-        // Convert UnquotedUnderscore characters to regular underscores for display
+        // Convert UnquotedUnderscore characters to regular underscores for display.
         let display_name = name.chars().map(|c| if c as u8 == UNQUOTED_UNDERSCORE { '_' } else { c }).collect::<String>();
 
         if !matches.is_empty() {
