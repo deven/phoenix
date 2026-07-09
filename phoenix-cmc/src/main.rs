@@ -8,7 +8,7 @@
 //
 
 use anyhow::Result;
-use log::info;
+use log::{error, info};
 use phoenix_cmc::{VERSION, server, server::Server};
 use std::env;
 use std::path::PathBuf;
@@ -105,7 +105,7 @@ pub async fn main() -> Result<()> {
         result = server_obj.run() => {
             println!("=== DEBUG: Server.run() returned: {:?} ===", result);
             if let Err(e) = result {
-                log::error!("Server error: {e}"); // XXX print error message
+                error!("Server error: {e}"); // XXX print error message
                 return Err(e);
             }
         }

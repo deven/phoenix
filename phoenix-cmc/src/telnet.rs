@@ -19,6 +19,7 @@ use crate::text::Text;
 use crate::timestamp::Timestamp;
 use async_backtrace::framed;
 use bytes::{Buf, BytesMut};
+use log::{error, info, warn};
 use std::collections::VecDeque;
 use std::mem;
 use std::net::SocketAddr;
@@ -417,10 +418,10 @@ impl Telnet {
     pub async fn log_caller(&self) {
         match self.0.peer {
             Some(addr) => {
-                log::info!("Accepted connection from {addr}"); // XXX log message
+                info!("Accepted connection from {addr}"); // XXX log message
             }
             None => {
-                log::warn!("Telnet::log_caller(): peer address unavailable"); // XXX print error message
+                warn!("Telnet::log_caller(): peer address unavailable"); // XXX print error message
             }
         }
     }
@@ -1491,7 +1492,7 @@ impl TelnetObj {
                             }
                             Some(TelnetMsg::Close { drain }) => {
                                 if let Err(e) = self.close(drain).await {
-                                    log::error!("close: {e}");
+                                    error!("close: {e}");
                                 }
                             }
                             None => break,
