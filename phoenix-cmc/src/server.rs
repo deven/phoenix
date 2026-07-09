@@ -28,7 +28,6 @@ use tokio::time::Duration;
 #[derive(Debug, Clone)]
 pub struct Server(pub Arc<ServerInner>);
 
-#[derive(Debug)]
 /// Messages to the server actor (the accept loop is the registry serializer, as the C++ main loop was).
 #[derive(Debug)]
 pub enum ServerMsg {
@@ -50,6 +49,7 @@ pub struct ServerObj {
     pub names: HashSet<Text>,
 }
 
+#[derive(Debug)]
 pub struct ServerInner {
     pub listener: TcpListener,
     pub tx: tokio::sync::mpsc::UnboundedSender<ServerMsg>,

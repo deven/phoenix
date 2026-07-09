@@ -19,6 +19,7 @@ use async_backtrace::framed;
 use im::OrdSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use tokio::sync::mpsc;
 
 static DISCUSSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
@@ -26,8 +27,65 @@ static DISCUSSION_COUNTER: AtomicUsize = AtomicUsize::new(1);
 #[derive(Debug, Clone)]
 pub struct Discussion(pub Arc<DiscussionInner>);
 
+/// Messages to the discussion actor: one mailbox creates a total order over the union of membership changes and
+/// deliveries, so every member sees the same message sequence, and a session receives exactly the messages processed
+/// during its membership -- nothing before its Join, nothing after its Quit.  (~ the C++ single thread's implicit
+/// per-discussion serialization, restored as structure.)
+#[derive(Debug)]
+pub enum DiscussionMsg {
+    /// Add a member (~ Discussion::Join).
+    Join(Session),
+    /// Remove a member (~ Discussion::Quit).
+    Quit(Session),
+    /// Fan an output out to the members, excluding the sender if given.
+    Deliver { out: Arc<Output>, sender: Option<Session> },
+}
+
+/// Private discussion state, owned by the discussion actor task.
+#[derive(Debug)]
+pub struct DiscussionObj {
+    pub discussion: Discussion,
+    pub rx: mpsc::UnboundedReceiver<DiscussionMsg>,
+}
+
+impl DiscussionObj {
+    /// The discussion actor: membership and delivery share one sequential context.
+    #[framed]
+    pub async fn run(mut self) {
+        while let Some(msg) = self.rx.recv().await {
+            match msg {
+                DiscussionMsg::Join(session) => {
+                    if let Err(e) = self.discussion.join(&session).await {
+                        log::error!("discussion join: {e}");
+                    }
+                }
+                DiscussionMsg::Quit(session) => {
+                    if let Err(e) = self.discussion.quit(&session).await {
+                        log::error!("discussion quit: {e}");
+                    }
+                }
+                DiscussionMsg::Deliver { out, sender } => {
+                    let result = match &sender {
+                        Some(sender) => self.discussion.enqueue_others(Arc::clone(&out), sender).await,
+                        None => {
+                            for member in &self.discussion.members() {
+                                member.enqueue(Arc::clone(&out)).await.ok();
+                            }
+                            Ok(())
+                        }
+                    };
+                    if let Err(e) = result {
+                        log::error!("discussion deliver: {e}");
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct DiscussionInner {
+    pub tx: mpsc::UnboundedSender<DiscussionMsg>,
     pub id: usize,
     pub name: AtomicText,
     pub title: AtomicText,
@@ -64,7 +122,9 @@ impl Discussion {
             moderators.insert(creator_name);
         }
 
+        let (tx, rx) = mpsc::unbounded_channel();
         let inner = DiscussionInner {
+            tx,
             id,
             name: AtomicText::new(name),
             title: AtomicText::new(title),
@@ -78,7 +138,24 @@ impl Discussion {
             idle_since: AtomicTimestamp::new(idle_since),
         };
 
-        Self(Arc::new(inner))
+        let discussion = Self(Arc::new(inner));
+        tokio::spawn(DiscussionObj { discussion: discussion.clone(), rx }.run());
+        discussion
+    }
+
+    /// Ask the discussion actor to add a member (ordered with deliveries).
+    pub fn send_join(&self, session: Session) {
+        let _ = self.0.tx.send(DiscussionMsg::Join(session));
+    }
+
+    /// Ask the discussion actor to remove a member (ordered with deliveries).
+    pub fn send_quit(&self, session: Session) {
+        let _ = self.0.tx.send(DiscussionMsg::Quit(session));
+    }
+
+    /// Deliver an output to the members through the discussion actor, excluding the sender if given.
+    pub fn deliver(&self, out: Arc<Output>, sender: Option<Session>) {
+        let _ = self.0.tx.send(DiscussionMsg::Deliver { out, sender });
     }
 
     /// Get the discussion ID.
