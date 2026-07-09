@@ -60,6 +60,8 @@ pub enum SessionMsg {
     InputLine(Text),
     /// The connection event loop has exited (~ Telnet::Closed()): detach if signed on, close otherwise.
     Closed(Telnet),
+    /// The account-lookup outcome (first login handshake).
+    UserLookup(Option<User>),
     /// Stream all unsent output, marking it acknowledged (non-TELNET pacing: the C++ accept_input flushed with
     /// OutputNext()/AcknowledgeOutput() pairs).
     Flush,
@@ -110,6 +112,11 @@ impl SessionObj {
                     self.pending.dequeue();
                     if let Err(e) = self.session.handle_input(line).await {
                         error!("handle_input: {e}");
+                    }
+                }
+                SessionMsg::UserLookup(user) => {
+                    if let Err(e) = self.session.login_lookup_result(user).await {
+                        error!("login lookup: {e}");
                     }
                 }
                 SessionMsg::Closed(telnet) => {
@@ -210,6 +217,9 @@ pub enum LoginState {
     AwaitingBlurb = 4,
     AwaitingTransferConfirmation = 5,
     LoggedIn = 6,
+    /// Awaiting the user manager's account-lookup outcome (the first login handshake; no C++ counterpart -- the
+    /// FindUser call was synchronous).
+    AwaitingLookup = 7,
 }
 
 impl Default for LoginState {
@@ -1025,6 +1035,7 @@ impl Session {
         match self.login_state() {
             LoginState::PreLogin => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
             LoginState::AwaitingLogin => println!("=== DEBUG: calling handle_login_input({line:?}) ==="),
+            LoginState::AwaitingLookup => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
             LoginState::AwaitingPassword => println!("=== DEBUG: calling handle_password_input({line:?}) ==="),
             LoginState::AwaitingName => println!("=== DEBUG: calling handle_name_input({line:?}) ==="),
             LoginState::AwaitingBlurb => println!("=== DEBUG: calling handle_blurb_input({line:?}) ==="),
@@ -1035,6 +1046,7 @@ impl Session {
         match self.login_state() {
             LoginState::PreLogin => self.save_input_line(line).await?,
             LoginState::AwaitingLogin => self.handle_login_input(line).await?,
+            LoginState::AwaitingLookup => self.save_input_line(line).await?,
             LoginState::AwaitingPassword => self.handle_password_input(line).await?,
             LoginState::AwaitingName => self.handle_name_input(line).await?,
             LoginState::AwaitingBlurb => self.handle_blurb_input(line).await?,
@@ -1061,8 +1073,23 @@ impl Session {
             }
             return Ok(());
         }
-        let user = (*USER_MANAGER).get_user(&line).await;
-        self.set_user_entered(Some(line));
+        self.set_user_entered(Some(line.clone()));
+        // First login handshake: the user manager reloads the passwd file if stale and replies with
+        // SessionMsg::UserLookup (~ the synchronous C++ FindUser call, split across the actor boundary).
+        self.set_login_state(LoginState::AwaitingLookup);
+        (*USER_MANAGER).lookup(line, self.clone());
+
+        Ok(())
+    }
+
+    /// Continue the login flow with the account-lookup outcome (the second half of the C++ Login(), split by the Lookup
+    /// handshake).
+    #[framed]
+    pub async fn login_lookup_result(&self, user: Option<User>) -> tokio::io::Result<()> {
+        if self.login_state() != LoginState::AwaitingLookup {
+            return Ok(()); // Stale outcome: state changed or connection closed.
+        }
+        self.set_user(user.clone());
         if let Some(telnet) = self.telnet() {
             if let Some(user) = user {
                 // Warn if echo can't be turned off.
@@ -1087,6 +1114,7 @@ impl Session {
                     }
                 }
             } else {
+                self.set_login_state(LoginState::AwaitingLogin);
                 telnet.output("Invalid login.\n").await;
                 let attempts = self.increment_attempts();
                 if attempts >= MAX_LOGIN_ATTEMPTS {
@@ -1107,13 +1135,10 @@ impl Session {
             telnet.output("\n").await;
             telnet.set_do_echo(true);
         }
-        println!("=== DEBUG: handle_password_input(): calling update_all() ===");
-        (*USER_MANAGER).update_all().await.ok();
 
-        let user = match self.user_entered().as_ref() {
-            Some(user) => (*USER_MANAGER).get_user(user).await,
-            None => None,
-        };
+        // The account was looked up once at login and stored (~ the C++ handlers reading the user member set by
+        // Login()).
+        let user = self.user();
 
         let valid = if let Some(user) = user {
             println!("=== DEBUG: handle_password_input(): user={user:?} ===");
@@ -1150,12 +1175,7 @@ impl Session {
     pub async fn handle_name_input(&self, line: Text) -> tokio::io::Result<()> {
         let line = line.trim();
 
-        (*USER_MANAGER).update_all().await.ok();
-
-        let user = match self.user_entered().as_ref() {
-            Some(user) => (*USER_MANAGER).get_user(user).await,
-            None => None,
-        };
+        let user = self.user();
 
         let name = if !line.is_empty() { Some(line.clone()) } else { user.and_then(|user| user.reserved().front().cloned()) };
 
@@ -1174,12 +1194,7 @@ impl Session {
 
     #[framed]
     pub async fn handle_blurb_input(&self, line: Text) -> tokio::io::Result<()> {
-        (*USER_MANAGER).update_all().await.ok();
-
-        let user = match self.user_entered().as_ref() {
-            Some(user) => (*USER_MANAGER).get_user(user).await,
-            None => None,
-        };
+        let user = self.user();
 
         let blurb = (!line.is_empty()).then_some(line).or_else(|| user.as_ref().and_then(|u| u.blurb()));
 
@@ -1324,12 +1339,7 @@ impl Session {
             return Ok(false);
         }
 
-        (*USER_MANAGER).update_all().await.ok();
-
-        let user = match self.user_entered().as_ref() {
-            Some(user) => (*USER_MANAGER).get_user(user).await,
-            None => None,
-        };
+        let user = self.user();
 
         if let Some((reserved, found_user)) = (*USER_MANAGER).find_reserved(name).await {
             if Some(found_user) != user {
