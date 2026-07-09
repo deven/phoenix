@@ -48,6 +48,9 @@ pub static USER_MANAGER: LazyLock<UserManager> = LazyLock::new(UserManager::new)
 #[derive(Debug, Clone)]
 pub struct Session(pub Arc<SessionInner>);
 
+/// Recently-enqueued Message-class outputs remembered for recipient-side dedup.
+const DEDUP_RING: usize = 8;
+
 /// Messages to the session actor.
 #[derive(Debug)]
 pub enum SessionMsg {
@@ -77,6 +80,8 @@ pub struct SessionObj {
     session: Session,
     rx: mpsc::UnboundedReceiver<SessionMsg>,
     pending: OutputStream,
+    /// Recent Message-class outputs, for identity dedup of multi-path deliveries.
+    ring: VecDeque<Arc<Output>>,
 }
 
 impl SessionObj {
@@ -95,6 +100,18 @@ impl SessionObj {
         while let Some(msg) = self.rx.recv().await {
             match msg {
                 SessionMsg::Enqueue(out) => {
+                    // Recipient-side dedup: a message addressed both directly and via discussions arrives once per
+                    // path; the first copy delivers, the rest drop.  Identity, never content -- distinct sends of
+                    // identical text are distinct Arcs.  Ring exhaustion degrades to a duplicate, never a miss.
+                    if out.class() == crate::output::OutputClass::MessageClass {
+                        if self.ring.iter().any(|o| Arc::ptr_eq(o, &out)) {
+                            continue;
+                        }
+                        if self.ring.len() == DEDUP_RING {
+                            self.ring.pop_front();
+                        }
+                        self.ring.push_back(Arc::clone(&out));
+                    }
                     self.pending.queue.push(out);
                     if let Some(telnet) = self.session.telnet() {
                         if telnet.acknowledge() {
@@ -327,7 +344,7 @@ impl Session {
         println!("=== DEBUG: Session::new() created session wrapper ===");
 
         // Spawn the session actor: sole owner of the pending output queue.
-        tokio::spawn(SessionObj { session: session.clone(), rx, pending: OutputStream::new() }.run());
+        tokio::spawn(SessionObj { session: session.clone(), rx, pending: OutputStream::new(), ring: VecDeque::new() }.run());
 
         // Set telnet session.
         if let Some(telnet) = telnet {
@@ -1433,7 +1450,7 @@ impl Session {
         let disc_keys: Vec<_> = DISCUSSIONS.iter().map(|(key, _)| key.clone()).collect();
         for key in &disc_keys {
             if let Some(disc) = DISCUSSIONS.get(key) {
-                disc.quit(self).await?;
+                disc.send_quit(self.clone());
             }
         }
 
@@ -2755,7 +2772,7 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.join(self).await?,
+                (Some(discussion), _) => discussion.send_join(self.clone()),
                 (_, matches) => self.discussion_matches(name, &matches).await,
             }
         }
@@ -2776,9 +2793,9 @@ impl Session {
             remaining = rest;
 
             match self.find_discussion(name, false).await {
-                (Some(discussion), _) => discussion.quit(self).await?,
+                (Some(discussion), _) => discussion.send_quit(self.clone()),
                 _ => match self.find_discussion(name, true).await {
-                    (Some(discussion), _) => discussion.quit(self).await?,
+                    (Some(discussion), _) => discussion.send_quit(self.clone()),
                     (_, matches) => self.discussion_matches(name, &matches).await,
                 },
             }
@@ -3996,10 +4013,15 @@ impl Session {
         let message = Message::new(message_type, self.name(), Arc::new(sendlist.clone()), text);
         self.set_last_message(Some(message.clone()));
 
-        // Send message to recipients.
+        // Send the message: direct recipients first (causal determinism -- the direct copy wins the recipient-side
+        // dedup race), then delivery through each discussion actor in sendlist order, preserving the per-discussion
+        // total order for members not directly co-addressed.
         let msg: Arc<Output> = message.into();
-        for session in &who {
+        for session in &sendlist.sessions() {
             session.enqueue(msg.clone()).await.ok();
+        }
+        for disc in &sendlist.discussions() {
+            disc.deliver(msg.clone(), Some(self.clone()));
         }
 
         Ok(())
