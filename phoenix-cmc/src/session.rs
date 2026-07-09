@@ -62,6 +62,8 @@ pub enum SessionMsg {
     Closed(Telnet),
     /// The account-lookup outcome (first login handshake).
     UserLookup(Option<User>),
+    /// The name-claim outcome (second login handshake).
+    EnterResult { ok: bool, name: Name },
     /// Stream all unsent output, marking it acknowledged (non-TELNET pacing: the C++ accept_input flushed with
     /// OutputNext()/AcknowledgeOutput() pairs).
     Flush,
@@ -117,6 +119,11 @@ impl SessionObj {
                 SessionMsg::UserLookup(user) => {
                     if let Err(e) = self.session.login_lookup_result(user).await {
                         error!("login lookup: {e}");
+                    }
+                }
+                SessionMsg::EnterResult { ok, name } => {
+                    if let Err(e) = self.session.login_entry_result(ok, name).await {
+                        error!("login entry: {e}");
                     }
                 }
                 SessionMsg::Closed(telnet) => {
@@ -220,6 +227,9 @@ pub enum LoginState {
     /// Awaiting the user manager's account-lookup outcome (the first login handshake; no C++ counterpart -- the
     /// FindUser call was synchronous).
     AwaitingLookup = 7,
+    /// Awaiting the server registry's name-claim outcome (the second login handshake; the C++ single thread made the
+    /// claim implicit).
+    AwaitingEntry = 8,
 }
 
 impl Default for LoginState {
@@ -1036,6 +1046,7 @@ impl Session {
             LoginState::PreLogin => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
             LoginState::AwaitingLogin => println!("=== DEBUG: calling handle_login_input({line:?}) ==="),
             LoginState::AwaitingLookup => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
+            LoginState::AwaitingEntry => println!("=== DEBUG: calling save_input_line({line:?}) ==="),
             LoginState::AwaitingPassword => println!("=== DEBUG: calling handle_password_input({line:?}) ==="),
             LoginState::AwaitingName => println!("=== DEBUG: calling handle_name_input({line:?}) ==="),
             LoginState::AwaitingBlurb => println!("=== DEBUG: calling handle_blurb_input({line:?}) ==="),
@@ -1047,6 +1058,7 @@ impl Session {
             LoginState::PreLogin => self.save_input_line(line).await?,
             LoginState::AwaitingLogin => self.handle_login_input(line).await?,
             LoginState::AwaitingLookup => self.save_input_line(line).await?,
+            LoginState::AwaitingEntry => self.save_input_line(line).await?,
             LoginState::AwaitingPassword => self.handle_password_input(line).await?,
             LoginState::AwaitingName => self.handle_name_input(line).await?,
             LoginState::AwaitingBlurb => self.handle_blurb_input(line).await?,
@@ -1206,6 +1218,27 @@ impl Session {
         }
 
         let name = Name::new(self.name_entered().unwrap_or_default(), blurb);
+
+        // Second login handshake: the server registry claims the name atomically against simultaneous in-flight logins
+        // and replies with SessionMsg::EnterResult.  Existing-session cases (reserved names, attach, transfer) were
+        // already handled by check_name_availability() above.
+        self.set_login_state(LoginState::AwaitingEntry);
+        self.server().enter(self.clone(), name);
+
+        Ok(())
+    }
+
+    /// Complete the login with the name-claim outcome (the tail of the C++ login flow, split by the Enter handshake).
+    #[framed]
+    pub async fn login_entry_result(&self, ok: bool, name: Name) -> tokio::io::Result<()> {
+        if self.login_state() != LoginState::AwaitingEntry {
+            return Ok(()); // Stale outcome: state changed or connection closed.
+        }
+        if !ok {
+            self.output(&format!("\"{name}\" is now in use.  Choose another name.\n", name = name.name())).await;
+            return self.switch_login_state(LoginState::AwaitingName, Some("Enter name: ")).await;
+        }
+        let user = self.user();
         println!("=== DEBUG: handle_blurb_input(): name={name:?} ===");
         self.logged_in(name, user);
         println!("=== DEBUG: handle_blurb_input(): self.name()={name:?} ===", name = self.name());
@@ -1391,6 +1424,8 @@ impl Session {
         SESSIONS.remove(&id);
 
         if self.signed_on() {
+            // Release the name claim held in the server registry.
+            self.server().release_name(self.name().name().clone());
             self.notify_exit().await?;
         }
 

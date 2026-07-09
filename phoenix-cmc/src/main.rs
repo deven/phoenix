@@ -88,7 +88,7 @@ pub async fn main() -> Result<()> {
 
     // Initialize server
     println!("=== DEBUG: Creating server on port {port} ===");
-    let server = Server::new(port, debug).await?;
+    let (server, server_obj) = Server::new(port, debug).await?;
     println!("=== DEBUG: Server created successfully ===");
     let pid = std::process::id();
     info!("Started Phoenix server, version {VERSION}.");
@@ -102,7 +102,7 @@ pub async fn main() -> Result<()> {
     // Main event loop
     println!("=== DEBUG: Starting main event loop ===");
     tokio::select! {
-        result = server.run() => {
+        result = server_obj.run() => {
             println!("=== DEBUG: Server.run() returned: {:?} ===", result);
             if let Err(e) = result {
                 log::error!("Server error: {e}"); // XXX print error message
