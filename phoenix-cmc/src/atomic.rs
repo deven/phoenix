@@ -679,11 +679,6 @@ impl NameBorrow {
 }
 
 impl AtomicTelnetOption {
-    /// Get the prompt if telnet exists.
-    pub fn prompt(&self) -> Option<Text> {
-        self.snapshot().map(|telnet| telnet.prompt())
-    }
-
     /// Set do echo flag if telnet exists.
     pub fn set_do_echo(&self, value: bool) {
         if let Some(telnet) = self.snapshot() {
