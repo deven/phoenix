@@ -218,40 +218,17 @@ pub enum TelnetMsg {
 }
 
 pub struct TelnetInner {
-    // Connection.
-    pub peer: Option<SocketAddr>,   // peer address, captured at accept
-    pub write_interest: AtomicBool, // pending output? (~ C++ FDTable::WriteSelect bit)
-
     pub tx: mpsc::UnboundedSender<TelnetMsg>, // channel to the connection event loop
+    pub peer: Option<SocketAddr>,             // peer address, captured at accept
+    pub width: AtomicUsize,                   // current screen width
+    pub height: AtomicUsize,                  // current screen height
+    pub session: AtomicSession,               // link to session object
     pub closing: AtomicBool,                  // connection closing?
     pub close_on_eof: AtomicBool,             // close connection on EOF?
-
-    // Session.
-    pub session: AtomicSession, // link to session object
-
-    // Terminal settings.
-    pub width: AtomicUsize,  // current screen width
-    pub height: AtomicUsize, // current screen height
-
-    // Input buffer and editing.
-
-    // History and kill ring.
-
-    // Reply tracking.
-
-    // Output buffers.
-
-    // Telnet/subnegotiation states.
-
-    // Flags and acknowledgement count.
-    pub do_echo: AtomicBool,     // should server be echoing?
-    pub acknowledge: AtomicBool, // use telnet TIMING-MARK option?
-
-    // Telnet options.
-    pub echo: AtomicU8, // ECHO option (local)
-
-                        // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
-                        // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
+    pub acknowledge: AtomicBool,              // use telnet TIMING-MARK option?
+    pub do_echo: AtomicBool,                  // should server be echoing?
+    pub echo: AtomicU8,                       // ECHO option (local)
+    pub write_interest: AtomicBool,           // pending output? (~ C++ FDTable::WriteSelect bit)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -363,17 +340,17 @@ impl fmt::Debug for TelnetInner {
         }
 
         f.debug_struct("TelnetInner")
-            .field("peer", &self.peer)
-            .field("write_interest", &self.write_interest)
             .field("tx", &self.tx)
-            .field("closing", &self.closing)
-            .field("close_on_eof", &self.close_on_eof)
-            .field("session", &SessionSummary(&self.session))
+            .field("peer", &self.peer)
             .field("width", &self.width)
             .field("height", &self.height)
-            .field("do_echo", &self.do_echo)
+            .field("session", &SessionSummary(&self.session))
+            .field("closing", &self.closing)
+            .field("close_on_eof", &self.close_on_eof)
             .field("acknowledge", &self.acknowledge)
+            .field("do_echo", &self.do_echo)
             .field("echo", &self.echo)
+            .field("write_interest", &self.write_interest)
             .finish()
     }
 }
@@ -394,19 +371,18 @@ impl Telnet {
         let (tx, rx) = mpsc::unbounded_channel();
         println!("=== DEBUG: Telnet::new() session created with ID: {id} ===", id = session.id());
         let inner = TelnetInner {
-            peer: stream.peer_addr().ok(),
-            write_interest: AtomicBool::new(false),
             tx,
-            closing: AtomicBool::new(false),
-            close_on_eof: AtomicBool::new(true),
-            session: AtomicSession::new(session),
+            peer: stream.peer_addr().ok(),
             width: AtomicUsize::new(Self::DEFAULT_WIDTH),
             height: AtomicUsize::new(Self::DEFAULT_HEIGHT),
-            do_echo: AtomicBool::new(true),
+            session: AtomicSession::new(session),
+            closing: AtomicBool::new(false),
+            close_on_eof: AtomicBool::new(true),
             acknowledge: AtomicBool::new(false),
+            do_echo: AtomicBool::new(true),
             echo: AtomicU8::new(0),
+            write_interest: AtomicBool::new(false),
         };
-
         let telnet = Telnet(Arc::new(inner));
         telnet.session().set_telnet(Some(telnet.clone()));
 
@@ -414,21 +390,21 @@ impl Telnet {
             telnet: telnet.clone(),
             stream,
             rx,
+            naws_width: 0,
+            naws_height: 0,
             data: Vec::with_capacity(Self::INPUT_SIZE),
-            history: VecDeque::with_capacity(Self::HISTORY_MAX),
-            kill_ring: VecDeque::with_capacity(Self::KILL_RING_MAX),
             point: 0,
             mark: None,
             prompt: Text::default(),
+            history: VecDeque::with_capacity(Self::HISTORY_MAX),
             history_position: None,
+            kill_ring: VecDeque::with_capacity(Self::KILL_RING_MAX),
             reply_to: None,
-            state: TelnetState::Data as u8,
-            sb_state: TelnetSubnegotiationState::Idle as u8,
-            undrawn: false,
+            output_buffer: BytesMut::with_capacity(Self::BUF_SIZE),
+            command_buffer: BytesMut::with_capacity(1024),
             outstanding: 2, // Start with 2 for initial timing marks.
-            welcome_sent: false,
-            naws_width: 0,
-            naws_height: 0,
+            state: TelnetState::Data as u8,
+            undrawn: false,
             lsga: 0,
             rsga: 0,
             lbin: 0,
@@ -440,8 +416,8 @@ impl Telnet {
             lbin_callback: false,
             rbin_callback: false,
             naws_callback: false,
-            output_buffer: BytesMut::with_capacity(Self::BUF_SIZE),
-            command_buffer: BytesMut::with_capacity(1024),
+            sb_state: TelnetSubnegotiationState::Idle as u8,
+            welcome_sent: false,
         };
         (telnet, obj)
     }
@@ -610,39 +586,40 @@ impl Telnet {
 /// Private connection state, owned by the connection actor task (stage 3a-1: the stream and the output buffers; the
 /// editor and protocol state follow in 3a-2 and 3a-3).
 pub struct TelnetObj {
-    pub telnet: Telnet,
-    pub stream: TcpStream,
-    pub rx: mpsc::UnboundedReceiver<TelnetMsg>,
-    pub data: Vec<u8>,             // the input line being edited (~ C++ data)
-    pub history: VecDeque<Text>,   // input history lines
-    pub kill_ring: VecDeque<Text>, // kill-ring
-    // Editor, protocol, and negotiation state (loop-only; ~ telnet.h members in plain types).
-    // The X_callback flags are the analog of the C++ (this->*X_callback)(); X_callback = NULL.
-    pub point: usize,
-    pub mark: Option<usize>,
-    pub prompt: Text,
-    pub history_position: Option<usize>,
-    pub reply_to: Option<Name>,
-    pub state: u8,
-    pub sb_state: u8,
-    pub undrawn: bool,
-    pub outstanding: usize,
-    pub welcome_sent: bool,
-    pub naws_width: usize,
-    pub naws_height: usize,
-    pub lsga: u8,
-    pub rsga: u8,
-    pub lbin: u8,
-    pub rbin: u8,
-    pub naws: u8,
-    pub echo_callback: bool,
-    pub lsga_callback: bool,
-    pub rsga_callback: bool,
-    pub lbin_callback: bool,
-    pub rbin_callback: bool,
-    pub naws_callback: bool,
-    pub output_buffer: BytesMut,  // pending data output (~ C++ Output)
-    pub command_buffer: BytesMut, // pending command output (~ C++ Command)
+    pub telnet: Telnet,                         // link to TelnetInner object
+    pub stream: TcpStream,                      // TCP connection to TELNET client
+    pub rx: mpsc::UnboundedReceiver<TelnetMsg>, // channel to receive actor messages
+    pub naws_width: usize,                      // NAWS negotiated screen width
+    pub naws_height: usize,                     // NAWS negotiated screen height
+    pub data: Vec<u8>,                          // input line being edited
+    pub point: usize,                           // current point location
+    pub mark: Option<usize>,                    // current mark location
+    pub prompt: Text,                           // current prompt
+    pub history: VecDeque<Text>,                // history lines
+    pub history_position: Option<usize>,        // history position
+    pub kill_ring: VecDeque<Text>,              // kill-ring
+    pub reply_to: Option<Name>,                 // sender of last private message
+    pub output_buffer: BytesMut,                // pending data output
+    pub command_buffer: BytesMut,               // pending command output
+    pub outstanding: usize,                     // outstanding acknowledgement count
+    pub state: u8,                              // input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
+    pub undrawn: bool,                          // input line undrawn for output?
+    pub lsga: u8,                               // SUPPRESS-GO-AHEAD option (local)
+    pub rsga: u8,                               // SUPPRESS-GO-AHEAD option (remote)
+    pub lbin: u8,                               // TRANSMIT-BINARY option (local)
+    pub rbin: u8,                               // TRANSMIT-BINARY option (remote)
+    pub naws: u8,                               // NAWS option (remote)
+
+    // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
+    // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
+    pub echo_callback: bool, // ECHO callback (local)
+    pub lsga_callback: bool, // SUPPRESS-GO-AHEAD callback (local)
+    pub rsga_callback: bool, // SUPPRESS-GO-AHEAD callback (remote)
+    pub lbin_callback: bool, // TRANSMIT-BINARY callback (local)
+    pub rbin_callback: bool, // TRANSMIT-BINARY callback (remote)
+    pub naws_callback: bool, // NAWS callback (remote)
+    pub sb_state: u8,        // subnegotiation state
+    pub welcome_sent: bool,  // welcome banner sent
 }
 
 impl TelnetObj {
