@@ -8,13 +8,15 @@
 //
 
 use crate::atomic::AtomicAbortHandleOption;
-use crate::session::Session;
+use crate::name::Name;
+use crate::session::{Session, SessionMsg};
 use crate::telnet::Telnet;
 use crate::text::Text;
 use crate::timestamp::{Timestamp, system_uptime};
 use anyhow::Result;
 use async_backtrace::framed;
 use log::{error, info};
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use tokio::net::{TcpListener, TcpStream};
@@ -27,8 +29,30 @@ use tokio::time::Duration;
 pub struct Server(pub Arc<ServerInner>);
 
 #[derive(Debug)]
+/// Messages to the server actor (the accept loop is the registry serializer, as the C++ main loop was).
+#[derive(Debug)]
+pub enum ServerMsg {
+    /// Claim a name to complete a login (second login handshake).  The claim is authoritative against simultaneous
+    /// in-flight logins, which no scan of existing sessions can serialize; the outcome returns as
+    /// SessionMsg::EnterResult.  (~ the atomicity the C++ single thread gave CheckNameAvailability and Session::Login
+    /// implicitly.)
+    Enter { session: Session, name: Name },
+    /// Release a name claim (a signed-on session closed).
+    Exit { name: Text },
+}
+
+/// Private server state, owned by the server actor task.
+#[derive(Debug)]
+pub struct ServerObj {
+    pub server: Server,
+    pub rx: tokio::sync::mpsc::UnboundedReceiver<ServerMsg>,
+    /// Names claimed by signed-on (or completing) sessions; Text folds case.
+    pub names: HashSet<Text>,
+}
+
 pub struct ServerInner {
     pub listener: TcpListener,
+    pub tx: tokio::sync::mpsc::UnboundedSender<ServerMsg>,
     pub port: AtomicU16,
     pub debug: AtomicBool,
     pub shutdown_tx: broadcast::Sender<()>,
@@ -41,7 +65,7 @@ pub struct ServerInner {
 impl Server {
     /// Create a new `Server` object.
     #[framed]
-    pub async fn new(port: u16, debug: bool) -> Result<Self> {
+    pub async fn new(port: u16, debug: bool) -> Result<(Self, ServerObj)> {
         println!("=== DEBUG: Server::new() called with port={port}, debug={debug} ===");
         let listener = TcpListener::bind(("0.0.0.0", port)).await?;
         println!("=== DEBUG: TcpListener bound successfully to 0.0.0.0:{port} ===");
@@ -49,8 +73,10 @@ impl Server {
         let shutdown_handle = None;
         let restarting = false;
 
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
         let inner = ServerInner {
             listener,
+            tx,
             port: AtomicU16::new(port),
             debug: AtomicBool::new(debug),
             shutdown_tx,
@@ -61,7 +87,9 @@ impl Server {
         };
 
         println!("=== DEBUG: Server::new() completed successfully ===");
-        Ok(Self(Arc::new(inner)))
+        let server = Self(Arc::new(inner));
+        let obj = ServerObj { server: server.clone(), rx, names: HashSet::new() };
+        Ok((server, obj))
     }
 
     /// Get the `TcpListener` object.
@@ -130,32 +158,14 @@ impl Server {
     }
 
     /// Run the Phoenix server.
-    pub async fn run(&self) -> Result<()> {
-        println!("=== DEBUG: Server::run() starting accept loop ===");
-        // Accept loop
-        loop {
-            println!("=== DEBUG: Waiting for connection on listener.accept() ===");
-            match self.listener().accept().await {
-                Ok((stream, addr)) => {
-                    println!("=== DEBUG: New connection accepted from {addr} ===");
-                    info!("New connection from {addr}");
+    /// Claim a name to complete a login (second login handshake); the outcome arrives as SessionMsg::EnterResult.
+    pub fn enter(&self, session: Session, name: Name) {
+        let _ = self.0.tx.send(ServerMsg::Enter { session, name });
+    }
 
-                    let server = self.clone();
-                    tokio::spawn(async move {
-                        println!("=== DEBUG: Spawned task to handle connection from {addr} ===");
-                        if let Err(e) = server.handle_connection(stream).await {
-                            println!("=== DEBUG: Connection error from {addr}: {e} ===");
-                            error!("Connection error: {e}");
-                        }
-                    });
-                }
-                Err(e) => {
-                    println!("=== DEBUG: Failed to accept connection: {e} ===");
-                    error!("Failed to accept connection: {e}");
-                    continue;
-                }
-            }
-        }
+    /// Release a name claim (a signed-on session closed).
+    pub fn release_name(&self, name: Text) {
+        let _ = self.0.tx.send(ServerMsg::Exit { name });
     }
 
     /// Handle a new TCP connection.
@@ -303,6 +313,51 @@ impl Server {
 /// Check if the specified TCP port number is busy.
 pub async fn is_port_busy(port: u16) -> bool {
     TcpListener::bind(("0.0.0.0", port)).await.is_err()
+}
+
+impl ServerObj {
+    /// The server actor: the accept loop and the name-claim registry share one sequential context (~ the C++ main loop
+    /// serializing accepts and session bookkeeping).
+    #[framed]
+    pub async fn run(mut self) -> Result<()> {
+        println!("=== DEBUG: Server::run() starting accept loop ===");
+        loop {
+            tokio::select! {
+                accepted = self.server.listener().accept() => match accepted {
+                    Ok((stream, addr)) => {
+                        println!("=== DEBUG: New connection accepted from {addr} ===");
+                        info!("New connection from {addr}");
+
+                        let server = self.server.clone();
+                        tokio::spawn(async move {
+                            println!("=== DEBUG: Spawned task to handle connection from {addr} ===");
+                            if let Err(e) = server.handle_connection(stream).await {
+                                println!("=== DEBUG: Connection error from {addr}: {e} ===");
+                                error!("Connection error: {e}");
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        println!("=== DEBUG: Failed to accept connection: {e} ===");
+                        error!("Failed to accept connection: {e}");
+                        continue;
+                    }
+                },
+                msg = self.rx.recv() => match msg {
+                    Some(ServerMsg::Enter { session, name }) => {
+                        // The claim is the check and the insert as one sequential unit: simultaneous logins racing one
+                        // name serialize here, and exactly one wins.
+                        let ok = self.names.insert(name.name().clone());
+                        let _ = session.0.tx.send(SessionMsg::EnterResult { ok, name });
+                    }
+                    Some(ServerMsg::Exit { name }) => {
+                        self.names.remove(&name);
+                    }
+                    None => {}
+                },
+            }
+        }
+    }
 }
 
 const fn assert_send_sync_static<T: Send + Sync + 'static>() {}
