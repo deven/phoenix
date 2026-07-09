@@ -11,7 +11,7 @@ use crate::atomic::{AtomicNameOption, AtomicOrdSet, AtomicText, AtomicTimestamp}
 use crate::constants::COMMA;
 use crate::name::Name;
 use crate::output::*;
-use crate::session::Session;
+use crate::session::{DISCUSSIONS, Session};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use crate::{getword, match_keyword};
@@ -112,7 +112,7 @@ impl DiscussionObj {
                     }
                     // A successful destroy removed the discussion from the registry: the actor exits, and later sends
                     // fail silently (messages to a destroyed discussion are no-ops).
-                    if crate::session::DISCUSSIONS.get(&self.discussion.name()).is_none() {
+                    if DISCUSSIONS.get(&self.discussion.name()).is_none() {
                         return;
                     }
                 }

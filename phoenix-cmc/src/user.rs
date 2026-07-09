@@ -15,6 +15,7 @@ use async_backtrace::framed;
 use im::Vector;
 use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
+use std::time::SystemTime;
 use tokio::sync::mpsc;
 
 pub static USERS: LazyLock<AtomicHashMap<Text, User>> = LazyLock::new(AtomicHashMap::default);
@@ -140,7 +141,7 @@ pub struct UserManagerInner {
 #[derive(Debug)]
 pub struct UserManagerObj {
     rx: mpsc::UnboundedReceiver<UserMsg>,
-    last_update: Option<std::time::SystemTime>,
+    last_update: Option<SystemTime>,
 }
 
 impl UserManagerObj {
