@@ -145,6 +145,7 @@ impl SessionObj {
                     }
                 }
                 SessionMsg::UserLookup(user) => {
+                    println!("=== DEBUG: SessionObj received UserLookup({:?}) ===", user.is_some());
                     if let Err(e) = self.session.login_lookup_result(user).await {
                         error!("login lookup: {e}");
                     }
@@ -1120,7 +1121,9 @@ impl Session {
         // First login handshake: the user manager reloads the passwd file if stale and replies with
         // SessionMsg::UserLookup (~ the synchronous C++ FindUser call, split across the actor boundary).
         self.set_login_state(LoginState::AwaitingLookup);
+        println!("=== DEBUG: sending Lookup to user manager ===");
         (*USER_MANAGER).lookup(line, self.clone());
+        println!("=== DEBUG: Lookup sent ===");
 
         Ok(())
     }
@@ -1129,6 +1132,7 @@ impl Session {
     /// handshake).
     #[framed]
     pub async fn login_lookup_result(&self, user: Option<User>) -> tokio::io::Result<()> {
+        println!("=== DEBUG: login_lookup_result() state={:?} ===", self.login_state());
         if self.login_state() != LoginState::AwaitingLookup {
             return Ok(()); // Stale outcome: state changed or connection closed.
         }

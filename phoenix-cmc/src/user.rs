@@ -219,15 +219,20 @@ impl UserManagerObj {
     /// The user manager actor.
     #[framed]
     pub async fn run(mut self) {
+        println!("=== DEBUG: UserManagerObj::run() started ===");
         while let Some(msg) = self.rx.recv().await {
+            println!("=== DEBUG: UserManagerObj received {msg:?} ===");
             match msg {
                 UserMsg::Lookup { login, requester } => {
                     if let Err(e) = self.update_all().await {
+                        println!("=== DEBUG: update_all() error: {e} ===");
                         error!("passwd reload: {e}");
                     }
+                    println!("=== DEBUG: update_all() finished, looking up {login:?} ===");
 
                     // Text hashes and compares case-insensitively (UniCase), so this lookup folds case.
                     let user = USERS.get(&Text::from(login.as_ref()));
+                    println!("=== DEBUG: lookup result: {:?}, sending UserLookup reply ===", user.is_some());
                     let _ = requester.0.tx.send(SessionMsg::UserLookup(user));
                 }
                 UserMsg::Reload => {
@@ -244,6 +249,7 @@ impl UserManager {
     #[framed]
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
+        println!("=== DEBUG: UserManager::new() spawning user manager actor ===");
         tokio::spawn(UserManagerObj { rx, last_update: None }.run());
         Self(Arc::new(UserManagerInner { tx }))
     }
