@@ -206,8 +206,13 @@ pub enum TelnetMsg {
 #[derive(Debug)]
 pub struct TelnetInner {
     // Connection
-    pub peer: Option<SocketAddr>,             // peer address, captured at accept
-    pub write_interest: AtomicBool,           // pending output? (~ C++ FDTable::WriteSelect bit)
+    pub peer: Option<SocketAddr>,   // peer address, captured at accept
+    pub write_interest: AtomicBool, // pending output? (~ C++ FDTable::WriteSelect bit)
+
+    // The doorbell survives stage 2 deliberately: output() and flush_output() are still called cross-task (the session
+    // actor appends prompts during login), and the writable branch's disarm-then-recheck protocol depends on the
+    // appender's wake.  It retires in stage 3, when the buffers move into the connection actor and every append is
+    // loop-local.
     pub doorbell: Notify,                     // wake the connection event loop
     pub tx: mpsc::UnboundedSender<TelnetMsg>, // channel to the connection event loop
     pub closing: AtomicBool,                  // connection closing?
@@ -970,14 +975,10 @@ impl Telnet {
                 }
             }
 
-            // Detach associated session.
+            // Detach the associated session, on the session actor (~ the synchronous C++ detach call; as a message it
+            // breaks the Session::close/Telnet::close recursion).
             let session = self.session();
-            if let Err(e) = session.detach(self, self.closing()).await {
-                println!("=== DEBUG: Error in session.detach() during close(): {e} ===");
-                if result.is_ok() {
-                    result = Err(e);
-                }
-            }
+            let _ = session.0.tx.send(SessionMsg::Detached { telnet: self.clone(), intentional: self.closing() });
         }
 
         // Discard pending output unless draining (the C++ non-drain close dropped it).
