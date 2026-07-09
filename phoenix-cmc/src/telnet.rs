@@ -8,7 +8,7 @@
 //
 
 use crate::VERSION;
-use crate::atomic::{AtomicNameOption, AtomicSession, AtomicText, AtomicUsizeOption};
+use crate::atomic::AtomicSession;
 use crate::constants::*;
 use crate::name::Name;
 use crate::output::MessageType;
@@ -228,51 +228,28 @@ pub struct TelnetInner {
     pub session: AtomicSession, // link to session object
 
     // Terminal settings.
-    pub width: AtomicUsize,       // current screen width
-    pub height: AtomicUsize,      // current screen height
-    pub naws_width: AtomicUsize,  // NAWS negotiated screen width
-    pub naws_height: AtomicUsize, // NAWS negotiated screen height
+    pub width: AtomicUsize,  // current screen width
+    pub height: AtomicUsize, // current screen height
 
     // Input buffer and editing.
-    pub point: AtomicUsize,      // current point location
-    pub mark: AtomicUsizeOption, // current mark location
-    pub prompt: AtomicText,      // current prompt
 
     // History and kill ring.
-    pub history_position: AtomicUsizeOption, // current input history position
 
     // Reply tracking.
-    pub reply_to: AtomicNameOption, // sender of last private message
 
     // Output buffers.
 
     // Telnet/subnegotiation states.
-    pub state: AtomicU8,    // input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
-    pub sb_state: AtomicU8, // subnegotiation state
 
     // Flags and acknowledgement count.
-    pub undrawn: AtomicBool,      // input line undrawn for output?
-    pub do_echo: AtomicBool,      // should server be echoing?
-    pub acknowledge: AtomicBool,  // use telnet TIMING-MARK option?
-    pub outstanding: AtomicUsize, // outstanding acknowledgement count
-    pub welcome_sent: AtomicBool, // welcome banner sent?
+    pub do_echo: AtomicBool,     // should server be echoing?
+    pub acknowledge: AtomicBool, // use telnet TIMING-MARK option?
 
     // Telnet options.
     pub echo: AtomicU8, // ECHO option (local)
-    pub lsga: AtomicU8, // SUPPRESS-GO-AHEAD option (local)
-    pub rsga: AtomicU8, // SUPPRESS-GO-AHEAD option (remote)
-    pub lbin: AtomicU8, // TRANSMIT-BINARY option (local)
-    pub rbin: AtomicU8, // TRANSMIT-BINARY option (remote)
-    pub naws: AtomicU8, // NAWS option (remote)
 
-    // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
-    // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
-    pub echo_callback: AtomicBool,
-    pub lsga_callback: AtomicBool,
-    pub rsga_callback: AtomicBool,
-    pub lbin_callback: AtomicBool,
-    pub rbin_callback: AtomicBool,
-    pub naws_callback: AtomicBool,
+                        // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
+                        // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -390,32 +367,9 @@ impl Telnet {
             session: AtomicSession::new(session),
             width: AtomicUsize::new(Self::DEFAULT_WIDTH),
             height: AtomicUsize::new(Self::DEFAULT_HEIGHT),
-            naws_width: AtomicUsize::new(0),
-            naws_height: AtomicUsize::new(0),
-            point: AtomicUsize::new(0),
-            mark: AtomicUsizeOption::new(None),
-            prompt: AtomicText::new(Text::default()),
-            history_position: AtomicUsizeOption::new(None),
-            reply_to: None.into(),
-            undrawn: AtomicBool::new(false),
             do_echo: AtomicBool::new(true),
             acknowledge: AtomicBool::new(false),
-            outstanding: AtomicUsize::new(2), // Start with 2 for initial timing marks.
-            welcome_sent: AtomicBool::new(false),
-            state: AtomicU8::new(TelnetState::Data as u8),
-            sb_state: AtomicU8::new(TelnetSubnegotiationState::Idle as u8),
             echo: AtomicU8::new(0),
-            lsga: AtomicU8::new(0),
-            rsga: AtomicU8::new(0),
-            lbin: AtomicU8::new(0),
-            rbin: AtomicU8::new(0),
-            naws: AtomicU8::new(0),
-            echo_callback: AtomicBool::new(false),
-            lsga_callback: AtomicBool::new(false),
-            rsga_callback: AtomicBool::new(false),
-            lbin_callback: AtomicBool::new(false),
-            rbin_callback: AtomicBool::new(false),
-            naws_callback: AtomicBool::new(false),
         };
 
         let telnet = Telnet(Arc::new(inner));
@@ -428,6 +382,29 @@ impl Telnet {
             data: Vec::with_capacity(Self::INPUT_SIZE),
             history: VecDeque::with_capacity(Self::HISTORY_MAX),
             kill_ring: VecDeque::with_capacity(Self::KILL_RING_MAX),
+            point: 0,
+            mark: None,
+            prompt: Text::default(),
+            history_position: None,
+            reply_to: None,
+            state: TelnetState::Data as u8,
+            sb_state: TelnetSubnegotiationState::Idle as u8,
+            undrawn: false,
+            outstanding: 2, // Start with 2 for initial timing marks.
+            welcome_sent: false,
+            naws_width: 0,
+            naws_height: 0,
+            lsga: 0,
+            rsga: 0,
+            lbin: 0,
+            rbin: 0,
+            naws: 0,
+            echo_callback: false,
+            lsga_callback: false,
+            rsga_callback: false,
+            lbin_callback: false,
+            rbin_callback: false,
+            naws_callback: false,
             output_buffer: BytesMut::with_capacity(Self::BUF_SIZE),
             command_buffer: BytesMut::with_capacity(1024),
         };
@@ -502,134 +479,6 @@ impl Telnet {
         self.0.height.store(value, Ordering::Relaxed);
     }
 
-    /// Get the NAWS width.
-    pub fn naws_width(&self) -> usize {
-        self.0.naws_width.load(Ordering::Relaxed)
-    }
-
-    /// Set the NAWS width.
-    pub fn set_naws_width(&self, value: usize) {
-        self.0.naws_width.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the NAWS height.
-    pub fn naws_height(&self) -> usize {
-        self.0.naws_height.load(Ordering::Relaxed)
-    }
-
-    /// Set the NAWS height.
-    pub fn set_naws_height(&self, value: usize) {
-        self.0.naws_height.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the point location.
-    pub fn point(&self) -> usize {
-        self.0.point.load(Ordering::Relaxed)
-    }
-
-    /// Set the point location.
-    pub fn set_point(&self, value: usize) {
-        self.0.point.store(value, Ordering::Relaxed);
-    }
-
-    /// Get cursor line number.
-    #[inline]
-    pub fn point_line(&self) -> usize {
-        (self.start() + self.point()) / self.width()
-    }
-
-    /// Get cursor column number.
-    #[inline]
-    pub fn point_column(&self) -> usize {
-        (self.start() + self.point()) % self.width()
-    }
-
-    /// Check if cursor is at start of input.
-    #[inline]
-    pub fn at_start(&self) -> bool {
-        self.point() == 0
-    }
-
-    /// Get the mark location, if any.
-    pub fn mark(&self) -> Option<usize> {
-        self.0.mark.load(Ordering::Relaxed)
-    }
-
-    /// Set the mark location.
-    pub fn set_mark(&self, value: Option<usize>) {
-        self.0.mark.store(value, Ordering::Relaxed);
-    }
-
-    /// Get mark line number.
-    #[inline]
-    pub fn mark_line(&self) -> Option<usize> {
-        self.mark().map(|mark| (self.start() + mark) / self.width())
-    }
-
-    /// Get mark column number.
-    #[inline]
-    pub fn mark_column(&self) -> Option<usize> {
-        self.mark().map(|mark| (self.start() + mark) % self.width())
-    }
-
-    /// Get the prompt.
-    pub fn prompt(&self) -> Text {
-        self.0.prompt.snapshot()
-    }
-
-    /// Set the prompt.
-    pub fn set_prompt(&self, value: impl Into<Text>) {
-        self.0.prompt.set(value.into())
-    }
-
-    /// Get start position (after prompt).
-    #[inline]
-    pub fn start(&self) -> usize {
-        self.prompt().len()
-    }
-
-    /// Get start line number.
-    #[inline]
-    pub fn start_line(&self) -> usize {
-        self.start() / self.width()
-    }
-
-    /// Get start column number.
-    #[inline]
-    pub fn start_column(&self) -> usize {
-        self.start() % self.width()
-    }
-
-    /// Get the history position, if any.
-    pub fn history_position(&self) -> Option<usize> {
-        self.0.history_position.load(Ordering::Relaxed)
-    }
-
-    /// Set the history position.
-    pub fn set_history_position(&self, value: Option<usize>) {
-        self.0.history_position.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the reply-to name, if any.
-    pub fn reply_to(&self) -> Option<Name> {
-        self.0.reply_to.snapshot()
-    }
-
-    /// Set the reply-to name.
-    pub fn set_reply_to(&self, value: impl Into<Option<Name>>) {
-        self.0.reply_to.set(value.into());
-    }
-
-    /// Get the undrawn flag.
-    pub fn undrawn(&self) -> bool {
-        self.0.undrawn.load(Ordering::Relaxed)
-    }
-
-    /// Set the undrawn flag.
-    pub fn set_undrawn(&self, value: bool) {
-        self.0.undrawn.store(value, Ordering::Relaxed);
-    }
-
     /// Get the do-echo flag.
     pub fn do_echo(&self) -> bool {
         self.0.do_echo.load(Ordering::Relaxed)
@@ -650,60 +499,6 @@ impl Telnet {
         self.0.acknowledge.store(value, Ordering::Relaxed);
     }
 
-    /// Get the outstanding count.
-    pub fn outstanding(&self) -> usize {
-        self.0.outstanding.load(Ordering::Relaxed)
-    }
-
-    /// Set the outstanding count.
-    pub fn set_outstanding(&self, value: usize) {
-        self.0.outstanding.store(value, Ordering::Relaxed);
-    }
-
-    /// Increment the outstanding count.
-    pub fn increment_outstanding(&self) {
-        self.0.outstanding.fetch_add(1, Ordering::Relaxed);
-    }
-
-    /// Decrement the outstanding count.
-    pub fn decrement_outstanding(&self) {
-        self.0.outstanding.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| if x > 0 { Some(x - 1) } else { None }).ok();
-    }
-
-    /// Get the welcome sent flag.
-    pub fn welcome_sent(&self) -> bool {
-        self.0.welcome_sent.load(Ordering::Relaxed)
-    }
-
-    /// Set the welcome sent flag.
-    pub fn set_welcome_sent(&self, value: bool) {
-        self.0.welcome_sent.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the TELNET state.
-    pub fn state(&self) -> TelnetState {
-        TelnetState::from_u8(self.0.state.load(Ordering::Relaxed))
-    }
-
-    /// Set the TELNET state.
-    pub fn set_state(&self, value: TelnetState) {
-        let old_state = self.state();
-        if old_state != value {
-            println!("=== DEBUG: TELNET state change: {:?} -> {:?} ===", old_state, value);
-        }
-        self.0.state.store(value as u8, Ordering::Relaxed);
-    }
-
-    /// Get the TELNET option subnegotiation state.
-    pub fn sb_state(&self) -> TelnetSubnegotiationState {
-        TelnetSubnegotiationState::from_u8(self.0.sb_state.load(Ordering::Relaxed))
-    }
-
-    /// Set the TELNET option subnegotiation state.
-    pub fn set_sb_state(&self, value: TelnetSubnegotiationState) {
-        self.0.sb_state.store(value as u8, Ordering::Relaxed);
-    }
-
     /// Get the echo option state.
     pub fn echo(&self) -> u8 {
         self.0.echo.load(Ordering::Relaxed)
@@ -712,56 +507,6 @@ impl Telnet {
     /// Set the echo option state.
     pub fn set_echo(&self, value: u8) {
         self.0.echo.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the local suppress-go-ahead option state.
-    pub fn lsga(&self) -> u8 {
-        self.0.lsga.load(Ordering::Relaxed)
-    }
-
-    /// Set the local suppress-go-ahead option state.
-    pub fn set_lsga(&self, value: u8) {
-        self.0.lsga.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the remote suppress-go-ahead option state.
-    pub fn rsga(&self) -> u8 {
-        self.0.rsga.load(Ordering::Relaxed)
-    }
-
-    /// Set the remote suppress-go-ahead option state.
-    pub fn set_rsga(&self, value: u8) {
-        self.0.rsga.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the local binary option state.
-    pub fn lbin(&self) -> u8 {
-        self.0.lbin.load(Ordering::Relaxed)
-    }
-
-    /// Set the local binary option state.
-    pub fn set_lbin(&self, value: u8) {
-        self.0.lbin.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the remote binary option state.
-    pub fn rbin(&self) -> u8 {
-        self.0.rbin.load(Ordering::Relaxed)
-    }
-
-    /// Set the remote binary option state.
-    pub fn set_rbin(&self, value: u8) {
-        self.0.rbin.store(value, Ordering::Relaxed);
-    }
-
-    /// Get the NAWS option state.
-    pub fn naws(&self) -> u8 {
-        self.0.naws.load(Ordering::Relaxed)
-    }
-
-    /// Set the NAWS option state.
-    pub fn set_naws(&self, value: u8) {
-        self.0.naws.store(value, Ordering::Relaxed);
     }
 
     /// Final cleanup when the connection is fully closed (~ Telnet::Closed()): hand the detach-or-close decision to the
@@ -836,15 +581,266 @@ pub struct TelnetObj {
     pub data: Vec<u8>,             // the input line being edited (~ C++ data)
     pub history: VecDeque<Text>,   // input history lines
     pub kill_ring: VecDeque<Text>, // kill-ring
-    pub output_buffer: BytesMut,   // pending data output (~ C++ Output)
-    pub command_buffer: BytesMut,  // pending command output (~ C++ Command)
+    // Editor, protocol, and negotiation state (loop-only; ~ telnet.h members in plain types).
+    // The X_callback flags are the analog of the C++ (this->*X_callback)(); X_callback = NULL.
+    pub point: usize,
+    pub mark: Option<usize>,
+    pub prompt: Text,
+    pub history_position: Option<usize>,
+    pub reply_to: Option<Name>,
+    pub state: u8,
+    pub sb_state: u8,
+    pub undrawn: bool,
+    pub outstanding: usize,
+    pub welcome_sent: bool,
+    pub naws_width: usize,
+    pub naws_height: usize,
+    pub lsga: u8,
+    pub rsga: u8,
+    pub lbin: u8,
+    pub rbin: u8,
+    pub naws: u8,
+    pub echo_callback: bool,
+    pub lsga_callback: bool,
+    pub rsga_callback: bool,
+    pub lbin_callback: bool,
+    pub rbin_callback: bool,
+    pub naws_callback: bool,
+    pub output_buffer: BytesMut,  // pending data output (~ C++ Output)
+    pub command_buffer: BytesMut, // pending command output (~ C++ Command)
 }
 
 impl TelnetObj {
-    /// Passthrough to the handle: is the input line currently undrawn?  (Keeps the render funnel reading
-    /// `telnet.undrawn()` instead of stuttering through `telnet.telnet`.)
+    /// Get the point location.
+    pub fn point(&self) -> usize {
+        self.point
+    }
+
+    /// Set the point location.
+    pub fn set_point(&mut self, value: usize) {
+        self.point = value;
+    }
+
+    /// Get cursor line number.
+    #[inline]
+    pub fn point_line(&self) -> usize {
+        (self.start() + self.point()) / self.telnet.width()
+    }
+
+    /// Get cursor column number.
+    #[inline]
+    pub fn point_column(&self) -> usize {
+        (self.start() + self.point()) % self.telnet.width()
+    }
+
+    /// Check if cursor is at start of input.
+    #[inline]
+    pub fn at_start(&self) -> bool {
+        self.point() == 0
+    }
+
+    /// Get the mark location, if any.
+    pub fn mark(&self) -> Option<usize> {
+        self.mark
+    }
+
+    /// Set the mark location.
+    pub fn set_mark(&mut self, value: Option<usize>) {
+        self.mark = value;
+    }
+
+    /// Get mark line number.
+    #[inline]
+    pub fn mark_line(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) / self.telnet.width())
+    }
+
+    /// Get mark column number.
+    #[inline]
+    pub fn mark_column(&self) -> Option<usize> {
+        self.mark().map(|mark| (self.start() + mark) % self.telnet.width())
+    }
+
+    /// Get the prompt.
+    pub fn prompt(&self) -> Text {
+        self.prompt.clone()
+    }
+
+    /// Set the prompt.
+    pub fn set_prompt(&mut self, value: impl Into<Text>) {
+        self.prompt = value.into();
+    }
+
+    /// Get start position (after prompt).
+    #[inline]
+    pub fn start(&self) -> usize {
+        self.prompt().len()
+    }
+
+    /// Get start line number.
+    #[inline]
+    pub fn start_line(&self) -> usize {
+        self.start() / self.telnet.width()
+    }
+
+    /// Get start column number.
+    #[inline]
+    pub fn start_column(&self) -> usize {
+        self.start() % self.telnet.width()
+    }
+
+    /// Get the history position, if any.
+    pub fn history_position(&self) -> Option<usize> {
+        self.history_position
+    }
+
+    /// Set the history position.
+    pub fn set_history_position(&mut self, value: Option<usize>) {
+        self.history_position = value;
+    }
+
+    /// Get the reply-to name, if any.
+    pub fn reply_to(&self) -> Option<Name> {
+        self.reply_to.clone()
+    }
+
+    /// Set the reply-to name.
+    pub fn set_reply_to(&mut self, value: impl Into<Option<Name>>) {
+        self.reply_to = value.into();
+    }
+
+    /// Get the TELNET state.
+    pub fn state(&self) -> TelnetState {
+        TelnetState::from_u8(self.state)
+    }
+
+    /// Set the TELNET state.
+    pub fn set_state(&mut self, value: TelnetState) {
+        let old_state = self.state();
+        if old_state != value {
+            println!("=== DEBUG: TELNET state change: {:?} -> {:?} ===", old_state, value);
+        }
+        self.state = value as u8;
+    }
+
+    /// Get the TELNET option subnegotiation state.
+    pub fn sb_state(&self) -> TelnetSubnegotiationState {
+        TelnetSubnegotiationState::from_u8(self.sb_state)
+    }
+
+    /// Set the TELNET option subnegotiation state.
+    pub fn set_sb_state(&mut self, value: TelnetSubnegotiationState) {
+        self.sb_state = value as u8;
+    }
+
+    /// Get the undrawn flag.
     pub fn undrawn(&self) -> bool {
-        self.telnet.undrawn()
+        self.undrawn
+    }
+
+    /// Set the undrawn flag.
+    pub fn set_undrawn(&mut self, value: bool) {
+        self.undrawn = value;
+    }
+
+    /// Get the outstanding count.
+    pub fn outstanding(&self) -> usize {
+        self.outstanding
+    }
+
+    /// Set the outstanding count.
+    pub fn set_outstanding(&mut self, value: usize) {
+        self.outstanding = value;
+    }
+
+    /// Increment the outstanding count.
+    pub fn increment_outstanding(&mut self) {
+        self.outstanding += 1;
+    }
+
+    /// Decrement the outstanding count (saturating: never below zero).
+    pub fn decrement_outstanding(&mut self) {
+        self.outstanding = self.outstanding.saturating_sub(1);
+    }
+
+    /// Get the welcome sent flag.
+    pub fn welcome_sent(&self) -> bool {
+        self.welcome_sent
+    }
+
+    /// Set the welcome sent flag.
+    pub fn set_welcome_sent(&mut self, value: bool) {
+        self.welcome_sent = value;
+    }
+
+    /// Get the NAWS width.
+    pub fn naws_width(&self) -> usize {
+        self.naws_width
+    }
+
+    /// Set the NAWS width.
+    pub fn set_naws_width(&mut self, value: usize) {
+        self.naws_width = value;
+    }
+
+    /// Get the NAWS height.
+    pub fn naws_height(&self) -> usize {
+        self.naws_height
+    }
+
+    /// Set the NAWS height.
+    pub fn set_naws_height(&mut self, value: usize) {
+        self.naws_height = value;
+    }
+
+    /// Get the local suppress-go-ahead option state.
+    pub fn lsga(&self) -> u8 {
+        self.lsga
+    }
+
+    /// Set the local suppress-go-ahead option state.
+    pub fn set_lsga(&mut self, value: u8) {
+        self.lsga = value;
+    }
+
+    /// Get the remote suppress-go-ahead option state.
+    pub fn rsga(&self) -> u8 {
+        self.rsga
+    }
+
+    /// Set the remote suppress-go-ahead option state.
+    pub fn set_rsga(&mut self, value: u8) {
+        self.rsga = value;
+    }
+
+    /// Get the local binary option state.
+    pub fn lbin(&self) -> u8 {
+        self.lbin
+    }
+
+    /// Set the local binary option state.
+    pub fn set_lbin(&mut self, value: u8) {
+        self.lbin = value;
+    }
+
+    /// Get the remote binary option state.
+    pub fn rbin(&self) -> u8 {
+        self.rbin
+    }
+
+    /// Set the remote binary option state.
+    pub fn set_rbin(&mut self, value: u8) {
+        self.rbin = value;
+    }
+
+    /// Get the NAWS option state.
+    pub fn naws(&self) -> u8 {
+        self.naws
+    }
+
+    /// Set the NAWS option state.
+    pub fn set_naws(&mut self, value: u8) {
+        self.naws = value;
     }
 
     /// Passthrough to the handle (render-path callers in output.rs).
@@ -861,13 +857,13 @@ impl TelnetObj {
     /// Get end line number.
     #[inline]
     pub async fn end_line(&self) -> usize {
-        (self.telnet.start() + self.data.len()) / self.telnet.width()
+        (self.start() + self.data.len()) / self.telnet.width()
     }
 
     /// Get end column number.
     #[inline]
     pub async fn end_column(&self) -> usize {
-        (self.telnet.start() + self.data.len()) % self.telnet.width()
+        (self.start() + self.data.len()) % self.telnet.width()
     }
 
     /// Check if input buffer is empty.
@@ -879,7 +875,7 @@ impl TelnetObj {
     /// Check if cursor is at end of input.
     #[inline]
     pub async fn at_end(&self) -> bool {
-        self.telnet.point() == self.data.len()
+        self.point() == self.data.len()
     }
 
     /// Accept input line.
@@ -890,18 +886,13 @@ impl TelnetObj {
 
         // Check if initial option negotiations are still pending: if no option reply has ever arrived, assume a raw TCP
         // connection (~ the C++ test that every X_callback is still armed).
-        if self.telnet.0.echo_callback.load(Ordering::Relaxed)
-            && self.telnet.0.lsga_callback.load(Ordering::Relaxed)
-            && self.telnet.0.rsga_callback.load(Ordering::Relaxed)
-            && self.telnet.0.lbin_callback.load(Ordering::Relaxed)
-            && self.telnet.0.rbin_callback.load(Ordering::Relaxed)
-        {
-            self.telnet.0.echo_callback.store(false, Ordering::Relaxed);
-            self.telnet.0.lsga_callback.store(false, Ordering::Relaxed);
-            self.telnet.0.rsga_callback.store(false, Ordering::Relaxed);
-            self.telnet.0.lbin_callback.store(false, Ordering::Relaxed);
-            self.telnet.0.rbin_callback.store(false, Ordering::Relaxed);
-            self.telnet.0.naws_callback.store(false, Ordering::Relaxed);
+        if self.echo_callback && self.lsga_callback && self.rsga_callback && self.lbin_callback && self.rbin_callback {
+            self.echo_callback = false;
+            self.lsga_callback = false;
+            self.rsga_callback = false;
+            self.lbin_callback = false;
+            self.rbin_callback = false;
+            self.naws_callback = false;
             self.check_options(true).await;
         }
 
@@ -916,7 +907,7 @@ impl TelnetObj {
 
             // Reset self.history position.
             // TODO: Should this really be Option<T>?  Should it be numeric?  It's a pointer/iterator into the self.history.
-            self.telnet.set_history_position(None);
+            self.set_history_position(None);
 
             // Add to self.history if echoing.
             if do_echo && !line.is_empty() {
@@ -932,7 +923,7 @@ impl TelnetObj {
             }
 
             // Echo newline and clear input.
-            if self.telnet.undrawn() {
+            if self.undrawn() {
                 let session = self.telnet.session();
                 session.output(&line.as_str()).await;
                 session.output("\n").await;
@@ -945,9 +936,9 @@ impl TelnetObj {
 
             // Clear input buffer.
             self.data.clear();
-            self.telnet.set_point(0);
-            self.telnet.set_mark(None);
-            self.telnet.set_prompt(Text::new(""));
+            self.set_point(0);
+            self.set_mark(None);
+            self.set_prompt(Text::new(""));
 
             line
         };
@@ -961,42 +952,42 @@ impl TelnetObj {
     // Input editing functions.
     #[framed]
     pub async fn backward_char(&mut self) {
-        if !self.telnet.at_start() {
-            if self.telnet.point_column() == 0 {
+        if !self.at_start() {
+            if self.point_column() == 0 {
                 let cols = self.telnet.width() - 1;
                 self.echo_output(&format!("\x1b[A\x1b[{cols}C")).await; // XXX ANSI!
             } else {
                 self.echo_output("\x08").await;
             }
 
-            self.telnet.set_point(self.telnet.point() - 1);
+            self.set_point(self.point() - 1);
         }
     }
 
     #[framed]
     pub async fn backward_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point > 0 && !self.data[point - 1].is_ascii_alphabetic() {
             self.backward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Skip alpha characters.
         while point > 0 && self.data[point - 1].is_ascii_alphabetic() {
             self.backward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
     }
 
     #[framed]
     pub async fn beginning_of_line(&mut self) {
-        if !self.telnet.at_start() {
-            let point_line = self.telnet.point_line();
-            let start_line = self.telnet.start_line();
-            let point_col = self.telnet.point_column();
-            let start_col = self.telnet.start_column();
+        if !self.at_start() {
+            let point_line = self.point_line();
+            let start_line = self.start_line();
+            let point_col = self.point_column();
+            let start_col = self.start_column();
 
             let lines = point_line - start_line;
             let cols = point_col as i32 - start_col as i32;
@@ -1011,18 +1002,18 @@ impl TelnetObj {
                 self.echo_output(&format!("\x1b[{cols}C")).await; // XXX ANSI!
             }
 
-            self.telnet.set_point(0);
+            self.set_point(0);
         }
     }
 
     #[framed]
     pub async fn capitalize_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point < self.data.len() && !self.data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Capitalize first character.
@@ -1043,7 +1034,7 @@ impl TelnetObj {
             point += 1;
         }
 
-        if self.telnet.point_column() == 0 {
+        if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
@@ -1053,7 +1044,7 @@ impl TelnetObj {
             self.echo_output("\x08").await;
         }
 
-        self.telnet.set_point(point);
+        self.set_point(point);
     }
 
     // Check if initial option negotiations are finished.
@@ -1061,12 +1052,12 @@ impl TelnetObj {
     pub async fn check_options(&mut self, force: bool) {
         if force {
             // Assume this is a raw TCP connection.
-            self.telnet.set_lsga(TELNET_ENABLED);
-            self.telnet.set_rsga(TELNET_ENABLED);
-            self.telnet.set_lbin(TELNET_ENABLED);
-            self.telnet.set_rbin(TELNET_ENABLED);
+            self.set_lsga(TELNET_ENABLED);
+            self.set_rsga(TELNET_ENABLED);
+            self.set_lbin(TELNET_ENABLED);
+            self.set_rbin(TELNET_ENABLED);
             self.telnet.set_echo(0);
-            self.telnet.set_naws(0);
+            self.set_naws(0);
             self.output(
                 "You don't appear to be running a telnet client.  Assuming raw TCP connection.\n(Use C-x C-e to toggle remote echo if you need it.)\n\n",
             )
@@ -1074,7 +1065,7 @@ impl TelnetObj {
         } else {
             // Make sure we're done with required initial option negotiations.  Intentionally use == with bitfield mask
             // to test both bits at once.
-            if self.telnet.lbin() == TELNET_WILL_WONT || self.telnet.rbin() == TELNET_DO_DONT || self.telnet.echo() == TELNET_WILL_WONT {
+            if self.lbin() == TELNET_WILL_WONT || self.rbin() == TELNET_DO_DONT || self.telnet.echo() == TELNET_WILL_WONT {
                 return;
             }
         }
@@ -1090,13 +1081,13 @@ impl TelnetObj {
         }
 
         // See if local TRANSMIT-BINARY option worked.
-        if self.telnet.lbin() == 0 {
+        if self.lbin() == 0 {
             // We were denied binary transmission.  Blow it off and do it anyhow.
             self.output("Binary output refused, but the refusal will be ignored...\n").await;
         }
 
         // See if remote TRANSMIT-BINARY option worked.
-        if self.telnet.rbin() == 0 {
+        if self.rbin() == 0 {
             // Client refuses to send binary data; that's okay.
             self.output("Binary input refused.  Use compose sequences as necessary.\n").await;
         }
@@ -1137,8 +1128,8 @@ impl TelnetObj {
                     }
                 }
             } else {
-                // Flush all pending output: arm the writable branch (we are on the loop; the
-                // select re-evaluates after this arm).
+                // Flush all pending output: arm the writable branch (we are on the loop; the select re-evaluates after
+                // this arm).
                 self.telnet.0.write_interest.store(true, Ordering::Release);
             }
 
@@ -1171,15 +1162,15 @@ impl TelnetObj {
 
     #[framed]
     pub async fn delete_char(&mut self) {
-        let point = self.telnet.point();
+        let point = self.point();
 
         if !self.data.is_empty() && !self.at_end().await {
             self.echo_output("\x1b[P").await; // Delete character. // XXX ANSI!
 
             // Make room for the new character if necessary.
             if !self.at_end().await {
-                let mut lines = self.end_line().await - self.telnet.point_line();
-                let mut wrap = point - self.telnet.point_column();
+                let mut lines = self.end_line().await - self.point_line();
+                let mut wrap = point - self.point_column();
 
                 while lines > 0 {
                     // Go to the end of the current line.
@@ -1193,10 +1184,10 @@ impl TelnetObj {
                     lines -= 1;
                 }
 
-                if self.end_line().await > self.telnet.point_line() {
+                if self.end_line().await > self.point_line() {
                     // Move cursor back to point.
-                    let columns = -(self.telnet.point_column() as i32);
-                    let lines = self.end_line().await - self.telnet.point_line();
+                    let columns = -(self.point_column() as i32);
+                    let lines = self.end_line().await - self.point_line();
                     self.echo_output(&format!("\x1b[{lines}A")).await; // XXX ANSI!
                     if columns > 0 {
                         self.echo_output(&format!("\x1b[{columns}D")).await;
@@ -1212,24 +1203,24 @@ impl TelnetObj {
 
     #[framed]
     pub async fn delete_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point < self.data.len() && !self.data[point].is_ascii_alphabetic() {
             self.delete_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Skip alpha characters.
         while point < self.data.len() && self.data[point].is_ascii_alphabetic() {
             self.delete_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
     }
 
     #[framed]
     pub async fn do_colon(&mut self) {
-        if self.telnet.at_start() {
+        if self.at_start() {
             let session = self.telnet.session();
             let reply = session.reply_sendlist();
             if !reply.is_empty() {
@@ -1243,7 +1234,7 @@ impl TelnetObj {
     #[framed]
     pub async fn do_naws(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::NAWS as u8]).await?;
-        self.telnet.set_naws(self.telnet.naws() | TELNET_DO_DONT);
+        self.set_naws(self.naws() | TELNET_DO_DONT);
 
         Ok(())
     }
@@ -1252,7 +1243,7 @@ impl TelnetObj {
     #[framed]
     pub async fn do_rbin(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TransmitBinary as u8]).await?;
-        self.telnet.set_rbin(self.telnet.rbin() | TELNET_DO_DONT);
+        self.set_rbin(self.rbin() | TELNET_DO_DONT);
 
         Ok(())
     }
@@ -1261,14 +1252,14 @@ impl TelnetObj {
     #[framed]
     pub async fn do_rsga(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::SuppressGoAhead as u8]).await?;
-        self.telnet.set_rsga(self.telnet.rsga() | TELNET_DO_DONT);
+        self.set_rsga(self.rsga() | TELNET_DO_DONT);
 
         Ok(())
     }
 
     #[framed]
     pub async fn do_semicolon(&mut self) {
-        if self.telnet.at_start() {
+        if self.at_start() {
             let session = self.telnet.session();
             let last = session.last_explicit();
             if !last.is_empty() {
@@ -1282,7 +1273,7 @@ impl TelnetObj {
     #[framed]
     pub async fn dont_naws(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::NAWS as u8]).await?;
-        self.telnet.set_naws(self.telnet.naws() & !TELNET_DO_DONT);
+        self.set_naws(self.naws() & !TELNET_DO_DONT);
 
         Ok(())
     }
@@ -1291,7 +1282,7 @@ impl TelnetObj {
     #[framed]
     pub async fn dont_rbin(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::TransmitBinary as u8]).await?;
-        self.telnet.set_rbin(self.telnet.rbin() & !TELNET_DO_DONT);
+        self.set_rbin(self.rbin() & !TELNET_DO_DONT);
 
         Ok(())
     }
@@ -1300,19 +1291,19 @@ impl TelnetObj {
     #[framed]
     pub async fn dont_rsga(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, TelnetOption::SuppressGoAhead as u8]).await?;
-        self.telnet.set_rsga(self.telnet.rsga() & !TELNET_DO_DONT);
+        self.set_rsga(self.rsga() & !TELNET_DO_DONT);
 
         Ok(())
     }
 
     #[framed]
     pub async fn downcase_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point < self.data.len() && !self.data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Downcase alpha characters.
@@ -1324,7 +1315,7 @@ impl TelnetObj {
             point += 1;
         }
 
-        if self.telnet.point_column() == 0 {
+        if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
@@ -1334,13 +1325,13 @@ impl TelnetObj {
             self.echo_output("\x08").await;
         }
 
-        self.telnet.set_point(point);
+        self.set_point(point);
     }
 
     /// Echo output (if echo enabled and not undrawn).
     #[framed]
     pub async fn echo_output(&mut self, data: impl AsRef<str>) {
-        if self.telnet.echo() == TELNET_ENABLED && self.telnet.do_echo() && !self.telnet.undrawn() {
+        if self.telnet.echo() == TELNET_ENABLED && self.telnet.do_echo() && !self.undrawn() {
             self.output(data.as_ref()).await;
         }
     }
@@ -1349,11 +1340,11 @@ impl TelnetObj {
     pub async fn end_of_line(&mut self) {
         let data_len = self.data.len();
 
-        if data_len > 0 && self.telnet.point() != data_len {
+        if data_len > 0 && self.point() != data_len {
             let end_line = self.end_line().await;
-            let point_line = self.telnet.point_line();
+            let point_line = self.point_line();
             let end_col = self.end_column().await;
-            let point_col = self.telnet.point_column();
+            let point_col = self.point_column();
 
             let lines = end_line - point_line;
             let cols = end_col as i32 - point_col as i32;
@@ -1368,13 +1359,13 @@ impl TelnetObj {
                 self.echo_output(&format!("\x1b[{cols}D")).await; // XXX ANSI!
             }
 
-            self.telnet.set_point(data_len);
+            self.set_point(data_len);
         }
     }
 
     #[framed]
     pub async fn erase_char(&mut self) {
-        if !self.telnet.at_start() {
+        if !self.at_start() {
             self.backward_char().await;
             self.delete_char().await;
         }
@@ -1388,27 +1379,27 @@ impl TelnetObj {
 
     #[framed]
     pub async fn erase_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point > 0 && !self.data[point - 1].is_ascii_alphabetic() {
             self.erase_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Skip alpha characters.
         while point > 0 && self.data[point - 1].is_ascii_alphabetic() {
             self.erase_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
     }
 
     #[framed]
     pub async fn forward_char(&mut self) {
         if !self.at_end().await {
-            self.telnet.set_point(self.telnet.point() + 1);
+            self.set_point(self.point() + 1);
 
-            if self.telnet.point_column() == 0 {
+            if self.point_column() == 0 {
                 self.echo_output("\r\n").await;
             } else {
                 self.echo_output("\x1b[C").await; // XXX ANSI!
@@ -1419,18 +1410,18 @@ impl TelnetObj {
     /// Move point forward one word.
     #[framed]
     pub async fn forward_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point < self.data.len() && !self.data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Skip alpha characters.
         while point < self.data.len() && self.data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
     }
 
@@ -1492,7 +1483,7 @@ impl TelnetObj {
                             }
                             Some(TelnetMsg::ResetHistory) => {
                                 self.history.clear();
-                                self.telnet.set_history_position(None);
+                                self.set_history_position(None);
                             }
                             Some(TelnetMsg::Flush) => {
                                 // The select loop re-evaluates writability; nothing else to do.
@@ -1561,15 +1552,15 @@ impl TelnetObj {
         // (~ C++ set_X(&Telnet::Welcome, on)).  NAWS is requested but deliberately gets NO callback
         // (~ C++ set_NAWS(NULL, on)): its reply routinely arrives after the required options resolve, and must not
         // re-trigger the completion check.
-        self.telnet.0.lsga_callback.store(true, Ordering::Relaxed);
+        self.lsga_callback = true;
         self.will_lsga().await?; // Send IAC WILL SUPPRESS-GO-AHEAD option sequence. (local)
-        self.telnet.0.rsga_callback.store(true, Ordering::Relaxed);
+        self.rsga_callback = true;
         self.do_rsga().await?; // Send IAC DO SUPPRESS-GO-AHEAD option sequence. (remote)
-        self.telnet.0.lbin_callback.store(true, Ordering::Relaxed);
+        self.lbin_callback = true;
         self.will_lbin().await?; // Send IAC WILL TRANSMIT-BINARY option sequence. (local)
-        self.telnet.0.rbin_callback.store(true, Ordering::Relaxed);
+        self.rbin_callback = true;
         self.do_rbin().await?; // Send IAC DO TRANSMIT-BINARY option sequence. (remote)
-        self.telnet.0.echo_callback.store(true, Ordering::Relaxed);
+        self.echo_callback = true;
         self.will_echo().await?; // Send IAC WILL ECHO option sequence.
         self.do_naws().await?; // Send IAC DO NAWS option sequence.........
 
@@ -1618,22 +1609,22 @@ impl TelnetObj {
     #[framed]
     pub async fn insert_char(&mut self, ch: u8) {
         if (SPACE..DELETE).contains(&ch) || (NBSP..=Y_UMLAUT_LOWER).contains(&ch) {
-            let point = self.telnet.point();
+            let point = self.point();
 
             if point == self.data.len() {
                 // Insert character at point (end), echo if necessary.
                 self.data.push(ch);
-                self.telnet.set_point(point + 1);
+                self.set_point(point + 1);
 
                 self.echo_output(&String::from_utf8_lossy(&[ch])).await;
-                if self.telnet.point_column() == 0 {
+                if self.point_column() == 0 {
                     self.echo_output(" \x08").await; // Force line wrapping.
                 }
             } else {
                 // Insert in middle.
                 self.data.insert(point, ch);
-                let lines = self.end_line().await - self.telnet.point_line();
-                let mut wrap = point - self.telnet.point_column();
+                let lines = self.end_line().await - self.point_line();
+                let mut wrap = point - self.point_column();
 
                 self.echo_output("\x1b[@").await; // Insert character. // XXX ANSI!
 
@@ -1648,12 +1639,12 @@ impl TelnetObj {
                     }
                 }
 
-                self.telnet.set_point(point + 1);
+                self.set_point(point + 1);
 
-                if self.end_line().await > self.telnet.point_line() {
+                if self.end_line().await > self.point_line() {
                     // Move cursor back to point.
-                    let columns = 1i32 - (self.telnet.point_column() as i32);
-                    let line_diff = self.end_line().await - self.telnet.point_line();
+                    let columns = 1i32 - (self.point_column() as i32);
+                    let line_diff = self.end_line().await - self.point_line();
                     // XXX ANSI!
                     self.echo_output(&format!("\x1b[{line_diff}A")).await;
                     if columns > 0 {
@@ -1666,7 +1657,7 @@ impl TelnetObj {
 
                 // Echo the inserted character.
                 self.echo_output(&String::from_utf8_lossy(&[ch])).await;
-                if self.telnet.point_column() == 0 {
+                if self.point_column() == 0 {
                     // Force line wrapping - echo character after insertion point.
                     if point + 1 < self.data.len() {
                         self.echo_output(&String::from_utf8_lossy(&[self.data[point + 1]])).await;
@@ -1690,7 +1681,7 @@ impl TelnetObj {
 
         let s_bytes = s.as_bytes();
         let slen = s_bytes.len();
-        let original_point = self.telnet.point();
+        let original_point = self.point();
 
         // Check if we need to grow the buffer (Vec handles this automatically).
         let original_len = self.data.len();
@@ -1711,14 +1702,14 @@ impl TelnetObj {
         }
 
         // Update mark if it exists and is affected.
-        if let Some(mark) = self.telnet.mark() {
+        if let Some(mark) = self.mark() {
             if mark >= original_point {
-                self.telnet.set_mark(Some(mark + slen));
+                self.set_mark(Some(mark + slen));
             }
         }
 
         // Update point to after the inserted string.
-        self.telnet.set_point(original_point + slen);
+        self.set_point(original_point + slen);
 
         // Drop the self.data lock before calling other async methods.
 
@@ -1741,9 +1732,9 @@ impl TelnetObj {
         // Move cursor back to point if not at end.
         if !self.at_end().await {
             let end_line = self.end_line().await;
-            let point_line = self.telnet.point_line();
+            let point_line = self.point_line();
             let end_col = self.end_column().await;
-            let point_col = self.telnet.point_column();
+            let point_col = self.point_column();
 
             let lines = end_line as i32 - point_line as i32;
             let columns = end_col as i32 - point_col as i32;
@@ -1763,7 +1754,7 @@ impl TelnetObj {
 
     #[framed]
     pub async fn kill_line(&mut self) {
-        let point = self.telnet.point();
+        let point = self.point();
 
         if point < self.data.len() {
             self.echo_output("\x1b[J").await; // Clear to end of screen.
@@ -1779,9 +1770,9 @@ impl TelnetObj {
             }
 
             // Update mark if needed.
-            if let Some(m) = self.telnet.mark() {
+            if let Some(m) = self.mark() {
                 if m > point {
-                    self.telnet.set_mark(Some(point));
+                    self.set_mark(Some(point));
                 }
             }
         }
@@ -1791,7 +1782,7 @@ impl TelnetObj {
     pub async fn next_line(&mut self) {
         self.erase_line().await;
 
-        let history_pos = self.telnet.history_position();
+        let history_pos = self.history_position();
 
         // Move to next self.history entry (or clear if at end).
         let new_pos = match history_pos {
@@ -1810,7 +1801,7 @@ impl TelnetObj {
             }
         }
 
-        self.telnet.set_history_position(new_pos);
+        self.set_history_position(new_pos);
     }
 
     /// Add bytes to output buffer.
@@ -1898,7 +1889,7 @@ impl TelnetObj {
     pub async fn previous_line(&mut self) {
         self.erase_line().await;
 
-        let history_pos = self.telnet.history_position();
+        let history_pos = self.history_position();
 
         // Move to previous self.history entry.
         let new_pos = match history_pos {
@@ -1917,7 +1908,7 @@ impl TelnetObj {
             }
         }
 
-        self.telnet.set_history_position(new_pos);
+        self.set_history_position(new_pos);
     }
 
     #[framed]
@@ -1935,7 +1926,7 @@ impl TelnetObj {
             }
             MessageType::Private => {
                 // Save name to reply to.
-                self.telnet.set_reply_to(from.clone());
+                self.set_reply_to(from.clone());
 
                 // Decide if "private".
                 let mut is_private = false;
@@ -2066,7 +2057,7 @@ impl TelnetObj {
 
     #[framed]
     pub async fn process_byte(&mut self, byte: u8) -> tokio::io::Result<()> {
-        let state = self.telnet.state();
+        let state = self.state();
 
         match state {
             TelnetState::Data => self.process_data_byte(byte).await?,
@@ -2075,7 +2066,7 @@ impl TelnetObj {
             TelnetState::Do | TelnetState::Dont => self.process_do_dont(state, byte).await?,
             TelnetState::SubnegotiationBegin | TelnetState::SubnegotiationEnd => self.process_subnegotiation(state, byte).await?,
             TelnetState::Return => {
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
                 if byte != b'\n' {
                     self.process_data_byte(byte).await?;
                 }
@@ -2258,7 +2249,7 @@ impl TelnetObj {
             _ => {}
         }
 
-        self.telnet.set_state(new_state);
+        self.set_state(new_state);
         Ok(())
     }
 
@@ -2274,7 +2265,7 @@ impl TelnetObj {
             }
         }
 
-        self.telnet.set_state(TelnetState::Data);
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
@@ -2288,7 +2279,7 @@ impl TelnetObj {
             _ => self.output(BELL_STR).await,
         }
 
-        self.telnet.set_state(TelnetState::Data);
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
@@ -2296,10 +2287,10 @@ impl TelnetObj {
     pub async fn process_data_byte(&mut self, byte: u8) -> tokio::io::Result<()> {
         println!("=== DEBUG: process_data_byte(0x{byte:02x} '{ch}') ===", ch = if (32..=126).contains(&byte) { byte as char } else { '.' });
         match byte {
-            x if x == TelnetCommand::IAC as u8 => self.telnet.set_state(TelnetState::IAC),
+            x if x == TelnetCommand::IAC as u8 => self.set_state(TelnetState::IAC),
             CONTROL_A => self.beginning_of_line().await,
             CONTROL_B => self.backward_char().await,
-            CONTROL_C => self.telnet.set_state(TelnetState::ControlC),
+            CONTROL_C => self.set_state(TelnetState::ControlC),
             CONTROL_D => {
                 if self.telnet.close_on_eof() && self.data.is_empty() {
                     self.close(true).await?;
@@ -2319,19 +2310,19 @@ impl TelnetObj {
             CONTROL_P => self.previous_line().await,
             CONTROL_T => self.transpose_chars().await,
             CONTROL_U => self.erase_line().await,
-            CONTROL_X => self.telnet.set_state(TelnetState::ControlX),
+            CONTROL_X => self.set_state(TelnetState::ControlX),
             CONTROL_Y => self.yank().await,
             BACKSPACE | DELETE => self.erase_char().await,
             SEMICOLON => self.do_semicolon().await,
             COLON => self.do_colon().await,
             RETURN => {
                 println!("=== DEBUG: Processing RETURN, calling accept_input() ===");
-                self.telnet.set_state(TelnetState::Return);
+                self.set_state(TelnetState::Return);
                 self.accept_input().await?;
             }
             NEWLINE => self.accept_input().await?,
-            ESCAPE => self.telnet.set_state(TelnetState::Escape),
-            CSI => self.telnet.set_state(TelnetState::CSI),
+            ESCAPE => self.set_state(TelnetState::Escape),
+            CSI => self.set_state(TelnetState::CSI),
             _ => self.insert_char(byte).await,
         }
 
@@ -2344,7 +2335,7 @@ impl TelnetObj {
         match byte {
             // TRANSMIT-BINARY option.
             x if x == TelnetOption::TransmitBinary as u8 => {
-                let mut lbin = self.telnet.lbin();
+                let mut lbin = self.lbin();
                 if matches!(state, TelnetState::Do) {
                     lbin |= TELNET_DO_DONT;
                     if (lbin & TELNET_WILL_WONT) == 0 {
@@ -2353,7 +2344,7 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await?;
 
                         // You can too.
-                        if self.telnet.rbin() == 0 {
+                        if self.rbin() == 0 {
                             self.do_rbin().await?;
                         }
                     }
@@ -2365,9 +2356,9 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await?;
                     }
                 }
-                self.telnet.set_lbin(lbin);
+                self.set_lbin(lbin);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.lbin_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.lbin_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2392,14 +2383,14 @@ impl TelnetObj {
                 }
                 self.telnet.set_echo(echo);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.echo_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.echo_callback) {
                     self.check_options(false).await;
                 }
             }
 
             // SUPPRESS-GO-AHEAD option.
             x if x == TelnetOption::SuppressGoAhead as u8 => {
-                let mut lsga = self.telnet.lsga();
+                let mut lsga = self.lsga();
                 if matches!(state, TelnetState::Do) {
                     lsga |= TELNET_DO_DONT;
                     if (lsga & TELNET_WILL_WONT) == 0 {
@@ -2408,7 +2399,7 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, x]).await?;
 
                         // You can too.
-                        if self.telnet.rsga() == 0 {
+                        if self.rsga() == 0 {
                             self.do_rsga().await?;
                         }
                     }
@@ -2420,9 +2411,9 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, x]).await?;
                     }
                 }
-                self.telnet.set_lsga(lsga);
+                self.set_lsga(lsga);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.lsga_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.lsga_callback) {
                     self.check_options(false).await;
                 }
             }
@@ -2435,7 +2426,7 @@ impl TelnetObj {
             }
         }
 
-        self.telnet.set_state(TelnetState::Data);
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
@@ -2443,49 +2434,49 @@ impl TelnetObj {
     pub async fn process_escape(&mut self, byte: u8) -> tokio::io::Result<()> {
         match byte {
             b'[' | b'O' => {
-                self.telnet.set_state(TelnetState::CSI);
+                self.set_state(TelnetState::CSI);
             }
             CONTROL_L => {
                 self.undraw_input().await;
                 self.output("\x1b[H\x1b[J").await; // Clear screen. // XXX ANSI!
                 self.redraw_input().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'b' => {
                 self.backward_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'c' => {
                 self.capitalize_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'd' => {
                 self.delete_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'f' => {
                 self.forward_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'l' => {
                 self.downcase_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b't' => {
                 self.transpose_words().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             b'u' => {
                 self.upcase_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             BACKSPACE | DELETE => {
                 self.erase_word().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
             _ => {
                 self.output(BELL_STR).await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
         }
 
@@ -2498,42 +2489,42 @@ impl TelnetObj {
             // Abort all output data.
             x if x == TelnetCommand::AbortOutput as u8 => {
                 self.output_buffer.clear();
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
 
             // Are we here?  Yes!  Queue confirmation to command queue, to be output as soon as possible.
             x if x == TelnetCommand::AreYouThere as u8 => {
                 self.command(b"\r\n[Yes]\r\n").await?;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
 
             // Erase last input character.
             x if x == TelnetCommand::EraseCharacter as u8 => {
                 self.erase_char().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
 
             // Erase current input line.
             x if x == TelnetCommand::EraseLine as u8 => {
                 self.erase_line().await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
 
             // Option negotiation/subnegotiation.  Remember which type.
-            x if x == TelnetCommand::Will as u8 => self.telnet.set_state(TelnetState::Will),
-            x if x == TelnetCommand::Wont as u8 => self.telnet.set_state(TelnetState::Wont),
-            x if x == TelnetCommand::Do as u8 => self.telnet.set_state(TelnetState::Do),
-            x if x == TelnetCommand::Dont as u8 => self.telnet.set_state(TelnetState::Dont),
-            x if x == TelnetCommand::SubnegotiationBegin as u8 => self.telnet.set_state(TelnetState::SubnegotiationBegin),
+            x if x == TelnetCommand::Will as u8 => self.set_state(TelnetState::Will),
+            x if x == TelnetCommand::Wont as u8 => self.set_state(TelnetState::Wont),
+            x if x == TelnetCommand::Do as u8 => self.set_state(TelnetState::Do),
+            x if x == TelnetCommand::Dont as u8 => self.set_state(TelnetState::Dont),
+            x if x == TelnetCommand::SubnegotiationBegin as u8 => self.set_state(TelnetState::SubnegotiationBegin),
 
             // Escaped (doubled) TelnetIAC is data.
             x if x == TelnetCommand::IAC as u8 => {
                 self.insert_char(x).await;
-                self.telnet.set_state(TelnetState::Data);
+                self.set_state(TelnetState::Data);
             }
 
             // Ignore any other TELNET command.
-            _ => self.telnet.set_state(TelnetState::Data),
+            _ => self.set_state(TelnetState::Data),
         }
 
         Ok(())
@@ -2543,7 +2534,7 @@ impl TelnetObj {
     pub async fn process_subnegotiation(&mut self, state: TelnetState, byte: u8) -> tokio::io::Result<()> {
         // Watch for IAC in subnegotiation sequence.
         if matches!(state, TelnetState::SubnegotiationBegin) && byte == TelnetCommand::IAC as u8 {
-            self.telnet.set_state(TelnetState::SubnegotiationEnd);
+            self.set_state(TelnetState::SubnegotiationEnd);
             return Ok(());
         }
 
@@ -2552,18 +2543,18 @@ impl TelnetObj {
             // Received IAC during subnegotiation sequence, check for SE.
             if byte == TelnetCommand::SubnegotiationEnd as u8 {
                 // Subnegotiation sequence is complete.
-                if self.telnet.sb_state() == TelnetSubnegotiationState::NawsDone {
+                if self.sb_state() == TelnetSubnegotiationState::NawsDone {
                     // NAWS subnegotiation was successful; set the new size.
-                    self.set_new_width(self.telnet.naws_width()).await;
-                    self.telnet.set_new_height(self.telnet.naws_height()).await;
+                    self.set_new_width(self.naws_width()).await;
+                    self.telnet.set_new_height(self.naws_height()).await;
                 }
                 // If subnegotiation was unsuccessful, do nothing.
-                self.telnet.set_state(TelnetState::Data);
-                self.telnet.set_sb_state(TelnetSubnegotiationState::Idle);
+                self.set_state(TelnetState::Data);
+                self.set_sb_state(TelnetSubnegotiationState::Idle);
                 return Ok(());
             } else {
                 // Return to subnegotiation sequence processing.
-                self.telnet.set_state(TelnetState::SubnegotiationBegin);
+                self.set_state(TelnetState::SubnegotiationBegin);
 
                 // Allow doubled IAC to fall through as data, ignore others.
                 if byte != TelnetCommand::IAC as u8 {
@@ -2573,7 +2564,7 @@ impl TelnetObj {
         }
 
         // Process subnegotiation data.
-        let mut sb_state = self.telnet.sb_state();
+        let mut sb_state = self.sb_state();
         match sb_state {
             // Get subnegotiation option.
             TelnetSubnegotiationState::Idle => match byte {
@@ -2590,25 +2581,25 @@ impl TelnetObj {
 
             // Get high byte of terminal width.
             TelnetSubnegotiationState::NawsWidthHigh => {
-                self.telnet.set_naws_width((byte as usize) * 256);
+                self.set_naws_width((byte as usize) * 256);
                 sb_state = TelnetSubnegotiationState::NawsWidthLow;
             }
 
             // Get low byte of terminal width.
             TelnetSubnegotiationState::NawsWidthLow => {
-                self.telnet.set_naws_width(self.telnet.naws_width() + byte as usize);
+                self.set_naws_width(self.naws_width() + byte as usize);
                 sb_state = TelnetSubnegotiationState::NawsHeightHigh;
             }
 
             // Get high byte of terminal height.
             TelnetSubnegotiationState::NawsHeightHigh => {
-                self.telnet.set_naws_height((byte as usize) * 256);
+                self.set_naws_height((byte as usize) * 256);
                 sb_state = TelnetSubnegotiationState::NawsHeightLow;
             }
 
             // Get low byte of terminal height.
             TelnetSubnegotiationState::NawsHeightLow => {
-                self.telnet.set_naws_height(self.telnet.naws_height() + byte as usize);
+                self.set_naws_height(self.naws_height() + byte as usize);
                 sb_state = TelnetSubnegotiationState::NawsDone;
             }
 
@@ -2617,7 +2608,7 @@ impl TelnetObj {
         }
 
         // Save the final subnegotiation state.
-        self.telnet.set_sb_state(sb_state);
+        self.set_sb_state(sb_state);
 
         Ok(())
     }
@@ -2628,7 +2619,7 @@ impl TelnetObj {
         match byte {
             // TRANSMIT-BINARY option.
             x if x == TelnetOption::TransmitBinary as u8 => {
-                let mut rbin = self.telnet.rbin();
+                let mut rbin = self.rbin();
                 if matches!(state, TelnetState::Will) {
                     rbin |= TELNET_WILL_WONT;
                     if (rbin & TELNET_DO_DONT) == 0 {
@@ -2637,7 +2628,7 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await?;
 
                         // Me, too!
-                        if self.telnet.lbin() == 0 {
+                        if self.lbin() == 0 {
                             self.will_lbin().await?;
                         }
                     }
@@ -2649,16 +2640,16 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
-                self.telnet.set_rbin(rbin);
+                self.set_rbin(rbin);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.rbin_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.rbin_callback) {
                     self.check_options(false).await;
                 }
             }
 
             // SUPPRESS-GO-AHEAD option.
             x if x == TelnetOption::SuppressGoAhead as u8 => {
-                let mut rsga = self.telnet.rsga();
+                let mut rsga = self.rsga();
                 if matches!(state, TelnetState::Will) {
                     rsga |= TELNET_WILL_WONT;
                     if (rsga & TELNET_DO_DONT) == 0 {
@@ -2667,7 +2658,7 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, x]).await?;
 
                         // Me, too!
-                        if self.telnet.lsga() == 0 {
+                        if self.lsga() == 0 {
                             self.will_lsga().await?;
                         }
                     }
@@ -2679,16 +2670,16 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
-                self.telnet.set_rsga(rsga);
+                self.set_rsga(rsga);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.rsga_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.rsga_callback) {
                     self.check_options(false).await;
                 }
             }
 
             // NAWS option.
             x if x == TelnetOption::NAWS as u8 => {
-                let mut naws = self.telnet.naws();
+                let mut naws = self.naws();
                 if matches!(state, TelnetState::Will) {
                     naws |= TELNET_WILL_WONT;
                     if (naws & TELNET_DO_DONT) == 0 {
@@ -2704,21 +2695,21 @@ impl TelnetObj {
                         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Dont as u8, x]).await?;
                     }
                 }
-                self.telnet.set_naws(naws);
+                self.set_naws(naws);
                 // Invoke this option's one-shot callback, if still armed.
-                if self.telnet.0.naws_callback.swap(false, Ordering::Relaxed) {
+                if std::mem::take(&mut self.naws_callback) {
                     self.check_options(false).await;
                 }
             }
 
             // TIMING-MARK option.
             x if x == TelnetOption::TimingMark as u8 => {
-                self.telnet.decrement_outstanding();
+                self.decrement_outstanding();
                 if self.telnet.acknowledge() {
                     let session = self.telnet.session();
                     session.acknowledge_output().await;
                 }
-                if self.telnet.outstanding() == 0 {
+                if self.outstanding() == 0 {
                     self.telnet.set_acknowledge(true);
                 }
             }
@@ -2731,18 +2722,18 @@ impl TelnetObj {
             }
         }
 
-        self.telnet.set_state(TelnetState::Data);
+        self.set_state(TelnetState::Data);
         Ok(())
     }
 
     #[framed]
     pub async fn redraw_input(&mut self) {
-        if !self.telnet.undrawn() {
+        if !self.undrawn() {
             return;
         }
-        self.telnet.set_undrawn(false);
+        self.set_undrawn(false);
 
-        let prompt = self.telnet.prompt().clone();
+        let prompt = self.prompt().clone();
         if !prompt.is_empty() {
             self.output(&prompt).await;
         }
@@ -2779,9 +2770,9 @@ impl TelnetObj {
                 // Move cursor back to point if not at end.
                 if !self.at_end().await {
                     let end_line = self.end_line().await;
-                    let point_line = self.telnet.point_line();
+                    let point_line = self.point_line();
                     let end_col = self.end_column().await;
-                    let point_col = self.telnet.point_column();
+                    let point_col = self.point_column();
 
                     let lines = end_line - point_line;
                     let cols = end_col as i32 - point_col as i32;
@@ -2823,8 +2814,8 @@ impl TelnetObj {
     #[framed]
     pub async fn show_prompt(&mut self, p: &str) {
         self.telnet.session().enqueue_output().await.ok();
-        self.telnet.set_prompt(p);
-        if !self.telnet.undrawn() {
+        self.set_prompt(p);
+        if !self.undrawn() {
             self.output(p).await;
         }
     }
@@ -2833,7 +2824,7 @@ impl TelnetObj {
     #[framed]
     pub async fn timing_mark(&mut self) -> tokio::io::Result<()> {
         if self.telnet.acknowledge() {
-            self.telnet.increment_outstanding();
+            self.increment_outstanding();
             self.output_buffer.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
             self.telnet.0.write_interest.store(true, Ordering::Release);
         }
@@ -2843,7 +2834,7 @@ impl TelnetObj {
 
     #[framed]
     pub async fn transpose_chars(&mut self) {
-        let point = self.telnet.point();
+        let point = self.point();
 
         if point == 0 || self.data.len() < 2 {
             self.echo_output(BELL_STR).await;
@@ -2858,9 +2849,9 @@ impl TelnetObj {
             self.echo_output(&String::from_utf8_lossy(&[self.data[point - 1]])).await;
             self.echo_output(&String::from_utf8_lossy(&[self.data[point]])).await;
 
-            self.telnet.set_point(point + 1);
+            self.set_point(point + 1);
 
-            if self.telnet.point_column() == 0 {
+            if self.point_column() == 0 {
                 // Force line wrapping.
                 if self.at_end().await {
                     self.echo_output(" ").await;
@@ -2879,21 +2870,21 @@ impl TelnetObj {
 
     #[framed]
     pub async fn undraw_input(&mut self) {
-        if self.telnet.undrawn() {
+        if self.undrawn() {
             return;
         }
-        self.telnet.set_undrawn(true);
+        self.set_undrawn(true);
 
         let lines = if self.telnet.echo() == TELNET_ENABLED && self.telnet.do_echo() {
-            if self.telnet.start() == 0 && self.end().await == 0 {
+            if self.start() == 0 && self.end().await == 0 {
                 return;
             }
-            self.telnet.point_line()
+            self.point_line()
         } else {
-            if self.telnet.start() == 0 {
+            if self.start() == 0 {
                 return;
             }
-            self.telnet.start_line()
+            self.start_line()
         };
 
         // XXX ANSI!
@@ -2906,12 +2897,12 @@ impl TelnetObj {
 
     #[framed]
     pub async fn upcase_word(&mut self) {
-        let mut point = self.telnet.point();
+        let mut point = self.point();
 
         // Skip non-alpha characters.
         while point < self.data.len() && !self.data[point].is_ascii_alphabetic() {
             self.forward_char().await;
-            point = self.telnet.point();
+            point = self.point();
         }
 
         // Upcase alpha characters.
@@ -2923,7 +2914,7 @@ impl TelnetObj {
             point += 1;
         }
 
-        if self.telnet.point_column() == 0 {
+        if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
                 self.echo_output(" ").await;
@@ -2933,17 +2924,17 @@ impl TelnetObj {
             self.echo_output("\x08").await;
         }
 
-        self.telnet.set_point(point);
+        self.set_point(point);
     }
 
     /// Send welcome banner.
     #[framed]
     pub async fn welcome(&mut self) {
-        if !self.telnet.welcome_sent() {
+        if !self.welcome_sent() {
             self.output("\nWelcome to Phoenix! (").await;
             self.output(VERSION).await;
             self.output(")\n\n").await;
-            self.telnet.set_welcome_sent(true);
+            self.set_welcome_sent(true);
         }
     }
 
@@ -2960,7 +2951,7 @@ impl TelnetObj {
     #[framed]
     pub async fn will_lbin(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::TransmitBinary as u8]).await?;
-        self.telnet.set_lbin(self.telnet.lbin() | TELNET_WILL_WONT);
+        self.set_lbin(self.lbin() | TELNET_WILL_WONT);
 
         Ok(())
     }
@@ -2969,7 +2960,7 @@ impl TelnetObj {
     #[framed]
     pub async fn will_lsga(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Will as u8, TelnetOption::SuppressGoAhead as u8]).await?;
-        self.telnet.set_lsga(self.telnet.lsga() | TELNET_WILL_WONT);
+        self.set_lsga(self.lsga() | TELNET_WILL_WONT);
 
         Ok(())
     }
@@ -2987,7 +2978,7 @@ impl TelnetObj {
     #[framed]
     pub async fn wont_lbin(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::TransmitBinary as u8]).await?;
-        self.telnet.set_lbin(self.telnet.lbin() & !TELNET_WILL_WONT);
+        self.set_lbin(self.lbin() & !TELNET_WILL_WONT);
 
         Ok(())
     }
@@ -2996,7 +2987,7 @@ impl TelnetObj {
     #[framed]
     pub async fn wont_lsga(&mut self) -> tokio::io::Result<()> {
         self.command(&[TelnetCommand::IAC as u8, TelnetCommand::Wont as u8, TelnetOption::SuppressGoAhead as u8]).await?;
-        self.telnet.set_lsga(self.telnet.lsga() & !TELNET_WILL_WONT);
+        self.set_lsga(self.lsga() & !TELNET_WILL_WONT);
 
         Ok(())
     }
