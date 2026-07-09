@@ -103,7 +103,10 @@ impl SessionObj {
                     // Recipient-side dedup: a message addressed both directly and via discussions arrives once per
                     // path; the first copy delivers, the rest drop.  Identity, never content -- distinct sends of
                     // identical text are distinct Arcs.  Ring exhaustion degrades to a duplicate, never a miss.
-                    if out.class() == crate::output::OutputClass::MessageClass {
+                    // Provably single-path messages skip the ring entirely, so its capacity is spent only on messages
+                    // that could still receive a duplicate: paths multiply only when a discussion is targeted AND
+                    // (several are, or this session is also directly addressed).
+                    if out.multi_path(&self.session) {
                         if self.ring.iter().any(|o| Arc::ptr_eq(o, &out)) {
                             continue;
                         }

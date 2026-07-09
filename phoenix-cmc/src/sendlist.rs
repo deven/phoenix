@@ -50,6 +50,15 @@ impl Sendlist {
         self.0.sessions.snapshot()
     }
 
+    /// Could a message to this sendlist reach `recipient` by more than one delivery path?  Paths multiply only when a
+    /// discussion is targeted AND either several are (overlapping membership is possible) or the recipient is also
+    /// directly addressed.  This is a possibility bound: actual duplication further requires the recipient's membership
+    /// at fanout time.
+    pub fn multi_path(&self, recipient: &Session) -> bool {
+        let discussions = self.discussions();
+        !discussions.is_empty() && (discussions.len() > 1 || self.sessions().contains(recipient))
+    }
+
     /// Get the discussions.
     pub fn discussions(&self) -> OrdSet<Discussion> {
         self.0.discussions.snapshot()
