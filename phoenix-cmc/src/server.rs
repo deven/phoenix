@@ -189,15 +189,8 @@ impl Server {
             }
         }
 
-        // Detach or close session
-        let session = telnet.session();
-        {
-            if session.signed_on() {
-                session.detach(&telnet, false).await?;
-            } else {
-                session.close(false).await?;
-            }
-        }
+        // Detach or close the session, decided on the session actor (~ Telnet::Closed()).
+        telnet.closed();
 
         Ok(())
     }

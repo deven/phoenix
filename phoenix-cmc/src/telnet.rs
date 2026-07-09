@@ -14,7 +14,7 @@ use crate::name::Name;
 use crate::output::MessageType;
 use crate::sendlist::Sendlist;
 use crate::server::Server;
-use crate::session::Session;
+use crate::session::{Session, SessionMsg};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use async_backtrace::framed;
@@ -993,14 +993,11 @@ impl Telnet {
         result
     }
 
-    /// Final cleanup when connection is fully closed.
-    #[framed]
-    pub async fn closed(&self) -> tokio::io::Result<()> {
-        // Detach associated session if still attached.
+    /// Final cleanup when the connection is fully closed (~ Telnet::Closed()): hand the detach-or-close decision to the
+    /// session actor.
+    pub fn closed(&self) {
         let session = self.session();
-        session.detach(self, self.closing()).await?;
-
-        Ok(())
+        let _ = session.0.tx.send(SessionMsg::Closed(self.clone()));
     }
 
     /// Add bytes to output buffer.
@@ -3009,8 +3006,8 @@ impl Telnet {
             line
         };
 
-        // Process the input.
-        session.handle_input(line).await?;
+        // Process the input on the session actor.
+        session.input_line(line);
 
         Ok(())
     }
