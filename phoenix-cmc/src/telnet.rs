@@ -231,95 +231,50 @@ pub struct TelnetInner {
     pub write_interest: AtomicBool,           // pending output? (~ C++ FDTable::WriteSelect bit)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum TelnetState {
-    Data = 0,
-    IAC = 1,
-    Will = 2,
-    Wont = 3,
-    Do = 4,
-    Dont = 5,
-    SubnegotiationBegin = 6,
-    SubnegotiationEnd = 7,
-    Return = 8,
-    Escape = 9,
-    CSI = 10,
-    // Compose states.
-    ControlC = 11,
-    ControlX = 12,
-    ControlI = 13,
-    ControlL = 14,
-    ControlO = 15,
-    Umlaut = 16,
-    Backquote = 17,
-    AcuteAccent = 18,
-    Carat = 19,
-    Tilde = 20,
-    Slash = 21,
-    Cedilla = 22,
-    DegreeSign = 23,
-}
-
-impl TelnetState {
-    #[inline]
-    fn from_u8(n: u8) -> Self {
-        match n {
-            0 => Self::Data,
-            1 => Self::IAC,
-            2 => Self::Will,
-            3 => Self::Wont,
-            4 => Self::Do,
-            5 => Self::Dont,
-            6 => Self::SubnegotiationBegin,
-            7 => Self::SubnegotiationEnd,
-            8 => Self::Return,
-            9 => Self::Escape,
-            10 => Self::CSI,
-            11 => Self::ControlC,
-            12 => Self::ControlX,
-            13 => Self::ControlI,
-            14 => Self::ControlL,
-            15 => Self::ControlO,
-            16 => Self::Umlaut,
-            17 => Self::Backquote,
-            18 => Self::AcuteAccent,
-            19 => Self::Carat,
-            20 => Self::Tilde,
-            21 => Self::Slash,
-            22 => Self::Cedilla,
-            23 => Self::DegreeSign,
-            _ => Self::Data,
-        }
+repr_u8_enum! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum TelnetState {
+        Data = 0,
+        IAC = 1,
+        Will = 2,
+        Wont = 3,
+        Do = 4,
+        Dont = 5,
+        SubnegotiationBegin = 6,
+        SubnegotiationEnd = 7,
+        Return = 8,
+        Escape = 9,
+        CSI = 10,
+        // Compose states.
+        ControlC = 11,
+        ControlX = 12,
+        ControlI = 13,
+        ControlL = 14,
+        ControlO = 15,
+        Umlaut = 16,
+        Backquote = 17,
+        AcuteAccent = 18,
+        Carat = 19,
+        Tilde = 20,
+        Slash = 21,
+        Cedilla = 22,
+        DegreeSign = 23,
     }
+    default = Data
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum TelnetSubnegotiationState {
-    Idle = 0,
-    NawsWidthHigh = 1,
-    NawsWidthLow = 2,
-    NawsHeightHigh = 3,
-    NawsHeightLow = 4,
-    NawsDone = 5,
-    Unknown = 6,
-}
-
-impl TelnetSubnegotiationState {
-    #[inline]
-    fn from_u8(n: u8) -> Self {
-        match n {
-            0 => Self::Idle,
-            1 => Self::NawsWidthHigh,
-            2 => Self::NawsWidthLow,
-            3 => Self::NawsHeightHigh,
-            4 => Self::NawsHeightLow,
-            5 => Self::NawsDone,
-            6 => Self::Unknown,
-            _ => Self::Idle,
-        }
+repr_u8_enum! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum TelnetSubnegotiationState {
+        Idle = 0,
+        NawsWidthHigh = 1,
+        NawsWidthLow = 2,
+        NawsHeightHigh = 3,
+        NawsHeightLow = 4,
+        NawsDone = 5,
+        Unknown = 6,
     }
+    default = Idle
 }
 
 // Custom Debug impl for TelnetInner.  The derived Debug causes infinite recursion (and a stack overflow) because
@@ -403,7 +358,7 @@ impl Telnet {
             output_buffer: BytesMut::with_capacity(Self::BUF_SIZE),
             command_buffer: BytesMut::with_capacity(1024),
             outstanding: 2, // Start with 2 for initial timing marks.
-            state: TelnetState::Data as u8,
+            state: TelnetState::Data,
             undrawn: false,
             lsga: 0,
             rsga: 0,
@@ -416,7 +371,7 @@ impl Telnet {
             lbin_callback: false,
             rbin_callback: false,
             naws_callback: false,
-            sb_state: TelnetSubnegotiationState::Idle as u8,
+            sb_state: TelnetSubnegotiationState::Idle,
             welcome_sent: false,
         };
         (telnet, obj)
@@ -602,7 +557,7 @@ pub struct TelnetObj {
     pub output_buffer: BytesMut,                // pending data output
     pub command_buffer: BytesMut,               // pending command output
     pub outstanding: usize,                     // outstanding acknowledgement count
-    pub state: u8,                              // input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
+    pub state: TelnetState,                     // input state (0/\r/IAC/WILL/WONT/DO/DONT/SB)
     pub undrawn: bool,                          // input line undrawn for output?
     pub lsga: u8,                               // SUPPRESS-GO-AHEAD option (local)
     pub rsga: u8,                               // SUPPRESS-GO-AHEAD option (remote)
@@ -612,14 +567,14 @@ pub struct TelnetObj {
 
     // One-shot option callbacks: run check_options() when the option's initial negotiation reply arrives, then disarm
     // -- the analog of the C++ pattern (this->*X_callback)(); X_callback = NULL;
-    pub echo_callback: bool, // ECHO callback (local)
-    pub lsga_callback: bool, // SUPPRESS-GO-AHEAD callback (local)
-    pub rsga_callback: bool, // SUPPRESS-GO-AHEAD callback (remote)
-    pub lbin_callback: bool, // TRANSMIT-BINARY callback (local)
-    pub rbin_callback: bool, // TRANSMIT-BINARY callback (remote)
-    pub naws_callback: bool, // NAWS callback (remote)
-    pub sb_state: u8,        // subnegotiation state
-    pub welcome_sent: bool,  // welcome banner sent
+    pub echo_callback: bool,                 // ECHO callback (local)
+    pub lsga_callback: bool,                 // SUPPRESS-GO-AHEAD callback (local)
+    pub rsga_callback: bool,                 // SUPPRESS-GO-AHEAD callback (remote)
+    pub lbin_callback: bool,                 // TRANSMIT-BINARY callback (local)
+    pub rbin_callback: bool,                 // TRANSMIT-BINARY callback (remote)
+    pub naws_callback: bool,                 // NAWS callback (remote)
+    pub sb_state: TelnetSubnegotiationState, // subnegotiation state
+    pub welcome_sent: bool,                  // welcome banner sent
 }
 
 impl TelnetObj {
@@ -723,26 +678,25 @@ impl TelnetObj {
 
     /// Get the TELNET state.
     pub fn state(&self) -> TelnetState {
-        TelnetState::from_u8(self.state)
+        self.state
     }
 
     /// Set the TELNET state.
     pub fn set_state(&mut self, value: TelnetState) {
-        let old_state = self.state();
-        if old_state != value {
-            println!("=== DEBUG: TELNET state change: {:?} -> {:?} ===", old_state, value);
+        if self.state != value {
+            println!("=== DEBUG: TELNET state change: {:?} -> {:?} ===", self.state, value);
         }
-        self.state = value as u8;
+        self.state = value;
     }
 
     /// Get the TELNET option subnegotiation state.
     pub fn sb_state(&self) -> TelnetSubnegotiationState {
-        TelnetSubnegotiationState::from_u8(self.sb_state)
+        self.sb_state
     }
 
     /// Set the TELNET option subnegotiation state.
     pub fn set_sb_state(&mut self, value: TelnetSubnegotiationState) {
-        self.sb_state = value as u8;
+        self.sb_state = value;
     }
 
     /// Get the undrawn flag.
