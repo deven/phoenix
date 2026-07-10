@@ -1138,14 +1138,16 @@ impl TelnetObj {
             // Make room for the new character if necessary.
             if !self.at_end().await {
                 let mut lines = self.end_line().await - self.point_line();
-                let mut wrap = point - self.point_column();
+                // Buffer index of column 0 of the point's screen line, as in the C++ pointer
+                // arithmetic (point - PointColumn()); negative while that line starts in the prompt.
+                let mut wrap = point as isize - self.point_column() as isize;
 
                 while lines > 0 {
                     // Go to the end of the current line.
                     let cols = self.telnet.width() - 1;
                     self.echo_output(&format!("\r\x1b[{cols}C")).await; // XXX ANSI!
-                    wrap += self.telnet.width(); // Find wrapped character.
-                    let ch = if wrap < self.data.len() { self.data[wrap] } else { b' ' };
+                    wrap += self.telnet.width() as isize; // Find wrapped character.
+                    let ch = if wrap >= 0 && (wrap as usize) < self.data.len() { self.data[wrap as usize] } else { b' ' };
                     self.echo_output(&String::from_utf8_lossy(&[ch])).await; // Echo wrapped character.
                     // Force line wrap and delete a character.
                     self.echo_output(" \x08\x1b[P").await; // XXX ANSI!
@@ -1160,6 +1162,7 @@ impl TelnetObj {
                     if columns > 0 {
                         self.echo_output(&format!("\x1b[{columns}D")).await;
                     } else if columns < 0 {
+                        let columns = -columns;
                         self.echo_output(&format!("\x1b[{columns}C")).await;
                     }
                 }
@@ -1592,16 +1595,18 @@ impl TelnetObj {
                 // Insert in middle.
                 self.data.insert(point, ch);
                 let lines = self.end_line().await - self.point_line();
-                let mut wrap = point - self.point_column();
+                // Buffer index of column 0 of the point's screen line, as in the C++ pointer
+                // arithmetic (point - PointColumn()); negative while that line starts in the prompt.
+                let mut wrap = point as isize - self.point_column() as isize;
 
                 self.echo_output("\x1b[@").await; // Insert character. // XXX ANSI!
 
                 for _ in 0..lines {
                     // Handle line wrapping.
                     self.echo_output("\r\n\x1b[@").await; // XXX ANSI!
-                    wrap += self.telnet.width(); // Find wrapped character.
-                    if wrap < self.data.len() {
-                        self.echo_output(&String::from_utf8_lossy(&[self.data[wrap]])).await;
+                    wrap += self.telnet.width() as isize; // Find wrapped character.
+                    if wrap >= 0 && (wrap as usize) < self.data.len() {
+                        self.echo_output(&String::from_utf8_lossy(&[self.data[wrap as usize]])).await;
                     } else {
                         self.echo_output(" ").await;
                     }
