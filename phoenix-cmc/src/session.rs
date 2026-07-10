@@ -3416,18 +3416,16 @@ impl Session {
                 let oops_text = self.oops_text();
                 self.output(&format!("Your /oops text is currently \"{oops_text}\".\n")).await;
             }
-        } else {
-            if let Some(last_msg) = self.last_message() {
-                let sendlist = Sendlist::new(self, args, false, true, true).await;
-                let text = last_msg.text().clone();
-                let to = last_msg.to().clone();
+        } else if let Some(last_msg) = self.last_message() {
+            let sendlist = Sendlist::new(self, args, false, true, true).await;
+            let text = last_msg.text().clone();
+            let to = last_msg.to().clone();
 
-                self.send_message(&to, &self.oops_text()).await?;
-                self.send_message(&sendlist, &text).await?;
-                self.set_last_sendlist(Some(sendlist.clone()));
-            } else {
-                self.output("You have no previous message to resend.\n").await;
-            }
+            self.send_message(&to, &self.oops_text()).await?;
+            self.send_message(&sendlist, &text).await?;
+            self.set_last_sendlist(Some(sendlist.clone()));
+        } else {
+            self.output("You have no previous message to resend.\n").await;
         }
 
         Ok(())

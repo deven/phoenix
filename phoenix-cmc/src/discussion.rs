@@ -466,15 +466,13 @@ impl Discussion {
 
         if self.is_member(session) {
             session.output(&format!("You are already a member of discussion {disc}.\n")).await;
-        } else {
-            if self.is_permitted(&session_name) {
-                self.enqueue_others(JoinNotify::new(disc.clone(), session_name), session).await?;
+        } else if self.is_permitted(&session_name) {
+            self.enqueue_others(JoinNotify::new(disc.clone(), session_name), session).await?;
 
-                self.0.members.insert(session.clone());
-                session.output(&format!("You are now a member of discussion {disc}.\n")).await;
-            } else {
-                session.output(&format!("You are not permitted to join discussion {disc}.\n")).await;
-            }
+            self.0.members.insert(session.clone());
+            session.output(&format!("You are now a member of discussion {disc}.\n")).await;
+        } else {
+            session.output(&format!("You are not permitted to join discussion {disc}.\n")).await;
         }
 
         Ok(())
