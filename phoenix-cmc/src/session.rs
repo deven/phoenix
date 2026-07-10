@@ -71,6 +71,10 @@ pub enum SessionMsg {
     UserLookup(Option<User>),
     /// The name-claim outcome (second login handshake).
     EnterResult { ok: bool, name: Name },
+    /// The discussion-creation outcome (from the server actor's namespace serialization).
+    DiscussionCreated { discussion: Option<Discussion>, name: Text, for_login: bool },
+    /// Membership in a discussion has landed (sent by the discussion actor after Join).
+    Joined(Discussion),
     /// Stream all unsent output, marking it acknowledged (non-TELNET pacing: the C++ accept_input flushed with
     /// OutputNext()/AcknowledgeOutput() pairs).
     Flush,
@@ -156,6 +160,18 @@ impl SessionObj {
                         error!("login entry: {e}");
                     }
                 }
+                SessionMsg::DiscussionCreated { discussion, name, for_login } => {
+                    if let Err(e) = self.session.discussion_created_result(discussion, name, for_login).await {
+                        error!("discussion create: {e}");
+                    }
+                }
+                SessionMsg::Joined(_discussion) => {
+                    if self.session.0.banner_pending.swap(false, Ordering::AcqRel) {
+                        if let Err(e) = self.session.login_banner().await {
+                            error!("login banner: {e}");
+                        }
+                    }
+                }
                 SessionMsg::Closed(telnet) => {
                     // ~ Telnet::Closed(): the connection is gone.
                     let result = if self.session.signed_on() { self.session.detach(&telnet, false).await } else { self.session.close(false).await };
@@ -206,6 +222,10 @@ pub struct SessionInner {
     pub output_buffer: Mutex<String>,
     pub tx: mpsc::UnboundedSender<SessionMsg>,
 
+    /// The login banner's tail (default sendlist, /who, /howmany) is waiting on discussion A membership; cleared by the
+    /// Joined arm that runs it.
+    pub banner_pending: AtomicBool,
+
     // Login and idle timestamps.
     pub login_time: AtomicTimestamp,
     pub idle_since: AtomicTimestamp,
@@ -225,6 +245,10 @@ pub enum SessionType {
         attempts: AtomicI32,
     },
     LoggedIn {
+        // Signed on (~ the C++ SignedOn boolean): true from construction, cleared during close so discussion quits are
+        // silent and announcements exclude the closing session.
+        signed_on: AtomicBool,
+
         // User-visible session name.
         name: AtomicName,
 
@@ -295,7 +319,7 @@ impl fmt::Debug for SessionInner {
             }
         }
 
-        let SessionInner { id, server, telnet, lines, output_buffer, tx, login_time, idle_since, session_type } = self;
+        let SessionInner { id, server, telnet, lines, output_buffer, tx, banner_pending, login_time, idle_since, session_type } = self;
 
         f.debug_struct("SessionInner")
             .field("id", &id)
@@ -304,6 +328,7 @@ impl fmt::Debug for SessionInner {
             .field("lines", &lines)
             .field("output_buffer", &output_buffer)
             .field("tx", &tx)
+            .field("banner_pending", &banner_pending)
             .field("login_time", &login_time)
             .field("idle_since", &idle_since)
             .field("session_type", &session_type)
@@ -336,6 +361,7 @@ impl Session {
             lines: Mutex::new(VecDeque::new()),
             output_buffer: Mutex::new(String::new()),
             tx,
+            banner_pending: AtomicBool::new(false),
             login_time: AtomicTimestamp::new(now.clone()),
             idle_since: AtomicTimestamp::new(now),
             session_type: AtomicSessionType::new(SessionType::PreLogin {
@@ -378,6 +404,7 @@ impl Session {
         self.login_sequence_finished();
 
         self.0.session_type.set(SessionType::LoggedIn {
+            signed_on: AtomicBool::new(true),
             name: AtomicName::new(name),
             user: AtomicUserOption::new(user),
             user_vars: AtomicHashMap::empty(),
@@ -905,7 +932,7 @@ impl Session {
     pub fn signed_on(&self) -> bool {
         match self.session_type().as_ref() {
             SessionType::PreLogin { .. } => false,
-            SessionType::LoggedIn { .. } => true,
+            SessionType::LoggedIn { signed_on, .. } => signed_on.load(Ordering::Acquire),
         }
     }
 
@@ -1290,14 +1317,41 @@ impl Session {
         // Welcome message and automatic commands.
         self.output("\n\nWelcome to Phoenix.  Type \"/help\" for a list of commands.\n\n").await;
 
-        // Make sure discussion A exists.
-        if let (_, _, None, _) = self.find_sendable("A", false, true, true, true).await {
-            let disc = Discussion::new(None, "A", "General Discussion", true).await;
-            DISCUSSIONS.insert(Text::from("A"), disc);
-        }
+        // Ensure discussion A exists (create-or-get through the server actor's namespace serialization), then join it;
+        // the banner's tail runs from the Joined arm, because the member-gated do_send needs the membership visible
+        // (~ the C++ ran this synchronously).
+        self.0.banner_pending.store(true, Ordering::Release);
+        self.server().create_discussion(self.clone(), Text::from("A"), Text::from("General Discussion"), true, false, true);
 
-        // Automatic commands.
-        self.do_join("A").await?;
+        Ok(())
+    }
+
+    /// Continue after the server actor's discussion-creation outcome: the do_create tail, or the login's join of
+    /// discussion A.
+    #[framed]
+    pub async fn discussion_created_result(&self, discussion: Option<Discussion>, name: Text, for_login: bool) -> tokio::io::Result<()> {
+        let Some(disc) = discussion else {
+            self.0.banner_pending.store(false, Ordering::Release);
+            self.output(&format!("\"{name}\" is already in use. (not created)\n")).await;
+            return Ok(());
+        };
+        if for_login {
+            // Discussion A exists; join it -- the Joined signal continues the banner.
+            return self.do_join("A").await;
+        }
+        self.enqueue_others(CreateNotify::new(disc.name(), disc.title(), disc.is_public(), self.name())).await?;
+
+        let name = disc.name();
+        let title = disc.title();
+        self.output(&format!("You have created discussion {name}, \"{title}\".\n")).await;
+
+        Ok(())
+    }
+
+    /// The login banner's tail, run once discussion A membership has landed (~ the C++ ran the whole sequence
+    /// synchronously; the member-gated do_send needs the membership visible).
+    #[framed]
+    pub async fn login_banner(&self) -> tokio::io::Result<()> {
         self.do_send("A").await?;
         self.do_who("").await?;
         self.do_howmany("").await?;
@@ -1469,6 +1523,11 @@ impl Session {
             // Release the name claim held in the server registry.
             self.server().release_name(self.name().name().clone());
             self.notify_exit().await?;
+            // ~ the C++ `SignedOn = false` before the quit loop: the discussion quits below (and any announcements from
+            // here on) treat this session as signed off, so the quits are silent.
+            if let SessionType::LoggedIn { signed_on, .. } = self.session_type().as_ref() {
+                signed_on.store(false, Ordering::Release);
+            }
         }
 
         // Quit all discussions silently.
@@ -1644,12 +1703,15 @@ impl Session {
             }
 
             for s in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
+                // Sendlists match against the bare name alone -- NEVER the blurb.  (Name derefs to the name-with-blurb
+                // display string, which both polluted partial matches with blurb text and prevented exact matches for
+                // any blurbed session.)
                 let s_name = s.name();
-                if s_name.eq_ignore_ascii_case(sendlist) {
+                if s_name.name().as_str().eq_ignore_ascii_case(sendlist) {
                     session = Some(s.clone());
                     session_matches.insert(s.clone());
                 } else if !exact {
-                    if let Some(pos) = match_name(&s_name, sendlist) {
+                    if let Some(pos) = match_name(s_name.name().as_str(), sendlist) {
                         if pos == 1 {
                             count += 1;
                             session_lead = Some(s.clone());
@@ -2882,14 +2944,9 @@ impl Session {
             _ => {}
         }
 
-        let disc = Discussion::new(Some(self.clone()), name, title, is_public).await;
-        DISCUSSIONS.insert(name.to_string().into(), disc.clone());
-
-        self.enqueue_others(CreateNotify::new(disc.name(), disc.title(), disc.is_public(), self.name())).await?;
-
-        let name = disc.name();
-        let title = disc.title();
-        self.output(&format!("You have created discussion {name}, \"{title}\".\n")).await;
+        // The advisory checks above give the pretty errors; the authoritative claim is serialized in the server actor
+        // against both namespaces (~ the C++ single thread's implicit atomicity).
+        self.server().create_discussion(self.clone(), Text::from(name), Text::from(title), is_public, true, false);
 
         Ok(())
     }
