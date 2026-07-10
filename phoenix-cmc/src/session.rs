@@ -581,16 +581,29 @@ impl Session {
     /// Get the `LoginState`.
     pub fn login_state(&self) -> LoginState {
         match self.session_type().as_ref() {
-            SessionType::PreLogin { login_state, .. } => login_state.get(),
-            SessionType::LoggedIn { .. } => LoginState::LoggedIn,
+            SessionType::PreLogin { login_state, .. } => {
+                let state = login_state.get();
+                println!("=== DEBUG: Session::login_state() called on PreLogin session, returning {state:?} ===");
+                state
+            }
+            SessionType::LoggedIn { .. } => {
+                println!("=== DEBUG: Session::login_state() called on LoggedIn session, returning LoginState::LoggedIn ===");
+                LoginState::LoggedIn
+            }
         }
     }
 
     /// Set the `LoginState`.
     pub fn set_login_state(&self, value: LoginState) {
         match self.session_type().as_ref() {
-            SessionType::PreLogin { login_state, .. } => login_state.set(value),
-            SessionType::LoggedIn { .. } => (),
+            SessionType::PreLogin { login_state, .. } => {
+                let state = login_state.get();
+                println!("=== DEBUG: Session::set_login_state() called on PreLogin session, changing {state:?} to {value:?} ===");
+                login_state.set(value)
+            }
+            SessionType::LoggedIn { .. } => {
+                println!("=== DEBUG: Session::set_login_state() called on LoggedIn session, ignoring! ===");
+            }
         };
     }
 
