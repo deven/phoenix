@@ -9,6 +9,7 @@
 
 #![recursion_limit = "256"]
 #![deny(rust_2018_idioms, nonstandard_style, unused_must_use, clippy::all)]
+#![allow(clippy::collapsible_else_if)]
 //#![warn(future_incompatible, missing_docs, clippy::pedantic, clippy::cargo)]
 
 #[macro_use]
