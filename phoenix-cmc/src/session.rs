@@ -3183,7 +3183,7 @@ impl Session {
         let mut num = 0i64;
         while let Some(&ch) = chars.peek() {
             if ch.is_ascii_digit() {
-                num = num * 10 + (ch as i64 - '0' as i64);
+                num = num.saturating_mul(10).saturating_add(ch as i64 - '0' as i64);
                 chars.next();
             } else {
                 break;
@@ -3208,7 +3208,7 @@ impl Session {
             num = 0;
             while let Some(&ch) = chars.peek() {
                 if ch.is_ascii_digit() {
-                    num = num * 10 + (ch as i64 - '0' as i64);
+                    num = num.saturating_mul(10).saturating_add(ch as i64 - '0' as i64);
                     chars.next();
                 } else {
                     break;
@@ -3234,7 +3234,7 @@ impl Session {
             num = 0;
             while let Some(&ch) = chars.peek() {
                 if ch.is_ascii_digit() {
-                    num = num * 10 + (ch as i64 - '0' as i64);
+                    num = num.saturating_mul(10).saturating_add(ch as i64 - '0' as i64);
                     chars.next();
                 } else {
                     break;
@@ -3255,15 +3255,20 @@ impl Session {
             return Ok(());
         }
 
-        // Calculate new idle_since timestamp.
-        let total_minutes = days * 24 * 60 + hours * 60 + minutes;
-        let new_idle_since = Timestamp::from_unix(now.unix() - total_minutes * 60);
+        // Calculate the target idle_since time.  All arithmetic saturates, and the permission check compares raw
+        // seconds: an absurdly large specification must be rejected before constructing a Timestamp, which panics
+        // outside chrono's representable range.
+        let total_minutes = days.saturating_mul(24 * 60).saturating_add(hours.saturating_mul(60)).saturating_add(minutes);
+        let target = now.unix().saturating_sub(total_minutes.saturating_mul(60));
 
         // Check permissions.
-        if new_idle_since < self.login_time() && self.priv_level() < 50 {
+        if target < self.login_time().unix() && self.priv_level() < 50 {
             self.output("Sorry, you can't be idle longer than you've been signed on.\n").await;
             return Ok(());
         }
+
+        // Clamp to the Unix epoch so a privileged absurdity cannot panic Timestamp::from_unix.
+        let new_idle_since = Timestamp::from_unix(target.max(0));
 
         // Set the new idle time.
         self.set_idle_since(new_idle_since);
