@@ -9,7 +9,7 @@
 
 use crate::atomic::AtomicAbortHandleOption;
 use crate::name::Name;
-use crate::session::{Session, SessionMsg};
+use crate::session::{DISCUSSIONS, Session, SessionMsg};
 use crate::telnet::Telnet;
 use crate::text::Text;
 use crate::timestamp::{Timestamp, system_uptime};
@@ -38,6 +38,11 @@ pub enum ServerMsg {
     Enter { session: Session, name: Name },
     /// Release a name claim (a signed-on session closed).
     Exit { name: Text },
+    /// Create and register a discussion, serialized against both namespaces (the claimed session names and the
+    /// discussion registry; ~ the C++ DoCreate exclusivity checks made race-free).  With exclusive=false an existing
+    /// discussion of that name is returned instead of an error (the login's ensure-A semantics).  The outcome returns
+    /// as SessionMsg::DiscussionCreated.
+    CreateDiscussion { requester: Session, name: Text, title: Text, public: bool, exclusive: bool, for_login: bool },
 }
 
 /// Private server state, owned by the server actor task.
@@ -166,6 +171,12 @@ impl Server {
     /// Release a name claim (a signed-on session closed).
     pub fn release_name(&self, name: Text) {
         let _ = self.0.tx.send(ServerMsg::Exit { name });
+    }
+
+    /// Create (or, with exclusive=false, fetch) a discussion through the server actor's namespace serialization; the
+    /// outcome arrives as SessionMsg::DiscussionCreated.
+    pub fn create_discussion(&self, requester: Session, name: Text, title: Text, public: bool, exclusive: bool, for_login: bool) {
+        let _ = self.0.tx.send(ServerMsg::CreateDiscussion { requester, name, title, public, exclusive, for_login });
     }
 
     /// Handle a new TCP connection.
@@ -345,12 +356,27 @@ impl ServerObj {
                 msg = self.rx.recv() => match msg {
                     Some(ServerMsg::Enter { session, name }) => {
                         // The claim is the check and the insert as one sequential unit: simultaneous logins racing one
-                        // name serialize here, and exactly one wins.
-                        let ok = self.names.insert(name.name().clone());
+                        // name serialize here, and exactly one wins.  The namespace is shared with discussions (Text
+                        // folds case for both), so a name matching any existing discussion is rejected outright.
+                        let ok = !DISCUSSIONS.contains_key(name.name())
+                            && self.names.insert(name.name().clone());
                         let _ = session.0.tx.send(SessionMsg::EnterResult { ok, name });
                     }
                     Some(ServerMsg::Exit { name }) => {
                         self.names.remove(&name);
+                    }
+                    Some(ServerMsg::CreateDiscussion { requester, name, title, public, exclusive, for_login }) => {
+                        let discussion = if let Some(existing) = DISCUSSIONS.get(&name) {
+                            if exclusive { None } else { Some(existing) }
+                        } else if self.names.contains(&name) {
+                            None
+                        } else {
+                            let creator = if for_login { None } else { Some(requester.clone()) };
+                            let disc = crate::discussion::Discussion::new(creator, name.clone(), title, public).await;
+                            DISCUSSIONS.insert(name.clone(), disc.clone());
+                            Some(disc)
+                        };
+                        let _ = requester.0.tx.send(SessionMsg::DiscussionCreated { discussion, name, for_login });
                     }
                     None => {}
                 },

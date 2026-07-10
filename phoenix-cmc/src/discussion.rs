@@ -11,7 +11,7 @@ use crate::atomic::{AtomicNameOption, AtomicOrdSet, AtomicText, AtomicTimestamp}
 use crate::constants::COMMA;
 use crate::name::Name;
 use crate::output::*;
-use crate::session::{DISCUSSIONS, Session};
+use crate::session::{DISCUSSIONS, Session, SessionMsg};
 use crate::text::Text;
 use crate::timestamp::Timestamp;
 use crate::{getword, match_keyword};
@@ -81,6 +81,10 @@ impl DiscussionObj {
                     if let Err(e) = self.discussion.join(&session).await {
                         error!("discussion join: {e}");
                     }
+
+                    // Membership (and its notices) are now visible; signal the joiner, whose login banner may be
+                    // waiting on it.
+                    let _ = session.0.tx.send(SessionMsg::Joined(self.discussion.clone()));
                 }
                 DiscussionMsg::Quit(session) => {
                     if let Err(e) = self.discussion.quit(&session).await {
@@ -111,6 +115,7 @@ impl DiscussionObj {
                     if let Err(e) = self.discussion.destroy(&session).await {
                         error!("discussion destroy: {e}");
                     }
+
                     // A successful destroy removed the discussion from the registry: the actor exits, and later sends
                     // fail silently (messages to a destroyed discussion are no-ops).
                     if DISCUSSIONS.get(&self.discussion.name()).is_none() {
