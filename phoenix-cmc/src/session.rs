@@ -4117,8 +4117,10 @@ impl Session {
         let mut errors = String::new();
         let mut msg = String::new();
 
-        // Check if anyone is signed on at all.
-        let total_sessions = SESSIONS.snapshot().values().filter(|s| s.signed_on()).count();
+        // Check if anyone is signed on at all.  One snapshot serves both the count and the traversal below: reading
+        // SESSIONS twice would let a concurrent sign-on make who.len() exceed total_sessions.
+        let snapshot = SESSIONS.snapshot();
+        let total_sessions = snapshot.values().filter(|s| s.signed_on()).count();
         if total_sessions == 0 {
             self.output("Nobody is signed on.\n").await;
             return (who, errors, msg);
@@ -4189,7 +4191,7 @@ impl Session {
         // Add filter matches to the set.
         if has_filters {
             let now = Timestamp::new();
-            for session in SESSIONS.snapshot().values().filter(|s| s.signed_on()) {
+            for session in snapshot.values().filter(|s| s.signed_on()) {
                 let idle_time = (now.unix() - session.idle_since().unix()) / 60;
                 let is_active = match session.away() {
                     AwayState::Here if session.telnet().is_some() && idle_time < 60 => true,
