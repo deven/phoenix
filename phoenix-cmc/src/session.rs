@@ -123,7 +123,7 @@ impl SessionObj {
                     if let Some(telnet) = self.session.telnet() {
                         if telnet.acknowledge() {
                             self.send_all(&telnet);
-                        } else if !telnet.write_interest() && self.pending.sent < self.pending.queue.len() {
+                        } else if !telnet.output_pending() && self.pending.sent < self.pending.queue.len() {
                             // Non-TELNET pacing: send one output when the buffer is idle
                             // (~ C++ `if (!telnet->Output.head) SendNext(telnet);`).
                             telnet.deliver(TelnetMsg::Deliver(Arc::clone(&self.pending.queue[self.pending.sent])));
@@ -178,6 +178,13 @@ impl SessionObj {
                         self.send_all(&telnet);
                     }
                 }
+            }
+
+            // Flush session-buffered output at the end of every processing unit (~ the C++ EnqueueOutput at the end of
+            // input handling): any arm may have generated output through the session's text buffer, and the flush is a
+            // no-op when it is empty.
+            if let Err(e) = self.session.enqueue_output().await {
+                error!("output flush: {e}");
             }
         }
     }
@@ -273,8 +280,8 @@ repr_u8_enum! {
 
 impl fmt::Debug for SessionInner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Print the telnet field as a one-line summary (peer address) instead
-        // of expanding TelnetInner, which would recurse back into SessionInner.
+        // Print the telnet field as a one-line summary (peer address) instead of expanding TelnetInner, which would
+        // recurse back into SessionInner.
         struct TelnetSummary<'a>(&'a AtomicTelnetOption);
         impl fmt::Debug for TelnetSummary<'_> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -288,16 +295,18 @@ impl fmt::Debug for SessionInner {
             }
         }
 
+        let SessionInner { id, server, telnet, lines, output_buffer, tx, login_time, idle_since, session_type } = self;
+
         f.debug_struct("SessionInner")
-            .field("id", &self.id)
-            .field("server", &self.server)
-            .field("telnet", &TelnetSummary(&self.telnet))
-            .field("lines", &self.lines)
-            .field("output_buffer", &self.output_buffer)
-            .field("tx", &self.tx)
-            .field("login_time", &self.login_time)
-            .field("idle_since", &self.idle_since)
-            .field("session_type", &self.session_type)
+            .field("id", &id)
+            .field("server", &server)
+            .field("telnet", &TelnetSummary(telnet))
+            .field("lines", &lines)
+            .field("output_buffer", &output_buffer)
+            .field("tx", &tx)
+            .field("login_time", &login_time)
+            .field("idle_since", &idle_since)
+            .field("session_type", &session_type)
             .finish()
     }
 }

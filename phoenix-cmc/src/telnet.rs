@@ -228,7 +228,7 @@ pub struct TelnetInner {
     pub acknowledge: AtomicBool,              // use telnet TIMING-MARK option?
     pub do_echo: AtomicBool,                  // should server be echoing?
     pub echo: AtomicU8,                       // ECHO option (local)
-    pub write_interest: AtomicBool,           // pending output? (~ C++ FDTable::WriteSelect bit)
+    pub output_pending: AtomicBool,           // output waiting for the writable branch (~ C++ FDTable::WriteSelect bit)
 }
 
 repr_u8_enum! {
@@ -285,8 +285,8 @@ repr_u8_enum! {
 
 impl fmt::Debug for TelnetInner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Print the session field as a one-line summary (session ID) instead
-        // of expanding SessionInner, which would recurse back into TelnetInner.
+        // Print the session field as a one-line summary (session ID) instead of expanding SessionInner, which would
+        // recurse back into TelnetInner.
         struct SessionSummary<'a>(&'a AtomicSession);
         impl fmt::Debug for SessionSummary<'_> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -294,18 +294,20 @@ impl fmt::Debug for TelnetInner {
             }
         }
 
+        let TelnetInner { tx, peer, width, height, session, closing, close_on_eof, acknowledge, do_echo, echo, output_pending } = self;
+
         f.debug_struct("TelnetInner")
-            .field("tx", &self.tx)
-            .field("peer", &self.peer)
-            .field("width", &self.width)
-            .field("height", &self.height)
-            .field("session", &SessionSummary(&self.session))
-            .field("closing", &self.closing)
-            .field("close_on_eof", &self.close_on_eof)
-            .field("acknowledge", &self.acknowledge)
-            .field("do_echo", &self.do_echo)
-            .field("echo", &self.echo)
-            .field("write_interest", &self.write_interest)
+            .field("tx", &tx)
+            .field("peer", &peer)
+            .field("width", &width)
+            .field("height", &height)
+            .field("session", &SessionSummary(session))
+            .field("closing", &closing)
+            .field("close_on_eof", &close_on_eof)
+            .field("acknowledge", &acknowledge)
+            .field("do_echo", &do_echo)
+            .field("echo", &echo)
+            .field("output_pending", &output_pending)
             .finish()
     }
 }
@@ -336,7 +338,7 @@ impl Telnet {
             acknowledge: AtomicBool::new(false),
             do_echo: AtomicBool::new(true),
             echo: AtomicU8::new(0),
-            write_interest: AtomicBool::new(false),
+            output_pending: AtomicBool::new(false),
         };
         let telnet = Telnet(Arc::new(inner));
         telnet.session().set_telnet(Some(telnet.clone()));
@@ -507,9 +509,9 @@ impl Telnet {
         Ok(())
     }
 
-    /// Get the write-interest flag (event loop writable-branch guard).
-    pub fn write_interest(&self) -> bool {
-        self.0.write_interest.load(Ordering::Acquire)
+    /// Get the output-pending flag (event loop writable-branch guard).
+    pub fn output_pending(&self) -> bool {
+        self.0.output_pending.load(Ordering::Acquire)
     }
 
     /// Send a message to this connection's event loop (a silent no-op if the connection is gone, like a message to a
@@ -1096,7 +1098,7 @@ impl TelnetObj {
             } else {
                 // Flush all pending output: arm the writable branch (we are on the loop; the select re-evaluates after
                 // this arm).
-                self.telnet.0.write_interest.store(true, Ordering::Release);
+                self.telnet.0.output_pending.store(true, Ordering::Release);
             }
 
             // Detach the associated session, on the session actor (~ the synchronous C++ detach call; as a message it
@@ -1121,7 +1123,7 @@ impl TelnetObj {
     #[framed]
     pub async fn command(&mut self, data: &[u8]) -> tokio::io::Result<()> {
         self.command_buffer.extend_from_slice(data);
-        self.telnet.0.write_interest.store(true, Ordering::Release);
+        self.telnet.0.output_pending.store(true, Ordering::Release);
 
         Ok(())
     }
@@ -1416,7 +1418,7 @@ impl TelnetObj {
                         return Ok(());
                     }
                 }
-                result = self.stream.writable(), if self.telnet.write_interest() => {
+                result = self.stream.writable(), if self.telnet.output_pending() => {
                     result?;
                     self.output_ready().await?;
                 }
@@ -1535,7 +1537,7 @@ impl TelnetObj {
 
         // Flush all telnet options and welcome banner to client.
         println!("=== DEBUG: Flushing telnet options ===");
-        self.telnet.0.write_interest.store(true, Ordering::Release);
+        self.telnet.0.output_pending.store(true, Ordering::Release);
 
         Ok(())
     }
@@ -1801,7 +1803,7 @@ impl TelnetObj {
 
         // Arm the event loop's writable branch and wake it, as queuing output armed the writefds bit before the C++
         // loop's next select() pass.
-        self.telnet.0.write_interest.store(true, Ordering::Release);
+        self.telnet.0.output_pending.store(true, Ordering::Release);
     }
 
     /// Ready to write to TELNET connection.  Drains the command buffer, then the output buffer; a partial write retains
@@ -1843,9 +1845,9 @@ impl TelnetObj {
         // Disarm, then re-check.  Since stage 3a-1 every append is loop-local, so the historical cross-task race (an
         // appender arming between the emptiness check and the store) is gone; the re-check now just keeps the flag
         // consistent with work the current iteration appended.
-        self.telnet.0.write_interest.store(false, Ordering::Release);
+        self.telnet.0.output_pending.store(false, Ordering::Release);
         if self.has_pending_output().await {
-            self.telnet.0.write_interest.store(true, Ordering::Release);
+            self.telnet.0.output_pending.store(true, Ordering::Release);
         }
 
         Ok(())
@@ -2792,7 +2794,7 @@ impl TelnetObj {
         if self.telnet.acknowledge() {
             self.increment_outstanding();
             self.output_buffer.extend_from_slice(&[TelnetCommand::IAC as u8, TelnetCommand::Do as u8, TelnetOption::TimingMark as u8]);
-            self.telnet.0.write_interest.store(true, Ordering::Release);
+            self.telnet.0.output_pending.store(true, Ordering::Release);
         }
 
         Ok(())
