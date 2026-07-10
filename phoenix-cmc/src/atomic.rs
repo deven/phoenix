@@ -109,6 +109,58 @@ macro_rules! atomic_sentinel {
     };
 }
 
+/// Define a `#[repr(u8)]` enum with `Default`, `From<u8>` (panicking on invalid discriminants), and `Into<u8>`.
+///
+/// The `From<u8>` conversion panics on unknown values instead of silently returning a default, preventing a landmine
+/// where new variants are added to the enum but the conversion match isn't updated.  This macro is exported crate-wide
+/// so that any module can define enums stored in `AtomicU8` wrappers.
+#[macro_export]
+macro_rules! repr_u8_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $(
+                $(#[$vmeta:meta])*
+                $variant:ident = $disc:expr,
+            )*
+        }
+        default = $default:ident $(,)?
+    ) => {
+        #[repr(u8)]
+        $(#[$meta])*
+        $vis enum $name {
+            $(
+                $(#[$vmeta])*
+                $variant = $disc,
+            )*
+        }
+
+        impl Default for $name {
+            #[inline]
+            fn default() -> Self {
+                $name::$default
+            }
+        }
+
+        impl From<$name> for u8 {
+            #[inline]
+            fn from(value: $name) -> u8 {
+                value as u8
+            }
+        }
+
+        impl From<u8> for $name {
+            #[inline]
+            fn from(value: u8) -> Self {
+                match value {
+                    $($disc => $name::$variant,)*
+                    _ => panic!(concat!("invalid ", stringify!($name), " discriminant: {}"), value),
+                }
+            }
+        }
+    };
+}
+
 /// Generate an atomic wrapper for a `#[repr(u8)]` state enum, stored in an `AtomicU8` via the enum's
 /// `From<u8>`/`Into<u8>` conversions.
 macro_rules! atomic_enum {
@@ -441,6 +493,7 @@ macro_rules! atomic_value {
             }
         }
     };
+
     (@option $value:ident, $atomic_opt:ident, $borrow_opt:ident) => {
         #[doc = concat!("Lock-free atomic optional `", stringify!($value), "` storage using arc_swap.")]
         #[derive(Debug)]

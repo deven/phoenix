@@ -245,22 +245,24 @@ pub enum SessionType {
     },
 }
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum LoginState {
-    PreLogin = 0,
-    AwaitingLogin = 1,
-    AwaitingPassword = 2,
-    AwaitingName = 3,
-    AwaitingBlurb = 4,
-    AwaitingTransferConfirmation = 5,
-    LoggedIn = 6,
-    /// Awaiting the user manager's account-lookup outcome (the first login handshake; no C++ counterpart -- the
-    /// FindUser call was synchronous).
-    AwaitingLookup = 7,
-    /// Awaiting the server registry's name-claim outcome (the second login handshake; the C++ single thread made the
-    /// claim implicit).
-    AwaitingEntry = 8,
+repr_u8_enum! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub enum LoginState {
+        PreLogin = 0,
+        AwaitingLogin = 1,
+        AwaitingPassword = 2,
+        AwaitingName = 3,
+        AwaitingBlurb = 4,
+        AwaitingTransferConfirmation = 5,
+        LoggedIn = 6,
+        /// Awaiting the user manager's account-lookup outcome (the first login handshake; no C++ counterpart -- the
+        /// FindUser call was synchronous).
+        AwaitingLookup = 7,
+        /// Awaiting the server registry's name-claim outcome (the second login handshake; the C++ single thread made
+        /// the claim implicit).
+        AwaitingEntry = 8,
+    }
+    default = PreLogin
 }
 
 // Custom Debug impl for SessionInner.  The derived Debug causes infinite recursion (and a stack overflow) because
@@ -300,70 +302,15 @@ impl fmt::Debug for SessionInner {
     }
 }
 
-impl Default for LoginState {
-    #[inline]
-    fn default() -> Self {
-        LoginState::PreLogin
+repr_u8_enum! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub enum AwayState {
+        Here = 0,
+        Away = 1,
+        Busy = 2,
+        Gone = 3,
     }
-}
-
-impl From<LoginState> for u8 {
-    #[inline]
-    fn from(state: LoginState) -> u8 {
-        state as u8
-    }
-}
-
-impl From<u8> for LoginState {
-    #[inline]
-    fn from(value: u8) -> Self {
-        match value {
-            0 => LoginState::PreLogin,
-            1 => LoginState::AwaitingLogin,
-            2 => LoginState::AwaitingPassword,
-            3 => LoginState::AwaitingName,
-            4 => LoginState::AwaitingBlurb,
-            5 => LoginState::AwaitingTransferConfirmation,
-            6 => LoginState::LoggedIn,
-            _ => LoginState::default(),
-        }
-    }
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum AwayState {
-    Here = 0,
-    Away = 1,
-    Busy = 2,
-    Gone = 3,
-}
-
-impl Default for AwayState {
-    #[inline]
-    fn default() -> Self {
-        AwayState::Here
-    }
-}
-
-impl From<AwayState> for u8 {
-    #[inline]
-    fn from(state: AwayState) -> u8 {
-        state as u8
-    }
-}
-
-impl From<u8> for AwayState {
-    #[inline]
-    fn from(value: u8) -> Self {
-        match value {
-            0 => AwayState::Here,
-            1 => AwayState::Away,
-            2 => AwayState::Busy,
-            3 => AwayState::Gone,
-            _ => AwayState::default(),
-        }
-    }
+    default = Here
 }
 
 impl Session {
