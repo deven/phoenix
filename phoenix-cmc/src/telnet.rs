@@ -1009,7 +1009,7 @@ impl TelnetObj {
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
-                self.echo_output(&String::from_utf8_lossy(&[self.data[point + 1]])).await;
+                self.echo_output(&String::from_utf8_lossy(&[self.data[point]])).await;
             }
             self.echo_output("\x08").await;
         }
@@ -1293,7 +1293,7 @@ impl TelnetObj {
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
-                self.echo_output(&String::from_utf8_lossy(&[self.data[point + 1]])).await;
+                self.echo_output(&String::from_utf8_lossy(&[self.data[point]])).await;
             }
             self.echo_output("\x08").await;
         }
@@ -2830,7 +2830,7 @@ impl TelnetObj {
                 if self.at_end().await {
                     self.echo_output(" ").await;
                 } else {
-                    self.echo_output(&String::from_utf8_lossy(&[self.data[point + 1]])).await;
+                    self.echo_output(&String::from_utf8_lossy(&[self.data[self.point()]])).await;
                 }
                 self.echo_output("\x08").await;
             }
@@ -2895,7 +2895,7 @@ impl TelnetObj {
             if self.at_end().await {
                 self.echo_output(" ").await;
             } else {
-                self.echo_output(&String::from_utf8_lossy(&[self.data[point + 1]])).await;
+                self.echo_output(&String::from_utf8_lossy(&[self.data[point]])).await;
             }
             self.echo_output("\x08").await;
         }
