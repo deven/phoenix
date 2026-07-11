@@ -1002,6 +1002,8 @@ impl TelnetObj {
             point += 1;
         }
 
+        self.set_point(point);
+
         if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
@@ -1011,8 +1013,6 @@ impl TelnetObj {
             }
             self.echo_output("\x08").await;
         }
-
-        self.set_point(point);
     }
 
     // Check if initial option negotiations are finished.
@@ -1286,6 +1286,8 @@ impl TelnetObj {
             point += 1;
         }
 
+        self.set_point(point);
+
         if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
@@ -1295,8 +1297,6 @@ impl TelnetObj {
             }
             self.echo_output("\x08").await;
         }
-
-        self.set_point(point);
     }
 
     /// Echo output (if echo enabled and not undrawn).
@@ -2816,6 +2816,7 @@ impl TelnetObj {
                 self.backward_char().await;
             }
 
+            let point = self.point();
             self.data.swap(point - 1, point);
 
             self.echo_output("\x08").await;
@@ -2887,6 +2888,8 @@ impl TelnetObj {
             point += 1;
         }
 
+        self.set_point(point);
+
         if self.point_column() == 0 {
             // Force line wrapping.
             if self.at_end().await {
@@ -2896,8 +2899,6 @@ impl TelnetObj {
             }
             self.echo_output("\x08").await;
         }
-
-        self.set_point(point);
     }
 
     /// Send welcome banner.
