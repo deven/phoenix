@@ -4,103 +4,98 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Phoenix CMC is a Computer-Mediated Communication system written in Rust. It's a modern multi-user chat/messaging server that supports telnet connections, user sessions, discussions, and real-time messaging.
+Phoenix is a Computer-Mediated Communication (CMC) system — a TELNET-based chat/conferencing server with
+continuous history since 1992 (C original, C++ from 1993, now being ported to Rust as `phoenix-cmc` v2.0.0).
+It is strictly a CMC in the CONNECT lineage, **not** a MUD/MOO. Signature features: server-side remote echo,
+Emacs-style line editing on ANSI terminals, input redrawing during asynchronous output, detach/attach session
+persistence, and TIMING-MARK-based delivery confirmation.
+
+**The prime directive: parity first.** v2.0.0 must be a drop-in replacement for C++ v1.0.0 — a faithful,
+side-by-side-readable translation of the C++ structure and behavior, comments included. Deviations are permitted
+only for language necessity, Tokio's async requirements, or the small set of declared innovations: Argon2
+password hashing (replacing `crypt()`), UTF-8 (replacing Latin-1, character-for-character), async file I/O,
+in-server password management, and foreground-only operation by default (with a `--daemonize` option planned).
+Before flagging any behavior as a bug or deviation, **cross-check the C++ semantics first** — surprising behavior
+is often faithful behavior. Architectural rulings are Deven's alone: analyze, propose, and implement, but never
+decide unilaterally.
+
+## Repository Layout
+
+- `phoenix-cmc/` — **the active Rust port** (v2.0.0 work happens here)
+- `phoenix_cmc/` — retired earlier Rust crate (pre-port experiments: actor macros, `config!`, event system);
+  reference only, do not modify
+- `C/`, `C++/` — the historical C (1992–93) and C++ (1993–) implementations; `C++/` is the parity reference
+- `client/` — the original custom client (CONNECT-derived, TELNET-based)
+- `README`, `HISTORY`, `TODO`, `PORTING`, etc. — historical project documents; the Git history itself is a
+  forensically reconstructed archive (892+ commits) and must be treated with archival care
 
 ## Build and Development Commands
 
-### Building
-- `cargo build` - Build the project in debug mode
-- `cargo build --release` - Build optimized release version
-- `cargo run` - Run the server directly
-- `cargo run -- --help` - Show command-line options
+All Rust work happens in `phoenix-cmc/` (edition 2024, `rust-version = 1.85`).
 
-### Code Quality
-- `cargo fmt` - Format code using rustfmt (configured in rustfmt.toml)
-- `cargo clippy` - Run linter for code quality checks
-- `cargo test` - Run unit tests
+- `cargo build` / `cargo build --release` — build (release uses LTO, single codegen unit)
+- `cargo run -- [--cron] [--debug] [--port 9999]` — run the server (default port 9999; `--cron` exits quietly if
+  the port is busy; `--debug` enables debug behavior and foreground logging)
+- `cargo fmt` — format (see `rustfmt.toml`: `max_width = 160`, small-heuristics Max, Unix newlines)
+- `cargo clippy --all-targets` — lint
+- `cargo test` — run tests
 
-### Running the Server
-- `cargo run -- --port 9999` - Run on specific port (default: 9999)
-- `cargo run -- --debug` - Run with debug logging
-- `cargo run -- --cron` - Run in cron mode (exits if port busy)
+**Run `cargo fmt`, `cargo clippy --all-targets`, and `cargo test` before considering any change complete.**
 
-The server creates a `phoenix/` directory in the current working directory and operates from there, creating a `logs/` subdirectory for log files.
+At startup the server creates and changes into its lib directory (`phoenix/` under the working directory) and
+creates a `logs/` subdirectory. Before starting a test server, kill any stale server process and confirm it is
+gone — a stale server may keep serving while the new one errors out.
 
 ## Architecture
 
-### Core Components
+Hybrid actor model with lock-free shared reads:
 
-**Server (`src/server.rs`)**
-- Main server component handling TCP connections
-- Manages shutdown/restart lifecycle
-- Coordinates between sessions and discussions
+- **Actors.** Each subsystem is an actor: a `*Obj` struct owned by its Tokio task (`ServerObj`, `SessionObj`,
+  `TelnetObj`, `DiscussionObj`, `UserManagerObj`), driven by a `*Msg` enum over an **unbounded** mpsc channel.
+  Unbounded is an architectural ruling, not an oversight: backpressure is wrong for fan-out (one stuck consumer
+  would stall healthy members), bounded channels reintroduce deadlock through send-as-wait, and lossy `try_send`
+  corrupts the control plane. Memory governance belongs at the spool/retention layer, not the transport.
+- **Handles.** Each actor has a cheap clonable handle `Foo(Arc<FooInner>)`. Naming rule: `*Inner` holds
+  cross-task-readable state (atomics, arc-swap fields) plus the message sender; `*Obj` holds actor-task-private
+  state. State that only the actor task touches belongs in the `*Obj`, not as an atomic in the `*Inner`.
+- **Shared reads.** Global registries are `arc-swap`-based `AtomicHashMap`s over `im` immutable maps (RCU
+  pattern): `SESSIONS`, `DISCUSSIONS`, `USERS`, `USER_MANAGER`, `DEFAULTS` (all `LazyLock` statics). Reads are
+  lock-free snapshots; mutations serialize through the owning actor.
+- **Stratified waiting.** Session actors may await non-session actors using **oneshot** reply channels;
+  non-session actors never await anyone. Oneshot per request (not persistent mpsc) because persistent mpsc
+  cannot detect peer death.
+- **`repr_u8_enum!`** (`atomic.rs`) generates atomic-backed enums with exhaustive `From<u8>` — new variants
+  become compile errors instead of silently defaulting. Use it for any enum stored atomically (e.g.,
+  `LoginState`).
 
-**Session (`src/session.rs`)**
-- Represents individual user connections
-- Handles telnet protocol negotiation
-- Manages user authentication and commands
-- Global collections: `SESSIONS`, `INITS`, `DISCUSSIONS`
-
-**Discussion (`src/discussion.rs`)**
-- Multi-user chat rooms/channels
-- Message routing and history
-- User join/leave management
-
-**User (`src/user.rs`)**
-- User account management with password verification
-- Can have multiple concurrent sessions
-- Managed through `UserManager`
-
-**Telnet (`src/telnet.rs`)**
-- Full telnet protocol implementation
-- Handles terminal negotiation and control sequences
-
-### Key Data Structures
-
-- `DashMap` - Concurrent hashmaps for global state (sessions, discussions, users)
-- `OrderedSet` (IndexSet) - Order-preserving sets for maintaining user/session lists
-- `Arc<RwLock<>>` - Async-safe shared ownership with read/write locks
-- Static `LazyLock` - Thread-safe lazy initialization for globals
-
-### Text and Communication
-
-**Text (`src/text.rs`)**
-- Custom string type with case-insensitive operations
-- Handles text processing and formatting
-
-**Output (`src/output.rs`)**
-- Message formatting and routing system
-- Handles different output types (public, private, system messages)
-
-**Sendlist (`src/sendlist.rs`)**
-- Manages message distribution to multiple recipients
-- Handles selective message sending
+Modules: `server`, `session`, `telnet` (full TELNET protocol implementation), `discussion`, `user`, `sendlist`,
+`output`, `text` (case-insensitive `Text` type), `name`, `timestamp`, `atomic`, `constants`.
 
 ## Code Conventions
 
-- 4-space indentation (configured in rustfmt.toml)
-- Max line width: 160 characters
-- Use `async_backtrace::framed` attribute on async functions for better error traces
-- Extensive use of type safety with wrapper types (`Name`, `Text`, etc.)
-- Handle-based architecture: outer handle + `Arc<RwLock<Inner>>` pattern
-- Comprehensive error handling with `anyhow::Result`
+- 4-space indentation; `max_width = 160`; Deven rewraps comments at 120 columns — never anchor diffs on comment
+  lines, use code-line anchors only
+- `#[async_backtrace::framed]` on async functions
+- Wrapper types for domain safety (`Name`, `Text`); `anyhow::Result` at boundaries, `thiserror` for typed errors
+- `Debug` impls destructure the struct in the impl body so missing fields become compile errors; do not use
+  `finish_non_exhaustive()` to paper over fields
+- Logging via `log` + `env_logger` (`RUST_LOG=debug cargo run`); the `println!("=== DEBUG: ...")` scaffolding is
+  transitional and slated for conversion to `debug!`/`trace!`
+- Feature flag `guest-access` is **enabled by default** (`default = ["guest-access"]`); build with
+  `--no-default-features` to exclude it
 
-## Development Features
+## Commit Conventions
 
-**Guest Access**
-- Feature flag: `guest-access`
-- Enable with: `cargo build --features guest-access`
+- One commit per logical fix
+- Imperative subject line; detailed body with root cause, C++ correspondence, reproduction details, and
+  verification performed — full bodies, not just subject lines
+- AI-assisted commits carry a model attribution in a parenthetical; commits without one are Deven's own work.
+  Attribute design ideas accurately — do not credit a model for decisions that originated with Deven
 
-**Logging**
-- Uses `env_logger` - set `RUST_LOG` environment variable to control verbosity
-- Example: `RUST_LOG=debug cargo run`
+## Working Against the C++ Reference
 
-## Key Dependencies
-
-- **tokio** - Async runtime with full features
-- **anyhow/thiserror** - Error handling
-- **dashmap** - Concurrent hash maps
-- **indexmap** - Order-preserving collections
-- **argon2** - Password hashing
-- **async-backtrace** - Enhanced async stack traces
-- **chrono** - Date/time handling
+- `C++/` is the behavioral ground truth for parity questions; when in doubt, read it before proposing a change
+- **Warning:** commit `bcfa2fa` (2019 postfix-iterator refactor) broke all `while (u++)` login lookups in the
+  C++ codebase. Revert it before testing C++ behavior: `git show bcfa2fa | patch -p1 -R`
+- The gold standard for parity disputes is empirical byte-stream verification against the original binary
+  (a Python TELNET scripting client has been used for this); "reads equivalent" is not proof
